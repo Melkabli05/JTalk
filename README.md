@@ -269,6 +269,19 @@ landmark around it to limit the damage.
 Dark mode toggles the `app-dark` class on `<html>` (`ColorSchemeService`); `index.html` applies it before first paint.
 Read the [Optimus docs](https://optimus.openng.org/llms/llms.txt) before using a component.
 
+## Deploying (Vercel)
+
+The app is a static build (`pnpm build`, output `dist/Jtalk/browser`), and `vercel.json` is its routing ([Vercel: rewrites](https://vercel.com/docs/rewrites)):
+
+- `/api/*` and `/dev/*` are **proxied** to the backend on Render (`https://live-communication-service.onrender.com`). The browser only ever calls the
+  app's own domain, so there is no CORS and `environment.ts` can keep `apiUrl: '/api'`. Change the backend's address in `vercel.json`, nowhere else.
+- Every other path falls back to `index.html`, so deep links such as `/rooms/<id>` load (real files are still served first).
+- Proxied answers are never cached on the CDN (`x-vercel-enable-rewrite-caching: 0`): rooms and the stage change every few seconds.
+
+The backend on Render sleeps when idle on the free plan, so the first request after a quiet period can be slow or fail; the app refreshes every few
+seconds and recovers by itself. While the backend runs in its open testing mode (`MICRONAUT_ENVIRONMENTS=cloud,dev`) the production build uses the dev
+identity (`devIdentity: true` in `environment.ts`); turn that off when a user service issues tokens.
+
 ## Quality gates
 
 `pnpm check` runs ESLint with **type-aware rules** (including `no-deprecated`), Prettier, the tests and the build. The
