@@ -30,7 +30,7 @@
     </div>
   </header>
 
-  <section aria-labelledby="stage-heading">
+  <section class="stage" aria-labelledby="stage-heading">
     <h2 id="stage-heading">
       {{ 'On stage' | t }}
       <p-badge
@@ -106,9 +106,9 @@
 } @else {
   <div class="loading" role="status" aria-busy="true">
     <span class="cdk-visually-hidden">{{ 'Joining the room' | t }}</span>
-    <p-skeleton width="16rem" height="2.5rem" borderRadius="0" />
-    <p-skeleton width="100%" height="11rem" borderRadius="0" />
-    <p-skeleton width="100%" height="7rem" borderRadius="0" />
+    <p-skeleton width="16rem" height="2.5rem" borderRadius="12px" />
+    <p-skeleton width="100%" height="11rem" borderRadius="22px" />
+    <p-skeleton width="100%" height="7rem" borderRadius="22px" />
   </div>
 }
 

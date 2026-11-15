@@ -1,43 +1,58 @@
+// The stage is an open composition: avatars and names on the panel, centered however many people speak
+// (no fixed columns). Many speakers get smaller tiles; the avatar size comes from the component.
 .stage {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-  gap: 0.75rem;
+  --tile: 9.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 0.75rem;
   margin: 0;
   padding: 0;
   list-style: none;
+
+  &[data-size='large'] {
+    --tile: 7rem;
+  }
+}
+
+li {
+  display: flex;
+  inline-size: var(--tile);
 }
 
 .tile {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0.5rem;
-  width: 100%;
-  min-height: 11rem;
-  padding: 1rem 0.5rem;
-  border: 1px solid var(--p-content-border-color);
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  padding: 0.75rem 0.25rem;
+  border: 0;
   border-radius: var(--p-jtalk-radius-card);
-  background: var(--p-content-background);
-  box-shadow: var(--p-jtalk-elevation-1);
+  background: none;
   color: inherit;
   font: inherit;
   cursor: pointer;
   transition:
-    box-shadow 0.15s ease,
-    background-color 0.15s ease;
+    background-color var(--p-jtalk-motion-normal) ease,
+    transform var(--p-jtalk-motion-fast) ease;
 }
 
 .tile:hover:not(:disabled),
 .tile:focus-visible {
-  box-shadow: var(--p-jtalk-elevation-2);
+  background: color-mix(in srgb, var(--p-text-color) 6%, transparent);
+}
+
+.tile:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .seat {
-  border-style: dashed;
-  border-color: var(--p-form-field-border-color);
-  background: transparent;
-  box-shadow: none;
+  justify-content: center;
+  min-block-size: 7rem;
+  border: 1px dashed var(--p-form-field-border-color);
   color: var(--p-text-muted-color);
 
   .pi {
@@ -51,9 +66,9 @@
 }
 
 .name {
-  max-width: 100%;
+  max-inline-size: 100%;
   overflow: hidden;
-  font-weight: 600;
+  font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -63,13 +78,9 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.25rem;
-  min-height: 1.5rem;
+  min-block-size: 1.5rem;
 }
 
 .open {
   font-size: var(--p-jtalk-type-secondary);
-}
-
-.person.speaking {
-  border-color: var(--p-jtalk-brand);
 }

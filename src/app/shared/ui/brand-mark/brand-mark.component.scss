@@ -13,7 +13,7 @@
 
   &:nth-child(1) {
     block-size: 0.6em;
-    background: var(--p-jtalk-brand);
+    background: var(--brand-mark-active, var(--p-jtalk-brand));
   }
 
   &:nth-child(2) {

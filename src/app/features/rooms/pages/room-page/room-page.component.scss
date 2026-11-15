@@ -2,31 +2,30 @@
   display: block;
 }
 
+// Level 1: the header sits open on the canvas, compact, with no box around it.
 .hero {
   display: flex;
-  align-items: stretch;
-  overflow: hidden;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-jtalk-radius-panel);
-  background: var(--p-content-background);
-  box-shadow: var(--p-jtalk-elevation-1);
+  align-items: center;
+  gap: 1rem;
 }
 
 .mark {
   display: grid;
+  flex-shrink: 0;
   place-items: center;
-  min-width: 5.5rem;
-  background: var(--p-surface-50);
-  font-size: 2.5rem;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  border-radius: 50%;
+  font-size: 1.75rem;
 }
 
 .info {
-  padding: 1.25rem 1.5rem;
+  min-inline-size: 0;
 }
 
 h1 {
-  margin: 0 0 0.25rem;
-  font-size: var(--p-jtalk-type-display);
+  margin: 0 0 0.125rem;
+  font-size: var(--p-jtalk-type-title);
   font-weight: 700;
   line-height: 1.2;
 
@@ -38,13 +37,15 @@ h1 {
 }
 
 .topic {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.25rem;
   color: var(--p-text-muted-color);
 }
 
 .languages {
   margin: 0;
-  font-weight: 600;
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-secondary);
+  font-weight: 450;
 }
 
 .dot {
@@ -55,12 +56,23 @@ section {
   margin-block-start: 2rem;
 }
 
+// Level 3: the stage is the immersive center of the room, a feature panel one tonal step off the canvas.
+.stage {
+  padding: 1.25rem 1rem 1rem;
+  border-radius: var(--p-jtalk-radius-panel);
+  background: var(--p-content-hover-background);
+
+  h2 {
+    justify-content: center;
+  }
+}
+
 h2 {
   display: flex;
   align-items: center;
   gap: 0.625rem;
   margin: 0 0 0.75rem;
-  font-size: var(--p-jtalk-type-h2);
+  font-size: var(--p-jtalk-type-section);
 }
 
 .failure {

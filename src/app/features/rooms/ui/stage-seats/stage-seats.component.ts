@@ -26,6 +26,10 @@ export class StageSeatsComponent {
   readonly memberSelected = output<string>();
   readonly seatTaken = output<void>();
 
+  protected readonly avatarSize = computed<'large' | 'xlarge'>(() =>
+    this.speakers().length > 6 ? 'large' : 'xlarge',
+  );
+
   protected readonly onStage = computed(() =>
     this.speakers().map((id) => {
       const host = id === this.hostId();

@@ -1,32 +1,40 @@
 import { definePreset } from '@openng/optimus-ui-themes';
 import Aura from '@openng/optimus-ui-themes/aura';
-import { blue, sky } from '@radix-ui/colors';
 
 /**
- * Jtalk design tokens, layered on the Aura preset: "Social Audio", a warm, calm, people-first system
- * in the spirit of Clubhouse.
+ * Jtalk design tokens, layered on the Aura preset: Gather UI 2.0, "contemporary social audio x editorial
+ * minimalism x human warmth".
  *
- *  - color: a warm canvas, off-white cards, near-black ink; Active Green for anything live, Moderator
- *    Gold for roles, Danger for destructive actions. The six brand values are proposals, not an
- *    official palette, and every other step is a mix of them with white or black (see `ramp`);
- *  - form: 8px small controls, 14px buttons, 18px cards, 24px panels, circular avatars;
- *  - elevation: three soft levels (1 cards, 2 floating controls, 3 dialogs and menus), no heavy shadows;
- *  - type: Inter, with hierarchy from size and spacing rather than from many weights;
+ *  - color: porcelain canvas, paper surfaces, Forest Ink text. Forest green is strategic: it marks what is
+ *    active (live, speaking, the primary action), never decoration. Sand (gold in dark) marks elevated room
+ *    permissions, Terracotta marks danger. One color, one meaning, in both themes. The values are the design
+ *    proposal's; the steps between them are mixes of those values with white or black (see `ramp`);
+ *  - shape hierarchy: 10px small controls, 12px fields, 16px cards, 22px feature panels, 26px sheets, 14px
+ *    buttons (pills in the control dock), circular avatars;
+ *  - surface: tonal contrast and hairline borders, shadows almost invisible;
+ *  - type: Manrope, hierarchy from size and weight (400-700), no uppercase for ordinary text;
+ *  - motion: 120ms for button feedback, 180ms small transitions, 280ms sheets and overlays;
  *  - state: never color alone (speaking also shows a waveform, muted an icon, roles a labeled badge);
- *  - dark: its own warm theme, not an inverted light one.
+ *  - targets: at least 44x44px for buttons and fields.
  *
- * Contrast is verified numerically: text on solids >= 4.5:1, borders and indicators >= 3:1. That is why
- * the brand green (2.98:1 against white) is the solid only in dark mode, where ink text sits on it
- * (5.8:1); light mode fills buttons with the 700 step (5.5:1 against white).
+ * Contrast is verified numerically: text on fills >= 4.5:1, borders and indicators >= 3:1. Where the proposal's
+ * value falls short, the nearest passing one is used: secondary text `#6A6C64` (the proposed `#777970` is
+ * 4.05:1 on porcelain), the filled danger `#B0574E` (Terracotta `#C9685E` is 3.7:1 under white), and field
+ * borders `#8F9187` (the hairline `#E8E6DE` is for cards only). Tertiary `#999B91` is 2.8:1, so it is never
+ * used for text.
  */
 
 type Slot = 50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 | 950;
 type Scale = Record<Slot, string>;
 
-const brand = { green: '#3ba875', gold: '#e8b95b', danger: '#d95d58' };
-const ink = '#252525';
-const canvas = '#f5f1e8';
-const surface = '#fffefa';
+const forest = '#477a5d';
+const sage = '#80b18d';
+const sand = '#dcc79e';
+const gold = '#c9af7e';
+const terracotta = '#c9685e';
+const coral = '#df8277';
+const infoBlue = '#6389b5';
+const ink = '#20251f';
 
 const channel = (hex: string, at: number) => parseInt(hex.slice(at, at + 2), 16);
 
@@ -39,7 +47,7 @@ function mix(base: string, to: string, amount: number): string {
   return `#${part(1)}${part(3)}${part(5)}`;
 }
 
-/** An 11-slot Optimus ramp whose 500 is the brand color: tints towards white, shades towards black. */
+/** An 11-slot Optimus ramp whose 500 is the given color: tints towards white, shades towards black. */
 function ramp(base: string): Scale {
   return {
     50: mix(base, '#ffffff', 0.92),
@@ -56,152 +64,145 @@ function ramp(base: string): Scale {
   };
 }
 
-const green = ramp(brand.green);
-const gold = ramp(brand.gold);
-const danger = ramp(brand.danger);
-
 /**
- * A status palette (Aura's severities). Aura reads slot 500 for solids in light mode (white text on
- * it) and slot 400 for solids in dark mode (dark text on it), so those two take the steps that pass
- * 4.5:1; slots 600+ are darker for hover and pressed.
+ * A status palette (Aura's severities). Aura reads slot 500 for solids in light mode (white text on it)
+ * and slot 400 for solids in dark mode (dark text on it), so those two take the given colors, chosen to
+ * pass 4.5:1; slots 600+ are darker for hover and pressed, 50-300 are tints.
  */
-function status(scale: Scale, light: Slot, dark: Slot): Scale {
+function status(tints: string, light: string, dark: string): Scale {
+  const tint = ramp(tints);
   return {
-    50: scale[50],
-    100: scale[100],
-    200: scale[200],
-    300: scale[300],
-    400: scale[dark],
-    500: scale[light],
-    600: scale[800],
-    700: scale[900],
-    800: scale[900],
-    900: scale[950],
-    950: scale[950],
+    50: tint[50],
+    100: tint[100],
+    200: tint[200],
+    300: tint[300],
+    400: dark,
+    500: light,
+    600: mix(light, '#000000', 0.2),
+    700: mix(light, '#000000', 0.4),
+    800: mix(light, '#000000', 0.55),
+    900: mix(light, '#000000', 0.7),
+    950: mix(light, '#000000', 0.8),
   };
 }
 
-/** A Radix scale (12 steps, "blue1" ... "blue12") as an Optimus status palette: 500 -> step 11, 400 -> step 9. */
-const radix = (scale: Record<string, string>): Scale => {
-  const steps = Object.values(scale);
-  const step = (n: number) => steps[n - 1] ?? '';
-  return {
-    50: step(2),
-    100: step(3),
-    200: step(5),
-    300: step(8),
-    400: step(9),
-    500: step(11),
-    600: step(12),
-    700: step(12),
-    800: step(12),
-    900: step(12),
-    950: step(12),
-  };
-};
-
-// Warm neutrals. Light: 0 card, 50 canvas, 500 the muted tone (borders, icons), 600 muted text, 950 ink.
-// Dark runs the other way (a lower slot is lighter): 950 canvas, 900 card, 100 text.
+// Tonal surfaces. Light: 0 paper, 50 porcelain, 100 the secondary surface, 200 the hairline border, 500 the
+// field border (3.2:1), 600 secondary text, 950 Forest Ink. Dark runs the other way (a lower slot is lighter):
+// 950 night, 900 surface, 800 secondary surface, 700 hairline border, 500 field border, 300 secondary text.
 const lightSurface: Record<0 | Slot, string> = {
-  0: surface,
-  50: canvas,
-  100: '#ece7da',
-  200: '#ded8c8',
-  300: '#cdc7b6',
-  400: '#a9a79e',
-  500: '#85847e',
-  600: '#6b6a64',
-  700: '#504f4b',
-  800: '#3a3936',
-  900: '#2e2d2b',
+  0: '#ffffff',
+  50: '#f7f5ef',
+  100: '#efeee7',
+  200: '#e8e6de',
+  300: '#d6d4ca',
+  400: '#b3b5ab',
+  500: '#8f9187',
+  600: '#6a6c64',
+  700: '#505249',
+  800: '#3a3e37',
+  900: '#2a2f29',
   950: ink,
 };
 const darkSurface: Record<0 | Slot, string> = {
-  0: surface,
-  50: canvas,
-  100: '#e8e5db',
-  200: '#d2cfc4',
-  300: '#b3b0a6',
-  400: '#9c9a91',
-  500: '#6f6d66',
-  600: '#4a4843',
-  700: '#3a3935',
-  800: '#2e2d29',
-  900: '#242320',
-  950: '#1b1a18',
+  0: '#ffffff',
+  50: '#f7f5ef',
+  100: '#edeee7',
+  200: '#d3d8cf',
+  300: '#b1b8ae',
+  400: '#858f84',
+  500: '#6f7c6f',
+  600: '#4b574c',
+  700: '#343d35',
+  800: '#29312a',
+  900: '#202720',
+  950: '#151916',
 };
 
-const radius = { control: '8px', button: '14px', card: '18px', panel: '24px' };
+const radius = {
+  control: '10px',
+  field: '12px',
+  card: '16px',
+  panel: '22px',
+  sheet: '26px',
+  button: '14px',
+  pill: '9999px',
+};
 
+// Shadows are almost invisible: cards separate by a hairline and a tonal step, only floating things lift.
 const elevation = {
-  light: [
-    '0 1px 2px rgba(37, 37, 37, 0.06), 0 1px 1px rgba(37, 37, 37, 0.04)',
-    '0 4px 14px rgba(37, 37, 37, 0.1)',
-    '0 12px 32px rgba(37, 37, 37, 0.16)',
-  ],
-  dark: [
-    '0 1px 2px rgba(0, 0, 0, 0.35)',
-    '0 4px 14px rgba(0, 0, 0, 0.45)',
-    '0 12px 32px rgba(0, 0, 0, 0.55)',
-  ],
+  light: ['none', '0 1px 3px rgba(32, 37, 31, 0.06)', '0 8px 28px rgba(32, 37, 31, 0.1)'],
+  dark: ['none', '0 1px 3px rgba(0, 0, 0, 0.35)', '0 8px 28px rgba(0, 0, 0, 0.45)'],
 };
 
-// Inter has no Arabic glyphs, so Arabic text falls through to Noto Sans Arabic (fetched only when it appears).
+// Manrope has no Arabic glyphs, so Arabic text falls through to Noto Sans Arabic (fetched only when it appears).
 const fontFamily = {
-  sans: "'Inter Variable', 'Noto Sans Arabic Variable', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  sans: "'Manrope Variable', 'Noto Sans Arabic Variable', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   mono: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
 };
 
-// Type scale: size by role, weight 400/500/600/700 only.
+// Type scale by role: hero 36/700, title 28/700, section 21/650, card 17/650, body 15/400, secondary 13/450,
+// metadata 11/600 (weights and line heights are applied in the global CSS below).
 const type = {
-  display: '2rem',
-  h1: '1.625rem',
-  h2: '1.25rem',
-  h3: '1rem',
+  hero: '2.25rem',
+  title: '1.75rem',
+  section: '1.3125rem',
+  card: '1.0625rem',
   body: '0.9375rem',
   secondary: '0.8125rem',
-  caption: '0.6875rem',
+  metadata: '0.6875rem',
 };
 
-// Fills for initials avatars and room banners: the brand colors at depths that carry text (white on
-// green and coral >= 4.9:1, ink on gold 8.4:1), and fine on both canvases.
-const tone = { green: green[700], gold: gold[500], coral: danger[600] };
+const motion = { fast: '120ms', normal: '180ms', slow: '280ms' };
+
+// Fills for initials avatars and room banners: Forest and a deeper Terracotta carry white text (5.0:1 and
+// 4.9:1), Sand carries ink (9.4:1). They read on both canvases.
+const tone = { green: forest, gold: sand, coral: '#b0574e' };
+
+const palette = {
+  green: status(forest, forest, sage),
+  danger: status(terracotta, '#b0574e', coral),
+  role: status(sand, '#8f6a28', gold),
+  info: status(infoBlue, '#46709e', '#8fb0d6'),
+};
 
 export const JtalkPreset = definePreset(Aura, {
   primitive: {
-    // Aura's Tailwind-default palettes, replaced. Warnings and the other warm severities are gold.
+    // Aura's Tailwind-default palettes, replaced. Warnings and the other warm severities are the role color.
     // `purple` (the rarely used "help" severity) stays Aura's.
-    green: status(green, 700, 500),
-    red: status(danger, 600, 400),
-    yellow: status(gold, 800, 500),
-    orange: status(gold, 800, 500),
-    // Information keeps Radix blue and sky (white on blue-11 is 4.8:1): the brand has no blue.
-    blue: radix(blue),
-    sky: radix(sky),
+    green: palette.green,
+    red: palette.danger,
+    yellow: palette.role,
+    orange: palette.role,
+    blue: palette.info,
+    sky: palette.info,
     borderRadius: {
       none: '0',
       xs: '4px',
       sm: radius.control,
-      md: '10px',
-      lg: '14px',
-      xl: radius.card,
+      md: radius.field,
+      lg: radius.card,
+      xl: radius.panel,
     },
   },
 
   semantic: {
-    primary: green,
+    primary: ramp(forest),
 
-    transitionDuration: '0.2s',
+    transitionDuration: motion.normal,
 
     // WCAG 2.4.7 / 2.4.11: a clearly visible, >= 2px, >= 3:1 focus indicator.
     focusRing: { width: '2px', style: 'solid', color: '{primary.color}', offset: '2px' },
 
-    formField: { borderRadius: radius.control },
+    formField: {
+      borderRadius: radius.field,
+      paddingX: '0.875rem',
+      paddingY: '0.625rem',
+    },
     content: { borderRadius: radius.control },
 
     overlay: {
-      select: { borderRadius: radius.button, shadow: 'var(--p-jtalk-elevation-3)' },
-      popover: { borderRadius: radius.button, shadow: 'var(--p-jtalk-elevation-3)' },
+      select: { borderRadius: radius.field, shadow: 'var(--p-jtalk-elevation-3)' },
+      popover: { borderRadius: radius.card, shadow: 'var(--p-jtalk-elevation-3)' },
       modal: { borderRadius: radius.panel, shadow: 'var(--p-jtalk-elevation-3)' },
       navigation: { shadow: 'var(--p-jtalk-elevation-3)' },
     },
@@ -209,12 +210,12 @@ export const JtalkPreset = definePreset(Aura, {
     colorScheme: {
       light: {
         surface: lightSurface,
-        // The 700 step under white text: 5.5:1.
+        // Forest under white text: 5.0:1; hover and pressed are darker.
         primary: {
-          color: '{primary.700}',
+          color: '{primary.500}',
           contrastColor: '#ffffff',
-          hoverColor: '{primary.800}',
-          activeColor: '{primary.900}',
+          hoverColor: '{primary.600}',
+          activeColor: '{primary.700}',
         },
         text: {
           color: '{surface.950}',
@@ -222,7 +223,7 @@ export const JtalkPreset = definePreset(Aura, {
           mutedColor: '{surface.600}',
           hoverMutedColor: '{surface.700}',
         },
-        // Field borders are the muted tone (3.3:1 on the canvas, 3.7:1 on a card): WCAG 1.4.11.
+        // Field borders are surface 500 (3.2:1 on paper): WCAG 1.4.11.
         formField: {
           background: '{surface.0}',
           borderColor: '{surface.500}',
@@ -232,36 +233,37 @@ export const JtalkPreset = definePreset(Aura, {
           floatLabelColor: '{surface.600}',
           floatLabelActiveColor: '{surface.600}',
         },
+        content: { hoverBackground: '{surface.100}' },
         overlay: {
           select: { borderColor: '{surface.200}' },
           popover: { borderColor: '{surface.200}' },
           modal: { borderColor: '{surface.200}' },
         },
-        mask: { background: 'rgba(37, 37, 37, 0.45)' },
+        mask: { background: 'rgba(32, 37, 31, 0.45)' },
       },
       dark: {
         surface: darkSurface,
-        // The brand green itself, with near-black text on it: 5.8:1.
+        // Sage, with night text on it: 7.3:1. Green means active in both themes.
         primary: {
-          color: '{primary.500}',
+          color: sage,
           contrastColor: '{surface.950}',
-          hoverColor: '{primary.400}',
-          activeColor: '{primary.300}',
+          hoverColor: mix(sage, '#ffffff', 0.2),
+          activeColor: mix(sage, '#ffffff', 0.4),
         },
         text: {
           color: '{surface.100}',
           hoverColor: '{surface.50}',
-          mutedColor: '{surface.400}',
-          hoverMutedColor: '{surface.300}',
+          mutedColor: '{surface.300}',
+          hoverMutedColor: '{surface.200}',
         },
         formField: {
           background: '{surface.900}',
           borderColor: '{surface.500}',
           hoverBorderColor: '{surface.400}',
-          placeholderColor: '{surface.400}',
-          iconColor: '{surface.400}',
-          floatLabelColor: '{surface.400}',
-          floatLabelActiveColor: '{surface.400}',
+          placeholderColor: '{surface.300}',
+          iconColor: '{surface.300}',
+          floatLabelColor: '{surface.300}',
+          floatLabelActiveColor: '{surface.300}',
         },
         content: { borderColor: '{surface.700}', hoverBackground: '{surface.800}' },
         overlay: {
@@ -277,12 +279,12 @@ export const JtalkPreset = definePreset(Aura, {
   components: {
     breadcrumb: {
       root: { background: 'transparent', padding: '0' },
-      // WCAG 2.5.8: the links are pointer targets, so they get the 24 px minimum height.
+      // The links are pointer targets: 44px high.
       css: () => `
         .p-breadcrumb-item-link {
           display: inline-flex;
           align-items: center;
-          min-height: 1.5rem;
+          min-height: 2.75rem;
         }
       `,
     },
@@ -299,10 +301,13 @@ export const JtalkPreset = definePreset(Aura, {
           flex-wrap: wrap;
           row-gap: 0.5rem;
         }
+        .p-menubar-item-link {
+          min-height: 2.75rem;
+        }
         .p-menubar-item-link-active {
           background: color-mix(in srgb, ${dt('primary.color')} 14%, transparent);
           color: ${dt('text.color')};
-          font-weight: 600;
+          font-weight: 650;
         }
         .p-menubar-item-link-active .p-menubar-item-icon {
           color: ${dt('primary.color')};
@@ -317,7 +322,7 @@ export const JtalkPreset = definePreset(Aura, {
         padding: '0.375rem 0.75rem',
       },
       colorScheme: {
-        light: { root: { background: '{surface.950}', color: surface } },
+        light: { root: { background: '{surface.950}', color: '{surface.50}' } },
         dark: { root: { background: '{surface.100}', color: '{surface.950}' } },
       },
     },
@@ -339,21 +344,22 @@ export const JtalkPreset = definePreset(Aura, {
     listbox: {
       css: () => `
         .p-listbox-option-group {
-          font-size: var(--p-jtalk-type-caption);
-          font-weight: 500;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
+          font-size: var(--p-jtalk-type-metadata);
+          font-weight: 600;
+        }
+        .p-listbox-option {
+          min-height: 2.75rem;
         }
         .p-listbox-option.p-listbox-option-selected {
           box-shadow: inset 3px 0 0 var(--p-primary-color);
-          font-weight: 600;
+          font-weight: 650;
         }
       `,
     },
     card: {
       root: { borderRadius: radius.card, shadow: 'var(--p-jtalk-elevation-1)' },
       body: { padding: '1rem', gap: '0.5rem' },
-      title: { fontSize: type.h3, fontWeight: '600' },
+      title: { fontSize: type.card, fontWeight: '650' },
       css: ({ dt }) => `
         .p-card {
           border: 1px solid ${dt('content.border.color')};
@@ -361,30 +367,44 @@ export const JtalkPreset = definePreset(Aura, {
         }
       `,
     },
-    // Sizes of the avatar scale: 36 (normal), 48 (large), 88 (xlarge); 28 and 64 are set by the component.
+    // Avatar scale: 36 (normal), 48 (large), 88 (xlarge); 28 and 64 are set by the component.
     avatar: {
       root: { width: '2.25rem', height: '2.25rem', fontSize: '0.875rem', borderRadius: '50%' },
       lg: { width: '3rem', height: '3rem', fontSize: '1.125rem' },
       xl: { width: '5.5rem', height: '5.5rem', fontSize: '1.75rem' },
     },
-    // Badges: small, labeled, pill-shaped; role colors (gold for moderators) come from the severities.
+    // Badges: small, labeled, pill-shaped; the role colors come from the severities.
     tag: {
       root: {
-        fontSize: type.caption,
-        fontWeight: '500',
+        fontSize: type.metadata,
+        fontWeight: '600',
         padding: '0.125rem 0.5rem',
-        borderRadius: '999px',
+        borderRadius: radius.pill,
       },
     },
-    toast: { root: { borderRadius: radius.button } },
-    message: { root: { borderRadius: radius.button } },
+    toast: { root: { borderRadius: radius.card } },
+    message: { root: { borderRadius: radius.card } },
     button: {
       root: {
         borderRadius: radius.button,
-        label: { fontWeight: '600' },
+        roundedBorderRadius: radius.pill,
+        label: { fontWeight: '650' },
         paddingY: '0.625rem',
-        paddingX: '1rem',
+        paddingX: '1.125rem',
+        iconOnlyWidth: '2.75rem',
+        sm: { iconOnlyWidth: '2.75rem' },
+        lg: { iconOnlyWidth: '3rem' },
       },
+      // 44px minimum target, and a quick press: a 2% scale in 120ms.
+      css: () => `
+        .p-button {
+          min-height: 2.75rem;
+          transition-duration: var(--p-jtalk-motion-fast);
+        }
+        .p-button:not(:disabled):active {
+          transform: scale(0.98);
+        }
+      `,
       colorScheme: {
         light: {
           outlined: {
@@ -403,32 +423,28 @@ export const JtalkPreset = definePreset(Aura, {
         },
       },
     },
-    // WCAG 2.5.8 (AA): pointer targets of at least 24x24 CSS px.
     checkbox: { root: { width: '1.5rem', height: '1.5rem' } },
     radiobutton: { root: { width: '1.5rem', height: '1.5rem' } },
   },
 
-  // Exposed as CSS variables (--p-jtalk-font-sans, --p-jtalk-brand, --p-jtalk-type-h1, ...).
-  extend: {
-    jtalk: {
-      font: fontFamily,
-      type,
-      tone,
-      brand: brand.green,
-      moderator: brand.gold,
-      danger: brand.danger,
-      radius,
-    },
-  },
+  // Exposed as CSS variables (--p-jtalk-font-sans, --p-jtalk-type-title, --p-jtalk-radius-card, ...).
+  extend: { jtalk: { font: fontFamily, type, tone, motion, radius } },
 
   css: ({ dt }) => `
+    /* Semantic colors: green means active, gold elevated permissions, red danger, in both themes. */
     :root {
+      --p-jtalk-brand: ${forest};
+      --p-jtalk-moderator: ${sand};
+      --p-jtalk-danger: ${terracotta};
       --p-jtalk-elevation-1: ${elevation.light[0]};
       --p-jtalk-elevation-2: ${elevation.light[1]};
       --p-jtalk-elevation-3: ${elevation.light[2]};
     }
 
     .app-dark {
+      --p-jtalk-brand: ${sage};
+      --p-jtalk-moderator: ${gold};
+      --p-jtalk-danger: ${coral};
       --p-jtalk-elevation-1: ${elevation.dark[0]};
       --p-jtalk-elevation-2: ${elevation.dark[1]};
       --p-jtalk-elevation-3: ${elevation.dark[2]};
@@ -452,12 +468,17 @@ export const JtalkPreset = definePreset(Aura, {
 
     body {
       font-size: ${dt('jtalk.type.body')};
-      line-height: 1.5;
+      line-height: 1.55;
     }
 
-    h1 { font-size: ${dt('jtalk.type.h1')}; font-weight: 700; line-height: 1.2; }
-    h2 { font-size: ${dt('jtalk.type.h2')}; font-weight: 600; line-height: 1.3; }
-    h3 { font-size: ${dt('jtalk.type.h3')}; font-weight: 600; line-height: 1.4; }
+    h1 { font-size: ${dt('jtalk.type.title')}; font-weight: 700; line-height: 1.2; }
+    h2 { font-size: ${dt('jtalk.type.section')}; font-weight: 650; line-height: 1.3; }
+    h3 { font-size: ${dt('jtalk.type.card')}; font-weight: 650; line-height: 1.35; }
+
+    /* Counts and timers keep their width as they change. */
+    .p-tag, .p-badge, time {
+      font-variant-numeric: tabular-nums;
+    }
 
     code, kbd, pre, samp {
       font-family: ${dt('jtalk.font.mono')};

@@ -128,17 +128,25 @@ protect the app add `canActivateChild: [authGuard]` to the shell route in `layou
   one label and uses `aria-pressed`. Return focus sensibly after a dialog, a delete or a new item.
 - Browser APIs get a util in `shared/utils` (`download-file`, `safe-storage`), never a call inside a component.
 
-## Design system: Social Audio
+## Design system: Gather UI 2.0
 
-A warm, calm, people-first system in the spirit of Clubhouse; all tokens live in `core/config/jtalk-preset.ts` (change them there, never per
-component). Color: canvas `#F5F1E8` (surface 50), card `#FFFEFA` (surface 0), ink `#252525`, Active Green `#3BA875` for anything live,
-Moderator Gold `#E8B95B` for roles, Danger `#D95D58`; these are proposed values, and every other step is a mix of them with white or black.
-Light buttons fill with the green 700 step (white text 5.5:1), dark mode uses the brand green with ink text (5.8:1); muted text is surface 600
-(the proposed `#85847E` is only 3.7:1, so it is for borders and icons). Shape: 8px small controls, 14px buttons, 18px cards, 24px panels and
-the control dock, circular avatars (`--p-jtalk-radius-*`). Elevation: three soft levels, `--p-jtalk-elevation-1` cards, `-2` floating controls,
-`-3` dialogs and menus; separate with a hairline `--p-content-border-color`, not heavy rules. Type: Inter (Noto Sans Arabic falls in for Arabic),
-sizes from `--p-jtalk-type-*` (display 32, h1 26, h2 20, h3 16, body 15, secondary 13, caption 11), weights 400/500/600/700 only. Spacing: the 4px
-scale in `styles/_tokens.scss` (`$space-*`). Initials avatars and room banners take `--p-jtalk-tone-{green,gold,coral}`. Dark is its own warm
-theme (surface 950 canvas, 900 cards), not an inversion. State is never color alone: speaking is a green ring plus a waveform badge. Motion is
-subtle and still under `prefers-reduced-motion`. No gradients or glassmorphism. Verify contrast numerically (text on solids >= 4.5:1, borders and
-indicators >= 3:1).
+Contemporary social audio, editorial minimalism, human warmth. All tokens live in `core/config/jtalk-preset.ts` (change them there, never per
+component); the values are a design proposal and every step between them is a mix with white or black. Color: porcelain `#F7F5EF` canvas
+(surface 50), paper `#FFFFFF` cards (surface 0), Forest Ink `#20251F` text; Forest `#477A5D` (Sage `#80B18D` in dark) means active and nothing
+else (live, speaking, the primary action), Sand (Gold `#C9AF7E` in dark) means elevated room permissions, Terracotta (Coral `#DF8277`) means
+danger: one color, one meaning, in both themes (`--p-jtalk-brand`, `-moderator`, `-danger`). Where a proposed value fails contrast the nearest
+passing one is used: secondary text `#6A6C64` (not `#777970`, 4.05:1), filled danger `#B0574E`, field borders `#8F9187`; tertiary `#999B91`
+is never text. Verify contrast numerically (text on fills >= 4.5:1, borders and indicators >= 3:1).
+Shape hierarchy (`--p-jtalk-radius-*`): 10 controls, 12 fields, 16 cards, 22 feature panels, 26 sheets, 14 buttons (pills, `[rounded]`, in the
+control dock), circular avatars. Three levels: the canvas is open (no boxes), interactive surfaces are paper with a hairline
+(`--p-content-border-color`), the immersive stage is a panel one tonal step off the canvas (`--p-content-hover-background`). Shadows are almost
+invisible (`--p-jtalk-elevation-1..3`: none, floating controls, dialogs and menus): use tonal contrast and borders.
+Type: Manrope (Noto Sans Arabic falls in for Arabic), `--p-jtalk-type-*`: hero 36/700, title 28/700, section 21/650, card 17/650, body 15,
+secondary 13/450, metadata 11/600; tabular numerals for counts and timers; no uppercase for ordinary text. Spacing: the 4px scale in
+`styles/_tokens.scss` (`$space-*`). Motion: `--p-jtalk-motion-fast|normal|slow` (120, 180, 280ms), meaningful only (a speaking ring, press
+feedback, status changes), never continuous when nothing happens, still under `prefers-reduced-motion`. Targets: 44x44px minimum for buttons
+and fields (the preset enforces it). Initials avatars and room banners take `--p-jtalk-tone-{green,gold,coral}`. Dark is its own theme (night
+`#151916` canvas, `#202720` surfaces), not an inversion. State is never color alone: speaking is a green ring plus a waveform badge, a muted
+microphone is an icon and a label (muted is not danger), roles are labeled badges. The stage is an open centered composition whose avatar
+size follows the speaker count; controls are grouped by importance (primary: leave and microphone; secondary: raise hand, sound; host last).
+Never show a server-confirmed action as done before the server confirms it. No gradients or glassmorphism.

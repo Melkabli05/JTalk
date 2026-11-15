@@ -23,6 +23,21 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+
+  &:empty {
+    display: none;
+  }
+}
+
+// Primary controls (microphone, leave) come first; the rest follow by importance, host controls last.
+.secondary {
+  padding-inline-start: 0.75rem;
+  border-inline-start: 1px solid var(--p-content-border-color);
+}
+
+.host {
+  padding-inline-start: 0.75rem;
+  border-inline-start: 1px solid var(--p-content-border-color);
 }
 
 .audio {

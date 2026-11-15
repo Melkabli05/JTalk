@@ -10,7 +10,7 @@ import type { AudioStatus } from '../../models/realtime.model';
   template: `
     <div class="bar">
       <div
-        class="group"
+        class="group primary"
         role="group"
         [attr.aria-label]="'Room controls' | t"
         [attr.aria-busy]="busy()"
@@ -21,6 +21,7 @@ import type { AudioStatus } from '../../models/realtime.model';
           size="large"
           icon="pi pi-sign-out"
           severity="secondary"
+          [rounded]="true"
           [outlined]="true"
           [label]="'Leave quietly' | t"
           (click)="leave.emit()"
@@ -31,16 +32,20 @@ import type { AudioStatus } from '../../models/realtime.model';
             type="button"
             size="large"
             [icon]="micOn() ? 'pi pi-microphone' : 'pi pi-microphone-slash'"
-            [severity]="micOn() ? 'primary' : 'danger'"
+            [severity]="micOn() ? 'primary' : 'secondary'"
+            [rounded]="true"
             [label]="micOn() ? ('Mute' | t) : ('Unmute' | t)"
             (click)="toggleMic.emit()"
           ></button>
         }
+      </div>
+      <div class="group secondary">
         @if (soundBlocked()) {
           <button
             pButton
             type="button"
             size="large"
+            [rounded]="true"
             icon="pi pi-volume-up"
             [label]="'Turn on sound' | t"
             (click)="enableSound.emit()"
@@ -53,6 +58,7 @@ import type { AudioStatus } from '../../models/realtime.model';
             size="large"
             icon="pi pi-refresh"
             severity="secondary"
+            [rounded]="true"
             [label]="'Reconnect audio' | t"
             (click)="retryAudio.emit()"
           ></button>
@@ -65,6 +71,7 @@ import type { AudioStatus } from '../../models/realtime.model';
               size="large"
               icon="pi pi-megaphone"
               severity="secondary"
+              [rounded]="true"
               [label]="'Lower hand' | t"
               [disabled]="busy()"
               (click)="lowerHand.emit()"
@@ -75,6 +82,8 @@ import type { AudioStatus } from '../../models/realtime.model';
               type="button"
               size="large"
               icon="pi pi-megaphone"
+              [rounded]="true"
+              [outlined]="true"
               [label]="'Raise hand' | t"
               [disabled]="busy()"
               (click)="raiseHand.emit()"
@@ -106,6 +115,7 @@ import type { AudioStatus } from '../../models/realtime.model';
             size="large"
             icon="pi pi-pencil"
             severity="secondary"
+            [rounded]="true"
             [text]="true"
             [label]="'Edit the room' | t"
             (click)="edit.emit()"
@@ -116,6 +126,7 @@ import type { AudioStatus } from '../../models/realtime.model';
             size="large"
             icon="pi pi-stop-circle"
             severity="danger"
+            [rounded]="true"
             [outlined]="true"
             [label]="'End the room' | t"
             (click)="end.emit()"
