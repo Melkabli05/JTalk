@@ -1,6 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-/** `"Ada Lovelace"` -> `"AL"`. Up to two letters, upper-cased; empty input gives an empty string. */
 @Pipe({ name: 'initials' })
 export class InitialsPipe implements PipeTransform {
   transform(name: string | null | undefined): string {

@@ -6,7 +6,6 @@ export interface Language {
   readonly name: string;
 }
 
-/** The languages a room can practise (`name` is English wording, translated for display). */
 export const LANGUAGES: readonly Language[] = [
   { code: 'en', flag: '🇬🇧', name: msg('English') },
   { code: 'es', flag: '🇪🇸', name: msg('Spanish') },
@@ -22,7 +21,6 @@ export const LANGUAGES: readonly Language[] = [
   { code: 'it', flag: '🇮🇹', name: msg('Italian') },
 ];
 
-/** A code the list does not know is shown as it is, with a neutral flag. */
 export function languageOf(code: string): Language {
   return LANGUAGES.find((language) => language.code === code) ?? { code, flag: '🏳️', name: code };
 }

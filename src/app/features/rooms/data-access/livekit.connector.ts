@@ -1,12 +1,7 @@
-import type { RealtimeConnection, RealtimeListener } from '../../models/realtime.model';
+import type { RealtimeConnection, RealtimeListener } from '../models/realtime.model';
 
-/** The name of the server's data messages about the room, which the backend publishes on LiveKit's data channel. */
 export const ROOM_EVENTS_TOPIC = 'room-events';
 
-/**
- * The only code that knows LiveKit's client library: connects, plays what is heard, and turns the library's events into
- * the app's own `RealtimeListener` calls. The library is imported on demand, so it loads only when someone enters a room.
- */
 export async function connectLiveKit(
   url: string,
   token: string,
@@ -15,7 +10,6 @@ export async function connectLiveKit(
   const { Room, RoomEvent, Track } = await import('livekit-client');
   const room = new Room({ adaptiveStream: true, dynacast: true });
 
-  // Heard audio plays from hidden elements the library creates; they must be in the page to play.
   const speakers = document.createElement('div');
   speakers.hidden = true;
   document.body.append(speakers);
@@ -36,8 +30,6 @@ export async function connectLiveKit(
       listener.speakersChanged(active.map((participant) => participant.identity));
     })
     .on(RoomEvent.DataReceived, (_payload, participant, _kind, topic) => {
-      // A message sent by the backend has no participant. One that names a participant came from a client: the media server does
-      // not let clients write to the data channel, and this is the second lock, so a modified client cannot fake a room event.
       if (participant === undefined && topic === ROOM_EVENTS_TOPIC) {
         listener.roomEvent();
       }

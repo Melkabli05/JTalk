@@ -1,8 +1,8 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
-import type { Member } from '../../models/room.model';
 import { PersonDialogComponent } from './person-dialog.component';
+import type { Person } from '@core/auth/identity.models';
 
-const MAYA: Member = { id: 'm-1', name: 'Maya', nativeLanguage: 'es', learning: 'ja', avatar: '' };
+const MAYA: Person = { id: 'm-1', name: 'Maya', nativeLanguage: 'es', learning: 'ja', avatar: '' };
 
 describe('PersonDialogComponent (presentational)', () => {
   let fixture: ComponentFixture<PersonDialogComponent>;

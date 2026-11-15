@@ -41,7 +41,6 @@ describe('ColorSchemeService', () => {
   });
 
   it('follows the operating system while the preference is "system"', async () => {
-    // A controllable MediaQueryList: the CDK reads `matches` when the change listener fires.
     const mql = { matches: false, media: '', addListener: vi.fn(), removeListener: vi.fn() };
     vi.stubGlobal('matchMedia', (media: string) => ({ ...mql, media }));
     const scheme = TestBed.inject(ColorSchemeService);
@@ -50,7 +49,6 @@ describe('ColorSchemeService', () => {
     const [listener] = mql.addListener.mock.calls[0] as [(event: unknown) => void];
     mql.matches = true;
     listener({ matches: true });
-    // The CDK debounces changes by one macrotask.
     await vi.waitFor(() => expect(scheme.isDark()).toBe(true));
 
     scheme.set('light');

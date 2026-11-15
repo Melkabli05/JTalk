@@ -6,22 +6,19 @@
       "destination": "https://live-communication-service.onrender.com/api/:path*"
     },
     {
-      "source": "/dev/:path*",
-      "destination": "https://live-communication-service.onrender.com/dev/:path*"
-    },
-    {
-      "source": "/:path((?!api/|dev/).*)",
+      "source": "/:path((?!api/).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
     {
       "source": "/api/:path*",
-      "headers": [{ "key": "x-vercel-enable-rewrite-caching", "value": "0" }]
-    },
-    {
-      "source": "/dev/:path*",
-      "headers": [{ "key": "x-vercel-enable-rewrite-caching", "value": "0" }]
+      "headers": [
+        {
+          "key": "x-vercel-enable-rewrite-caching",
+          "value": "0"
+        }
+      ]
     }
   ]
 }

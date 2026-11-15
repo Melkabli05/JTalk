@@ -21,14 +21,12 @@
   }
 }
 
-// A thin indeterminate bar across the top of the viewport while a route loads.
 .navigation-progress {
   position: fixed;
   inset: 0 0 auto;
   z-index: 20;
 }
 
-// The header sits on the card surface with a hairline under it: calm, no heavy rule.
 .header {
   border-block-end: 1px solid var(--p-content-border-color);
   background: var(--p-content-background);
@@ -65,7 +63,6 @@
     outline: none;
   }
 
-  // Pages that ask for it (route data `wide`) use the whole content area.
   &.wide {
     max-width: none;
   }
@@ -75,7 +72,6 @@
   padding: 0.25rem;
 }
 
-// The account popover: who you are, then the few preferences nobody needs on every screen.
 .settings {
   display: flex;
   flex-direction: column;

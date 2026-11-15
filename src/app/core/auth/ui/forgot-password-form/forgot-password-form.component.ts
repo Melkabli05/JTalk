@@ -7,7 +7,6 @@ import { formSubmission } from '@shared/utils/form-submission';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 
-/** Presentational "forgot password" form: emits the address to send a reset link to. */
 @Component({
   selector: 'app-forgot-password-form',
   imports: [TranslatePipe, FormField, FormRoot, ButtonDirective, Message, TextFieldComponent],

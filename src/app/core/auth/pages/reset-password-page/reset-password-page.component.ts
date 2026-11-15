@@ -13,7 +13,6 @@ import { msg } from '@shared/utils/i18n/msg';
 
 const LINK_SPENT = msg('This link has expired or was already used. Request a new one.');
 
-/** Container: sets a new password with the single-use token from the emailed link (`?token=`). */
 @Component({
   selector: 'app-reset-password-page',
   imports: [
@@ -30,7 +29,6 @@ export default class ResetPasswordPageComponent {
   private readonly auth = inject(AuthService);
   protected readonly locales = inject(LocaleService);
 
-  /** The `token` query parameter (bound by `withComponentInputBinding()`). */
   readonly token = input<string>();
 
   protected readonly resetting = saveRequest();

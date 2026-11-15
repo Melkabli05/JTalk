@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { AuthService } from '@core/auth/auth.service';
@@ -357,12 +357,6 @@ describe('AppShellComponent profile gate (development builds)', () => {
     page()
       .querySelector('app-profile-form form')!
       .dispatchEvent(new Event('submit', { cancelable: true }));
-    await fixture.whenStable();
-    const http = TestBed.inject(HttpTestingController);
-    http
-      .expectOne({ method: 'POST', url: '/dev/users' })
-      .flush(null, { status: 204, statusText: 'No Content' });
-    http.expectOne({ method: 'GET', url: '/dev/users' }).flush([]);
     await fixture.whenStable();
 
     expect(root().querySelector('router-outlet')).not.toBeNull();

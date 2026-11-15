@@ -1,7 +1,6 @@
-import type { VoiceRoomDto } from '../../models/room.dto';
-import { parseRoom, parseRooms, parseSession, toRoom } from './rooms.adapter';
+import { parseRoom, parseRooms, parseSession } from './room.parser';
 
-const dto: VoiceRoomDto = {
+const dto = {
   id: 'r-1',
   title: 'Spanish for beginners',
   topic: null,
@@ -14,9 +13,9 @@ const dto: VoiceRoomDto = {
   handRaiseCount: 1,
 };
 
-describe('rooms adapter', () => {
+describe('room parser', () => {
   it('maps a room, with no topic as an empty one', () => {
-    const room = toRoom(dto);
+    const room = parseRoom(dto);
 
     expect(room.topic).toBe('');
     expect(room.speakers).toEqual(['h-1', 's-2']);

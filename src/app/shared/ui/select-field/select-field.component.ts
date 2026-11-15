@@ -5,14 +5,12 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 import { FieldControlDirective } from '../field-control.directive';
 import { FieldErrorsComponent } from '../field-errors/field-errors.component';
 
-/** One choice: `label` is the English wording (translated for display), `prefix` is shown as it is, e.g. a flag. */
 export interface SelectOption<TValue> {
   readonly value: TValue;
   readonly label: string;
   readonly prefix?: string;
 }
 
-/** Labelled choice list that plugs into Signal Forms: `<app-select-field label="Language" [options]="o" [formField]="f.lang" />`. */
 @Component({
   selector: 'app-select-field',
   imports: [FormsModule, Select, FieldErrorsComponent, TranslatePipe],

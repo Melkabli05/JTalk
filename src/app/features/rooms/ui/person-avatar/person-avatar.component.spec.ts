@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import type { Member } from '../../models/room.model';
 import { PersonAvatarComponent } from './person-avatar.component';
+import type { Person } from '@core/auth/identity.models';
 
-const ADA: Member = {
+const ADA: Person = {
   id: 'a-1',
   name: 'Ada Lovelace',
   nativeLanguage: 'en',
@@ -11,7 +11,7 @@ const ADA: Member = {
 };
 
 describe('PersonAvatarComponent (presentational)', () => {
-  async function render(member: Member) {
+  async function render(member: Person) {
     const fixture = TestBed.createComponent(PersonAvatarComponent);
     fixture.componentRef.setInput('member', member);
     await fixture.whenStable();

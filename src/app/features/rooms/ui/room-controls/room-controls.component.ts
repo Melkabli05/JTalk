@@ -10,12 +10,6 @@ import type { AudioStatus } from '../../models/realtime.model';
 
 let nextId = 0;
 
-/**
- * The dock, by role. Leave is a pill on one side; what the person does in the conversation (the microphone for a speaker, the
- * hand for a listener) is a round icon button in the middle, the way every audio room does it; the host's actions sit behind a
- * menu the page gives it. It says nothing while all is well, and speaks (a `p-message`) only when the audio is lost, coming back, or the
- * microphone is refused. An Optimus `p-toolbar`; it sticks to the bottom of the screen.
- */
 @Component({
   selector: 'app-room-controls',
   imports: [ButtonDirective, Menu, Message, Toolbar, Tooltip, TranslatePipe],
@@ -151,18 +145,14 @@ let nextId = 0;
   styleUrl: './room-controls.component.scss',
 })
 export class RoomControlsComponent {
-  /** What only the host can do for the room, already worded for the person: a menu behind a button, empty for everyone else. */
   readonly actions = input<readonly MenuItem[]>([]);
   readonly onStage = input(false);
   readonly handRaised = input(false);
   readonly busy = input(false);
   readonly audio = input<AudioStatus>('idle');
-  /** The server lets this person speak (they are on stage). */
   readonly canSpeak = input(false);
   readonly micOn = input(false);
-  /** The browser will not play sound until the person taps. */
   readonly soundBlocked = input(false);
-  /** The browser or the person refused the microphone. */
   readonly micRefused = input(false);
 
   readonly leave = output<void>();

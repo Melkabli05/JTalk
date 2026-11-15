@@ -8,7 +8,6 @@
   min-block-size: 100dvh;
 }
 
-// ---- The poster: the brand green, the brand, a slogan and a cluster of voice bubbles.
 .poster {
   display: flex;
   flex-direction: column;
@@ -47,7 +46,6 @@
   inline-size: min(100%, 18rem);
 }
 
-// ---- The column with the form.
 .panel {
   display: grid;
   place-items: center;
@@ -79,7 +77,6 @@ h1 {
   line-height: 1.5;
 }
 
-// ---- Narrow screens: the poster becomes a band with the brand and a strip of the four bubbles.
 @media (max-width: 52rem) {
   .auth {
     grid-template-columns: minmax(0, 1fr);

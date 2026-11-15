@@ -6,7 +6,7 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { REALTIME_CONNECTOR } from '../data-access/realtime-connector.token';
-import { FakeRealtimeLink } from '../data-access/realtime-link.fake';
+import { FakeRealtimeLink } from '../utils/realtime-link.fake';
 import { provideRoom, RoomFacade, type RoomExit } from './room.facade';
 
 const BASE = '/api/v1/voice-rooms/r-1';
@@ -67,7 +67,6 @@ describe('RoomFacade', () => {
     );
   }
 
-  /** Answers everything asked, until nothing more is. Reloads are asked a moment after an answer. */
   async function settle() {
     const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
     for (let quiet = 0; quiet < 3;) {
@@ -84,7 +83,6 @@ describe('RoomFacade', () => {
     await settle();
   }
 
-  /** A fresh facade, as a page would get it. Fake timers must be installed before this, to fake its refresh timer. */
   function build() {
     TestBed.resetTestingModule();
     link = new FakeRealtimeLink();

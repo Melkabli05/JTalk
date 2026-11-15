@@ -9,7 +9,6 @@ import { type Credentials, MIN_PASSWORD_LENGTH } from '../../auth.models';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 
-/** Presentational registration form: emits valid credentials, never calls the API. */
 @Component({
   selector: 'app-register-form',
   imports: [

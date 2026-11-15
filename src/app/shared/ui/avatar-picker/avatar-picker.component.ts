@@ -5,11 +5,6 @@ import { AVATARS } from '../../utils/avatars';
 import { FieldControlDirective } from '../field-control.directive';
 import { FieldErrorsComponent } from '../field-errors/field-errors.component';
 
-/**
- * A labelled choice of picture that plugs into Signal Forms. Native radio buttons in a fieldset, so arrow keys, focus and
- * screen readers work without code; Optimus has no picture picker (its SelectButton is one row of text buttons). Each picture
- * is decorative: the radio's own name ("Avatar 3") is what is announced.
- */
 @Component({
   selector: 'app-avatar-picker',
   imports: [FieldErrorsComponent, NgOptimizedImage, TranslatePipe],

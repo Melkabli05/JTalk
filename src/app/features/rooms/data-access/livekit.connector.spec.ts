@@ -1,7 +1,6 @@
-import type { RealtimeListener } from '../../models/realtime.model';
-import { connectLiveKit, ROOM_EVENTS_TOPIC } from './livekit.adapter';
+import type { RealtimeListener } from '../models/realtime.model';
+import { connectLiveKit, ROOM_EVENTS_TOPIC } from './livekit.connector';
 
-/** A stand-in for livekit-client that lets a spec play the media server's part and see what the adapter does with it. */
 const library = vi.hoisted(() => {
   type Handler = (...args: unknown[]) => void;
   const state = {

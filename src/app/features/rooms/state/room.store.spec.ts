@@ -34,7 +34,6 @@ describe('RoomStore', () => {
     return TestBed.inject(RoomStore);
   }
 
-  /** Answers what the three resources ask for, with the given server state. */
   async function load(
     store: RoomStore,
     server: { stage?: object; people?: object[] } = {},

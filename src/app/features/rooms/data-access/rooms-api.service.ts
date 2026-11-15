@@ -3,27 +3,23 @@ import { inject, Service } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 import { API_BASE_URL } from '@core/http/api-base-url.token';
 import type { Room, RoomDraft, RoomEdit, RoomSession } from '../models/room.model';
-import { parseRoom, parseRooms, parseSession } from './adapters/rooms.adapter';
+import { parseRoom, parseRooms, parseSession } from './parsers/room.parser';
 
 const PAGE_SIZE = 100;
 
-/** The only code that knows the rooms endpoints and their wire format. */
 @Service()
 export class RoomsApiService {
   private readonly http = inject(HttpClient);
   private readonly url = `${inject(API_BASE_URL)}/v1/voice-rooms`;
 
-  /** Open rooms, newest first. Call it from an injection context, e.g. a component field. */
   roomsResource(): HttpResourceRef<Room[] | undefined> {
     return httpResource(() => `${this.url}?size=${PAGE_SIZE}`, { parse: parseRooms });
   }
 
-  /** One room, re-fetched whenever `id()` changes, and not fetched while it is empty. Call it from an injection context. */
   roomResource(id: () => string): HttpResourceRef<Room | undefined> {
     return httpResource(() => (id() ? `${this.url}/${id()}` : undefined), { parse: parseRoom });
   }
 
-  /** Opens a room and joins it as host. A host with a room already open gets that room back. */
   create(draft: RoomDraft): Observable<RoomSession> {
     return this.http.post<unknown>(this.url, draft).pipe(map(parseSession));
   }

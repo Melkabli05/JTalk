@@ -3,10 +3,6 @@ import type { ValidationError } from '@angular/forms/signals';
 import { Message } from '@openng/optimus-ui/message';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 
-/**
- * The error messages of a field control, as Optimus `p-message`s. The element itself is always rendered
- * (give it an `id`, which the input's `aria-describedby` points to) and only fills when `visible`.
- */
 @Component({
   selector: 'app-field-errors',
   imports: [TranslatePipe, Message],

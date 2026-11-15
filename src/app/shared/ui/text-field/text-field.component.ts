@@ -4,7 +4,6 @@ import { TrimOnBlurDirective } from '../../directives/trim-on-blur.directive';
 import { FieldControlDirective } from '../field-control.directive';
 import { FieldErrorsComponent } from '../field-errors/field-errors.component';
 
-/** Labelled text input that plugs into Signal Forms: `<app-text-field label="Email" [formField]="f.email" />`. */
 @Component({
   selector: 'app-text-field',
   imports: [InputText, FieldErrorsComponent, TrimOnBlurDirective],

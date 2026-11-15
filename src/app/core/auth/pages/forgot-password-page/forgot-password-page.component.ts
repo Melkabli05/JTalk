@@ -11,7 +11,6 @@ import { LocaleService } from '@core/config/locale.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 
-/** Container: asks for a reset link. The answer never says whether the address has an account. */
 @Component({
   selector: 'app-forgot-password-page',
   imports: [

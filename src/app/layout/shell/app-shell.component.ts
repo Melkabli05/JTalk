@@ -44,10 +44,6 @@ const NAV_ITEMS: MenuItem[] = [
   },
 ];
 
-/**
- * What the shell reads from the current route: breadcrumbs from `data: { breadcrumb: 'Label' }` (the route's own
- * config, not inherited), and `data: { wide: true }`, which lets a page use the full width of the content area.
- */
 function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wide: boolean } {
   const breadcrumbs: MenuItem[] = [];
   let wide = false;
@@ -66,11 +62,6 @@ function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wid
   return { breadcrumbs, wide };
 }
 
-/**
- * The application chrome, and the one container that owns app-level state (auth, theme, router). Its header,
- * navigation menu and breadcrumb are Optimus components (toolbar, menu, breadcrumb): they do their own routing and
- * mark the active item, so there is no navigation code of ours beyond the items and the breadcrumb trail.
- */
 @Component({
   selector: 'app-shell',
   imports: [
@@ -115,7 +106,6 @@ export class AppShellComponent {
   );
   protected readonly navItems = computed(() => this.translated(NAV_ITEMS));
 
-  /** True while a navigation is in flight (lazy chunk loading, guards): drives the progress bar. */
   protected readonly navigating = computed(() => !!this.router.currentNavigation());
 
   private readonly route = toSignal(

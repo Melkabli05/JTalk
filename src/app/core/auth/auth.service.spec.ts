@@ -29,7 +29,7 @@ describe('AuthService', () => {
     const request = http.expectOne('/api/auth/login');
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({ email: 'a@b.co', password: 'secret' });
-    expect(auth.isAuthenticated()).toBe(false); // nothing happens until the API answers
+    expect(auth.isAuthenticated()).toBe(false);
     request.flush({ token: 'jwt' });
 
     expect(done).toHaveBeenCalledOnce();

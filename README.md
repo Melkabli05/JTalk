@@ -6,12 +6,11 @@ Angular 22 skeleton: zoneless, signals, Signal Forms, lazy feature routes, funct
 the structure and its enforced rules (`CLAUDE.md`), the application shell, the account pages (`core/auth`), the theme,
 the i18n setup and a mock API. `features/home` is a one-page placeholder for the first real page.
 
-**Talking to the backend.** `pnpm start` proxies `/api` and `/dev` to http://localhost:8080 (`proxy.conf.json`), where
-`live-communication-service` listens. With the backend's `dev` profile (what `./gradlew run` uses) there is no sign-in: before
+**Talking to the backend.** `pnpm start` proxies `/api` to http://localhost:8080 (`proxy.conf.json`), where
+`live-communication-service` listens. With the backend's security switched off (`MICRONAUT_SECURITY_ENABLED=false`) there is no sign-in: before
 using the app the person fills in a **profile** (a name, one of ten bundled pictures from `public/avatars/`, the language they speak and the one they are learning) in a dialog. It is kept in
-this browser, its generated id is sent as `X-User-Id`, and it is registered with the backend (`POST /dev/users`) so everyone sees names
-instead of ids. That is a stand-in for the user service that will replace it: it lives in `IdentityService` (`core/auth`) and is active only
-in a development build. With the backend's default profile every call needs `Authorization: Bearer <JWT>` whose `sub` is the user's UUID,
+this browser and its generated id is sent as `X-User-Id`. Other people are shown by the start of their id until a user service names them. That is a stand-in for the user service that will replace it: it lives in `IdentityService` (`core/auth`) and is active only
+where `devIdentity` is on. With the backend's default configuration every call needs `Authorization: Bearer <JWT>` whose `sub` is the user's UUID,
 which `authInterceptor` sends.
 
 **Rooms** (`features/rooms`) are the product so far:
@@ -115,7 +114,7 @@ src/
       <feature>/
         pages/<x>-page/     route-level containers
         ui/<component>/     presentational components
-        data-access/        <feature>-api.service, adapters/ (DTO <-> model)
+        data-access/        <feature>-api.service, parsers/ (check what the API sends)
         state/              <x>.store (the feature's state as signals) and <x>.facade (what a page injects: the state,
                             the use cases, what keeps the feature alive); only when a feature has state worth it, e.g. rooms
         models/             <x>.model (what the app uses), <x>.dto (what the API sends)
@@ -175,7 +174,7 @@ and validation, shows what `submitting` and `error` say, and emits `save`. Outpu
 - A new business area → `features/<name>/` with only the folders it needs, plus `<name>.routes.ts` and `<name>.ts`,
   registered in `app.routes.ts` with `loadChildren: () => import('./features/<name>/<name>').then(m => m.<NAME>_ROUTES)`.
 - A screen that coordinates data → `pages/<x>-page/`. A piece of UI → `ui/<x>/` (one feature) or `shared/ui/<x>/` (several).
-- An API client → `data-access/`; keep wire formats there and map to `models/` with an adapter.
+- An API client → `data-access/`; keep wire formats there and check them with a parser that returns the `models/` type.
 - An interceptor, guard, token or app-wide service → `core/`. A generic helper → `shared/utils/`.
 - A route that needs a breadcrumb → `data: { breadcrumb: 'Label' }` on that route.
 
@@ -190,7 +189,7 @@ and validation, shows what `submitting` and `error` say, and emits `save`. Outpu
 - **Guard reads with `hasValue()`**: `value()` throws while the resource is in the error state. Templates check
   `hasValue()` first, then `error()`, and fall back to a spinner (`loading` and `idle`).
 - **Validate what the API sends**: every resource passes a `parse` function (`parseRooms`, `parseRoom`, ...) from
-  the feature's adapter, which checks the shape and maps the DTO to the model. A response of the wrong shape becomes
+  the feature's parser, which checks the shape and returns the model. A response of the wrong shape becomes
   an error state instead of bad data. No schema library is needed for this; add Zod if the shapes grow.
 - **Writes are `HttpClient` Observables**, not resources (a resource would cancel or re-run them as signals change;
   the Angular docs say to avoid `httpResource` for mutations): `api.update(...).pipe(finalize(...)).subscribe({ next, error })`.
@@ -273,13 +272,13 @@ Read the [Optimus docs](https://optimus.openng.org/llms/llms.txt) before using a
 
 The app is a static build (`pnpm build`, output `dist/Jtalk/browser`), and `vercel.json` is its routing ([Vercel: rewrites](https://vercel.com/docs/rewrites)):
 
-- `/api/*` and `/dev/*` are **proxied** to the backend on Render (`https://live-communication-service.onrender.com`). The browser only ever calls the
+- `/api/*` is **proxied** to the backend on Render (`https://live-communication-service.onrender.com`). The browser only ever calls the
   app's own domain, so there is no CORS and `environment.ts` can keep `apiUrl: '/api'`. Change the backend's address in `vercel.json`, nowhere else.
 - Every other path falls back to `index.html`, so deep links such as `/rooms/<id>` load (real files are still served first).
 - Proxied answers are never cached on the CDN (`x-vercel-enable-rewrite-caching: 0`): rooms and the stage change every few seconds.
 
 The backend on Render sleeps when idle on the free plan, so the first request after a quiet period can be slow or fail; the app refreshes every few
-seconds and recovers by itself. While the backend runs in its open testing mode (`MICRONAUT_ENVIRONMENTS=cloud,dev`) the production build uses the dev
+seconds and recovers by itself. While the backend runs in its open testing mode (`MICRONAUT_SECURITY_ENABLED=false`) the production build uses the dev
 identity (`devIdentity: true` in `environment.ts`); turn that off when a user service issues tokens.
 
 ## Quality gates

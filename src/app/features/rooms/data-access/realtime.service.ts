@@ -4,28 +4,19 @@ import type { AudioStatus, RealtimeConnection, RealtimeListener } from '../model
 import type { RoomSession } from '../models/room.model';
 import { REALTIME_CONNECTOR } from './realtime-connector.token';
 
-/**
- * The audio of one room: connects with the session the backend gave, keeps the microphone in step with the right to
- * speak (which the server grants and takes away while connected), and reports who is speaking and when the server
- * announces a change in the room. Provide it per room page: it disconnects when the page goes away.
- */
 @Service()
 export class RealtimeService {
   private readonly connector = inject(REALTIME_CONNECTOR);
   private readonly pushed = new Subject<void>();
   private connection: RealtimeConnection | null = null;
-  /** Counts connections, so a slow one that finishes after the person left or retried cannot take over. */
   private generation = 0;
 
   readonly status = signal<AudioStatus>('idle');
-  /** Can speak: the server lets this person publish. */
   readonly canSpeak = signal(false);
   readonly micOn = signal(false);
-  /** The microphone was asked for and refused (no permission, no device). */
   readonly micRefused = signal(false);
   readonly soundBlocked = signal(false);
   readonly speaking = signal<readonly string[]>([]);
-  /** Emits when the server says something changed in the room. */
   readonly roomEvents = this.pushed.asObservable();
 
   constructor() {
@@ -66,11 +57,12 @@ export class RealtimeService {
   }
 
   async enableSound(): Promise<void> {
-    try {
-      await this.connection?.startSound();
+    const started = await this.connection?.startSound().then(
+      () => true,
+      () => false,
+    );
+    if (started) {
       this.soundBlocked.set(false);
-    } catch {
-      // still blocked: the button stays, and the next tap tries again
     }
   }
 
@@ -102,7 +94,6 @@ export class RealtimeService {
     }
   }
 
-  /** What the connection reports, ignored once a newer connection has replaced it. */
   private listenerFor(generation: number): RealtimeListener {
     const live = <Args extends unknown[]>(handle: (...args: Args) => void) => {
       return (...args: Args) => {

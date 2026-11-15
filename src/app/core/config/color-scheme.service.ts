@@ -7,7 +7,6 @@ import { STORAGE_KEYS } from './app-config';
 
 export type ColorSchemePreference = 'light' | 'dark' | 'system';
 
-/** The class on <html> that turns dark mode on; app.config.ts derives Optimus' `darkModeSelector` from it. */
 export const DARK_CLASS = 'app-dark';
 
 function isPreference(value: string | null): value is ColorSchemePreference {
@@ -17,7 +16,6 @@ function isPreference(value: string | null): value is ColorSchemePreference {
 @Service()
 export class ColorSchemeService {
   private readonly document = inject(DOCUMENT);
-  // The CDK observes the media query (and copes with browsers or test environments without matchMedia).
   private readonly systemDark = toSignal(
     inject(BreakpointObserver)
       .observe('(prefers-color-scheme: dark)')

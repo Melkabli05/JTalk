@@ -18,7 +18,7 @@ describe('routes', () => {
         provideRouter(routes, withComponentInputBinding()),
         provideHttpClient(),
         provideHttpClientTesting(),
-        MessageService, // provided app-wide by app.config.ts
+        MessageService,
       ],
     });
   });

@@ -4,7 +4,6 @@ import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import type { Room, RoomDraft, RoomEdit } from '../../models/room.model';
 import { RoomFormComponent } from '../room-form/room-form.component';
 
-/** The room form in a modal dialog. The form is created each time the dialog opens, so it always starts fresh. */
 @Component({
   selector: 'app-room-form-dialog',
   imports: [Dialog, RoomFormComponent, TranslatePipe],

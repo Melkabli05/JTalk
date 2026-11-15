@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import type { RoomSession } from '../models/room.model';
 import { REALTIME_CONNECTOR } from './realtime-connector.token';
-import { FakeRealtimeLink } from './realtime-link.fake';
+import { FakeRealtimeLink } from '../utils/realtime-link.fake';
 import { RealtimeService } from './realtime.service';
 
 const SESSION: RoomSession = {

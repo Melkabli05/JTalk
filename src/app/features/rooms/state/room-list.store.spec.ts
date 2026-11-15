@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { RoomsStore } from './rooms.store';
+import { RoomListStore } from './room-list.store';
 
 const room = (id: string, targetLanguage: string) => ({
   id,
@@ -17,13 +17,13 @@ const room = (id: string, targetLanguage: string) => ({
   handRaiseCount: 0,
 });
 
-describe('RoomsStore', () => {
+describe('RoomListStore', () => {
   function setup() {
     localStorage.clear();
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
-    return { store: TestBed.inject(RoomsStore), http: TestBed.inject(HttpTestingController) };
+    return { store: TestBed.inject(RoomListStore), http: TestBed.inject(HttpTestingController) };
   }
 
   async function listed(rooms: object[]) {

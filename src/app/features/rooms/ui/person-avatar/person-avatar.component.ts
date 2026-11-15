@@ -2,13 +2,9 @@ import { Component, computed, input } from '@angular/core';
 import { Avatar } from '@openng/optimus-ui/avatar';
 import { InitialsPipe } from '@shared/pipes/initials.pipe';
 import { avatarUrl } from '@shared/utils/avatars';
-import type { Member } from '../../models/room.model';
 import { avatarColors } from '../../utils/members';
+import type { Person } from '@core/auth/identity.models';
 
-/**
- * A person as their chosen picture, or, without one, a colored circle with their initials. Decorative: the name always
- * sits next to it, so screen readers skip it. Speaking is a ring around the picture; the stage adds a labeled `Speaking` tag, so it never relies on color.
- */
 @Component({
   selector: 'app-person-avatar',
   imports: [Avatar, InitialsPipe],
@@ -68,10 +64,8 @@ import { avatarColors } from '../../utils/members';
   `,
 })
 export class PersonAvatarComponent {
-  readonly member = input.required<Member>();
-  /** `hero` is one avatar alone on a stage: larger than the scale's biggest. */
+  readonly member = input.required<Person>();
   readonly size = input<'normal' | 'large' | 'xlarge' | 'hero'>('large');
-  /** Shown as a ring around the picture while the person is heard. */
   readonly speaking = input(false);
 
   protected readonly pictureSize = computed<'normal' | 'large' | 'xlarge'>(() => {

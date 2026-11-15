@@ -1,8 +1,8 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
-import type { Member } from '../../models/room.model';
 import { RaisedHandsComponent } from './raised-hands.component';
+import type { Person } from '@core/auth/identity.models';
 
-const MEMBERS: ReadonlyMap<string, Member> = new Map([
+const MEMBERS: ReadonlyMap<string, Person> = new Map([
   ['b-1', { id: 'b-1', name: 'Bob', nativeLanguage: 'en', learning: 'ar', avatar: '' }],
   ['c-2', { id: 'c-2', name: 'Carol', nativeLanguage: 'ar', learning: 'en', avatar: '' }],
 ]);

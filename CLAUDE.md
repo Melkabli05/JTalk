@@ -35,7 +35,7 @@ in the container page, pictures `p-avatar` (profile pictures, with initials as t
   react to (an `Observable`, e.g. `exited`). Containers keep only what is on screen: dialogs, confirmations, announcements, the router, i18n texts.
   A store reads each resource through `shared/utils/resource-value` (`loadedValue`: the value, or `undefined` while loading or failed, so `computed`s never throw) and a facade reads a status through `shared/utils/http-status`. A `provide<Feature>()` function in the facade file lists the store, the facade and what they need; the container puts it in its `providers`, so
   state and timers live and die with the page. Lint keeps stores and facades out of every presentational component.
-- Reads: `httpResource` created by the data-access service, `parse` from the adapter (validates the response and maps DTO -> model),
+- Reads: `httpResource` created by the data-access service, `parse` from a parser in `data-access/parsers/` (validates the response and returns the model),
   read in templates behind `hasValue()` (`value()` throws in the error state). `rxResource` only for non-HTTP streams.
   Writes: `HttpClient` Observables run through `saveRequest()` (`shared/utils/save-request`: `submitting`, `error`, `run(request, { next, failure })`).
   Never `firstValueFrom`, never `httpResource` for POST/PUT/DELETE.
@@ -61,6 +61,7 @@ in the container page, pictures `p-avatar` (profile pictures, with initials as t
 - Layout numbers live in `styles/_tokens.scss`. Keep it simple: no abstraction until a second use exists.
 - Lint also enforces modern Angular (`prefer-signals`, `prefer-signal-model`, `prefer-output-emitter-ref`, `prefer-host-metadata-property`,
   `prefer-service-decorator`, `inject-at-top`, template `prefer-*` rules for control flow, built-in pipes, class/style bindings, `button-has-type`).
+- No comments in code (TypeScript, templates, styles): names and structure carry the meaning. Explain in the README or CLAUDE.md, not in the source.
 - Every new behaviour gets a spec. Run `pnpm check` before finishing (lint, format, tests, the mock's own tests, build).
 
 ## Languages and direction (README "Languages (i18n)" and "Right-to-left")
@@ -110,13 +111,13 @@ in the container page, pictures `p-avatar` (profile pictures, with initials as t
 
 ## Current state
 
-The live-communication frontend (the Micronaut backend `live-communication-service`, `/api` and `/dev` proxied to port 8080). `features/rooms` is the one
+The live-communication frontend (the Micronaut backend `live-communication-service`, `/api` proxied to port 8080). `features/rooms` is the one
 feature: the hallway (`room-list-page`) and a room (`room-page`), with `RoomsApiService`, `ParticipantsApiService` and `StageApiService` as the only code that knows
 the endpoints, polling and the heartbeat in the `room-page` container, and no mock data. Identity lives in `core/auth/identity.service.ts`: in a development build the
-person fills in a profile (a name, a picture chosen from the ten in `public/avatars/` by id, and two languages; kept in this browser, registered with the backend's `POST /dev/users`) before the shell shows any page, and `devIdentityInterceptor` sends its id
+person fills in a profile (a name, a picture chosen from the ten in `public/avatars/` by id, and two languages; kept in this browser) before the shell shows any page, and `devIdentityInterceptor` sends its id
 as `X-User-Id`; with a token the user id is the token's subject. A user service will replace this. The mock API has only the account endpoints (`pnpm start:mock`).
 Account pages are listed under Auth (sign-in honors a safe `?returnUrl=`). `authGuard` is not applied to any route on purpose (auth is off while testing); to
-protect the app add `canActivateChild: [authGuard]` to the shell route in `layout.routes.ts`. Rooms: `RoomsFacade`/`RoomsStore` (hallway) and `RoomFacade`/`RoomStore` (one room) in `state/` are what the two pages inject. Room audio: `RealtimeService` (per room page, `data-access/`) holds the connection state as signals; `adapters/livekit.adapter.ts` is the only code that knows `livekit-client` (loaded on demand); specs swap it through the `REALTIME_CONNECTOR` token with `realtime-link.fake.ts`.
+protect the app add `canActivateChild: [authGuard]` to the shell route in `layout.routes.ts`. Rooms: `RoomListFacade`/`RoomListStore` (hallway) and `RoomFacade`/`RoomStore` (one room) in `state/` are what the two pages inject. Room audio: `RealtimeService` (per room page, `data-access/`) holds the connection state as signals; `data-access/livekit.connector.ts` is the only code that knows `livekit-client` (loaded on demand); specs swap it through the `REALTIME_CONNECTOR` token with `realtime-link.fake.ts`.
 
 ## Accessibility and safety
 

@@ -3,8 +3,6 @@
   height: 100%;
 }
 
-// The whole card is the way in: the title is the one real button, stretched over the card (a quiet hover and a focus ring
-// on the card tell where it goes, so there is no second "Join" button to read).
 .card {
   position: relative;
   display: flex;
@@ -75,7 +73,6 @@
   -webkit-line-clamp: 2;
 }
 
-// The host is named; the others are faces (names in a tooltip), all on one row.
 .speakers {
   display: flex;
   flex-wrap: wrap;

@@ -25,7 +25,7 @@ import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 import { msg } from '@shared/utils/i18n/msg';
-import type { MemberRole, RoomEdit, Stage } from '../../models/room.model';
+import type { RoomRole, RoomEdit, Stage } from '../../models/room.model';
 import { provideRoom, RoomFacade, type RoomExit } from '../../state/room.facade';
 import { AudienceSectionComponent } from '../../ui/audience-section/audience-section.component';
 import { PersonDialogComponent } from '../../ui/person-dialog/person-dialog.component';
@@ -36,18 +36,12 @@ import { StageSeatsComponent } from '../../ui/stage-seats/stage-seats.component'
 import { memberOf } from '../../utils/members';
 import { roomLook } from '../../utils/room-look';
 
-/** What to tell the person, when something other than their own choice took them out of the room. */
 const EXIT_MESSAGES: Readonly<Record<RoomExit, string | null>> = {
   removed: msg('The host removed you from this room.'),
   ended: msg('This room has ended.'),
   closed: null,
 };
 
-/**
- * Container: one room. Everything that keeps the room alive (joining, the audio, refreshing, the requests) is the
- * `RoomFacade`'s; this page is what is on screen: which person is picked, the dialogs and confirmations, what screen
- * readers are told, and moving back to the hallway when the facade says the person is out.
- */
 @Component({
   selector: 'app-room-page',
   imports: [
@@ -86,13 +80,11 @@ export default class RoomPageComponent {
   readonly id = input.required<string>();
 
   protected readonly state = this.facade.state;
-  /** A wide screen has room for the audience beside the stage; a narrow one folds it away. */
   protected readonly wide = toSignal(
     this.breakpoints.observe('(min-width: 1024px)').pipe(map((result) => result.matches)),
     { initialValue: false },
   );
   protected readonly look = computed(() => roomLook(this.state.room()));
-  /** The host's own actions on the room, behind the dock's menu; nobody else has any. */
   protected readonly hostActions = computed<MenuItem[]>(() =>
     this.state.isHost()
       ? [
@@ -111,7 +103,6 @@ export default class RoomPageComponent {
       : [],
   );
   protected readonly host = computed(() => memberOf(this.state.members(), this.state.hostId()));
-  /** Who is on stage with the microphone off: only this person's own is known, from the audio they are connected to. */
   protected readonly mutedIds = computed(() => {
     const me = this.state.meId();
     const audio = this.facade.audio;
@@ -127,12 +118,11 @@ export default class RoomPageComponent {
   protected readonly editing = signal(false);
   protected readonly selectedId = signal<string | null>(null);
 
-  // The person picked on screen, and what the one looking may do about them.
   protected readonly selected = computed(() => {
     const id = this.selectedId();
     return id === null ? undefined : memberOf(this.state.members(), id);
   });
-  protected readonly selectedRole = computed<MemberRole>(() => {
+  protected readonly selectedRole = computed<RoomRole>(() => {
     const id = this.selectedId();
     return id === this.state.hostId()
       ? 'HOST'
@@ -250,7 +240,6 @@ export default class RoomPageComponent {
     void this.router.navigate(['/']);
   }
 
-  /** Tells screen readers what changed on the stage since the last look: who raised a hand, who got a seat, who gave it up. */
   private announceChanges(stage: Stage): void {
     const before = this.previous;
     this.previous = stage;
@@ -288,7 +277,6 @@ export default class RoomPageComponent {
     }
   }
 
-  /** Tells screen readers when the microphone goes on or off, since the button's look is the only other sign. */
   private announceMicrophone(on: boolean): void {
     if (on !== this.heardMicrophone) {
       this.heardMicrophone = on;

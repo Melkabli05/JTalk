@@ -9,7 +9,6 @@ import type { Credentials } from '../../auth.models';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 
-/** Presentational sign-in form: emits valid credentials, never calls the API. */
 @Component({
   selector: 'app-login-form',
   imports: [

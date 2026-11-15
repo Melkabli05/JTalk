@@ -9,7 +9,7 @@ import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MessageService } from '@openng/optimus-ui/api';
 import { provideRouter, Router } from '@angular/router';
 import { REALTIME_CONNECTOR } from '../../data-access/realtime-connector.token';
-import { FakeRealtimeLink } from '../../data-access/realtime-link.fake';
+import { FakeRealtimeLink } from '../../utils/realtime-link.fake';
 import RoomPageComponent from './room-page.component';
 
 @Component({ selector: 'app-stub', template: '' })
@@ -91,7 +91,6 @@ describe('RoomPageComponent (container)', () => {
     );
   }
 
-  /** What the real backend would answer: the state in `server`, unless a test overrides one response. */
   function respond(request: TestRequest, overrides: Record<string, Override>) {
     const { method, url } = request.request;
     requests.push({ method, url, body: request.request.body });
@@ -118,7 +117,6 @@ describe('RoomPageComponent (container)', () => {
     );
   }
 
-  /** Answers everything the page asks, until it stops asking. Reloads are requested a moment after an answer, so it waits a tick between rounds. */
   async function settle(overrides: Record<string, Override> = {}) {
     const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
     for (let quiet = 0; quiet < 3;) {

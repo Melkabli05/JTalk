@@ -4,11 +4,6 @@ import { InputNumber } from '@openng/optimus-ui/inputnumber';
 import { FieldControlDirective } from '../field-control.directive';
 import { FieldErrorsComponent } from '../field-errors/field-errors.component';
 
-/**
- * Labelled currency input for Signal Forms: `<app-number-field label="Amount" [formField]="f.total" />`.
- * Parsing, grouping and decimals are Optimus `p-inputnumber`; this wrapper only reveals errors after
- * the user has touched the field (see FieldControlDirective for why `[formField]` is not bound directly).
- */
 @Component({
   selector: 'app-number-field',
   imports: [FormsModule, InputNumber, FieldErrorsComponent],
@@ -24,7 +19,6 @@ export class NumberFieldComponent extends FieldControlDirective<number | null> {
 
   constructor() {
     super();
-    // p-inputnumber exposes aria-required/aria-describedby but not aria-invalid on its inner input.
     afterRenderEffect(() => {
       this.host().input.nativeElement.setAttribute('aria-invalid', String(this.showErrors()));
     });

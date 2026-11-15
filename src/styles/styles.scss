@@ -3,11 +3,8 @@
 @use '@openng/icons/openng-icons.css';
 @use '@angular/cdk' as cdk;
 
-// `.cdk-visually-hidden`: text for screen readers only (also used by the CDK's LiveAnnouncer).
 @include cdk.a11y-visually-hidden();
 
-// Page background and text come from the Jtalk preset's tokens (core/config/jtalk-preset.ts): the warm canvas
-// (surface 50) in light, the dark canvas (surface 950) in dark.
 html {
   color-scheme: light;
 
@@ -16,7 +13,6 @@ html {
   }
 }
 
-// The room's control dock sticks to the bottom: keep a focused control clear of it (WCAG 2.4.11).
 html:has(app-room-page) {
   scroll-padding-block-end: 10rem;
 }
@@ -35,12 +31,10 @@ a {
   color: var(--p-primary-color);
 }
 
-// An anchor styled as an Optimus button (`<a pButton>`) is a button, not an underlined link.
 a.p-button {
   text-decoration: none;
 }
 
-// Centers an Optimus progress spinner while a page is loading.
 .loading {
   display: flex;
   justify-content: center;

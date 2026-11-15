@@ -1,11 +1,10 @@
 import { Component, computed, input, output } from '@angular/core';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import type { Member } from '../../models/room.model';
 import { memberOf } from '../../utils/members';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
+import type { Person } from '@core/auth/identity.models';
 
-/** Listeners waiting for the stage, numbered in the order they raised a hand. The host can invite any of them. */
 @Component({
   selector: 'app-raised-hands',
   imports: [ButtonDirective, PersonAvatarComponent, TranslatePipe],
@@ -35,7 +34,7 @@ import { PersonAvatarComponent } from '../person-avatar/person-avatar.component'
 })
 export class RaisedHandsComponent {
   readonly ids = input.required<readonly string[]>();
-  readonly members = input.required<ReadonlyMap<string, Member>>();
+  readonly members = input.required<ReadonlyMap<string, Person>>();
   readonly canInvite = input(false);
 
   readonly invited = output<string>();

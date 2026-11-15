@@ -2,8 +2,6 @@
   display: block;
 }
 
-// One column on a phone: header, stage, the people, then the dock. From 1024px the stage is the main column and the
-// audience (and, for the host, the raised hands) sit beside it; wider screens only widen the stage, not the content.
 .room {
   display: grid;
   grid-template-areas:
@@ -70,7 +68,6 @@
   margin-inline-start: -0.5rem;
 }
 
-// A live room says so quietly: a still dot and the count.
 .live {
   display: flex;
   align-items: center;
@@ -96,7 +93,6 @@ h1 {
   line-height: 1.2;
   text-wrap: balance;
 
-  // Focus moves here when the room opens so screen readers announce it. A heading is not a control: no ring.
   &:focus,
   &:focus-visible {
     outline: none;

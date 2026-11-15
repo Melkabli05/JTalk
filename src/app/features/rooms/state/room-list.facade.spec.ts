@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import type { RoomDraft } from '../models/room.model';
-import { provideRooms, RoomsFacade } from './rooms.facade';
+import { provideRoomList, RoomListFacade } from './room-list.facade';
 
 const DRAFT: RoomDraft = {
   title: 'T',
@@ -25,18 +25,18 @@ const ROOM = {
   handRaiseCount: 0,
 };
 
-describe('RoomsFacade', () => {
+describe('RoomListFacade', () => {
   let http: HttpTestingController;
-  let facade: RoomsFacade;
+  let facade: RoomListFacade;
   const list = () => http.match((request) => request.method === 'GET');
 
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRooms()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRoomList()],
     });
     http = TestBed.inject(HttpTestingController);
-    facade = TestBed.inject(RoomsFacade);
+    facade = TestBed.inject(RoomListFacade);
     TestBed.tick();
   });
   afterEach(() => vi.useRealTimers());
@@ -75,10 +75,10 @@ describe('RoomsFacade', () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRooms()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRoomList()],
     });
     http = TestBed.inject(HttpTestingController);
-    TestBed.inject(RoomsFacade);
+    TestBed.inject(RoomListFacade);
     TestBed.tick();
     list().forEach((request) => request.flush({ content: [] }));
     await Promise.resolve();

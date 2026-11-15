@@ -11,12 +11,10 @@ import { LocaleService } from '@core/config/locale.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 
-/** Only in-app paths: `//evil.example` and `https://evil.example` must not become a redirect target. */
 function safeReturnUrl(url: string | undefined): string {
   return url?.startsWith('/') && !url.startsWith('//') && !url.includes('\\') ? url : '/';
 }
 
-/** Container: signs in with the form's credentials, then goes where the user was headed (`?returnUrl=`). */
 @Component({
   selector: 'app-login-page',
   imports: [TranslatePipe, AuthLayoutComponent, ButtonDirective, LoginFormComponent, RouterLink],
@@ -27,7 +25,6 @@ export default class LoginPageComponent {
   protected readonly locales = inject(LocaleService);
   private readonly router = inject(Router);
 
-  /** The `returnUrl` query parameter (bound by `withComponentInputBinding()`). */
   readonly returnUrl = input<string>();
 
   protected readonly signingIn = saveRequest();

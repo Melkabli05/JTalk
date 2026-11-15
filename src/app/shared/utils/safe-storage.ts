@@ -1,7 +1,5 @@
 type StorageKind = 'local' | 'session';
 
-// Web Storage can throw (private mode, blocked site data, quota), so every
-// access is wrapped and the app keeps working without persistence.
 function resolve(kind: StorageKind): Storage | null {
   try {
     return kind === 'local' ? globalThis.localStorage : globalThis.sessionStorage;
@@ -18,6 +16,8 @@ export function readItem(kind: StorageKind, key: string): string | null {
   }
 }
 
+const ignoreFailure = (): undefined => undefined;
+
 export function writeItem(kind: StorageKind, key: string, value: string | null): void {
   try {
     const storage = resolve(kind);
@@ -27,6 +27,6 @@ export function writeItem(kind: StorageKind, key: string, value: string | null):
       storage?.setItem(key, value);
     }
   } catch {
-    // Persistence is best-effort.
+    ignoreFailure();
   }
 }

@@ -21,10 +21,6 @@ interface ProfileFormModel {
   learning: string;
 }
 
-/**
- * Presentational profile form: a name, a picture, what you speak and what you are learning. The chosen picture, ringed and
- * checked in the picker, is the preview. It emits a valid draft and never saves it.
- */
 @Component({
   selector: 'app-profile-form',
   imports: [

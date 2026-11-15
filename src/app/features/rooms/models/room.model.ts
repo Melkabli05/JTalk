@@ -1,4 +1,4 @@
-export type MemberRole = 'HOST' | 'SPEAKER' | 'LISTENER';
+export type RoomRole = 'HOST' | 'SPEAKER' | 'LISTENER';
 
 export interface Room {
   readonly id: string;
@@ -13,7 +13,6 @@ export interface Room {
   readonly handRaiseCount: number;
 }
 
-/** What the person fills in to open a room. */
 export interface RoomDraft {
   readonly title: string;
   readonly topic: string;
@@ -22,14 +21,12 @@ export interface RoomDraft {
   readonly maxStageSeats: number;
 }
 
-/** What the host may change about a room that is already open. */
 export interface RoomEdit {
   readonly title: string;
   readonly topic: string;
   readonly maxStageSeats: number;
 }
 
-/** What the backend hands over on entering a room: the room, the rights, and where and how to connect to its audio. */
 export interface RoomSession {
   readonly room: Room;
   readonly canPublishAudio: boolean;
@@ -45,13 +42,4 @@ export interface Stage {
 export interface Participant {
   readonly userId: string;
   readonly reconnecting: boolean;
-}
-
-/** Someone shown on screen. The backend knows users by id only; names come from the identity layer, when it has them. */
-export interface Member {
-  readonly id: string;
-  readonly name: string;
-  readonly nativeLanguage: string;
-  readonly learning: string;
-  readonly avatar: string;
 }

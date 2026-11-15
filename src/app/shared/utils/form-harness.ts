@@ -1,10 +1,5 @@
 import type { ComponentFixture } from '@angular/core/testing';
 
-/**
- * Spec helper for forms built from the `app-*-field` controls: find a field by its label,
- * type into it like a user would (input, then blur), and submit the form. `fixture` is a getter because
- * specs assign it in `beforeEach`.
- */
 export function formHarness(fixture: () => ComponentFixture<unknown>) {
   const root = () => fixture().nativeElement as HTMLElement;
 

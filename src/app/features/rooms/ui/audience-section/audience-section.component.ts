@@ -3,18 +3,14 @@ import { Component, computed, input, output, signal } from '@angular/core';
 import { AvatarGroup } from '@openng/optimus-ui/avatargroup';
 import { Panel } from '@openng/optimus-ui/panel';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import type { Member } from '../../models/room.model';
 import { memberOf } from '../../utils/members';
 import { AudienceGridComponent } from '../audience-grid/audience-grid.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
+import type { Person } from '@core/auth/identity.models';
 
 const PREVIEW = 5;
 let nextId = 0;
 
-/**
- * The listeners, kept out of the way. On a narrow screen an Optimus `p-panel` (collapsed by default) whose header carries the
- * count and a few faces and whose content is the full list; on a wide one, which has room beside the stage, a heading and the list.
- */
 @Component({
   selector: 'app-audience-section',
   imports: [
@@ -80,10 +76,9 @@ let nextId = 0;
 })
 export class AudienceSectionComponent {
   readonly ids = input.required<readonly string[]>();
-  readonly members = input.required<ReadonlyMap<string, Member>>();
+  readonly members = input.required<ReadonlyMap<string, Person>>();
   readonly meId = input<string | null>(null);
   readonly reconnecting = input<readonly string[]>([]);
-  /** A narrow screen folds the list away; a wide one has room to show it. */
   readonly collapsible = input(true);
 
   readonly memberSelected = output<string>();

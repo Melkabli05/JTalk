@@ -5,7 +5,6 @@ import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 import { type Language, languageOf } from '@shared/utils/languages';
 
-/** Pick one of the languages that have rooms, or all of them (the empty code). */
 @Component({
   selector: 'app-language-filter',
   imports: [FormsModule, SelectButton, TranslatePipe],

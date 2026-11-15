@@ -8,7 +8,6 @@ import { MIN_PASSWORD_LENGTH } from '../../auth.models';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 
-/** Presentational "choose a new password" form: emits the new password. */
 @Component({
   selector: 'app-reset-password-form',
   imports: [TranslatePipe, FormField, FormRoot, ButtonDirective, Message, PasswordFieldComponent],

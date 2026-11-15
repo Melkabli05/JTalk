@@ -3,11 +3,11 @@ import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Dialog } from '@openng/optimus-ui/dialog';
 import { Tag } from '@openng/optimus-ui/tag';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import type { Member, MemberRole } from '../../models/room.model';
+import type { RoomRole } from '../../models/room.model';
 import { languageOf } from '@shared/utils/languages';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
+import type { Person } from '@core/auth/identity.models';
 
-/** Who someone is, and what the person looking at them may do about it. */
 @Component({
   selector: 'app-person-dialog',
   imports: [ButtonDirective, Dialog, PersonAvatarComponent, Tag, TranslatePipe],
@@ -16,8 +16,8 @@ import { PersonAvatarComponent } from '../person-avatar/person-avatar.component'
 })
 export class PersonDialogComponent {
   readonly visible = model(false);
-  readonly member = input<Member>();
-  readonly role = input<MemberRole>('LISTENER');
+  readonly member = input<Person>();
+  readonly role = input<RoomRole>('LISTENER');
   readonly isMe = input(false);
   readonly canInvite = input(false);
   readonly canDemote = input(false);

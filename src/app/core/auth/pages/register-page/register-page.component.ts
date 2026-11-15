@@ -12,10 +12,6 @@ import { LocaleService } from '@core/config/locale.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 
-/**
- * Container: creates the account. The confirmation is the same whether or not the address was already
- * registered, so the page cannot be used to find out who has an account (OWASP account enumeration).
- */
 @Component({
   selector: 'app-register-page',
   imports: [

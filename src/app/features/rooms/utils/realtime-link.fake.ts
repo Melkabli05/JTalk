@@ -4,7 +4,6 @@ import type {
   RealtimeListener,
 } from '../models/realtime.model';
 
-/** Stands in for the media server: records what the app asked for and lets a spec play the server's part. */
 export class FakeRealtimeLink {
   readonly connections: {
     url: string;

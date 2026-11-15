@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
-import type { Member, Room } from '../../models/room.model';
+import type { Room } from '../../models/room.model';
 import { RoomCardComponent } from './room-card.component';
+import type { Person } from '@core/auth/identity.models';
 
 const ROOM: Room = {
   id: 'r-1',
@@ -17,7 +18,7 @@ const ROOM: Room = {
   handRaiseCount: 2,
 };
 
-const MEMBERS: ReadonlyMap<string, Member> = new Map([
+const MEMBERS: ReadonlyMap<string, Person> = new Map([
   ['h-1', { id: 'h-1', name: 'Alice Host', nativeLanguage: 'es', learning: 'en', avatar: '' }],
   ['s-2', { id: 's-2', name: 'Maya Speaker', nativeLanguage: 'es', learning: 'ja', avatar: '' }],
 ]);

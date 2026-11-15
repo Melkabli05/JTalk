@@ -4,10 +4,6 @@ import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import type { Person, ProfileDraft } from '../../identity.models';
 import { ProfileFormComponent } from '../profile-form/profile-form.component';
 
-/**
- * The profile form in a modal dialog. Until the person has a profile it cannot be dismissed (`cancellable` is false):
- * the app is not usable without one. The form is created each time the dialog opens, so it always starts fresh.
- */
 @Component({
   selector: 'app-profile-dialog',
   imports: [Dialog, ProfileFormComponent, TranslatePipe],

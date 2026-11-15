@@ -2,11 +2,10 @@ import { Component, computed, input, output } from '@angular/core';
 import { Tag } from '@openng/optimus-ui/tag';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
-import type { Member } from '../../models/room.model';
 import { memberOf } from '../../utils/members';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
+import type { Person } from '@core/auth/identity.models';
 
-/** The listeners in the room. A person who is reconnecting says so. */
 @Component({
   selector: 'app-audience-grid',
   imports: [PersonAvatarComponent, Tag, TranslatePipe],
@@ -44,7 +43,7 @@ import { PersonAvatarComponent } from '../person-avatar/person-avatar.component'
 })
 export class AudienceGridComponent {
   readonly ids = input.required<readonly string[]>();
-  readonly members = input.required<ReadonlyMap<string, Member>>();
+  readonly members = input.required<ReadonlyMap<string, Person>>();
   readonly meId = input<string | null>(null);
   readonly reconnecting = input<readonly string[]>([]);
 

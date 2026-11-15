@@ -25,7 +25,6 @@ const MIN_SEATS = 2;
 const MAX_SEATS = 12;
 const DEFAULT_SEATS = 6;
 
-/** Presentational room form. Given a room it edits that room (title, topic, seats); without one it opens a new room, starting from `defaults`. It never calls the API. */
 @Component({
   selector: 'app-room-form',
   imports: [

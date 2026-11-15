@@ -3,19 +3,16 @@ import { AvatarGroup } from '@openng/optimus-ui/avatargroup';
 import { Card } from '@openng/optimus-ui/card';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import type { Member, Room } from '../../models/room.model';
+import type { Room } from '../../models/room.model';
 import { memberOf } from '../../utils/members';
 import { roomLook } from '../../utils/room-look';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
+import type { Person } from '@core/auth/identity.models';
 
 const SHOWN_OTHERS = 4;
 
 let nextId = 0;
 
-/**
- * One open room in the hallway: what it is, who is on stage by name, how busy it is. The whole card opens the room (the title
- * is the button), so there is no separate Join.
- */
 @Component({
   selector: 'app-room-card',
   imports: [AvatarGroup, Card, PersonAvatarComponent, Tooltip, TranslatePipe],
@@ -24,13 +21,12 @@ let nextId = 0;
 })
 export class RoomCardComponent {
   readonly room = input.required<Room>();
-  readonly members = input.required<ReadonlyMap<string, Member>>();
+  readonly members = input.required<ReadonlyMap<string, Person>>();
 
   readonly opened = output<void>();
 
   protected readonly titleId = `app-room-card-${nextId++}`;
   protected readonly look = computed(() => roomLook(this.room()));
-  /** The host is the one person named on the card. */
   protected readonly host = computed(() => {
     const room = this.room();
     const id = room.speakers.includes(room.hostId) ? room.hostId : room.speakers[0];
@@ -41,7 +37,6 @@ export class RoomCardComponent {
       .speakers.filter((id) => id !== this.host()?.id)
       .map((id) => memberOf(this.members(), id)),
   );
-  /** The others on stage are faces only, with their names in a tooltip: enough to recognise someone, short enough for a card. */
   protected readonly others = computed(() => this.everyoneElse().slice(0, SHOWN_OTHERS));
   protected readonly otherNames = computed(() =>
     this.others()
