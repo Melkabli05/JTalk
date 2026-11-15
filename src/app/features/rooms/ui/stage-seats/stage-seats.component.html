@@ -1,0 +1,44 @@
+<ul class="stage" [attr.aria-label]="'On stage' | t">
+  @for (speaker of onStage(); track speaker.member.id) {
+    <li>
+      <button
+        type="button"
+        class="tile person"
+        aria-haspopup="dialog"
+        [attr.aria-label]="
+          speaker.me
+            ? ('{name} (you), {role}' | t: { name: speaker.member.name, role: speaker.role | t })
+            : ('{name}, {role}' | t: { name: speaker.member.name, role: speaker.role | t })
+        "
+        (click)="memberSelected.emit(speaker.member.id)"
+      >
+        <app-person-avatar size="xlarge" [member]="speaker.member" />
+        <span class="name" aria-hidden="true">{{ speaker.member.name }}</span>
+        <span class="badges" aria-hidden="true">
+          @if (speaker.host) {
+            <p-tag severity="warn" icon="pi pi-star" [value]="'Host' | t" />
+          }
+          @if (speaker.me) {
+            <p-tag severity="info" [value]="'You' | t" />
+          }
+        </span>
+      </button>
+    </li>
+  }
+  @for (seat of openSeats(); track seat) {
+    <li>
+      <button
+        type="button"
+        class="tile seat"
+        [disabled]="!canTakeSeat()"
+        [attr.aria-label]="
+          'Take free seat {number} of {total}' | t: { number: seat, total: seats() }
+        "
+        (click)="seatTaken.emit()"
+      >
+        <i class="pi pi-plus" aria-hidden="true"></i>
+        <span class="open" aria-hidden="true">{{ 'Open seat' | t }}</span>
+      </button>
+    </li>
+  }
+</ul>

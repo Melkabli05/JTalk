@@ -25,6 +25,19 @@
         @let themeLabel =
           colorScheme.isDark() ? ('Switch to light theme' | t) : ('Switch to dark theme' | t);
         <div class="controls">
+          @if (identity.devMode && identity.profile(); as me) {
+            <button
+              pButton
+              type="button"
+              icon="pi pi-user"
+              severity="secondary"
+              [text]="true"
+              [label]="me.name"
+              [pTooltip]="'Your profile' | t"
+              tooltipPosition="bottom"
+              (click)="editingProfile.set(true)"
+            ></button>
+          }
           <app-locale-switch
             [locale]="locales.locale()"
             (localeChange)="locales.switchTo($event)"
@@ -73,5 +86,17 @@
     [model]="breadcrumbs()"
     [pt]="{ root: { 'aria-label': 'Breadcrumb' | t } }"
   />
-  <router-outlet />
+  @if (!identity.needsProfile()) {
+    <router-outlet />
+  }
 </main>
+
+@defer (when profileOpen()) {
+  <app-profile-dialog
+    [visible]="profileOpen()"
+    [profile]="identity.profile() ?? undefined"
+    [cancellable]="!identity.needsProfile()"
+    (saved)="saveProfile($event)"
+    (visibleChange)="editingProfile.set(false)"
+  />
+}

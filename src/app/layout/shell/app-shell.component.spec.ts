@@ -1,9 +1,12 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { AuthService } from '@core/auth/auth.service';
 import { ColorSchemeService } from '@core/config/color-scheme.service';
+import { DEV_IDENTITY } from '@core/auth/dev-identity.token';
 import { DirectionService } from '@core/config/direction.service';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 import { layoutRoutes } from '../layout.routes';
@@ -131,14 +134,14 @@ describe('AppShellComponent (container)', () => {
     const links = [...root().querySelectorAll('nav [role="menuitem"] a')].map((a) =>
       a.textContent?.trim(),
     );
-    expect(links).toEqual(['الرئيسية']);
+    expect(links).toEqual(['الغرف']);
     expect(root().querySelector('a.skip-link')?.textContent).toContain('تخطَّ');
 
     localeOption('English')!.click();
     await vi.waitFor(() => expect(i18n.locale()).toBe('en'));
     await fixture.whenStable();
     expect(document.documentElement.dir).toBe('ltr');
-    expect(root().querySelector('nav [role="menuitem"] a')?.textContent?.trim()).toBe('Home');
+    expect(root().querySelector('nav [role="menuitem"] a')?.textContent?.trim()).toBe('Rooms');
   });
 
   it('signs out and returns home', async () => {
@@ -162,7 +165,7 @@ describe('AppShellComponent (container)', () => {
       ),
     ];
 
-    expect(links.map((a) => a.textContent?.trim())).toEqual(['Home']);
+    expect(links.map((a) => a.textContent?.trim())).toEqual(['Rooms']);
     expect(links.map((a) => a.getAttribute('href'))).toEqual(['/']);
   });
 
@@ -235,7 +238,7 @@ describe('AppShellComponent routing', () => {
     expect(crumbs(await open('/section'))).toEqual(['Section']);
   });
 
-  it('marks Home only on the home page, not on every page below the root', async () => {
+  it('marks Rooms only on the hallway, not on every page below the root', async () => {
     const harness = await RouterTestingHarness.create('/');
     await harness.fixture.whenStable();
     const root = harness.fixture.nativeElement as HTMLElement;
@@ -243,14 +246,14 @@ describe('AppShellComponent routing', () => {
       [...root.querySelectorAll('nav a.p-menubar-item-link-active')].map((a) =>
         a.textContent?.trim(),
       );
-    expect(highlighted()).toEqual(['Home']);
+    expect(highlighted()).toEqual(['Rooms']);
 
     await harness.navigateByUrl('/section');
     await harness.fixture.whenStable();
     expect(highlighted()).toEqual([]);
   });
 
-  it('marks Home as the current page on the home page, and nothing elsewhere', async () => {
+  it('marks Rooms as the current page on the hallway, and nothing elsewhere', async () => {
     const harness = await RouterTestingHarness.create('/');
     await harness.fixture.whenStable();
     const root = harness.fixture.nativeElement as HTMLElement;
@@ -260,7 +263,7 @@ describe('AppShellComponent routing', () => {
           'nav[aria-label="Primary"] [role="menuitem"] a[aria-current="page"]',
         ),
       ].map((a) => a.textContent?.trim());
-    expect(current()).toEqual(['Home']);
+    expect(current()).toEqual(['Rooms']);
 
     await harness.navigateByUrl('/section/5');
     await harness.fixture.whenStable();
@@ -273,11 +276,99 @@ describe('AppShellComponent routing', () => {
     const root = harness.fixture.nativeElement as HTMLElement;
     const link = [
       ...root.querySelectorAll<HTMLAnchorElement>('nav[aria-label="Primary"] [role="menuitem"] a'),
-    ].find((a) => a.textContent?.includes('Home'))!;
+    ].find((a) => a.textContent?.includes('Rooms'))!;
 
     link.click();
     await harness.fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/');
+  });
+});
+
+describe('AppShellComponent profile gate (development builds)', () => {
+  let fixture: ComponentFixture<AppShellComponent>;
+  const root = () => fixture.nativeElement as HTMLElement;
+  const page = () => document.body;
+
+  beforeEach(() => {
+    sessionStorage.clear();
+    localStorage.clear();
+    localStorage.setItem('jtalk:locale', 'en');
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: DEV_IDENTITY, useValue: true },
+      ],
+    });
+  });
+
+  async function render() {
+    fixture = TestBed.createComponent(AppShellComponent);
+    await fixture.whenStable();
+  }
+
+  it('asks for a profile before the app can be used, and shows no page behind it', async () => {
+    await render();
+
+    expect(page().textContent).toContain('Create your profile');
+    expect(root().querySelector('router-outlet')).toBeNull();
+  });
+
+  it('lets the person in once they have filled the profile in, and shows their name', async () => {
+    await render();
+    const name = page().querySelector<HTMLInputElement>('app-profile-form input')!;
+    name.value = 'Mona';
+    name.dispatchEvent(new Event('input'));
+    name.dispatchEvent(new Event('blur'));
+    await fixture.whenStable();
+
+    page()
+      .querySelector('app-profile-form form')!
+      .dispatchEvent(new Event('submit', { cancelable: true }));
+    await fixture.whenStable();
+    const http = TestBed.inject(HttpTestingController);
+    http
+      .expectOne({ method: 'POST', url: '/dev/users' })
+      .flush(null, { status: 204, statusText: 'No Content' });
+    http.expectOne({ method: 'GET', url: '/dev/users' }).flush([]);
+    await fixture.whenStable();
+
+    expect(root().querySelector('router-outlet')).not.toBeNull();
+    expect(root().querySelector('header')?.textContent).toContain('Mona');
+  });
+
+  it('shows the name of a person who has a profile, straight into the app', async () => {
+    localStorage.setItem(
+      'jtalk:profile',
+      JSON.stringify({ id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en' }),
+    );
+    await render();
+
+    expect(page().textContent).not.toContain('Create your profile');
+    expect(root().querySelector('router-outlet')).not.toBeNull();
+    expect(root().querySelector('header')?.textContent).toContain('Mona');
+  });
+
+  it('opens the profile for editing from the name, and can close it again', async () => {
+    localStorage.setItem(
+      'jtalk:profile',
+      JSON.stringify({ id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en' }),
+    );
+    await render();
+
+    [...root().querySelectorAll<HTMLButtonElement>('header button')]
+      .find((b) => b.textContent?.includes('Mona'))!
+      .click();
+    await fixture.whenStable();
+    expect(page().textContent).toContain('Your profile');
+    expect(page().querySelector('app-profile-form input')?.getAttribute('id')).toBeTruthy();
+
+    [...page().querySelectorAll<HTMLButtonElement>('app-profile-form button')]
+      .find((b) => b.textContent?.includes('Cancel'))!
+      .click();
+    await fixture.whenStable();
+    expect(page().querySelector('app-profile-form')).toBeNull();
   });
 });

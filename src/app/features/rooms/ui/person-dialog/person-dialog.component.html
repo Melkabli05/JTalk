@@ -1,0 +1,92 @@
+<p-dialog
+  [modal]="true"
+  [dismissableMask]="true"
+  [style]="{ width: '26rem', maxWidth: '95vw' }"
+  [header]="member()?.name ?? ''"
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
+>
+  @if (member(); as person) {
+    <div class="who">
+      <app-person-avatar size="xlarge" [member]="person" />
+      <div class="details">
+        <p-tag
+          class="role"
+          [severity]="role() === 'HOST' ? 'warn' : role() === 'SPEAKER' ? 'success' : 'secondary'"
+        >
+          @switch (role()) {
+            @case ('HOST') {
+              {{ 'Host' | t }}
+            }
+            @case ('SPEAKER') {
+              {{ 'Speaker' | t }}
+            }
+            @default {
+              {{ 'Listener' | t }}
+            }
+          }
+          @if (isMe()) {
+            · {{ 'You' | t }}
+          }
+        </p-tag>
+        @if (person.nativeLanguage) {
+          <p>
+            <span aria-hidden="true">{{ native().flag }}</span>
+            {{ 'Speaks {language}' | t: { language: native().name | t } }}
+          </p>
+        }
+        @if (person.learning) {
+          <p>
+            <span aria-hidden="true">{{ learning().flag }}</span>
+            {{ 'Learning {language}' | t: { language: learning().name | t } }}
+          </p>
+        }
+      </div>
+    </div>
+
+    @if (anything()) {
+      <div class="actions">
+        @if (canInvite()) {
+          <button
+            pButton
+            type="button"
+            icon="pi pi-microphone"
+            [label]="'Invite to the stage' | t"
+            (click)="invite.emit()"
+          ></button>
+        }
+        @if (canStepDown()) {
+          <button
+            pButton
+            type="button"
+            icon="pi pi-arrow-down"
+            severity="secondary"
+            [label]="'Step down to the audience' | t"
+            (click)="stepDown.emit()"
+          ></button>
+        }
+        @if (canDemote()) {
+          <button
+            pButton
+            type="button"
+            icon="pi pi-arrow-down"
+            severity="secondary"
+            [label]="'Move to the audience' | t"
+            (click)="demote.emit()"
+          ></button>
+        }
+        @if (canRemove()) {
+          <button
+            pButton
+            type="button"
+            icon="pi pi-times"
+            severity="danger"
+            [outlined]="true"
+            [label]="'Remove from the room' | t"
+            (click)="remove.emit()"
+          ></button>
+        }
+      </div>
+    }
+  }
+</p-dialog>

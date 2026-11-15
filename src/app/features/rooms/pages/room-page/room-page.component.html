@@ -1,0 +1,130 @@
+@if (joining.error(); as failure) {
+  <p-message severity="warn">{{ failure | t }}</p-message>
+  <a
+    pButton
+    routerLink="/"
+    class="back"
+    icon="pi pi-arrow-left"
+    [label]="'Back to the rooms' | t"
+  ></a>
+} @else if (joined() && room.hasValue()) {
+  @let current = room.value();
+
+  <header class="hero">
+    <div
+      class="mark"
+      aria-hidden="true"
+      [style.background]="colors().background"
+      [style.color]="colors().color"
+    >
+      {{ target().flag }}
+    </div>
+    <div class="info">
+      <h1 #heading tabindex="-1">{{ current.title }}</h1>
+      @if (current.topic) {
+        <p class="topic">{{ current.topic }}</p>
+      }
+      <p class="languages">
+        <span aria-hidden="true">{{ target().flag }}</span> {{ target().name | t }}
+        <span class="dot" aria-hidden="true">·</span>
+        {{ 'for {language} speakers' | t: { language: native().name | t } }}
+      </p>
+    </div>
+  </header>
+
+  <section aria-labelledby="stage-heading">
+    <h2 id="stage-heading">
+      {{ 'On stage' | t }}
+      <p-badge severity="secondary" [value]="`${speakers().length}/${current.maxStageSeats}`" />
+    </h2>
+    <app-stage-seats
+      [speakers]="speakers()"
+      [seats]="current.maxStageSeats"
+      [hostId]="current.hostId"
+      [meId]="meId()"
+      [members]="members()"
+      [canTakeSeat]="!onStage() && !action.submitting()"
+      (memberSelected)="selectedId.set($event)"
+      (seatTaken)="takeSeat()"
+    />
+  </section>
+
+  @if (queue().length > 0) {
+    <section aria-labelledby="hands-heading">
+      <h2 id="hands-heading">
+        {{ 'Raised hands' | t }}
+        <p-badge severity="secondary" [value]="queue().length" />
+      </h2>
+      <app-raised-hands
+        [ids]="queue()"
+        [members]="members()"
+        [canInvite]="isHost()"
+        (invited)="invite($event)"
+      />
+    </section>
+  }
+
+  <section aria-labelledby="audience-heading">
+    <h2 id="audience-heading">
+      {{ 'In the audience' | t }}
+      <p-badge severity="secondary" [value]="audience().length" />
+    </h2>
+    <app-audience-grid
+      [ids]="audience()"
+      [members]="members()"
+      [meId]="meId()"
+      [reconnecting]="reconnecting()"
+      (memberSelected)="selectedId.set($event)"
+    />
+  </section>
+
+  @if (action.error(); as failure) {
+    <p-message class="failure" severity="error">{{ failure | t }}</p-message>
+  }
+
+  <app-room-controls
+    class="controls"
+    [isHost]="isHost()"
+    [onStage]="onStage()"
+    [handRaised]="handRaised()"
+    [busy]="action.submitting()"
+    (leave)="leave()"
+    (raiseHand)="raiseHand()"
+    (lowerHand)="lowerHand()"
+    (edit)="editing.set(true)"
+    (end)="end()"
+  />
+} @else {
+  <div class="loading" role="status" aria-busy="true">
+    <span class="cdk-visually-hidden">{{ 'Joining the room' | t }}</span>
+    <p-skeleton width="16rem" height="2.5rem" borderRadius="0" />
+    <p-skeleton width="100%" height="11rem" borderRadius="0" />
+    <p-skeleton width="100%" height="7rem" borderRadius="0" />
+  </div>
+}
+
+<app-person-dialog
+  [visible]="selectedId() !== null"
+  [member]="selected()"
+  [role]="selectedRole()"
+  [isMe]="selectedIsMe()"
+  [canInvite]="canInvite()"
+  [canDemote]="canDemote()"
+  [canRemove]="canRemove()"
+  [canStepDown]="canStepDown()"
+  (visibleChange)="selectedId.set(null)"
+  (invite)="invite(selectedId() ?? '')"
+  (demote)="demote(selectedId() ?? '')"
+  (remove)="remove(selectedId() ?? '')"
+  (stepDown)="stepDown()"
+/>
+
+<app-room-form-dialog
+  [(visible)]="editing"
+  [room]="room.hasValue() ? room.value() : undefined"
+  [submitting]="saving.submitting()"
+  [error]="saving.error()"
+  (edited)="edit($event)"
+/>
+
+<p-confirmdialog />

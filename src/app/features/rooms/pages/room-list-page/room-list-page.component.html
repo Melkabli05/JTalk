@@ -1,0 +1,72 @@
+<header class="head">
+  <div>
+    <h1>{{ 'Rooms' | t }}</h1>
+    <p class="lead">{{ 'Join a conversation to practise a language.' | t }}</p>
+  </div>
+  <button
+    pButton
+    type="button"
+    size="large"
+    icon="pi pi-plus"
+    [label]="'Start a room' | t"
+    (click)="starting.set(true)"
+  ></button>
+</header>
+
+@if (rooms.hasValue()) {
+  @if (languages().length > 1) {
+    <app-language-filter class="filter" [languages]="languages()" [(selected)]="filter" />
+  }
+
+  <p class="cdk-visually-hidden" role="status">
+    {{ 'Rooms shown: {count}' | t: { count: shown().length } }}
+  </p>
+
+  @if (shown().length > 0) {
+    <ul class="rooms">
+      @for (room of shown(); track room.id) {
+        <li>
+          <app-room-card [room]="room" [members]="members()" (opened)="open(room)" />
+        </li>
+      }
+    </ul>
+  } @else {
+    <div class="empty">
+      <app-brand-mark aria-hidden="true" />
+      <p>{{ 'No open rooms yet. Start one to practise.' | t }}</p>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-plus"
+        [label]="'Start a room' | t"
+        (click)="starting.set(true)"
+      ></button>
+    </div>
+  }
+} @else if (rooms.error()) {
+  <p-message severity="error">{{ 'Could not load the rooms. Please try again.' | t }}</p-message>
+  <button
+    pButton
+    type="button"
+    class="retry"
+    icon="pi pi-refresh"
+    severity="secondary"
+    [label]="'Try again' | t"
+    (click)="rooms.reload()"
+  ></button>
+} @else {
+  <p class="cdk-visually-hidden" role="status">{{ 'Loading' | t }}</p>
+  <ul class="rooms" aria-hidden="true">
+    @for (placeholder of [1, 2, 3]; track placeholder) {
+      <li><p-skeleton width="100%" height="16rem" borderRadius="0" /></li>
+    }
+  </ul>
+}
+
+<app-room-form-dialog
+  [(visible)]="starting"
+  [defaults]="defaults()"
+  [submitting]="saving.submitting()"
+  [error]="saving.error()"
+  (saved)="start($event)"
+/>

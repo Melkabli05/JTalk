@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   ActivatedRouteSnapshot,
@@ -14,6 +14,9 @@ import { Menubar } from '@openng/optimus-ui/menubar';
 import { ProgressBar } from '@openng/optimus-ui/progressbar';
 import { filter, map } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
+import type { ProfileDraft } from '@core/auth/identity.models';
+import { IdentityService } from '@core/auth/identity.service';
+import { ProfileDialogComponent } from '@core/auth/ui/profile-dialog/profile-dialog.component';
 import { APP_NAME } from '@core/config/app-config';
 import { ColorSchemeService } from '@core/config/color-scheme.service';
 import { DirectionService } from '@core/config/direction.service';
@@ -28,8 +31,8 @@ import { Tooltip } from '@openng/optimus-ui/tooltip';
 
 const NAV_ITEMS: MenuItem[] = [
   {
-    label: msg('Home'),
-    icon: 'pi pi-home',
+    label: msg('Rooms'),
+    icon: 'pi pi-microphone',
     routerLink: '/',
     routerLinkActiveOptions: { exact: true },
   },
@@ -65,6 +68,7 @@ function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wid
 @Component({
   selector: 'app-shell',
   imports: [
+    ProfileDialogComponent,
     Tooltip,
     TranslatePipe,
     RouterOutlet,
@@ -84,11 +88,16 @@ export class AppShellComponent {
   private readonly router = inject(Router);
 
   protected readonly auth = inject(AuthService);
+  protected readonly identity = inject(IdentityService);
   protected readonly colorScheme = inject(ColorSchemeService);
   protected readonly direction = inject(DirectionService);
   protected readonly locales = inject(LocaleService);
   private readonly i18n = inject(I18n);
   protected readonly appName = APP_NAME;
+  protected readonly editingProfile = signal(false);
+  protected readonly profileOpen = computed(
+    () => this.identity.needsProfile() || this.editingProfile(),
+  );
   protected readonly navItems = computed(() => this.translated(NAV_ITEMS));
 
   /** True while a navigation is in flight (lazy chunk loading, guards): drives the progress bar. */
@@ -107,6 +116,11 @@ export class AppShellComponent {
 
   private translated(items: readonly MenuItem[]): MenuItem[] {
     return items.map((item) => ({ ...item, label: this.i18n.t(item.label ?? '') }));
+  }
+
+  protected saveProfile(draft: ProfileDraft): void {
+    this.identity.saveProfile(draft);
+    this.editingProfile.set(false);
   }
 
   protected async signOut(): Promise<void> {

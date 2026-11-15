@@ -1,0 +1,93 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 2px solid var(--p-text-color);
+  transition: border-color 0.15s ease;
+
+  &:hover,
+  &:focus-within {
+    border-color: var(--p-primary-color);
+  }
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-block-end: 2px solid var(--p-text-color);
+}
+
+.flag {
+  font-size: 2.25rem;
+  line-height: 1;
+}
+
+.language {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.practise {
+  font-family: var(--p-jtalk-font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.audience {
+  font-size: 0.875rem;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--p-jtalk-font-display);
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.topic {
+  margin: 0 0 0.75rem;
+  color: var(--p-text-muted-color);
+}
+
+.people,
+.footer,
+.counts {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.people {
+  flex-wrap: wrap;
+}
+
+.host {
+  color: var(--p-text-muted-color);
+  font-size: 0.875rem;
+}
+
+.footer {
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.counts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 600;
+}
+
+.counts li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}

@@ -21,7 +21,9 @@ import { JtalkPreset } from '@core/config/jtalk-preset';
 import { PageTitleStrategy } from '@core/config/page-title.strategy';
 import { GlobalErrorHandler } from '@core/error-handling/global-error-handler';
 import { httpErrorInterceptor } from '@core/error-handling/http-error.interceptor';
+import { IdentityService } from '@core/auth/identity.service';
 import { authInterceptor } from '@core/http/auth.interceptor';
+import { devIdentityInterceptor } from '@core/http/dev-identity.interceptor';
 import { routes } from './app.routes';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 
@@ -32,7 +34,9 @@ export const appConfig: ApplicationConfig = {
     // Preload every lazy feature after the first navigation: two small features, so no blank wait later.
     provideRouter(routes, withComponentInputBinding(), withPreloading(PreloadAllModules)),
     // Order matters: attach credentials first, then handle failures on the way back.
-    provideHttpClient(withInterceptors([authInterceptor, httpErrorInterceptor])),
+    provideHttpClient(
+      withInterceptors([devIdentityInterceptor, authInterceptor, httpErrorInterceptor]),
+    ),
     { provide: TitleStrategy, useClass: PageTitleStrategy },
     provideOptimus({
       theme: { preset: JtalkPreset, options: { darkModeSelector: `.${DARK_CLASS}` } },
@@ -45,5 +49,7 @@ export const appConfig: ApplicationConfig = {
       inject(DirectionService);
       return inject(I18n).init();
     }),
+    // Development builds only: learn the backend's named test users before the first request needs one.
+    provideAppInitializer(() => inject(IdentityService).load()),
   ],
 };

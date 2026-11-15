@@ -1,5 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -9,6 +9,10 @@ import { routes } from './app.routes';
 describe('routes', () => {
   beforeEach(() => {
     sessionStorage.clear();
+    localStorage.setItem(
+      'jtalk:profile',
+      JSON.stringify({ id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en' }),
+    );
     TestBed.configureTestingModule({
       providers: [
         provideRouter(routes, withComponentInputBinding()),
@@ -22,12 +26,18 @@ describe('routes', () => {
   const text = (harness: RouterTestingHarness) =>
     (harness.fixture.nativeElement as HTMLElement).textContent;
 
-  it('starts on the home page', async () => {
+  const answerRoomList = () =>
+    TestBed.inject(HttpTestingController)
+      .expectOne('/api/v1/voice-rooms?size=100')
+      .flush({ content: [] });
+
+  it('starts on the hallway of rooms', async () => {
     const harness = await RouterTestingHarness.create('/');
+    answerRoomList();
     await harness.fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/');
-    expect(text(harness)).toContain('Live communication');
+    expect(text(harness)).toContain('Start a room');
   });
 
   it('serves the sign-in page without the shell', async () => {
@@ -55,6 +65,7 @@ describe('routes', () => {
   it('sends a signed-in user away from the sign-in page', async () => {
     sessionStorage.setItem('jtalk:token', 'jwt');
     const harness = await RouterTestingHarness.create('/login');
+    answerRoomList();
     await harness.fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/');

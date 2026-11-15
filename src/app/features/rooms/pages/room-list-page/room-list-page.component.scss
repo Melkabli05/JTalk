@@ -1,0 +1,58 @@
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-block-end: 1.5rem;
+}
+
+h1 {
+  margin: 0;
+  font-family: var(--p-jtalk-font-display);
+  font-size: 2.25rem;
+  line-height: 1.1;
+}
+
+.lead {
+  margin: 0.25rem 0 0;
+  color: var(--p-text-muted-color);
+}
+
+.filter {
+  display: block;
+  margin-block-end: 1.5rem;
+  overflow-x: auto;
+}
+
+.rooms {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(22rem, 100%), 1fr));
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 1rem;
+  border: 2px dashed var(--p-content-border-color);
+  text-align: center;
+
+  app-brand-mark {
+    font-size: 2.5rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--p-text-muted-color);
+  }
+}
+
+.retry {
+  margin-block-start: 1rem;
+}

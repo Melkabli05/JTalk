@@ -104,11 +104,13 @@ in the container page, pictures `p-avatar` (profile pictures, with initials as t
 
 ## Current state
 
-An empty skeleton for the live-communication frontend (the Micronaut backend `live-communication-service`, `/api` proxied to
-port 8080): `features/home` is a placeholder page, and every other product feature has been removed. The mock API has only the account
-endpoints (`pnpm start:mock`). Account pages are listed under Auth (sign-in honors a safe `?returnUrl=`). `authGuard` is not applied to any
-route on purpose (auth is off while testing); to protect the app add `canActivateChild: [authGuard]` to the shell route in
-`layout.routes.ts` (or `canMatch` on the lazy features so signed-out users do not download them).
+The live-communication frontend (the Micronaut backend `live-communication-service`, `/api` and `/dev` proxied to port 8080). `features/rooms` is the one
+feature: the hallway (`room-list-page`) and a room (`room-page`), with `RoomsApiService`, `ParticipantsApiService` and `StageApiService` as the only code that knows
+the endpoints, polling and the heartbeat in the `room-page` container, and no mock data. Identity lives in `core/auth/identity.service.ts`: in a development build the
+person fills in a profile (kept in this browser, registered with the backend's `POST /dev/users`) before the shell shows any page, and `devIdentityInterceptor` sends its id
+as `X-User-Id`; with a token the user id is the token's subject. A user service will replace this. The mock API has only the account endpoints (`pnpm start:mock`).
+Account pages are listed under Auth (sign-in honors a safe `?returnUrl=`). `authGuard` is not applied to any route on purpose (auth is off while testing); to
+protect the app add `canActivateChild: [authGuard]` to the shell route in `layout.routes.ts`. The LiveKit audio client is not added yet.
 
 ## Accessibility and safety
 

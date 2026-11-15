@@ -12,8 +12,7 @@ export const routes: Routes = [
   ...layoutRoutes([
     {
       path: '',
-      pathMatch: 'full',
-      loadChildren: () => import('./features/home/home').then((m) => m.HOME_ROUTES),
+      loadChildren: () => import('./features/rooms/rooms').then((m) => m.ROOMS_ROUTES),
     },
     {
       path: '**',

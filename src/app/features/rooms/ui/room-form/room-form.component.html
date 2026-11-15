@@ -1,0 +1,47 @@
+<form class="form" [formRoot]="roomForm">
+  @if (error(); as message) {
+    <p-message severity="error">{{ message | t }}</p-message>
+  }
+
+  <app-text-field [label]="'Title' | t" [formField]="roomForm.title" />
+  <app-text-field [label]="'Topic' | t" [formField]="roomForm.topic" />
+
+  @if (!room()) {
+    <div class="pair">
+      <app-select-field
+        [label]="'I want to practise' | t"
+        [options]="languages"
+        [formField]="roomForm.targetLanguage"
+      />
+      <app-select-field
+        [label]="'For speakers of' | t"
+        [options]="languages"
+        [formField]="roomForm.nativeLanguage"
+      />
+    </div>
+  }
+
+  <app-select-field
+    [label]="'Stage seats, including you' | t"
+    [options]="seats"
+    [formField]="roomForm.maxStageSeats"
+  />
+
+  <div class="actions">
+    <button
+      pButton
+      type="button"
+      severity="secondary"
+      [text]="true"
+      [label]="'Cancel' | t"
+      (click)="cancelled.emit()"
+    ></button>
+    <button
+      pButton
+      type="submit"
+      [loading]="submitting()"
+      [disabled]="submitting()"
+      [label]="room() ? ('Save' | t) : ('Open the room' | t)"
+    ></button>
+  </div>
+</form>

@@ -1,0 +1,25 @@
+<label [for]="inputId">{{ label() }}</label>
+<p-select
+  appendTo="body"
+  optionLabel="label"
+  optionValue="value"
+  [inputId]="inputId"
+  [options]="choices()"
+  [ngModel]="value()"
+  [disabled]="disabled()"
+  [invalid]="showErrors()"
+  [attr.aria-required]="required() || null"
+  [attr.aria-describedby]="showErrors() ? errorsId : null"
+  (ngModelChange)="value.set($event)"
+  (onBlur)="touch.emit()"
+>
+  <ng-template #selectedItem>
+    @if (selected(); as chosen) {
+      <span>{{ chosen.prefix }} {{ chosen.label | t }}</span>
+    }
+  </ng-template>
+  <ng-template #item let-option>
+    <span>{{ option.prefix }} {{ option.label | t }}</span>
+  </ng-template>
+</p-select>
+<app-field-errors [attr.id]="errorsId" [errors]="errors()" [visible]="showErrors()" />

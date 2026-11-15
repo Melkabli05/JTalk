@@ -13,7 +13,7 @@ describe('PageTitleStrategy', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([
-          { path: 'a', title: 'Home', component: Stub },
+          { path: 'a', title: 'Rooms', component: Stub },
           { path: 'b', component: Stub },
         ]),
         { provide: TitleStrategy, useClass: PageTitleStrategy },
@@ -27,7 +27,7 @@ describe('PageTitleStrategy', () => {
 
     await router.navigateByUrl('/a');
     TestBed.tick();
-    expect(title.getTitle()).toBe('Home · Jtalk');
+    expect(title.getTitle()).toBe('Rooms · Jtalk');
 
     await router.navigateByUrl('/b');
     TestBed.tick();
@@ -41,10 +41,10 @@ describe('PageTitleStrategy', () => {
 
     await i18n.use('ar');
     TestBed.tick();
-    expect(TestBed.inject(Title).getTitle()).toBe('الرئيسية · Jtalk');
+    expect(TestBed.inject(Title).getTitle()).toBe('الغرف · Jtalk');
 
     await i18n.use('en');
     TestBed.tick();
-    expect(TestBed.inject(Title).getTitle()).toBe('Home · Jtalk');
+    expect(TestBed.inject(Title).getTitle()).toBe('Rooms · Jtalk');
   });
 });

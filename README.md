@@ -6,10 +6,31 @@ Angular 22 skeleton: zoneless, signals, Signal Forms, lazy feature routes, funct
 the structure and its enforced rules (`CLAUDE.md`), the application shell, the account pages (`core/auth`), the theme,
 the i18n setup and a mock API. `features/home` is a one-page placeholder for the first real page.
 
-**Talking to the backend.** `pnpm start` proxies `/api` to http://localhost:8080 (`proxy.conf.json`), where
-`live-communication-service` listens. With the backend's `dev` profile (what `./gradlew run` uses) security is off and the caller
-is named by an `X-User-Id: <uuid>` header; with the default profile every call needs `Authorization: Bearer <JWT>` whose `sub`
-is the user's UUID. `authInterceptor` sends the bearer token, so `core/auth` is the part to align with whichever you use.
+**Talking to the backend.** `pnpm start` proxies `/api` and `/dev` to http://localhost:8080 (`proxy.conf.json`), where
+`live-communication-service` listens. With the backend's `dev` profile (what `./gradlew run` uses) there is no sign-in: before
+using the app the person fills in a **profile** (a name, the language they speak and the one they are learning) in a dialog. It is kept in
+this browser, its generated id is sent as `X-User-Id`, and it is registered with the backend (`POST /dev/users`) so everyone sees names
+instead of ids. That is a stand-in for the user service that will replace it: it lives in `IdentityService` (`core/auth`) and is active only
+in a development build. With the backend's default profile every call needs `Authorization: Bearer <JWT>` whose `sub` is the user's UUID,
+which `authInterceptor` sends.
+
+**Rooms** (`features/rooms`) are the product so far:
+
+- **The hallway** lists the open rooms as cards (a colored language banner, the title, who is on stage, how busy it is), filters them by language,
+  and starts a room from a dialog that is filled in for the person (a title and topic, the language they are learning to practise, theirs for the audience).
+- **A room** shows the stage with its open seats, the raised hands in order, and the audience. Anyone can take a free seat or raise a hand; the host invites,
+  moves, removes, edits and ends. The page says "still here" and refreshes every 3 seconds, and sends the person back to the hallway when the host removes
+  them or the room ends.
+- Built from Optimus components (card, avatar, avatar group, tag, badge, dialog, select, selectbutton, skeleton, message, confirm dialog); the only custom
+  pieces are the Signal Forms wrappers and the tiles.
+- **Accessible**: real heading structure, every control named (the Join button names its room, a seat is "Take free seat 3 of 4"), decorative avatars and
+  flags hidden from screen readers, changes announced politely through the CDK `LiveAnnouncer` ("Maya joined the stage", "You raised your hand"),
+  focus moved to the room title on arrival, a sticky controls bar with large targets, status in words and not only dimming, and logical CSS so Arabic
+  right-to-left works.
+- **Not built yet**: the audio itself. Joining a room takes a stage seat or a place in the audience, but nothing is heard until the LiveKit client
+  (`livekit-client`) is added; the backend already issues the tokens.
+
+There is no mock data for rooms: the hallway shows what the backend has, which is nothing until someone opens a room.
 
 ## Getting started
 

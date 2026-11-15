@@ -1,0 +1,23 @@
+:host {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 2;
+  display: block;
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-block-start: 4px solid var(--p-text-color);
+  background: var(--p-content-background);
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

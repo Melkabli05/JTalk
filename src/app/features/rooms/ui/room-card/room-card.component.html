@@ -1,0 +1,66 @@
+<p-card class="card" role="group" [attr.aria-labelledby]="titleId">
+  <ng-template #header>
+    <div class="banner" [style.background]="colors().background" [style.color]="colors().color">
+      <span class="flag" aria-hidden="true">{{ target().flag }}</span>
+      <span class="language">
+        <span class="practise">{{ target().name | t }}</span>
+        <span class="audience">{{
+          'for {language} speakers' | t: { language: native().name | t }
+        }}</span>
+      </span>
+    </div>
+  </ng-template>
+
+  <ng-template #title>
+    <h2 class="title" [id]="titleId">{{ room().title }}</h2>
+  </ng-template>
+
+  @if (room().topic) {
+    <p class="topic">{{ room().topic }}</p>
+  }
+
+  <div class="people">
+    <p-avatargroup aria-hidden="true">
+      @for (speaker of speakers(); track speaker.id) {
+        <app-person-avatar size="normal" [member]="speaker" />
+      }
+      @if (more() > 0) {
+        <p-avatar shape="circle" size="normal" [label]="`+${more()}`" />
+      }
+    </p-avatargroup>
+    <span class="host">{{ 'Hosted by {name}' | t: { name: host().name } }}</span>
+  </div>
+
+  <ng-template #footer>
+    <div class="footer">
+      <ul class="counts">
+        <li>
+          <i class="pi pi-microphone" aria-hidden="true"></i>
+          <span class="cdk-visually-hidden">{{ 'On stage' | t }}:</span>
+          {{ room().speakers.length }}/{{ room().maxStageSeats }}
+        </li>
+        <li>
+          <i class="pi pi-users" aria-hidden="true"></i>
+          <span class="cdk-visually-hidden">{{ 'In the room' | t }}:</span>
+          {{ room().participantCount }}
+        </li>
+        @if (room().handRaiseCount > 0) {
+          <li>
+            <i class="pi pi-megaphone" aria-hidden="true"></i>
+            <span class="cdk-visually-hidden">{{ 'Raised hands' | t }}:</span>
+            {{ room().handRaiseCount }}
+          </li>
+        }
+      </ul>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        [label]="'Join' | t"
+        [attr.aria-label]="'Join {title}' | t: { title: room().title }"
+        (click)="opened.emit()"
+      ></button>
+    </div>
+  </ng-template>
+</p-card>
