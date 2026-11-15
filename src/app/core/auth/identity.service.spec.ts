@@ -6,8 +6,8 @@ import { DEV_IDENTITY } from './dev-identity.token';
 import type { Person } from './identity.models';
 import { IdentityService } from './identity.service';
 
-const MONA: Person = { id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en' };
-const BOB: Person = { id: 'b-2', name: 'Bob', nativeLanguage: 'en', learning: 'ar' };
+const MONA: Person = { id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en', avatar: '' };
+const BOB: Person = { id: 'b-2', name: 'Bob', nativeLanguage: 'en', learning: 'ar', avatar: '' };
 const NO_CONTENT = { status: 204, statusText: 'No Content' };
 
 describe('IdentityService', () => {
@@ -43,7 +43,7 @@ describe('IdentityService', () => {
     expect(identity.needsProfile()).toBe(true);
     expect(identity.userId()).toBeNull();
 
-    identity.saveProfile({ name: 'Mona', nativeLanguage: 'ar', learning: 'en' });
+    identity.saveProfile({ name: 'Mona', nativeLanguage: 'ar', learning: 'en', avatar: '' });
     http.expectOne({ method: 'POST', url: '/dev/users' }).flush(null, NO_CONTENT);
     answerLoad(http, []);
 
@@ -62,7 +62,7 @@ describe('IdentityService', () => {
   it('makes an id for a saved profile, keeps it in this browser, and registers it with the backend', () => {
     const { identity, http } = setup();
 
-    identity.saveProfile({ name: '  Mona  ', nativeLanguage: 'ar', learning: 'en' });
+    identity.saveProfile({ name: '  Mona  ', nativeLanguage: 'ar', learning: 'en', avatar: '' });
     const register = http.expectOne({ method: 'POST', url: '/dev/users' });
     register.flush(null, NO_CONTENT);
     answerLoad(http, []);
@@ -77,10 +77,55 @@ describe('IdentityService', () => {
     expect(identity.devUserId()).toBe(saved?.id);
   });
 
+  it('keeps the chosen picture with the profile, and registers it with the backend', () => {
+    const { identity, http } = setup();
+
+    identity.saveProfile({
+      name: 'Mona',
+      nativeLanguage: 'ar',
+      learning: 'en',
+      avatar: 'avatar-05',
+    });
+    const register = http.expectOne({ method: 'POST', url: '/dev/users' });
+    register.flush(null, NO_CONTENT);
+    answerLoad(http, []);
+
+    expect(identity.profile()?.avatar).toBe('avatar-05');
+    expect((register.request.body as { avatar: string }).avatar).toBe('avatar-05');
+    expect(JSON.parse(localStorage.getItem('jtalk:profile') ?? '{}')).toMatchObject({
+      avatar: 'avatar-05',
+    });
+  });
+
+  it('reads a profile with no picture, such as an older one, as having an empty picture', () => {
+    const { identity, http } = setup(true, {
+      id: 'm-1',
+      name: 'Mona',
+      nativeLanguage: 'ar',
+      learning: 'en',
+    });
+
+    identity.load().subscribe();
+    http.expectOne({ method: 'POST', url: '/dev/users' }).flush(null, NO_CONTENT);
+    answerLoad(http, [
+      { id: 'b-2', name: 'Bob', nativeLanguage: 'en', learning: 'ar', avatar: 'avatar-02' },
+      { id: 'c-3', name: 'Cy', nativeLanguage: 'en', learning: 'ar' },
+    ]);
+
+    expect(identity.profile()?.avatar).toBe('');
+    expect(identity.directory().get('b-2')?.avatar).toBe('avatar-02');
+    expect(identity.directory().get('c-3')?.avatar).toBe('');
+  });
+
   it('keeps the same id when the profile is edited', () => {
     const { identity, http } = setup(true, MONA);
 
-    identity.saveProfile({ name: 'Mona K', nativeLanguage: 'fr', learning: 'de' });
+    identity.saveProfile({
+      name: 'Mona K',
+      nativeLanguage: 'fr',
+      learning: 'de',
+      avatar: 'avatar-02',
+    });
     http.expectOne({ method: 'POST', url: '/dev/users' }).flush(null, NO_CONTENT);
     answerLoad(http, []);
 
@@ -89,6 +134,7 @@ describe('IdentityService', () => {
       name: 'Mona K',
       nativeLanguage: 'fr',
       learning: 'de',
+      avatar: 'avatar-02',
     });
   });
 

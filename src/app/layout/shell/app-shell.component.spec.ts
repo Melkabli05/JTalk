@@ -351,6 +351,35 @@ describe('AppShellComponent profile gate (development builds)', () => {
     expect(root().querySelector('header')?.textContent).toContain('Mona');
   });
 
+  it('shows the picture the person chose beside their name', async () => {
+    localStorage.setItem(
+      'jtalk:profile',
+      JSON.stringify({
+        id: 'm-1',
+        name: 'Mona',
+        nativeLanguage: 'ar',
+        learning: 'en',
+        avatar: 'avatar-06',
+      }),
+    );
+    await render();
+
+    expect(root().querySelector('header .profile img')?.getAttribute('src')).toBe(
+      'avatars/avatar-06.svg',
+    );
+  });
+
+  it('shows a plain icon beside the name of someone with no picture', async () => {
+    localStorage.setItem(
+      'jtalk:profile',
+      JSON.stringify({ id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en' }),
+    );
+    await render();
+
+    expect(root().querySelector('header .profile img')).toBeNull();
+    expect(root().querySelector('header .profile .pi-user')).not.toBeNull();
+  });
+
   it('opens the profile for editing from the name, and can close it again', async () => {
     localStorage.setItem(
       'jtalk:profile',

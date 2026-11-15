@@ -29,14 +29,21 @@
             <button
               pButton
               type="button"
-              icon="pi pi-user"
+              class="profile"
               severity="secondary"
               [text]="true"
-              [label]="me.name"
+              [attr.aria-label]="'Your profile' | t"
               [pTooltip]="'Your profile' | t"
               tooltipPosition="bottom"
               (click)="editingProfile.set(true)"
-            ></button>
+            >
+              @if (myPicture(); as picture) {
+                <p-avatar shape="circle" size="normal" aria-hidden="true" [image]="picture" />
+              } @else {
+                <i class="pi pi-user" aria-hidden="true"></i>
+              }
+              <span>{{ me.name }}</span>
+            </button>
           }
           <app-locale-switch
             [locale]="locales.locale()"

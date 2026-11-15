@@ -1,0 +1,54 @@
+<form class="form" [formRoot]="profileForm">
+  <div class="preview" aria-hidden="true">
+    @if (preview().picture; as picture) {
+      <p-avatar shape="circle" size="xlarge" [image]="picture" />
+    }
+    <div class="who">
+      <strong class="name">{{ preview().name || ('Your name' | t) }}</strong>
+      <span class="languages">
+        {{ preview().native.flag }} {{ preview().native.name | t }} → {{ preview().learning.flag }}
+        {{ preview().learning.name | t }}
+      </span>
+      <span class="caption">{{ 'This is how others will see you.' | t }}</span>
+    </div>
+  </div>
+
+  <app-text-field
+    [label]="'Your name' | t"
+    autocomplete="nickname"
+    [formField]="profileForm.name"
+  />
+  <app-avatar-picker [label]="'Choose your picture' | t" [formField]="profileForm.avatar" />
+
+  <div class="pair">
+    <app-select-field
+      [label]="'I speak' | t"
+      [options]="languages"
+      [formField]="profileForm.nativeLanguage"
+    />
+    <app-select-field
+      [label]="'I am learning' | t"
+      [options]="languages"
+      [formField]="profileForm.learning"
+    />
+  </div>
+
+  <div class="actions">
+    @if (cancellable()) {
+      <button
+        pButton
+        type="button"
+        severity="secondary"
+        [text]="true"
+        [label]="'Cancel' | t"
+        (click)="cancelled.emit()"
+      ></button>
+    }
+    <button
+      pButton
+      type="submit"
+      size="large"
+      [label]="profile() ? ('Save' | t) : ('Continue' | t)"
+    ></button>
+  </div>
+</form>

@@ -1,0 +1,27 @@
+<fieldset
+  class="picker"
+  [disabled]="disabled()"
+  [attr.aria-describedby]="showErrors() ? errorsId : null"
+>
+  <legend>{{ label() }}</legend>
+  <div class="grid">
+    @for (avatar of avatars; track avatar.id) {
+      <label class="option" [class.selected]="value() === avatar.id">
+        <input
+          #radio
+          type="radio"
+          class="cdk-visually-hidden"
+          [name]="group"
+          [value]="avatar.id"
+          [checked]="value() === avatar.id"
+          [attr.aria-label]="'Avatar {number}' | t: { number: $index + 1 }"
+          (change)="value.set(avatar.id)"
+          (blur)="touch.emit()"
+        />
+        <img class="picture" alt="" width="72" height="72" [ngSrc]="avatar.url" />
+        <i class="pi pi-check mark" aria-hidden="true"></i>
+      </label>
+    }
+  </div>
+  <app-field-errors [attr.id]="errorsId" [errors]="errors()" [visible]="showErrors()" />
+</fieldset>

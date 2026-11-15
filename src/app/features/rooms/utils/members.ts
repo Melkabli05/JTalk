@@ -2,7 +2,9 @@ import type { Member } from '../models/room.model';
 
 /** Who to show for an id: the person the identity layer knows, or the start of the id when it knows nobody. */
 export function memberOf(members: ReadonlyMap<string, Member>, id: string): Member {
-  return members.get(id) ?? { id, name: id.slice(0, 8), nativeLanguage: '', learning: '' };
+  return (
+    members.get(id) ?? { id, name: id.slice(0, 8), nativeLanguage: '', learning: '', avatar: '' }
+  );
 }
 
 const PALETTE = [

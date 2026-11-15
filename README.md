@@ -8,7 +8,7 @@ the i18n setup and a mock API. `features/home` is a one-page placeholder for the
 
 **Talking to the backend.** `pnpm start` proxies `/api` and `/dev` to http://localhost:8080 (`proxy.conf.json`), where
 `live-communication-service` listens. With the backend's `dev` profile (what `./gradlew run` uses) there is no sign-in: before
-using the app the person fills in a **profile** (a name, the language they speak and the one they are learning) in a dialog. It is kept in
+using the app the person fills in a **profile** (a name, one of ten bundled pictures from `public/avatars/`, the language they speak and the one they are learning) in a dialog. It is kept in
 this browser, its generated id is sent as `X-User-Id`, and it is registered with the backend (`POST /dev/users`) so everyone sees names
 instead of ids. That is a stand-in for the user service that will replace it: it lives in `IdentityService` (`core/auth`) and is active only
 in a development build. With the backend's default profile every call needs `Authorization: Bearer <JWT>` whose `sub` is the user's UUID,

@@ -3,8 +3,8 @@ import type { Member } from '../../models/room.model';
 import { AudienceGridComponent } from './audience-grid.component';
 
 const MEMBERS: ReadonlyMap<string, Member> = new Map([
-  ['a-1', { id: 'a-1', name: 'Ada', nativeLanguage: 'en', learning: 'ar' }],
-  ['b-2', { id: 'b-2', name: 'Bob', nativeLanguage: 'ar', learning: 'en' }],
+  ['a-1', { id: 'a-1', name: 'Ada', nativeLanguage: 'en', learning: 'ar', avatar: '' }],
+  ['b-2', { id: 'b-2', name: 'Bob', nativeLanguage: 'ar', learning: 'en', avatar: '' }],
 ]);
 
 describe('AudienceGridComponent (presentational)', () => {

@@ -4,6 +4,8 @@ export interface Person {
   readonly name: string;
   readonly nativeLanguage: string;
   readonly learning: string;
+  /** The id of one of the bundled pictures (see `shared/utils/avatars`), or empty. */
+  readonly avatar: string;
 }
 
 /** What a person fills in; the id is made for them. */

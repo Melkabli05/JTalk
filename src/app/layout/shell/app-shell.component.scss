@@ -79,3 +79,11 @@
     max-width: none;
   }
 }
+
+.profile {
+  gap: 0.5rem;
+
+  p-avatar {
+    border: 2px solid var(--p-text-color);
+  }
+}

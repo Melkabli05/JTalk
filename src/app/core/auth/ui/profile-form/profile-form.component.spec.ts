@@ -4,7 +4,7 @@ import { formHarness } from '@shared/utils/form-harness';
 import type { Person, ProfileDraft } from '../../identity.models';
 import { ProfileFormComponent } from './profile-form.component';
 
-const MONA: Person = { id: 'm-1', name: 'Mona', nativeLanguage: 'fr', learning: 'de' };
+const MONA: Person = { id: 'm-1', name: 'Mona', nativeLanguage: 'fr', learning: 'de', avatar: '' };
 
 describe('ProfileFormComponent (presentational)', () => {
   let fixture: ComponentFixture<ProfileFormComponent>;
@@ -42,6 +42,7 @@ describe('ProfileFormComponent (presentational)', () => {
 
     expect(saved).toHaveBeenCalledExactlyOnceWith({
       name: 'Mona',
+      avatar: 'avatar-01',
       nativeLanguage: 'ar',
       learning: 'en',
     });
@@ -63,6 +64,50 @@ describe('ProfileFormComponent (presentational)', () => {
 
     expect(root().textContent).toContain('Use at most 40 characters.');
     expect(saved).not.toHaveBeenCalled();
+  });
+
+  it('starts with the first picture chosen, and emits the one picked', async () => {
+    await render();
+    const radios = () => [
+      ...root().querySelectorAll<HTMLInputElement>('app-avatar-picker input[type="radio"]'),
+    ];
+    expect(radios().findIndex((r) => r.checked)).toBe(0);
+
+    radios()[3].click();
+    await type('Your name', 'Mona');
+    await submit();
+
+    expect(saved).toHaveBeenCalledExactlyOnceWith({
+      name: 'Mona',
+      avatar: 'avatar-04',
+      nativeLanguage: 'ar',
+      learning: 'en',
+    });
+  });
+
+  it('previews how others will see the person, as they type and choose', async () => {
+    await render();
+    const preview = () =>
+      root().querySelector('.preview')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+    expect(preview()).toContain('Your name');
+    expect(preview()).toContain('This is how others will see you.');
+
+    await type('Your name', 'Mona');
+    root().querySelectorAll<HTMLInputElement>('app-avatar-picker input[type="radio"]')[2].click();
+    await fixture.whenStable();
+
+    expect(preview()).toContain('Mona');
+    expect(preview()).toContain('Arabic');
+    expect(preview()).toContain('English');
+    expect(root().querySelector('.preview img')?.getAttribute('src')).toBe('avatars/avatar-03.svg');
+  });
+
+  it('keeps the picture of someone editing their profile, and falls back when theirs is gone', async () => {
+    await render({ profile: { ...MONA, avatar: 'avatar-09' } });
+    expect(root().querySelector('.preview img')?.getAttribute('src')).toBe('avatars/avatar-09.svg');
+
+    await render({ profile: { ...MONA, avatar: 'avatar-99' } });
+    expect(root().querySelector('.preview img')?.getAttribute('src')).toBe('avatars/avatar-01.svg');
   });
 
   it('edits an existing profile: it starts from it and says Save', async () => {

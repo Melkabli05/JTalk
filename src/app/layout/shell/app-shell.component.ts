@@ -20,9 +20,11 @@ import { ProfileDialogComponent } from '@core/auth/ui/profile-dialog/profile-dia
 import { APP_NAME } from '@core/config/app-config';
 import { ColorSchemeService } from '@core/config/color-scheme.service';
 import { DirectionService } from '@core/config/direction.service';
+import { avatarUrl } from '@shared/utils/avatars';
 import { AriaCurrentDirective } from '@shared/directives/aria-current.directive';
 import { BrandMarkComponent } from '@shared/ui/brand-mark/brand-mark.component';
 import { LocaleService } from '@core/config/locale.service';
+import { Avatar } from '@openng/optimus-ui/avatar';
 import { LocaleSwitchComponent } from '@shared/ui/locale-switch/locale-switch.component';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -68,6 +70,7 @@ function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wid
 @Component({
   selector: 'app-shell',
   imports: [
+    Avatar,
     ProfileDialogComponent,
     Tooltip,
     TranslatePipe,
@@ -94,6 +97,7 @@ export class AppShellComponent {
   protected readonly locales = inject(LocaleService);
   private readonly i18n = inject(I18n);
   protected readonly appName = APP_NAME;
+  protected readonly myPicture = computed(() => avatarUrl(this.identity.profile()?.avatar));
   protected readonly editingProfile = signal(false);
   protected readonly profileOpen = computed(
     () => this.identity.needsProfile() || this.editingProfile(),

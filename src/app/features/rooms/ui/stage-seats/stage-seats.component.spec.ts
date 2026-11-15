@@ -3,8 +3,8 @@ import type { Member } from '../../models/room.model';
 import { StageSeatsComponent } from './stage-seats.component';
 
 const MEMBERS: ReadonlyMap<string, Member> = new Map([
-  ['h-1', { id: 'h-1', name: 'Alice Host', nativeLanguage: 'es', learning: 'en' }],
-  ['s-2', { id: 's-2', name: 'Maya Speaker', nativeLanguage: 'es', learning: 'ja' }],
+  ['h-1', { id: 'h-1', name: 'Alice Host', nativeLanguage: 'es', learning: 'en', avatar: '' }],
+  ['s-2', { id: 's-2', name: 'Maya Speaker', nativeLanguage: 'es', learning: 'ja', avatar: '' }],
 ]);
 
 describe('StageSeatsComponent (presentational)', () => {

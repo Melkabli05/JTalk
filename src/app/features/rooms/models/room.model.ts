@@ -52,4 +52,5 @@ export interface Member {
   readonly name: string;
   readonly nativeLanguage: string;
   readonly learning: string;
+  readonly avatar: string;
 }

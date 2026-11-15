@@ -10,21 +10,34 @@ import { DEV_IDENTITY } from './dev-identity.token';
 import type { Person, ProfileDraft } from './identity.models';
 import { tokenSubject } from './token-subject';
 
-function isPerson(raw: unknown): raw is Person {
+/** A person as stored or as the backend lists them; the picture is optional, since older profiles have none. */
+function toPerson(raw: unknown): Person | null {
   const person = asRecord(raw);
-  return (
-    person !== undefined &&
-    typeof person['id'] === 'string' &&
-    typeof person['name'] === 'string' &&
-    typeof person['nativeLanguage'] === 'string' &&
-    typeof person['learning'] === 'string'
-  );
+  if (
+    person === undefined ||
+    typeof person['id'] !== 'string' ||
+    typeof person['name'] !== 'string' ||
+    typeof person['nativeLanguage'] !== 'string' ||
+    typeof person['learning'] !== 'string'
+  ) {
+    return null;
+  }
+  return {
+    id: person['id'],
+    name: person['name'],
+    nativeLanguage: person['nativeLanguage'],
+    learning: person['learning'],
+    avatar: typeof person['avatar'] === 'string' ? person['avatar'] : '',
+  };
+}
+
+function isPerson(person: Person | null): person is Person {
+  return person !== null;
 }
 
 function storedProfile(): Person | null {
   try {
-    const raw: unknown = JSON.parse(readItem('local', STORAGE_KEYS.profile) ?? 'null');
-    return isPerson(raw) ? raw : null;
+    return toPerson(JSON.parse(readItem('local', STORAGE_KEYS.profile) ?? 'null'));
   } catch {
     return null;
   }
@@ -75,7 +88,7 @@ export class IdentityService {
       : of(undefined);
     return register.pipe(
       switchMap(() => this.http.get<unknown>(`${environment.devUrl}/users`)),
-      map((raw) => (Array.isArray(raw) ? raw.filter(isPerson) : [])),
+      map((raw) => (Array.isArray(raw) ? raw.map(toPerson).filter(isPerson) : [])),
       tap((people) => this.others.set(people)),
       map(() => undefined),
       catchError(() => of(undefined)),
@@ -89,6 +102,7 @@ export class IdentityService {
       name: draft.name.trim(),
       nativeLanguage: draft.nativeLanguage,
       learning: draft.learning,
+      avatar: draft.avatar,
     };
     this.own.set(profile);
     writeItem('local', STORAGE_KEYS.profile, JSON.stringify(profile));

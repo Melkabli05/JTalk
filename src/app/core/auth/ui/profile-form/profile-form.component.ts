@@ -1,27 +1,36 @@
-import { Component, input, linkedSignal, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, output } from '@angular/core';
 import { FormField, FormRoot, form, maxLength, required } from '@angular/forms/signals';
+import { Avatar } from '@openng/optimus-ui/avatar';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
+import { AvatarPickerComponent } from '@shared/ui/avatar-picker/avatar-picker.component';
 import {
   SelectFieldComponent,
   type SelectOption,
 } from '@shared/ui/select-field/select-field.component';
 import { TextFieldComponent } from '@shared/ui/text-field/text-field.component';
+import { avatarOrDefault, avatarUrl } from '@shared/utils/avatars';
 import { formSubmission } from '@shared/utils/form-submission';
 import { msg } from '@shared/utils/i18n/msg';
-import { LANGUAGES } from '@shared/utils/languages';
+import { LANGUAGES, languageOf } from '@shared/utils/languages';
 import type { Person, ProfileDraft } from '../../identity.models';
 
 interface ProfileFormModel {
   name: string;
+  avatar: string;
   nativeLanguage: string;
   learning: string;
 }
 
-/** Presentational profile form: who you are, what you speak and what you are learning. It emits a valid draft and never saves it. */
+/**
+ * Presentational profile form: a name, a picture, what you speak and what you are learning, with a preview of how others
+ * will see you. It emits a valid draft and never saves it.
+ */
 @Component({
   selector: 'app-profile-form',
   imports: [
+    Avatar,
+    AvatarPickerComponent,
     ButtonDirective,
     FormField,
     FormRoot,
@@ -29,56 +38,8 @@ interface ProfileFormModel {
     TextFieldComponent,
     TranslatePipe,
   ],
-  template: `
-    <form class="form" [formRoot]="profileForm">
-      <app-text-field
-        [label]="'Your name' | t"
-        autocomplete="nickname"
-        [formField]="profileForm.name"
-      />
-      <app-select-field
-        [label]="'I speak' | t"
-        [options]="languages"
-        [formField]="profileForm.nativeLanguage"
-      />
-      <app-select-field
-        [label]="'I am learning' | t"
-        [options]="languages"
-        [formField]="profileForm.learning"
-      />
-
-      <div class="actions">
-        @if (cancellable()) {
-          <button
-            pButton
-            type="button"
-            severity="secondary"
-            [text]="true"
-            [label]="'Cancel' | t"
-            (click)="cancelled.emit()"
-          ></button>
-        }
-        <button
-          pButton
-          type="submit"
-          [label]="profile() ? ('Save' | t) : ('Continue' | t)"
-        ></button>
-      </div>
-    </form>
-  `,
-  styles: `
-    .form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.5rem;
-    }
-  `,
+  templateUrl: './profile-form.component.html',
+  styleUrl: './profile-form.component.scss',
 })
 export class ProfileFormComponent {
   readonly profile = input<Person>();
@@ -95,9 +56,20 @@ export class ProfileFormComponent {
 
   private readonly model = linkedSignal<ProfileFormModel>(() => ({
     name: this.profile()?.name ?? '',
+    avatar: avatarOrDefault(this.profile()?.avatar),
     nativeLanguage: this.profile()?.nativeLanguage ?? 'ar',
     learning: this.profile()?.learning ?? 'en',
   }));
+
+  protected readonly preview = computed(() => {
+    const { name, avatar, nativeLanguage, learning } = this.model();
+    return {
+      name: name.trim(),
+      picture: avatarUrl(avatar),
+      native: languageOf(nativeLanguage),
+      learning: languageOf(learning),
+    };
+  });
 
   protected readonly profileForm = form(
     this.model,
@@ -113,6 +85,7 @@ export class ProfileFormComponent {
         submit: (value) =>
           this.saved.emit({
             name: value.name.trim(),
+            avatar: value.avatar,
             nativeLanguage: value.nativeLanguage,
             learning: value.learning,
           }),

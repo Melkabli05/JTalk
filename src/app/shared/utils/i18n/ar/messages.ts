@@ -180,4 +180,7 @@ export const messages: Readonly<Record<string, string>> = {
   'Join {title}': 'انضم إلى {title}',
   'Host controls': 'أدوات المضيف',
   'Take free seat {number} of {total}': 'خذ المقعد الشاغر {number} من {total}',
+  'This is how others will see you.': 'هكذا سيراك الآخرون.',
+  'Choose your picture': 'اختر صورتك',
+  'Avatar {number}': 'الصورة الرمزية {number}',
 };

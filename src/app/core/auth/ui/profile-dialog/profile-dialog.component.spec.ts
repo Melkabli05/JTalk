@@ -2,7 +2,7 @@ import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import type { Person } from '../../identity.models';
 import { ProfileDialogComponent } from './profile-dialog.component';
 
-const MONA: Person = { id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en' };
+const MONA: Person = { id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en', avatar: '' };
 
 describe('ProfileDialogComponent (presentational)', () => {
   let fixture: ComponentFixture<ProfileDialogComponent>;
@@ -49,6 +49,7 @@ describe('ProfileDialogComponent (presentational)', () => {
 
     expect(saved).toHaveBeenCalledExactlyOnceWith({
       name: 'Mona',
+      avatar: 'avatar-01',
       nativeLanguage: 'ar',
       learning: 'en',
     });

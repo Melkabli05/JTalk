@@ -3,8 +3,8 @@ import type { Member } from '../../models/room.model';
 import { RaisedHandsComponent } from './raised-hands.component';
 
 const MEMBERS: ReadonlyMap<string, Member> = new Map([
-  ['b-1', { id: 'b-1', name: 'Bob', nativeLanguage: 'en', learning: 'ar' }],
-  ['c-2', { id: 'c-2', name: 'Carol', nativeLanguage: 'ar', learning: 'en' }],
+  ['b-1', { id: 'b-1', name: 'Bob', nativeLanguage: 'en', learning: 'ar', avatar: '' }],
+  ['c-2', { id: 'c-2', name: 'Carol', nativeLanguage: 'ar', learning: 'en', avatar: '' }],
 ]);
 
 describe('RaisedHandsComponent (presentational)', () => {
