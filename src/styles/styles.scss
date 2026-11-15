@@ -16,6 +16,11 @@ html {
   }
 }
 
+// The room's control dock sticks to the bottom: keep a focused control clear of it (WCAG 2.4.11).
+html:has(app-room-page) {
+  scroll-padding-block-end: 10rem;
+}
+
 body {
   margin: 0;
   background: var(--p-surface-50);

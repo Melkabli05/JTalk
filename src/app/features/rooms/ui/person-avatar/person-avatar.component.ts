@@ -100,6 +100,13 @@ import { avatarColors } from '../../utils/members';
       }
     }
 
+    @media (forced-colors: active) {
+      :host(.speaking) p-avatar {
+        outline: 3px solid Highlight;
+        outline-offset: 2px;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       :host(.speaking) p-avatar,
       .wave i {

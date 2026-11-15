@@ -113,14 +113,16 @@ import type { AudioStatus } from '../../models/realtime.model';
               <i class="pi pi-check-circle" aria-hidden="true"></i>
               {{ 'Audio connected' | t }}
             }
-            @case ('failed') {
-              <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-              {{ 'Audio is not available.' | t }}
-            }
           }
         </p>
+        @if (audio() === 'failed') {
+          <p class="audio warning" role="alert">
+            <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+            {{ 'Audio is not available.' | t }}
+          </p>
+        }
         @if (micRefused()) {
-          <p class="hint warning" role="status">
+          <p class="hint warning" role="alert">
             <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
             {{
               'We could not use your microphone. Allow it in your browser, then press Unmute.' | t

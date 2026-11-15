@@ -33,7 +33,7 @@ in the container page, pictures `p-avatar` (profile pictures, with initials as t
   derived from it) and has no behavior beyond changing that state; a `*.facade.ts` is the ONE thing a container injects: it exposes the store as
   `state`, owns the use cases (what the person does, refreshing, keeping a connection alive) by composing data-access, and reports what the page must
   react to (an `Observable`, e.g. `exited`). Containers keep only what is on screen: dialogs, confirmations, announcements, the router, i18n texts.
-  A `provide<Feature>()` function in the facade file lists the store, the facade and what they need; the container puts it in its `providers`, so
+  A store reads each resource through `shared/utils/resource-value` (`loadedValue`: the value, or `undefined` while loading or failed, so `computed`s never throw) and a facade reads a status through `shared/utils/http-status`. A `provide<Feature>()` function in the facade file lists the store, the facade and what they need; the container puts it in its `providers`, so
   state and timers live and die with the page. Lint keeps stores and facades out of every presentational component.
 - Reads: `httpResource` created by the data-access service, `parse` from the adapter (validates the response and maps DTO -> model),
   read in templates behind `hasValue()` (`value()` throws in the error state). `rxResource` only for non-HTTP streams.
@@ -163,3 +163,22 @@ request (with "waiting for the host" text), a speaker has the microphone beside 
 the room ("You're listening" / "You're on stage") and how the audio is (`connecting`, `reconnecting`, `connected`, `failed`), and a refused
 microphone says how to fix it, persistently. A crossed-out icon is `.pi-slashed` (the icon set has none). Not built yet: chat and reactions, a
 moderator bottom sheet, speaker invitations to accept or decline, per-speaker mute from other people, room privacy and share.
+
+### Principles and where they come from
+
+"Gather UI" is our own name for this system (from the design proposal); no public spec exists under that name, so every rule below is tied to a source. Check
+a change against them before shipping:
+
+- **WCAG 2.2** ([Understanding docs](https://www.w3.org/WAI/WCAG22/Understanding/)): 2.5.8 targets 24px (AA; we use 44px, the 2.5.5 AAA size, for buttons and fields);
+  2.4.11 a sticky dock must not hide the focused control (`scroll-padding-block-end` on `html:has(app-room-page)` in `styles.scss`); 4.1.3 a state is a
+  `role="status"` region, an error (audio lost, microphone refused) is `role="alert"`, and the end of a state is announced too (the microphone goes on and off through
+  the CDK `LiveAnnouncer`); 2.2.2 nothing decorative moves for more than 5 seconds (an infinite animation is only for a live state that stops when the state does:
+  the speaking ring); 1.4.1 and 1.4.11 never color alone, indicators at least 3:1; `forced-colors` keeps the speaking cue (an outline, since box-shadows are removed).
+- **Discord Stage Channels** ([FAQ](https://support.discord.com/hc/en-us/articles/1500005513722-Stage-Channels-FAQ)): speakers above the audience, entry as a muted listener, no
+  entry or exit sounds, "exit quietly", the request queue seen only by moderators, an invited person accepts before going on stage, moderators can turn requests off.
+  Not built: the accept/decline invitation and the requests switch need backend support.
+- **X Spaces and Clubhouse** (help pages, third-party guides): the microphone starts muted and takes a moment to be ready, a raised hand goes to a queue and never puts
+  anyone on stage by itself, the host invites or accepts, a listener can take the request back.
+- **Gather Town accessibility guide** ([article](https://support.gather.town/articles/1489858946-accessibility-best-practices-for-inclusive-space-design)): do not rely on
+  color alone, label roles in text, respect reduced motion.
+- Out of reach for now: live captions for audio (WCAG 1.2.9, AAA), an in-app reduce-motion switch (the system preference is honored).

@@ -38,9 +38,19 @@ describe('RoomControlsComponent (presentational)', () => {
     await fixture.whenStable();
     expect(root().querySelector('.audio')?.textContent).toContain('Audio connected');
 
-    fixture.componentRef.setInput('audio', 'failed');
+    fixture.componentRef.setInput('audio', 'reconnecting');
     await fixture.whenStable();
-    expect(root().querySelector('.audio')?.textContent).toContain('Audio is not available.');
+    expect(root().querySelector('.audio')?.getAttribute('role')).toBe('status');
+    expect(root().querySelector('.audio')?.textContent).toContain('Reconnecting…');
+  });
+
+  it('raises an alert, not a polite status, when the audio is lost or the microphone refused', async () => {
+    await render({ audio: 'failed', micRefused: true });
+
+    const alerts = [...root().querySelectorAll('[role="alert"]')].map((el) => el.textContent);
+    expect(alerts[0]).toContain('Audio is not available.');
+    expect(alerts[1]).toContain('We could not use your microphone.');
+    expect(root().querySelector('.audio[role="status"]')?.textContent?.trim()).toBe('');
   });
 
   it('lets someone who may speak mute and unmute', async () => {
