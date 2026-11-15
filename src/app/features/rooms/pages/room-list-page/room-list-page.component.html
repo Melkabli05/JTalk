@@ -9,13 +9,18 @@
     size="large"
     icon="pi pi-plus"
     [label]="'Start a room' | t"
-    (click)="starting.set(true)"
+    (click)="showStartForm(true)"
   ></button>
 </header>
 
 @if (rooms.hasValue()) {
   @if (languages().length > 1) {
-    <app-language-filter class="filter" [languages]="languages()" [(selected)]="filter" />
+    <app-language-filter
+      class="filter"
+      [languages]="languages()"
+      [selected]="filter()"
+      (selectedChange)="filterBy($event)"
+    />
   }
 
   <p class="cdk-visually-hidden" role="status">
@@ -39,7 +44,7 @@
         type="button"
         icon="pi pi-plus"
         [label]="'Start a room' | t"
-        (click)="starting.set(true)"
+        (click)="showStartForm(true)"
       ></button>
     </div>
   }
@@ -64,7 +69,8 @@
 }
 
 <app-room-form-dialog
-  [(visible)]="starting"
+  [visible]="starting()"
+  (visibleChange)="showStartForm($event)"
   [defaults]="defaults()"
   [submitting]="saving.submitting()"
   [error]="saving.error()"

@@ -9,7 +9,7 @@ Angular 22 starter. Refer to the docs before writing code; do not rely on memory
 ## Structure (mirrors the project owner's reference tree: keep it exact)
 
 - `app/{core,layout,shared,features}`, with `core/{auth,http,error-handling,config}`, `layout/{shell,layout.routes.ts}`,
-  `shared/{ui,pipes,directives,utils}`, `features/<x>/{pages,ui,data-access,models,<x>.routes.ts,<x>.ts}`.
+  `shared/{ui,pipes,directives,utils}`, `features/<x>/{pages,ui,data-access,state,models,<x>.routes.ts,<x>.ts}` (`state/` only when a feature has state worth a store, as `rooms` does).
 - File names use suffixes: `*.component.ts`, `*.service.ts`, `*.guard.ts`, `*.interceptor.ts`, `*.pipe.ts`, `*.directive.ts`,
   `*.models.ts`/`*.model.ts`/`*.dto.ts`, `*.token.ts`, `*.routes.ts`. Component classes end in `Component`.
   Generate with `ng generate @schematics/angular:<kind>` (configured in angular.json). Do not add folders the tree does not have.
@@ -29,6 +29,12 @@ in the container page, pictures `p-avatar` (profile pictures, with initials as t
 - No `standalone: true`, no explicit `OnPush` (both are v22 defaults). Zoneless. Strict TypeScript and templates.
 - `@Service()` + `inject()` (`@Injectable()` only for `useClass` providers). Signals, `input()`/`output()`/`model()`, `computed()`.
   `@if`/`@for`/`@switch`, `@let`. Output names must not match DOM events (`select`, `cancel`, ...).
+- Feature state (`features/<x>/state/`): a `*.store.ts` holds the feature's state as signals (server data from data-access resources, plus what is
+  derived from it) and has no behavior beyond changing that state; a `*.facade.ts` is the ONE thing a container injects: it exposes the store as
+  `state`, owns the use cases (what the person does, refreshing, keeping a connection alive) by composing data-access, and reports what the page must
+  react to (an `Observable`, e.g. `exited`). Containers keep only what is on screen: dialogs, confirmations, announcements, the router, i18n texts.
+  A `provide<Feature>()` function in the facade file lists the store, the facade and what they need; the container puts it in its `providers`, so
+  state and timers live and die with the page. Lint keeps stores and facades out of every presentational component.
 - Reads: `httpResource` created by the data-access service, `parse` from the adapter (validates the response and maps DTO -> model),
   read in templates behind `hasValue()` (`value()` throws in the error state). `rxResource` only for non-HTTP streams.
   Writes: `HttpClient` Observables run through `saveRequest()` (`shared/utils/save-request`: `submitting`, `error`, `run(request, { next, failure })`).
@@ -110,7 +116,7 @@ the endpoints, polling and the heartbeat in the `room-page` container, and no mo
 person fills in a profile (a name, a picture chosen from the ten in `public/avatars/` by id, and two languages; kept in this browser, registered with the backend's `POST /dev/users`) before the shell shows any page, and `devIdentityInterceptor` sends its id
 as `X-User-Id`; with a token the user id is the token's subject. A user service will replace this. The mock API has only the account endpoints (`pnpm start:mock`).
 Account pages are listed under Auth (sign-in honors a safe `?returnUrl=`). `authGuard` is not applied to any route on purpose (auth is off while testing); to
-protect the app add `canActivateChild: [authGuard]` to the shell route in `layout.routes.ts`. Room audio: `RealtimeService` (per room page, `data-access/`) holds the connection state as signals; `adapters/livekit.adapter.ts` is the only code that knows `livekit-client` (loaded on demand); specs swap it through the `REALTIME_CONNECTOR` token with `realtime-link.fake.ts`.
+protect the app add `canActivateChild: [authGuard]` to the shell route in `layout.routes.ts`. Rooms: `RoomsFacade`/`RoomsStore` (hallway) and `RoomFacade`/`RoomStore` (one room) in `state/` are what the two pages inject. Room audio: `RealtimeService` (per room page, `data-access/`) holds the connection state as signals; `adapters/livekit.adapter.ts` is the only code that knows `livekit-client` (loaded on demand); specs swap it through the `REALTIME_CONNECTOR` token with `realtime-link.fake.ts`.
 
 ## Accessibility and safety
 

@@ -24,9 +24,9 @@ export class RoomsApiService {
     return httpResource(() => `${this.url}?size=${PAGE_SIZE}`, { parse: parseRooms });
   }
 
-  /** One room, re-fetched whenever `id()` changes. Call it from an injection context. */
+  /** One room, re-fetched whenever `id()` changes, and not fetched while it is empty. Call it from an injection context. */
   roomResource(id: () => string): HttpResourceRef<Room | undefined> {
-    return httpResource(() => `${this.url}/${id()}`, { parse: parseRoom });
+    return httpResource(() => (id() ? `${this.url}/${id()}` : undefined), { parse: parseRoom });
   }
 
   /** Opens a room and joins it as host. A host with a room already open gets that room back. */

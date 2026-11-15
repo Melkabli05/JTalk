@@ -14,7 +14,9 @@ export class ParticipantsApiService {
 
   /** Who is in the room right now. Call it from an injection context. */
   participantsResource(id: () => string): HttpResourceRef<Participant[] | undefined> {
-    return httpResource(() => `${this.base}/${id()}/participants`, { parse: parseParticipants });
+    return httpResource(() => (id() ? `${this.base}/${id()}/participants` : undefined), {
+      parse: parseParticipants,
+    });
   }
 
   join(id: string): Observable<RoomSession> {

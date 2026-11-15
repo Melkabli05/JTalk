@@ -13,7 +13,9 @@ export class StageApiService {
 
   /** The speakers and the hand-raise queue. Call it from an injection context. */
   stageResource(id: () => string): HttpResourceRef<Stage | undefined> {
-    return httpResource(() => `${this.base}/${id()}/stage`, { parse: parseStage });
+    return httpResource(() => (id() ? `${this.base}/${id()}/stage` : undefined), {
+      parse: parseStage,
+    });
   }
 
   takeSeat(id: string): Observable<void> {

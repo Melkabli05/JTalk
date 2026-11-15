@@ -1,9 +1,7 @@
 import { LiveAnnouncer } from '@angular/cdk/a11y';
-import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   computed,
-  DestroyRef,
   effect,
   ElementRef,
   inject,
@@ -20,37 +18,31 @@ import { ButtonDirective } from '@openng/optimus-ui/button';
 import { ConfirmDialog } from '@openng/optimus-ui/confirmdialog';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
-import { interval, type Observable } from 'rxjs';
-import { IdentityService } from '@core/auth/identity.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 import { msg } from '@shared/utils/i18n/msg';
-import { saveRequest } from '@shared/utils/save-request';
-import { ParticipantsApiService } from '../../data-access/participants-api.service';
-import { RealtimeService } from '../../data-access/realtime.service';
-import { RoomsApiService } from '../../data-access/rooms-api.service';
-import { StageApiService } from '../../data-access/stage-api.service';
-import type { MemberRole, RoomEdit, Stage } from '../../models/room.model';
 import { languageOf } from '@shared/utils/languages';
-import { blockColors, memberOf } from '../../utils/members';
+import type { MemberRole, RoomEdit, Stage } from '../../models/room.model';
+import { provideRoom, RoomFacade, type RoomExit } from '../../state/room.facade';
 import { AudienceGridComponent } from '../../ui/audience-grid/audience-grid.component';
 import { PersonDialogComponent } from '../../ui/person-dialog/person-dialog.component';
 import { RaisedHandsComponent } from '../../ui/raised-hands/raised-hands.component';
 import { RoomControlsComponent } from '../../ui/room-controls/room-controls.component';
 import { RoomFormDialogComponent } from '../../ui/room-form-dialog/room-form-dialog.component';
 import { StageSeatsComponent } from '../../ui/stage-seats/stage-seats.component';
+import { blockColors, memberOf } from '../../utils/members';
 
-const REFRESH_MS = 3000;
-
-function statusOf(error: unknown): number | undefined {
-  return error instanceof HttpErrorResponse ? error.status : undefined;
-}
+/** What to tell the person, when something other than their own choice took them out of the room. */
+const EXIT_MESSAGES: Readonly<Record<RoomExit, string | null>> = {
+  removed: msg('The host removed you from this room.'),
+  ended: msg('This room has ended.'),
+  closed: null,
+};
 
 /**
- * Container: one room. Joins it, connects its audio, says "still here" and refreshes the stage and the people every few
- * seconds (and at once when the server announces a change), and turns what the person does (take a seat, raise a hand,
- * mute, leave) and what the host does (invite, remove, edit, end) into requests. Being removed by the host or the room
- * ending sends the person back to the hallway.
+ * Container: one room. Everything that keeps the room alive (joining, the audio, refreshing, the requests) is the
+ * `RoomFacade`'s; this page is what is on screen: which person is picked, the dialogs and confirmations, what screen
+ * readers are told, and moving back to the hallway when the facade says the person is out.
  */
 @Component({
   selector: 'app-room-page',
@@ -69,55 +61,45 @@ function statusOf(error: unknown): number | undefined {
     StageSeatsComponent,
     TranslatePipe,
   ],
-  providers: [ConfirmationService, RealtimeService],
+  providers: [ConfirmationService, provideRoom()],
   templateUrl: './room-page.component.html',
   styleUrl: './room-page.component.scss',
 })
 export default class RoomPageComponent {
-  private readonly rooms = inject(RoomsApiService);
-  private readonly participants = inject(ParticipantsApiService);
-  private readonly stages = inject(StageApiService);
-  protected readonly audio = inject(RealtimeService);
+  private readonly facade = inject(RoomFacade);
   private readonly router = inject(Router);
   private readonly confirmation = inject(ConfirmationService);
   private readonly toast = inject(MessageService);
   private readonly i18n = inject(I18n);
-  private readonly identity = inject(IdentityService);
   private readonly announcer = inject(LiveAnnouncer);
-  private left = false;
   private focused = false;
   private previous: Stage | null = null;
   private heardMicrophone = false;
 
   readonly id = input.required<string>();
 
-  protected readonly room = this.rooms.roomResource(this.id);
-  protected readonly stage = this.stages.stageResource(this.id);
-  protected readonly people = this.participants.participantsResource(this.id);
+  protected readonly state = this.facade.state;
+  protected readonly audio = this.facade.audio;
+  protected readonly room = this.state.room;
+  protected readonly members = this.state.members;
+  protected readonly meId = this.state.meId;
+  protected readonly joined = this.state.joined;
+  protected readonly hostId = this.state.hostId;
+  protected readonly isHost = this.state.isHost;
+  protected readonly speakers = this.state.speakers;
+  protected readonly queue = this.state.queue;
+  protected readonly onStage = this.state.onStage;
+  protected readonly handRaised = this.state.handRaised;
+  protected readonly audience = this.state.audience;
+  protected readonly reconnecting = this.state.reconnecting;
+  protected readonly joining = this.facade.joining;
+  protected readonly action = this.facade.action;
+  protected readonly saving = this.facade.saving;
 
   protected readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
-
-  protected readonly members = this.identity.directory;
-  protected readonly meId = this.identity.userId;
-  protected readonly joined = signal(false);
-  protected readonly joining = saveRequest();
-  protected readonly action = saveRequest();
-  protected readonly saving = saveRequest();
   protected readonly editing = signal(false);
   protected readonly selectedId = signal<string | null>(null);
 
-  protected readonly hostId = computed(() =>
-    this.room.hasValue() ? this.room.value().hostId : '',
-  );
-  protected readonly isHost = computed(() => this.meId() !== null && this.meId() === this.hostId());
-  protected readonly speakers = computed(() =>
-    this.stage.hasValue() ? this.stage.value().speakers : [],
-  );
-  protected readonly queue = computed(() =>
-    this.stage.hasValue() ? this.stage.value().handRaiseQueue : [],
-  );
-  protected readonly onStage = computed(() => this.speakers().includes(this.meId() ?? ''));
-  protected readonly handRaised = computed(() => this.queue().includes(this.meId() ?? ''));
   protected readonly target = computed(() =>
     languageOf(this.room.hasValue() ? this.room.value().targetLanguage : ''),
   );
@@ -126,21 +108,6 @@ export default class RoomPageComponent {
   );
   protected readonly colors = computed(() =>
     blockColors(this.room.hasValue() ? this.room.value().targetLanguage : ''),
-  );
-
-  private readonly present = computed(() => (this.people.hasValue() ? this.people.value() : []));
-  protected readonly audience = computed(() => {
-    const ids = new Set(this.present().map((person) => person.userId));
-    const me = this.meId();
-    if (this.joined() && me) {
-      ids.add(me);
-    }
-    return [...ids].filter((id) => !this.speakers().includes(id));
-  });
-  protected readonly reconnecting = computed(() =>
-    this.present()
-      .filter((person) => person.reconnecting)
-      .map((person) => person.userId),
   );
 
   protected readonly selected = computed(() => {
@@ -168,15 +135,10 @@ export default class RoomPageComponent {
   constructor() {
     effect(() => {
       const id = this.id();
-      untracked(() => this.join(id));
+      untracked(() => this.facade.enter(id));
     });
     effect(() => {
-      if (statusOf(this.room.error()) === 404) {
-        untracked(() => this.leaveAfter(msg('This room has ended.')));
-      }
-    });
-    effect(() => {
-      const stage = this.stage.hasValue() ? this.stage.value() : null;
+      const stage = this.state.stage.hasValue() ? this.state.stage.value() : null;
       if (stage) {
         untracked(() => this.announceChanges(stage));
       }
@@ -204,58 +166,51 @@ export default class RoomPageComponent {
         );
       }
     });
-    interval(REFRESH_MS)
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => this.refresh());
-    this.audio.roomEvents.pipe(takeUntilDestroyed()).subscribe(() => this.reloadAll());
-    inject(DestroyRef).onDestroy(() => this.sayGoodbye());
+    this.facade.exited.pipe(takeUntilDestroyed()).subscribe((reason) => this.leaveBecause(reason));
   }
 
   protected leave(): void {
-    this.sayGoodbye();
+    this.facade.leave();
     void this.router.navigate(['/']);
   }
 
   protected raiseHand(): void {
-    this.run(this.stages.raiseHand(this.id()), msg('Could not raise your hand. Please try again.'));
-  }
-
-  protected toggleMic(): void {
-    void this.audio.toggleMicrophone();
-  }
-
-  protected enableSound(): void {
-    void this.audio.enableSound();
-  }
-
-  protected retryAudio(): void {
-    void this.audio.retry();
+    this.facade.raiseHand();
   }
 
   protected lowerHand(): void {
-    this.run(this.stages.lowerHand(this.id()), msg('Could not lower your hand. Please try again.'));
+    this.facade.lowerHand();
   }
 
   protected takeSeat(): void {
-    this.run(this.stages.takeSeat(this.id()), msg('Could not take the seat. Please try again.'));
+    this.facade.takeSeat();
+  }
+
+  protected toggleMic(): void {
+    this.facade.toggleMicrophone();
+  }
+
+  protected enableSound(): void {
+    this.facade.enableSound();
+  }
+
+  protected retryAudio(): void {
+    this.facade.reconnectAudio();
   }
 
   protected invite(userId: string): void {
     this.selectedId.set(null);
-    this.run(
-      this.stages.promote(this.id(), userId),
-      msg('Could not invite them. Please try again.'),
-    );
+    this.facade.invite(userId);
   }
 
   protected demote(userId: string): void {
     this.selectedId.set(null);
-    this.run(this.stages.demote(this.id(), userId), msg('Could not move them. Please try again.'));
+    this.facade.demote(userId);
   }
 
   protected stepDown(): void {
     this.selectedId.set(null);
-    this.run(this.stages.leaveSeat(this.id()), msg('Could not step down. Please try again.'));
+    this.facade.stepDown();
   }
 
   protected remove(userId: string): void {
@@ -268,11 +223,7 @@ export default class RoomPageComponent {
       acceptLabel: this.i18n.t('Remove'),
       rejectLabel: this.i18n.t('Cancel'),
       acceptButtonProps: { severity: 'danger' },
-      accept: () =>
-        this.run(
-          this.participants.remove(this.id(), userId),
-          msg('Could not remove them. Please try again.'),
-        ),
+      accept: () => this.facade.remove(userId),
     });
   }
 
@@ -284,86 +235,22 @@ export default class RoomPageComponent {
       acceptLabel: this.i18n.t('End the room'),
       rejectLabel: this.i18n.t('Cancel'),
       acceptButtonProps: { severity: 'danger' },
-      accept: () =>
-        this.run(
-          this.rooms.close(this.id()),
-          msg('Could not end the room. Please try again.'),
-          () => {
-            this.left = true;
-            void this.router.navigate(['/']);
-          },
-        ),
+      accept: () => this.facade.close(),
     });
   }
 
   protected edit(change: RoomEdit): void {
-    this.saving.run(this.rooms.update(this.id(), change), {
-      next: () => {
-        this.editing.set(false);
-        this.room.reload();
-        this.toast.add({ severity: 'success', summary: this.i18n.t('The room was updated.') });
-      },
-      failure: msg('Could not save the room. Please try again.'),
+    this.facade.edit(change, () => {
+      this.editing.set(false);
+      this.toast.add({ severity: 'success', summary: this.i18n.t('The room was updated.') });
     });
   }
 
-  private join(id: string): void {
-    this.joined.set(false);
-    this.left = false;
-    this.joining.run(this.participants.join(id), {
-      next: (session) => {
-        this.joined.set(true);
-        void this.audio.connect(session);
-      },
-      failure: (error) =>
-        statusOf(error) === 403
-          ? msg('The host removed you from this room.')
-          : statusOf(error) === 404
-            ? msg('This room has ended.')
-            : msg('Could not join the room. Please try again.'),
-    });
-  }
-
-  private refresh(): void {
-    if (!this.joined()) {
-      return;
+  private leaveBecause(reason: RoomExit): void {
+    const summary = EXIT_MESSAGES[reason];
+    if (summary) {
+      this.toast.add({ severity: 'warn', summary: this.i18n.t(summary) });
     }
-    this.participants.heartbeat(this.id()).subscribe({
-      error: (error: unknown) => {
-        if (statusOf(error) === 403) {
-          this.leaveAfter(msg('The host removed you from this room.'));
-        } else if (statusOf(error) === 404) {
-          this.leaveAfter(msg('This room has ended.'));
-        }
-      },
-    });
-    this.reloadAll();
-  }
-
-  private reloadAll(): void {
-    this.room.reload();
-    this.stage.reload();
-    this.people.reload();
-  }
-
-  private run(request: Observable<void>, failure: string, after?: () => void): void {
-    this.action.run(request, {
-      next: () => {
-        after?.();
-        this.reloadAll();
-      },
-      failure,
-    });
-  }
-
-  private leaveAfter(summary: string): void {
-    if (this.left) {
-      return;
-    }
-    this.left = true;
-    this.joined.set(false);
-    void this.audio.disconnect();
-    this.toast.add({ severity: 'warn', summary: this.i18n.t(summary) });
     void this.router.navigate(['/']);
   }
 
@@ -413,14 +300,6 @@ export default class RoomPageComponent {
         this.i18n.t(on ? msg('Your microphone is on.') : msg('Your microphone is off.')),
         'polite',
       );
-    }
-  }
-
-  private sayGoodbye(): void {
-    void this.audio.disconnect();
-    if (this.joined() && !this.left) {
-      this.left = true;
-      this.participants.leave(this.id()).subscribe({ error: () => undefined });
     }
   }
 }

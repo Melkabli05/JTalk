@@ -116,6 +116,8 @@ src/
         pages/<x>-page/     route-level containers
         ui/<component>/     presentational components
         data-access/        <feature>-api.service, adapters/ (DTO <-> model)
+        state/              <x>.store (the feature's state as signals) and <x>.facade (what a page injects: the state,
+                            the use cases, what keeps the feature alive); only when a feature has state worth it, e.g. rooms
         models/             <x>.model (what the app uses), <x>.dto (what the API sends)
         <feature>.routes.ts routes, loaded with loadChildren at the feature boundary
         <feature>.ts        public API: the only file other code imports
