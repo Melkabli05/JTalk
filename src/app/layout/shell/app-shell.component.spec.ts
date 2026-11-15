@@ -23,8 +23,17 @@ describe('AppShellComponent (container)', () => {
       (b) => b.textContent?.includes(name) || b.getAttribute('aria-label')?.includes(name),
     );
 
+  const settings = () => document.querySelector<HTMLElement>('.settings');
+  async function openAccount() {
+    root().querySelector<HTMLButtonElement>('header button.account')!.click();
+    await vi.waitFor(() => expect(settings()).not.toBeNull());
+  }
+  const settingsButton = (name: string) =>
+    [...(settings()?.querySelectorAll('button') ?? [])].find((b) => b.textContent?.includes(name));
+  const toggle = (label: string) =>
+    settings()!.querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)!;
   const localeOption = (name: string) =>
-    [...root().querySelectorAll<HTMLElement>('p-selectbutton [role="button"]')].find(
+    [...(settings()?.querySelectorAll<HTMLElement>('p-selectbutton [role="button"]') ?? [])].find(
       (option) => option.textContent?.trim() === name,
     );
 
@@ -77,52 +86,66 @@ describe('AppShellComponent (container)', () => {
     expect(brand.getAttribute('href')).toBe('/');
   });
 
+  it('keeps the banner lean: the brand, the navigation and one account button', async () => {
+    await render();
+
+    expect(
+      [...root().querySelectorAll('header button')].map((b) => b.getAttribute('aria-label')),
+    ).toEqual(['Profile and settings']);
+  });
+
   it('offers no sign-out to a visitor', async () => {
     await render();
-    expect(button('Sign out')).toBeUndefined();
+    await openAccount();
+    expect(settingsButton('Sign out')).toBeUndefined();
   });
 
   it('offers sign-out to a signed-in user', async () => {
     sessionStorage.setItem('jtalk:token', 'jwt');
     await render();
-    expect(button('Sign out')).toBeDefined();
+    await openAccount();
+    expect(settingsButton('Sign out')).toBeDefined();
   });
 
-  it('explains the icon-only buttons in a tooltip when the pointer rests on them', async () => {
+  it('explains the icon-only account button in a tooltip when the pointer rests on it', async () => {
     await render();
 
-    button('Switch to dark theme')!.dispatchEvent(new MouseEvent('mouseenter'));
+    button('Profile and settings')!.dispatchEvent(new MouseEvent('mouseenter'));
 
     await vi.waitFor(() =>
-      expect(document.querySelector('.p-tooltip')?.textContent).toContain('Switch to dark theme'),
+      expect(document.querySelector('.p-tooltip')?.textContent).toContain('Profile and settings'),
     );
   });
 
-  it('switches the color scheme from the theme button, and relabels it', async () => {
+  it('switches the color scheme from the dark theme switch', async () => {
     await render();
+    await openAccount();
     const scheme = TestBed.inject(ColorSchemeService);
+    expect(toggle('Dark theme').checked).toBe(false);
 
-    button('Switch to dark theme')!.click();
+    toggle('Dark theme').click();
     await fixture.whenStable();
 
     expect(scheme.isDark()).toBe(true);
-    expect(button('Switch to light theme')).toBeDefined();
+    expect(toggle('Dark theme').checked).toBe(true);
   });
 
-  it('switches the reading direction from the direction button, and relabels it', async () => {
+  it('switches the reading direction from the right-to-left switch', async () => {
     await render();
+    await openAccount();
     const direction = TestBed.inject(DirectionService);
 
-    button('Switch to right-to-left layout')!.click();
+    toggle('Right-to-left').click();
     await fixture.whenStable();
 
     expect(direction.isRtl()).toBe(true);
     expect(document.documentElement.dir).toBe('rtl');
-    expect(button('Switch to left-to-right layout')).toBeDefined();
+    expect(toggle('Right-to-left').checked).toBe(true);
   });
 
-  it('switches to Arabic from the language button: its words, its direction, and a way back', async () => {
+  it('switches to Arabic from the language switch: its words, its direction, and a way back', async () => {
     await render();
+    await openAccount();
     const i18n = TestBed.inject(I18n);
 
     localeOption('العربية')!.click();
@@ -149,12 +172,12 @@ describe('AppShellComponent (container)', () => {
     await render();
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
 
-    button('Sign out')!.click();
+    await openAccount();
+    settingsButton('Sign out')!.click();
     await fixture.whenStable();
 
     expect(TestBed.inject(AuthService).isAuthenticated()).toBe(false);
     expect(navigate).toHaveBeenCalledWith('/');
-    expect(button('Sign out')).toBeUndefined();
   });
 
   it('has a primary navigation landmark with real links', async () => {
@@ -289,6 +312,13 @@ describe('AppShellComponent profile gate (development builds)', () => {
   let fixture: ComponentFixture<AppShellComponent>;
   const root = () => fixture.nativeElement as HTMLElement;
   const page = () => document.body;
+  const settings = () => document.querySelector<HTMLElement>('.settings');
+  async function openAccount() {
+    root().querySelector<HTMLButtonElement>('header button.account')!.click();
+    await vi.waitFor(() => expect(settings()).not.toBeNull());
+  }
+  const settingsButton = (name: string) =>
+    [...(settings()?.querySelectorAll('button') ?? [])].find((b) => b.textContent?.includes(name));
 
   beforeEach(() => {
     sessionStorage.clear();
@@ -336,10 +366,11 @@ describe('AppShellComponent profile gate (development builds)', () => {
     await fixture.whenStable();
 
     expect(root().querySelector('router-outlet')).not.toBeNull();
-    expect(root().querySelector('header')?.textContent).toContain('Mona');
+    await openAccount();
+    expect(settings()?.textContent).toContain('Mona');
   });
 
-  it('shows the name of a person who has a profile, straight into the app', async () => {
+  it('shows who the person is in the account popover, straight into the app', async () => {
     localStorage.setItem(
       'jtalk:profile',
       JSON.stringify({ id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en' }),
@@ -348,10 +379,11 @@ describe('AppShellComponent profile gate (development builds)', () => {
 
     expect(page().textContent).not.toContain('Create your profile');
     expect(root().querySelector('router-outlet')).not.toBeNull();
-    expect(root().querySelector('header')?.textContent).toContain('Mona');
+    await openAccount();
+    expect(settings()?.textContent).toContain('Mona');
   });
 
-  it('shows the picture the person chose beside their name', async () => {
+  it('shows the picture the person chose on the account button', async () => {
     localStorage.setItem(
       'jtalk:profile',
       JSON.stringify({
@@ -364,32 +396,31 @@ describe('AppShellComponent profile gate (development builds)', () => {
     );
     await render();
 
-    expect(root().querySelector('header .profile img')?.getAttribute('src')).toBe(
+    expect(root().querySelector('header .account img')?.getAttribute('src')).toBe(
       'avatars/avatar-06.svg',
     );
   });
 
-  it('shows a plain icon beside the name of someone with no picture', async () => {
+  it('shows a plain icon on the account button of someone with no picture', async () => {
     localStorage.setItem(
       'jtalk:profile',
       JSON.stringify({ id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en' }),
     );
     await render();
 
-    expect(root().querySelector('header .profile img')).toBeNull();
-    expect(root().querySelector('header .profile .pi-user')).not.toBeNull();
+    expect(root().querySelector('header .account img')).toBeNull();
+    expect(root().querySelector('header .account .pi-user')).not.toBeNull();
   });
 
-  it('opens the profile for editing from the name, and can close it again', async () => {
+  it('opens the profile for editing from the account popover, and can close it again', async () => {
     localStorage.setItem(
       'jtalk:profile',
       JSON.stringify({ id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en' }),
     );
     await render();
 
-    [...root().querySelectorAll<HTMLButtonElement>('header button')]
-      .find((b) => b.textContent?.includes('Mona'))!
-      .click();
+    await openAccount();
+    settingsButton('Edit profile')!.click();
     await fixture.whenStable();
     expect(page().textContent).toContain('Your profile');
     expect(page().querySelector('app-profile-form input')?.getAttribute('id')).toBeTruthy();

@@ -85,29 +85,30 @@ describe('ProfileFormComponent (presentational)', () => {
     });
   });
 
-  it('previews how others will see the person, as they type and choose', async () => {
+  it('shows the chosen picture checked in the picker, which is the only preview', async () => {
     await render();
-    const preview = () =>
-      root().querySelector('.preview')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
-    expect(preview()).toContain('Your name');
-    expect(preview()).toContain('This is how others will see you.');
+    const checked = () =>
+      root().querySelector<HTMLInputElement>('app-avatar-picker input[type="radio"]:checked')
+        ?.value;
+    expect(checked()).toBe('avatar-01');
+    expect(root().querySelector('.preview')).toBeNull();
 
-    await type('Your name', 'Mona');
     root().querySelectorAll<HTMLInputElement>('app-avatar-picker input[type="radio"]')[2].click();
     await fixture.whenStable();
 
-    expect(preview()).toContain('Mona');
-    expect(preview()).toContain('Arabic');
-    expect(preview()).toContain('English');
-    expect(root().querySelector('.preview img')?.getAttribute('src')).toBe('avatars/avatar-03.svg');
+    expect(checked()).toBe('avatar-03');
   });
 
   it('keeps the picture of someone editing their profile, and falls back when theirs is gone', async () => {
     await render({ profile: { ...MONA, avatar: 'avatar-09' } });
-    expect(root().querySelector('.preview img')?.getAttribute('src')).toBe('avatars/avatar-09.svg');
+    expect(root().querySelector<HTMLInputElement>('app-avatar-picker input:checked')?.value).toBe(
+      'avatar-09',
+    );
 
     await render({ profile: { ...MONA, avatar: 'avatar-99' } });
-    expect(root().querySelector('.preview img')?.getAttribute('src')).toBe('avatars/avatar-01.svg');
+    expect(root().querySelector<HTMLInputElement>('app-avatar-picker input:checked')?.value).toBe(
+      'avatar-01',
+    );
   });
 
   it('edits an existing profile: it starts from it and says Save', async () => {

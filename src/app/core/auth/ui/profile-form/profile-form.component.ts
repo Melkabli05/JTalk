@@ -1,6 +1,5 @@
-import { Component, computed, input, linkedSignal, output } from '@angular/core';
+import { Component, input, linkedSignal, output } from '@angular/core';
 import { FormField, FormRoot, form, maxLength, required } from '@angular/forms/signals';
-import { Avatar } from '@openng/optimus-ui/avatar';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { AvatarPickerComponent } from '@shared/ui/avatar-picker/avatar-picker.component';
@@ -9,10 +8,10 @@ import {
   type SelectOption,
 } from '@shared/ui/select-field/select-field.component';
 import { TextFieldComponent } from '@shared/ui/text-field/text-field.component';
-import { avatarOrDefault, avatarUrl } from '@shared/utils/avatars';
+import { avatarOrDefault } from '@shared/utils/avatars';
 import { formSubmission } from '@shared/utils/form-submission';
 import { msg } from '@shared/utils/i18n/msg';
-import { LANGUAGES, languageOf } from '@shared/utils/languages';
+import { LANGUAGES } from '@shared/utils/languages';
 import type { Person, ProfileDraft } from '../../identity.models';
 
 interface ProfileFormModel {
@@ -23,13 +22,12 @@ interface ProfileFormModel {
 }
 
 /**
- * Presentational profile form: a name, a picture, what you speak and what you are learning, with a preview of how others
- * will see you. It emits a valid draft and never saves it.
+ * Presentational profile form: a name, a picture, what you speak and what you are learning. The chosen picture, ringed and
+ * checked in the picker, is the preview. It emits a valid draft and never saves it.
  */
 @Component({
   selector: 'app-profile-form',
   imports: [
-    Avatar,
     AvatarPickerComponent,
     ButtonDirective,
     FormField,
@@ -60,16 +58,6 @@ export class ProfileFormComponent {
     nativeLanguage: this.profile()?.nativeLanguage ?? 'ar',
     learning: this.profile()?.learning ?? 'en',
   }));
-
-  protected readonly preview = computed(() => {
-    const { name, avatar, nativeLanguage, learning } = this.model();
-    return {
-      name: name.trim(),
-      picture: avatarUrl(avatar),
-      native: languageOf(nativeLanguage),
-      learning: languageOf(learning),
-    };
-  });
 
   protected readonly profileForm = form(
     this.model,

@@ -1,18 +1,4 @@
 <form class="form" [formRoot]="profileForm">
-  <div class="preview" aria-hidden="true">
-    @if (preview().picture; as picture) {
-      <p-avatar shape="circle" size="xlarge" [image]="picture" />
-    }
-    <div class="who">
-      <strong class="name">{{ preview().name || ('Your name' | t) }}</strong>
-      <span class="languages">
-        {{ preview().native.flag }} {{ preview().native.name | t }} → {{ preview().learning.flag }}
-        {{ preview().learning.name | t }}
-      </span>
-      <span class="caption">{{ 'This is how others will see you.' | t }}</span>
-    </div>
-  </div>
-
   <app-text-field
     [label]="'Your name' | t"
     autocomplete="nickname"

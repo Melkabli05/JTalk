@@ -22,12 +22,14 @@ describe('ProfileDialogComponent (presentational)', () => {
     await render({ visible: true });
 
     expect(text()).toContain('Create your profile');
-    expect(text()).toContain('Tell us who you are before you join a room.');
+    expect(text()).toContain('Pick a name and a face.');
     expect(closeButton()).toBeNull();
   });
 
-  it('shows an existing profile for editing, and can be closed', async () => {
+  it('shows an existing profile for editing, without the welcome, and can be closed', async () => {
     await render({ visible: true, profile: MONA, cancellable: true });
+
+    expect(text()).not.toContain('Pick a name and a face.');
 
     expect(text()).toContain('Your profile');
     expect(closeButton()).not.toBeNull();

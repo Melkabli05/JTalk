@@ -24,11 +24,15 @@ import { avatarUrl } from '@shared/utils/avatars';
 import { AriaCurrentDirective } from '@shared/directives/aria-current.directive';
 import { BrandMarkComponent } from '@shared/ui/brand-mark/brand-mark.component';
 import { LocaleService } from '@core/config/locale.service';
+import { FormsModule } from '@angular/forms';
 import { Avatar } from '@openng/optimus-ui/avatar';
 import { LocaleSwitchComponent } from '@shared/ui/locale-switch/locale-switch.component';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
+import { languageOf } from '@shared/utils/languages';
+import { Popover } from '@openng/optimus-ui/popover';
+import { ToggleSwitch } from '@openng/optimus-ui/toggleswitch';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 
 const NAV_ITEMS: MenuItem[] = [
@@ -71,7 +75,10 @@ function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wid
   selector: 'app-shell',
   imports: [
     Avatar,
+    FormsModule,
+    Popover,
     ProfileDialogComponent,
+    ToggleSwitch,
     Tooltip,
     TranslatePipe,
     RouterOutlet,
@@ -99,6 +106,10 @@ export class AppShellComponent {
   protected readonly appName = APP_NAME;
   protected readonly myPicture = computed(() => avatarUrl(this.identity.profile()?.avatar));
   protected readonly editingProfile = signal(false);
+  protected readonly myLanguages = computed(() => {
+    const me = this.identity.profile();
+    return me ? `${languageOf(me.nativeLanguage).flag} → ${languageOf(me.learning).flag}` : '';
+  });
   protected readonly profileOpen = computed(
     () => this.identity.needsProfile() || this.editingProfile(),
   );

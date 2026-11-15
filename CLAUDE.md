@@ -177,6 +177,17 @@ and a focus ring on the card, so there is no second Join button and no "Live" la
 cards of equal height. Empty is two different states, said differently: no rooms at all ("Quiet right now", and the header's single Start a room button, not a second one), and a language with no
 rooms ("Nothing in this language yet" with Show all rooms). Loading is skeleton cards.
 
+### The banner and the profile popup
+
+Banner (`layout/shell`, the `<header>` landmark): the brand, the navigation and one account button, on one row at every width (the menubar never collapses, `breakpoint="0px"`,
+because a hamburger over a single link hides more than it saves). The account button (the person's picture, or a user icon) opens a `p-popover` with who you are and an Edit profile
+button, then the few preferences nobody needs on every screen: language (`app-locale-switch`), dark theme and right-to-left (`p-toggleswitch`, each with its own `ariaLabel`), and Sign out
+when signed in. Add a preference there, not as another icon in the bar. (Source: general guidance to keep a top bar lean and move rarely used settings behind the account, from
+mobile-navigation write-ups; none addressed this placement directly.)
+Profile popup (`profile-dialog` and `profile-form`): creating and editing are one form. Creating opens with one human line ("Pick a name and a face. People in the rooms will see them.");
+editing has no welcome, since the person is already in. No preview card: the picture ringed and checked in the picker is the preview, and a second copy of the name and languages only
+repeated the form (and was unreadable in dark mode, a light card holding light text). Fields in order: name, picture, what you speak, what you are learning.
+
 ### Not looking generated
 
 Rules we hold ourselves to (sources: [DEV: fix the "AI-generated" look](https://dev.to/alanwest/how-to-fix-the-ai-generated-look-in-your-frontend-1ahh), [Clubhouse room case study](https://medium.com/design-bootcamp/case-study-redefining-the-room-experience-for-clubhouse-a3bcd6d3081a)): no box

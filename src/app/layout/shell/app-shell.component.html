@@ -10,7 +10,7 @@
 
 <header class="header">
   <nav [attr.aria-label]="'Primary' | t" appAriaCurrent>
-    <p-menubar [model]="navItems()" [ariaLabel]="'Primary' | t">
+    <p-menubar breakpoint="0px" [model]="navItems()" [ariaLabel]="'Primary' | t">
       <ng-template #start>
         <a class="brand" routerLink="/">
           <app-brand-mark />
@@ -18,70 +18,82 @@
         </a>
       </ng-template>
       <ng-template #end>
-        @let directionLabel =
-          direction.isRtl()
-            ? ('Switch to left-to-right layout' | t)
-            : ('Switch to right-to-left layout' | t);
-        @let themeLabel =
-          colorScheme.isDark() ? ('Switch to light theme' | t) : ('Switch to dark theme' | t);
-        <div class="controls">
-          @if (identity.devMode && identity.profile(); as me) {
-            <button
-              pButton
-              type="button"
-              class="profile"
-              severity="secondary"
-              [text]="true"
-              [attr.aria-label]="'Your profile' | t"
-              [pTooltip]="'Your profile' | t"
-              tooltipPosition="bottom"
-              (click)="editingProfile.set(true)"
-            >
-              @if (myPicture(); as picture) {
-                <p-avatar shape="circle" size="normal" aria-hidden="true" [image]="picture" />
-              } @else {
-                <i class="pi pi-user" aria-hidden="true"></i>
-              }
-              <span>{{ me.name }}</span>
-            </button>
+        <button
+          pButton
+          type="button"
+          class="account"
+          severity="secondary"
+          aria-haspopup="dialog"
+          [rounded]="true"
+          [text]="true"
+          [attr.aria-label]="'Profile and settings' | t"
+          [pTooltip]="'Profile and settings' | t"
+          tooltipPosition="bottom"
+          (click)="account.toggle($event)"
+        >
+          @if (identity.devMode && myPicture(); as picture) {
+            <p-avatar shape="circle" size="normal" aria-hidden="true" [image]="picture" />
+          } @else {
+            <i class="pi pi-user" aria-hidden="true"></i>
           }
-          <app-locale-switch
-            [locale]="locales.locale()"
-            (localeChange)="locales.switchTo($event)"
-          />
-          <button
-            pButton
-            type="button"
-            icon="pi pi-arrow-right-arrow-left"
-            [attr.aria-label]="directionLabel"
-            [pTooltip]="directionLabel"
-            tooltipPosition="bottom"
-            severity="secondary"
-            [text]="true"
-            (click)="direction.toggle()"
-          ></button>
-          <button
-            pButton
-            type="button"
-            [icon]="colorScheme.isDark() ? 'pi pi-sun' : 'pi pi-moon'"
-            [attr.aria-label]="themeLabel"
-            [pTooltip]="themeLabel"
-            tooltipPosition="bottom"
-            severity="secondary"
-            [text]="true"
-            (click)="colorScheme.toggle()"
-          ></button>
-          @if (auth.isAuthenticated()) {
-            <button
-              pButton
-              type="button"
-              [label]="'Sign out' | t"
-              severity="secondary"
-              [outlined]="true"
-              (click)="signOut()"
-            ></button>
-          }
-        </div>
+        </button>
+        <p-popover #account [ariaLabel]="'Profile and settings' | t">
+          <div class="settings">
+            @if (identity.devMode && identity.profile(); as me) {
+              <div class="me">
+                @if (myPicture(); as picture) {
+                  <p-avatar shape="circle" size="large" aria-hidden="true" [image]="picture" />
+                }
+                <div class="who">
+                  <strong>{{ me.name }}</strong>
+                  <span class="muted">{{ myLanguages() }}</span>
+                </div>
+                <button
+                  pButton
+                  type="button"
+                  size="small"
+                  severity="secondary"
+                  [outlined]="true"
+                  [label]="'Edit profile' | t"
+                  (click)="account.hide(); editingProfile.set(true)"
+                ></button>
+              </div>
+            }
+            <div class="row">
+              <span>{{ 'Language' | t }}</span>
+              <app-locale-switch
+                [locale]="locales.locale()"
+                (localeChange)="locales.switchTo($event)"
+              />
+            </div>
+            <div class="row">
+              <span aria-hidden="true">{{ 'Dark theme' | t }}</span>
+              <p-toggleswitch
+                [ariaLabel]="'Dark theme' | t"
+                [ngModel]="colorScheme.isDark()"
+                (ngModelChange)="colorScheme.toggle()"
+              />
+            </div>
+            <div class="row">
+              <span aria-hidden="true">{{ 'Right-to-left' | t }}</span>
+              <p-toggleswitch
+                [ariaLabel]="'Right-to-left' | t"
+                [ngModel]="direction.isRtl()"
+                (ngModelChange)="direction.toggle()"
+              />
+            </div>
+            @if (auth.isAuthenticated()) {
+              <button
+                pButton
+                type="button"
+                severity="secondary"
+                [outlined]="true"
+                [label]="'Sign out' | t"
+                (click)="account.hide(); signOut()"
+              ></button>
+            }
+          </div>
+        </p-popover>
       </ng-template>
     </p-menubar>
   </nav>

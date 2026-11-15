@@ -1,7 +1,6 @@
 import { Component, input, model, output } from '@angular/core';
 import { Dialog } from '@openng/optimus-ui/dialog';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import { BrandMarkComponent } from '@shared/ui/brand-mark/brand-mark.component';
 import type { Person, ProfileDraft } from '../../identity.models';
 import { ProfileFormComponent } from '../profile-form/profile-form.component';
 
@@ -11,7 +10,7 @@ import { ProfileFormComponent } from '../profile-form/profile-form.component';
  */
 @Component({
   selector: 'app-profile-dialog',
-  imports: [BrandMarkComponent, Dialog, ProfileFormComponent, TranslatePipe],
+  imports: [Dialog, ProfileFormComponent, TranslatePipe],
   template: `
     <p-dialog
       [modal]="true"
@@ -24,14 +23,11 @@ import { ProfileFormComponent } from '../profile-form/profile-form.component';
       (visibleChange)="visible.set($event)"
     >
       @if (visible()) {
-        <div class="intro">
-          <app-brand-mark aria-hidden="true" />
-          <p>
-            {{
-              'Tell us who you are before you join a room. For now this is only for testing.' | t
-            }}
+        @if (!profile()) {
+          <p class="intro">
+            {{ 'Pick a name and a face. People in the rooms will see them.' | t }}
           </p>
-        </div>
+        }
         <app-profile-form
           [profile]="profile()"
           [cancellable]="cancellable()"
@@ -43,21 +39,8 @@ import { ProfileFormComponent } from '../profile-form/profile-form.component';
   `,
   styles: `
     .intro {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-block-end: 1.25rem;
-      padding-block-end: 1rem;
-      border-block-end: 1px solid var(--p-content-border-color);
-
-      app-brand-mark {
-        font-size: 1.75rem;
-      }
-
-      p {
-        margin: 0;
-        color: var(--p-text-muted-color);
-      }
+      margin: 0 0 1.25rem;
+      color: var(--p-text-muted-color);
     }
   `,
 })

@@ -4,40 +4,6 @@
   gap: 1rem;
 }
 
-.preview {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-jtalk-radius-card);
-  background: var(--p-surface-50);
-}
-
-.who {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  min-width: 0;
-}
-
-.name {
-  overflow: hidden;
-  font-size: var(--p-jtalk-type-section);
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.languages {
-  font-weight: 600;
-}
-
-.caption {
-  color: var(--p-text-muted-color);
-  font-size: var(--p-jtalk-type-secondary);
-}
-
 .pair {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
