@@ -62,17 +62,17 @@ describe('StageSeatsComponent (presentational)', () => {
     );
   });
 
-  it('names each open seat by its number', async () => {
+  it('names the open seat by its number', async () => {
     await render();
 
     expect(
       [...root().querySelectorAll('.seat')].map((seat) => seat.getAttribute('aria-label')),
-    ).toEqual(['Take free seat 3 of 4', 'Take free seat 4 of 4']);
+    ).toEqual(['Take free seat 3 of 4']);
   });
 
-  it('offers one open seat per seat nobody has taken', async () => {
+  it('offers one open seat while any seat is free, however many are', async () => {
     await render();
-    expect(root().querySelectorAll('.seat')).toHaveLength(2);
+    expect(root().querySelectorAll('.seat')).toHaveLength(1);
 
     await render({ speakers: ['h-1', 's-2'], seats: 2 });
     expect(root().querySelectorAll('.seat')).toHaveLength(0);

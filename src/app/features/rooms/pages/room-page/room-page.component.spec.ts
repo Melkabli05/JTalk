@@ -58,10 +58,21 @@ describe('RoomPageComponent (container)', () => {
   const buttons = (within: ParentNode = page()) => [
     ...within.querySelectorAll<HTMLButtonElement>('button'),
   ];
+  const nameOf = (b: Element) => b.getAttribute('aria-label') ?? b.textContent?.trim() ?? '';
   const press = (label: string, within: ParentNode = page()) =>
     buttons(within)
-      .find((b) => b.textContent?.trim().includes(label))!
+      .find((b) => nameOf(b).includes(label))!
       .click();
+  const controlNames = () =>
+    [...root().querySelectorAll('app-room-controls button')].map((b) => nameOf(b));
+  const pressHostAction = async (label: string) => {
+    press('More actions', root().querySelector('app-room-controls')!);
+    await settle();
+    await new Promise((resolve) => setTimeout(resolve));
+    [...document.querySelectorAll<HTMLElement>('.p-menu-item-link')]
+      .find((item) => item.textContent?.includes(label))!
+      .click();
+  };
   const pressExactlyLast = (label: string) =>
     buttons()
       .filter((b) => b.textContent?.trim() === label)
@@ -169,7 +180,7 @@ describe('RoomPageComponent (container)', () => {
     expect(root().querySelector('h1')?.textContent).toBe('Spanish for beginners');
     expect(root().textContent).toContain('Ordering food');
     expect(root().querySelectorAll('app-stage-seats .person')).toHaveLength(1);
-    expect(root().querySelectorAll('app-stage-seats .seat')).toHaveLength(3);
+    expect(root().querySelectorAll('app-stage-seats .seat')).toHaveLength(1);
     expect(root().querySelector('app-audience-grid')).toBeNull();
 
     await openAudience();
@@ -178,11 +189,11 @@ describe('RoomPageComponent (container)', () => {
     ).not.toBeNull();
   });
 
-  it('shows the live room and its details beside the stage, and the requests to the host only', async () => {
+  it('says what the room is and who hosts it, and shows the requests to the host only', async () => {
     await open();
 
     expect(root().querySelector('.live')?.textContent).toContain('Live');
-    expect(root().querySelector('.details')?.textContent).toContain('Host');
+    expect(root().querySelector('.meta')?.textContent).toContain('Hosted by h-1');
     expect(root().querySelector('app-raised-hands')).toBeNull();
   });
 
@@ -210,19 +221,18 @@ describe('RoomPageComponent (container)', () => {
     const headings = [...root().querySelectorAll('h2')].map((h) =>
       h.textContent?.replace(/\s+/g, ' ').trim(),
     );
-    expect(headings).toHaveLength(3);
+    expect(headings).toHaveLength(2);
     expect(headings[0]).toBe('On stage 1/4');
     expect(headings[1]).toContain('Listeners');
-    expect(headings[2]).toBe('Room details');
     expect(root().querySelectorAll('section[aria-labelledby]')).toHaveLength(1);
-    expect(root().querySelectorAll('p-card[aria-labelledby]')).toHaveLength(1);
+    expect(root().querySelectorAll('p-card[aria-labelledby]')).toHaveLength(0);
   });
 
   it('gives a listener a hand to raise, and no host controls or invitations', async () => {
     await open();
 
-    expect(root().querySelector('app-room-controls')?.textContent).toContain('Raise hand');
-    expect(root().querySelector('app-room-controls')?.textContent).not.toContain('End the room');
+    expect(controlNames()).toContain('Raise hand');
+    expect(controlNames()).not.toContain('More actions');
     expect(root().querySelector('app-raised-hands button')).toBeNull();
   });
 
@@ -234,7 +244,11 @@ describe('RoomPageComponent (container)', () => {
     await settle();
 
     expect(sent('POST', `${BASE}/stage/raise-hand`)).toBe(true);
-    expect(root().querySelector('app-room-controls')?.textContent).toContain('Cancel request');
+    expect(
+      root()
+        .querySelector('app-room-controls [aria-label="Raise hand"]')
+        ?.getAttribute('aria-pressed'),
+    ).toBe('true');
   });
 
   it('takes a free seat', async () => {
@@ -246,7 +260,7 @@ describe('RoomPageComponent (container)', () => {
 
     expect(sent('POST', `${BASE}/stage/join`)).toBe(true);
     expect(root().querySelectorAll('app-stage-seats .person')).toHaveLength(2);
-    expect(root().querySelector('app-room-controls')?.textContent).not.toContain('Raise hand');
+    expect(controlNames()).not.toContain('Raise hand');
   });
 
   it('names each open seat by its number, for screen readers', async () => {
@@ -256,7 +270,7 @@ describe('RoomPageComponent (container)', () => {
       [...root().querySelectorAll('app-stage-seats .seat')].map((s) =>
         s.getAttribute('aria-label'),
       ),
-    ).toEqual(['Take free seat 2 of 4', 'Take free seat 3 of 4', 'Take free seat 4 of 4']);
+    ).toEqual(['Take free seat 2 of 4']);
   });
 
   it('shows a message, and keeps the room, when an action fails', async () => {
@@ -341,8 +355,7 @@ describe('RoomPageComponent (container)', () => {
     it('offers the room controls, and an Invite for each raised hand', async () => {
       await open(asHost);
 
-      expect(root().querySelector('app-room-controls')?.textContent).toContain('End the room');
-      expect(root().querySelector('app-room-controls')?.textContent).toContain('Edit the room');
+      expect(controlNames()).toContain('More actions');
       expect(root().querySelector('app-raised-hands button')?.getAttribute('aria-label')).toBe(
         'Invite b-1 to the stage',
       );
@@ -380,7 +393,7 @@ describe('RoomPageComponent (container)', () => {
     it('ends the room only after asking, and goes back to the hallway', async () => {
       await open(asHost);
 
-      press('End the room', root().querySelector('app-room-controls')!);
+      await pressHostAction('End the room');
       await settle();
       expect(page().textContent).toContain('The room closes for everyone in it.');
       expect(sent('DELETE', BASE)).toBe(false);
@@ -395,7 +408,7 @@ describe('RoomPageComponent (container)', () => {
     it('edits the room', async () => {
       await open(asHost);
 
-      press('Edit the room', root());
+      await pressHostAction('Edit the room');
       await settle();
       const title = page().querySelector<HTMLInputElement>('app-room-form input')!;
       expect(title.value).toBe('Spanish for beginners');
@@ -425,15 +438,14 @@ describe('RoomPageComponent (container)', () => {
       canPublishAudio: true,
     });
     const controls = () => root().querySelector('app-room-controls')!;
-    const controlLabels = () =>
-      [...controls().querySelectorAll('button')].map((b) => b.textContent?.trim());
+    const controlLabels = () => [...controls().querySelectorAll('button')].map((b) => nameOf(b));
 
     it('connects to the room audio with the address and token the backend gave', async () => {
       await open();
 
       expect(link.connections).toHaveLength(1);
       expect(link.last).toMatchObject({ url: 'wss://livekit.test', token: 'x' });
-      expect(controls().textContent).toContain('Audio connected');
+      expect(controls().querySelector('.notes')?.textContent?.trim()).toBe('');
     });
 
     it('gives a listener no microphone button', async () => {
@@ -520,7 +532,7 @@ describe('RoomPageComponent (container)', () => {
       press('Reconnect audio', root());
       await settle();
       expect(link.connections).toHaveLength(2);
-      expect(controls().textContent).toContain('Audio connected');
+      expect(controls().querySelector('.notes')?.textContent?.trim()).toBe('');
     });
 
     it('keeps the room usable when the audio cannot connect at all', async () => {

@@ -12,7 +12,7 @@ export const ROOMS_ROUTES: Routes = [
   {
     path: 'rooms/:id',
     title: msg('Room'),
-    data: { breadcrumb: msg('Room'), wide: true },
+    data: { wide: true },
     loadComponent: () => import('./pages/room-page/room-page.component'),
   },
 ];

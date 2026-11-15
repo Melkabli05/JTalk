@@ -1,5 +1,4 @@
 import { Component, computed, input, output } from '@angular/core';
-import { Tag } from '@openng/optimus-ui/tag';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 import type { Member } from '../../models/room.model';
@@ -9,7 +8,7 @@ import { PersonAvatarComponent } from '../person-avatar/person-avatar.component'
 /** The stage: the people speaking, and the seats still open (anyone may take one while there are some). */
 @Component({
   selector: 'app-stage-seats',
-  imports: [PersonAvatarComponent, Tag, TranslatePipe],
+  imports: [PersonAvatarComponent, TranslatePipe],
   templateUrl: './stage-seats.component.html',
   styleUrl: './stage-seats.component.scss',
 })
@@ -35,8 +34,12 @@ export class StageSeatsComponent {
   });
   protected readonly scrolls = computed(() => this.speakers().length > 8);
 
-  protected readonly onStage = computed(() =>
-    this.speakers().map((id) => {
+  /**
+   * The people on stage, in the order the server gave. Past eight the stage scrolls, and a person talking out of sight is the
+   * hardest thing to find on a big stage, so the ones heard right now come first.
+   */
+  protected readonly onStage = computed(() => {
+    const people = this.speakers().map((id) => {
       const host = id === this.hostId();
       return {
         member: memberOf(this.members(), id),
@@ -46,12 +49,13 @@ export class StageSeatsComponent {
         muted: this.muted().includes(id),
         role: host ? msg('Host') : msg('Speaker'),
       };
-    }),
-  );
-  protected readonly openSeats = computed(() =>
-    Array.from(
-      { length: Math.max(0, this.seats() - this.speakers().length) },
-      (_, index) => this.speakers().length + index + 1,
-    ),
+    });
+    return this.scrolls()
+      ? people.toSorted((a, b) => Number(b.speaking) - Number(a.speaking))
+      : people;
+  });
+  /** The first seat nobody holds: one open seat is enough to say there is room, the rest would only crowd the people. */
+  protected readonly nextSeat = computed(() =>
+    this.speakers().length < this.seats() ? this.speakers().length + 1 : null,
   );
 }

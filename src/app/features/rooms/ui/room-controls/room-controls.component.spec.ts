@@ -4,9 +4,12 @@ import { RoomControlsComponent } from './room-controls.component';
 describe('RoomControlsComponent (presentational)', () => {
   let fixture: ComponentFixture<RoomControlsComponent>;
   const root = () => fixture.nativeElement as HTMLElement;
-  const labels = () => [...root().querySelectorAll('button')].map((b) => b.textContent?.trim());
-  const click = (label: string) =>
-    [...root().querySelectorAll('button')].find((b) => b.textContent?.includes(label))!.click();
+  const nameOf = (button: Element) =>
+    button.getAttribute('aria-label') ?? button.textContent?.trim() ?? '';
+  const names = () => [...root().querySelectorAll('button')].map(nameOf);
+  const button = (name: string) =>
+    [...root().querySelectorAll('button')].find((b) => nameOf(b) === name)!;
+  const click = (name: string) => button(name).click();
 
   async function render(inputs: Record<string, unknown>) {
     fixture = TestBed.createComponent(RoomControlsComponent);
@@ -19,52 +22,49 @@ describe('RoomControlsComponent (presentational)', () => {
   it('lets a listener leave or raise a hand', async () => {
     await render({});
 
-    expect(labels()).toEqual(['Leave quietly', 'Raise hand']);
+    expect(names()).toEqual(['Leave quietly', 'Raise hand']);
   });
 
-  it('offers no audio controls, and no status, before there is any audio', async () => {
+  it('says nothing while all is well, and before there is any audio', async () => {
     await render({});
-
-    expect(labels()).toEqual(['Leave quietly', 'Raise hand']);
-    expect(root().querySelector('.audio')?.textContent?.trim()).toBe('');
-  });
-
-  it('says how the audio is doing, politely', async () => {
-    await render({ audio: 'connecting' });
-    expect(root().querySelector('.audio')?.getAttribute('role')).toBe('status');
-    expect(root().querySelector('.audio')?.textContent).toContain('Connecting audio…');
+    expect(root().querySelector('.notes')?.textContent?.trim()).toBe('');
 
     fixture.componentRef.setInput('audio', 'connected');
     await fixture.whenStable();
-    expect(root().querySelector('.audio')?.textContent).toContain('Audio connected');
+    expect(root().querySelector('.notes')?.textContent?.trim()).toBe('');
+  });
+
+  it('says it politely while connecting, and as a warning while the link is being re-made', async () => {
+    await render({ audio: 'connecting' });
+    expect(root().querySelector('.connecting')?.getAttribute('role')).toBe('status');
+    expect(root().querySelector('.connecting')?.textContent).toContain('Connecting audio…');
 
     fixture.componentRef.setInput('audio', 'reconnecting');
     await fixture.whenStable();
-    expect(root().querySelector('.audio')?.getAttribute('role')).toBe('status');
-    expect(root().querySelector('.audio')?.textContent).toContain('Reconnecting…');
+    expect(root().querySelector('.connecting')).toBeNull();
+    expect(root().querySelector('p-message[role="alert"]')?.textContent).toContain('Reconnecting…');
   });
 
-  it('raises an alert, not a polite status, when the audio is lost or the microphone refused', async () => {
+  it('raises an alert when the audio is lost or the microphone refused', async () => {
     await render({ audio: 'failed', micRefused: true });
 
     const alerts = [...root().querySelectorAll('[role="alert"]')].map((el) => el.textContent);
     expect(alerts[0]).toContain('Audio is not available.');
     expect(alerts[1]).toContain('We could not use your microphone.');
-    expect(root().querySelector('.audio[role="status"]')?.textContent?.trim()).toBe('');
   });
 
-  it('lets someone who may speak mute and unmute', async () => {
+  it('lets someone who may speak mute and unmute, with a button that names what it does', async () => {
     const toggled = vi.fn();
     await render({ canSpeak: true, onStage: true, micOn: true });
     fixture.componentInstance.toggleMic.subscribe(toggled);
 
-    expect(labels()).toEqual(['Leave quietly', 'Mute']);
+    expect(names()).toEqual(['Leave quietly', 'Mute']);
     click('Mute');
     expect(toggled).toHaveBeenCalledOnce();
 
     fixture.componentRef.setInput('micOn', false);
     await fixture.whenStable();
-    expect(labels()).toEqual(['Leave quietly', 'Unmute']);
+    expect(names()).toEqual(['Leave quietly', 'Unmute']);
   });
 
   it('asks for a tap to turn the sound on only while the browser blocks it', async () => {
@@ -77,13 +77,13 @@ describe('RoomControlsComponent (presentational)', () => {
 
     fixture.componentRef.setInput('soundBlocked', false);
     await fixture.whenStable();
-    expect(labels()).not.toContain('Turn on sound');
+    expect(names()).not.toContain('Turn on sound');
   });
 
   it('offers to reconnect the audio only once it has failed', async () => {
     const retried = vi.fn();
     await render({ audio: 'connected' });
-    expect(labels()).not.toContain('Reconnect audio');
+    expect(names()).not.toContain('Reconnect audio');
 
     fixture.componentRef.setInput('audio', 'failed');
     await fixture.whenStable();
@@ -93,48 +93,65 @@ describe('RoomControlsComponent (presentational)', () => {
     expect(retried).toHaveBeenCalledOnce();
   });
 
-  it('lets a listener with a hand up cancel the request, and tells them it is pending', async () => {
-    await render({ handRaised: true });
+  it('makes the hand a toggle: pressed while the request waits, and pressing again takes it back', async () => {
+    const raised = vi.fn();
+    const lowered = vi.fn();
+    await render({});
+    fixture.componentInstance.raiseHand.subscribe(raised);
+    fixture.componentInstance.lowerHand.subscribe(lowered);
+    expect(button('Raise hand').getAttribute('aria-pressed')).toBe('false');
+    click('Raise hand');
+    expect(raised).toHaveBeenCalledOnce();
 
-    expect(labels()).toEqual(['Leave quietly', 'Cancel request']);
+    fixture.componentRef.setInput('handRaised', true);
+    await fixture.whenStable();
+    expect(button('Raise hand').getAttribute('aria-pressed')).toBe('true');
     expect(root().textContent).toContain('Waiting for the host to let you speak.');
+    click('Raise hand');
+    expect(lowered).toHaveBeenCalledOnce();
   });
 
   it('has no hand to raise for someone already on stage', async () => {
     await render({ onStage: true });
 
-    expect(labels()).toEqual(['Leave quietly']);
+    expect(names()).toEqual(['Leave quietly']);
   });
 
-  it('gives the host the room controls too', async () => {
-    await render({ isHost: true, onStage: true });
+  it('gives only the host a menu of the room actions', async () => {
+    await render({ onStage: true });
+    expect(names()).not.toContain('More actions');
 
-    expect(labels()).toEqual(['Leave quietly', 'Edit the room', 'End the room']);
+    fixture.componentRef.setInput('actions', [{ label: 'Edit the room' }]);
+    await fixture.whenStable();
+    expect(names()).toEqual(['Leave quietly', 'More actions']);
   });
 
   it('disables the hand while a request is running', async () => {
     await render({ busy: true });
 
-    expect(
-      [...root().querySelectorAll('button')].find((b) => b.textContent?.includes('Raise hand'))
-        ?.disabled,
-    ).toBe(true);
+    expect(button('Raise hand').disabled).toBe(true);
   });
 
-  it('emits what was pressed', async () => {
-    await render({ isHost: true });
+  it('emits what was pressed, and runs the host actions the page gave it from their menu', async () => {
+    const edited = vi.fn();
+    await render({
+      actions: [{ label: 'Edit the room', command: edited }],
+    });
     const emitted: string[] = [];
     const c = fixture.componentInstance;
     c.leave.subscribe(() => emitted.push('leave'));
     c.raiseHand.subscribe(() => emitted.push('raise'));
-    c.edit.subscribe(() => emitted.push('edit'));
-    c.endRoom.subscribe(() => emitted.push('end'));
 
     click('Leave quietly');
     click('Raise hand');
-    click('Edit the room');
-    click('End the room');
+    click('More actions');
+    await fixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve));
+    [...document.querySelectorAll<HTMLElement>('.p-menu-item-link')]
+      .find((item) => item.textContent?.includes('Edit the room'))!
+      .click();
 
-    expect(emitted).toEqual(['leave', 'raise', 'edit', 'end']);
+    expect(emitted).toEqual(['leave', 'raise']);
+    expect(edited).toHaveBeenCalledOnce();
   });
 });

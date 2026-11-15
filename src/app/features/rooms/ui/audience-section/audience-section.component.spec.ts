@@ -47,6 +47,18 @@ describe('AudienceSectionComponent (presentational)', () => {
     expect(root().querySelector('app-audience-grid')).toBeNull();
   });
 
+  it('shows the whole list at once, with no panel to open, where there is room beside the stage', async () => {
+    fixture = TestBed.createComponent(AudienceSectionComponent);
+    fixture.componentRef.setInput('ids', ['a', 'b']);
+    fixture.componentRef.setInput('members', MEMBERS);
+    fixture.componentRef.setInput('collapsible', false);
+    await fixture.whenStable();
+
+    expect(root().querySelector('[aria-expanded]')).toBeNull();
+    expect(root().querySelector('h2')?.textContent).toContain('Listeners');
+    expect(root().querySelectorAll('app-audience-grid .person')).toHaveLength(2);
+  });
+
   it('says nobody is listening when the room has no audience', async () => {
     await render([]);
     toggle().click();

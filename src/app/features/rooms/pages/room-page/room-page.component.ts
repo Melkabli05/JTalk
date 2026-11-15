@@ -1,4 +1,5 @@
 import { LiveAnnouncer } from '@angular/cdk/a11y';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import {
   Component,
   computed,
@@ -10,16 +11,17 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { ConfirmationService, MessageService } from '@openng/optimus-ui/api';
+import { map } from 'rxjs';
+import { ConfirmationService, MessageService, type MenuItem } from '@openng/optimus-ui/api';
 import { Badge } from '@openng/optimus-ui/badge';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
 import { ConfirmDialog } from '@openng/optimus-ui/confirmdialog';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
-import { Tag } from '@openng/optimus-ui/tag';
+import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 import { msg } from '@shared/utils/i18n/msg';
@@ -62,7 +64,7 @@ const EXIT_MESSAGES: Readonly<Record<RoomExit, string | null>> = {
     RouterLink,
     Skeleton,
     StageSeatsComponent,
-    Tag,
+    Tooltip,
     TranslatePipe,
   ],
   providers: [ConfirmationService, provideRoom()],
@@ -76,6 +78,7 @@ export default class RoomPageComponent {
   private readonly toast = inject(MessageService);
   private readonly i18n = inject(I18n);
   private readonly announcer = inject(LiveAnnouncer);
+  private readonly breakpoints = inject(BreakpointObserver);
   private focused = false;
   private previous: Stage | null = null;
   private heardMicrophone = false;
@@ -83,7 +86,30 @@ export default class RoomPageComponent {
   readonly id = input.required<string>();
 
   protected readonly state = this.facade.state;
+  /** A wide screen has room for the audience beside the stage; a narrow one folds it away. */
+  protected readonly wide = toSignal(
+    this.breakpoints.observe('(min-width: 1024px)').pipe(map((result) => result.matches)),
+    { initialValue: false },
+  );
   protected readonly look = computed(() => roomLook(this.state.room()));
+  /** The host's own actions on the room, behind the dock's menu; nobody else has any. */
+  protected readonly hostActions = computed<MenuItem[]>(() =>
+    this.state.isHost()
+      ? [
+          {
+            label: this.i18n.t('Edit the room'),
+            icon: 'pi pi-pencil',
+            command: () => this.editing.set(true),
+          },
+          {
+            label: this.i18n.t('End the room'),
+            icon: 'pi pi-stop-circle',
+            styleClass: 'danger-item',
+            command: () => this.end(),
+          },
+        ]
+      : [],
+  );
   protected readonly host = computed(() => memberOf(this.state.members(), this.state.hostId()));
   /** Who is on stage with the microphone off: only this person's own is known, from the audio they are connected to. */
   protected readonly mutedIds = computed(() => {

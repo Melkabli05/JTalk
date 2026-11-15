@@ -9,126 +9,61 @@
   ></a>
 } @else if (state.joined() && state.room(); as current) {
   <div class="room">
-    <div class="column">
-      <header class="hero">
+    <header class="hero">
+      <div class="top">
         <a
           pButton
           routerLink="/"
           class="back"
-          size="small"
           icon="pi pi-arrow-left"
           severity="secondary"
+          [rounded]="true"
           [text]="true"
-          [label]="'Back to the rooms' | t"
+          [attr.aria-label]="'Back to the rooms' | t"
+          [pTooltip]="'Back to the rooms' | t"
         ></a>
         <p class="live">
-          <p-tag severity="success" icon="pi pi-circle-fill" [value]="'Live' | t" />
+          <span class="dot" aria-hidden="true"></span>
+          <span>{{ 'Live' | t }}</span>
+          <span aria-hidden="true">·</span>
           <span>{{ '{count} in the room' | t: { count: current.participantCount } }}</span>
         </p>
-        <div class="title-row">
-          <div
-            class="mark"
-            aria-hidden="true"
-            [style.background]="look().colors.background"
-            [style.color]="look().colors.color"
-          >
-            {{ look().target.flag }}
-          </div>
-          <div class="info">
-            <h1 #heading tabindex="-1">{{ current.title }}</h1>
-            @if (current.topic) {
-              <p class="topic">{{ current.topic }}</p>
-            }
-          </div>
-        </div>
-      </header>
-
-      <section class="stage" aria-labelledby="stage-heading">
-        <h2 id="stage-heading">
-          {{ 'On stage' | t }}
-          <p-badge
-            severity="secondary"
-            [value]="`${state.speakers().length}/${current.maxStageSeats}`"
-          />
-        </h2>
-        <app-stage-seats
-          [speakers]="state.speakers()"
-          [seats]="current.maxStageSeats"
-          [hostId]="current.hostId"
-          [meId]="state.meId()"
-          [members]="state.members()"
-          [canTakeSeat]="!state.onStage() && !facade.action.submitting()"
-          [speaking]="facade.audio.speaking()"
-          [muted]="mutedIds()"
-          (memberSelected)="selectedId.set($event)"
-          (seatTaken)="facade.takeSeat()"
-        />
-      </section>
-
-      <app-audience-section
-        class="audience"
-        [ids]="state.audience()"
-        [members]="state.members()"
-        [meId]="state.meId()"
-        [reconnecting]="state.reconnecting()"
-        (memberSelected)="selectedId.set($event)"
-      />
-
-      @if (facade.action.error(); as failure) {
-        <p-message class="failure" severity="error">{{ failure | t }}</p-message>
+      </div>
+      <h1 #heading tabindex="-1">{{ current.title }}</h1>
+      @if (current.topic) {
+        <p class="topic">{{ current.topic }}</p>
       }
+      <p class="meta">
+        <span aria-hidden="true">{{ look().target.flag }}</span>
+        {{ look().target.name | t }}
+        <span aria-hidden="true">·</span>
+        {{ 'for {language} speakers' | t: { language: look().native.name | t } }}
+        <span aria-hidden="true">·</span>
+        {{ 'Hosted by {name}' | t: { name: host().name } }}
+      </p>
+    </header>
 
-      <app-room-controls
-        class="controls"
-        [isHost]="state.isHost()"
-        [onStage]="state.onStage()"
-        [handRaised]="state.handRaised()"
-        [busy]="facade.action.submitting()"
-        [audio]="facade.audio.status()"
-        [canSpeak]="facade.audio.canSpeak()"
-        [micOn]="facade.audio.micOn()"
-        [micRefused]="facade.audio.micRefused()"
-        [soundBlocked]="facade.audio.soundBlocked()"
-        (toggleMic)="facade.audio.toggleMicrophone()"
-        (enableSound)="facade.audio.enableSound()"
-        (retryAudio)="facade.audio.retry()"
-        (leave)="leave()"
-        (raiseHand)="facade.raiseHand()"
-        (lowerHand)="facade.lowerHand()"
-        (edit)="editing.set(true)"
-        (endRoom)="end()"
+    <section class="stage" aria-labelledby="stage-heading">
+      <h2 id="stage-heading" class="cdk-visually-hidden">
+        {{ 'On stage' | t }} {{ state.speakers().length }}/{{ current.maxStageSeats }}
+      </h2>
+      <app-stage-seats
+        [speakers]="state.speakers()"
+        [seats]="current.maxStageSeats"
+        [hostId]="current.hostId"
+        [meId]="state.meId()"
+        [members]="state.members()"
+        [canTakeSeat]="!state.onStage() && !facade.action.submitting()"
+        [speaking]="facade.audio.speaking()"
+        [muted]="mutedIds()"
+        (memberSelected)="selectedId.set($event)"
+        (seatTaken)="facade.takeSeat()"
       />
-    </div>
+    </section>
 
-    <aside class="side">
-      <p-card class="panel" role="group" aria-labelledby="details-heading">
-        <ng-template #title>
-          <h2 id="details-heading">{{ 'Room details' | t }}</h2>
-        </ng-template>
-        <dl class="details">
-          <div>
-            <dt>{{ 'Host' | t }}</dt>
-            <dd>{{ host().name }}</dd>
-          </div>
-          <div>
-            <dt>{{ 'Language' | t }}</dt>
-            <dd>
-              <span aria-hidden="true">{{ look().target.flag }}</span>
-              {{ look().target.name | t }}
-              <span class="muted">{{
-                'for {language} speakers' | t: { language: look().native.name | t }
-              }}</span>
-            </dd>
-          </div>
-          <div>
-            <dt>{{ 'In the room' | t }}</dt>
-            <dd>{{ current.participantCount }}</dd>
-          </div>
-        </dl>
-      </p-card>
-
+    <div class="side">
       @if (state.isHost() && state.queue().length > 0) {
-        <p-card class="panel" role="group" aria-labelledby="hands-heading">
+        <p-card class="requests" role="group" aria-labelledby="hands-heading">
           <ng-template #title>
             <h2 id="hands-heading">
               {{ 'Raised hands' | t }}
@@ -143,7 +78,38 @@
           />
         </p-card>
       }
-    </aside>
+      <app-audience-section
+        [collapsible]="!wide()"
+        [ids]="state.audience()"
+        [members]="state.members()"
+        [meId]="state.meId()"
+        [reconnecting]="state.reconnecting()"
+        (memberSelected)="selectedId.set($event)"
+      />
+    </div>
+
+    <div class="dock">
+      @if (facade.action.error(); as failure) {
+        <p-message class="failure" severity="error">{{ failure | t }}</p-message>
+      }
+      <app-room-controls
+        [actions]="hostActions()"
+        [onStage]="state.onStage()"
+        [handRaised]="state.handRaised()"
+        [busy]="facade.action.submitting()"
+        [audio]="facade.audio.status()"
+        [canSpeak]="facade.audio.canSpeak()"
+        [micOn]="facade.audio.micOn()"
+        [micRefused]="facade.audio.micRefused()"
+        [soundBlocked]="facade.audio.soundBlocked()"
+        (toggleMic)="facade.audio.toggleMicrophone()"
+        (enableSound)="facade.audio.enableSound()"
+        (retryAudio)="facade.audio.retry()"
+        (leave)="leave()"
+        (raiseHand)="facade.raiseHand()"
+        (lowerHand)="facade.lowerHand()"
+      />
+    </div>
   </div>
 } @else {
   <div class="loading" role="status" aria-busy="true">

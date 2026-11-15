@@ -153,16 +153,28 @@ Never show a server-confirmed action as done before the server confirms it. No g
 
 ### The live room (`features/rooms/pages/room-page`)
 
-The conversation is the center; everything else is effortless. Mobile first (one column, details after the stage, bottom dock); from 1024px the stage
-is the main column and a side panel holds the room details and, for the host only, the raised hands (the route is `wide`, the content stays 80rem).
-Header: back link, a `Live` tag with the count, title and topic. The stage is a centered wrapping composition: one speaker is a hero avatar, up to
-four are large, five to eight smaller, past eight it scrolls instead of shrinking; open seats are quiet dashed circles; each speaker shows a Host
-tag, a visible `Speaking` or `Muted` tag (the page knows only its own microphone) and the speaking ring. The audience is collapsed by default
-(`app-audience-section`: count, a few faces, the list on demand). The dock is by role: a listener can leave or raise a hand and then cancel the
-request (with "waiting for the host" text), a speaker has the microphone beside leave, the host has edit and end last; it always says who you are in
-the room ("You're listening" / "You're on stage") and how the audio is (`connecting`, `reconnecting`, `connected`, `failed`), and a refused
-microphone says how to fix it, persistently. A crossed-out icon is `.pi-slashed` (the icon set has none). Not built yet: chat and reactions, a
-moderator bottom sheet, speaker invitations to accept or decline, per-speaker mute from other people, room privacy and share.
+Layout. One column on a phone (header, stage, the people, the dock); from 1024px a grid: header, stage and dock on the left, the people on the right behind a
+hairline. The route is `wide`, the content stays 80rem. The grid areas follow reading order, so keyboard order is header, stage, people, dock.
+Header. An icon-only back button, a still green dot with `Live · N in the room`, the title, the topic, and one muted line: flag, language, "for X speakers", "Hosted by Y".
+No flag circle, no data card, no `Room details`: what the room is about and who hosts it is said once, in words (the Clubhouse case study found rooms that never say
+what they are about, and screens without counts).
+Stage. People, not furniture: portraits and names on the page itself (no panel, no visible heading; the heading is for screen readers), centered however many speak.
+One speaker is a hero, up to four large, five to eight smaller, past eight it scrolls and whoever is heard comes first (the Clubhouse case study: a speaker out of sight is the
+hardest to find). A muted microphone is a small badge on the portrait's corner, the host a crown and the word `Host` in a quiet caption, you `You`, speaking the ring (and a hidden
+`Speaking` for screen readers). One open seat, not one per seat. People arrive with a short fade.
+The people. `Listeners N` and the list: a collapsed `p-panel` with a few faces on a phone, a plain heading and list where there is room. The host's raised hands are a card above it.
+The dock. A `Leave quietly` pill; in the middle the round icon buttons for the conversation (microphone for a speaker, the hand for a listener, a toggle with `aria-pressed`, both with
+a tooltip and an `aria-label`); the host's actions behind a `...` menu whose items the page builds (so they are translated). It says nothing while all is well and speaks only
+when audio is connecting, coming back, lost, or the microphone is refused. A crossed-out icon is `.pi-slashed` (the icon set has none). Not built yet: chat and reactions, a moderator
+bottom sheet, speaker invitations to accept or decline, per-speaker mute from other people, room privacy and share.
+
+### Not looking generated
+
+Rules we hold ourselves to (sources: [DEV: fix the "AI-generated" look](https://dev.to/alanwest/how-to-fix-the-ai-generated-look-in-your-frontend-1ahh), [Clubhouse room case study](https://medium.com/design-bootcamp/case-study-redefining-the-room-experience-for-clubhouse-a3bcd6d3081a)): no box
+around what needs none (hierarchy by spacing and alignment, then a hairline, then a surface); one radius vocabulary; no stack of pills under a name (state sits on the thing it
+describes: a badge on the portrait, a caption, the ring); asymmetry over a centered column of sections (a left-aligned header over a centered stage); words that say a concrete thing
+("Hosted by Sarah", not a feature title); silence when all is well; every state besides the happy path (connecting, lost, refused, empty). Delete before adding. Read a screen
+against a real app before shipping it, and check it right-to-left.
 
 ### Principles and where they come from
 

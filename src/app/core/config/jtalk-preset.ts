@@ -391,6 +391,19 @@ export const JtalkPreset = definePreset(Aura, {
         }
       `,
     },
+    // The host's menu: the destructive item reads as one (the text color that passes 4.5:1 on each canvas).
+    menu: {
+      css: () => `
+        .p-menu-item.danger-item .p-menu-item-link,
+        .p-menu-item.danger-item .p-menu-item-icon {
+          color: var(--p-red-500);
+        }
+        .app-dark .p-menu-item.danger-item .p-menu-item-link,
+        .app-dark .p-menu-item.danger-item .p-menu-item-icon {
+          color: var(--p-red-400);
+        }
+      `,
+    },
     // A collapsible section that sits open on the canvas (the audience): no box, no rule.
     panel: {
       root: { background: 'transparent', borderColor: 'transparent' },

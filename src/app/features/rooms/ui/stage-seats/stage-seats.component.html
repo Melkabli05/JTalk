@@ -6,7 +6,7 @@
   [attr.data-size]="avatarSize()"
 >
   @for (speaker of onStage(); track speaker.member.id) {
-    <li>
+    <li animate.enter="tile-in">
       <button
         type="button"
         class="tile person"
@@ -22,11 +22,18 @@
         "
         (click)="memberSelected.emit(speaker.member.id)"
       >
-        <app-person-avatar
-          [size]="avatarSize()"
-          [member]="speaker.member"
-          [speaking]="speaker.speaking"
-        />
+        <span class="portrait">
+          <app-person-avatar
+            [size]="avatarSize()"
+            [member]="speaker.member"
+            [speaking]="speaker.speaking"
+          />
+          @if (speaker.muted) {
+            <span class="mic-off" aria-hidden="true"
+              ><i class="pi pi-microphone pi-slashed"></i
+            ></span>
+          }
+        </span>
         @if (speaker.speaking) {
           <span class="cdk-visually-hidden" [id]="`state-${speaker.member.id}`">{{
             'Speaking' | t
@@ -37,24 +44,24 @@
           }}</span>
         }
         <span class="name" aria-hidden="true">{{ speaker.member.name }}</span>
-        <span class="badges" aria-hidden="true">
-          @if (speaker.host) {
-            <p-tag severity="warn" icon="pi pi-star" [value]="'Host' | t" />
-          }
-          @if (speaker.me) {
-            <p-tag severity="info" [value]="'You' | t" />
-          }
-          @if (speaker.speaking) {
-            <p-tag severity="success" icon="pi pi-volume-up" [value]="'Speaking' | t" />
-          } @else if (speaker.muted) {
-            <p-tag severity="secondary" icon="pi pi-microphone pi-slashed" [value]="'Muted' | t" />
-          }
-        </span>
+        @if (speaker.host || speaker.me) {
+          <span class="role" aria-hidden="true">
+            @if (speaker.host) {
+              <i class="pi pi-crown"></i>{{ 'Host' | t }}
+            }
+            @if (speaker.host && speaker.me) {
+              ·
+            }
+            @if (speaker.me) {
+              {{ 'You' | t }}
+            }
+          </span>
+        }
       </button>
     </li>
   }
-  @for (seat of openSeats(); track seat) {
-    <li>
+  @if (nextSeat(); as seat) {
+    <li animate.enter="tile-in">
       <button
         type="button"
         class="tile seat"
