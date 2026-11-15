@@ -35,8 +35,10 @@ export async function connectLiveKit(
     .on(RoomEvent.ActiveSpeakersChanged, (active) => {
       listener.speakersChanged(active.map((participant) => participant.identity));
     })
-    .on(RoomEvent.DataReceived, (_payload, _participant, _kind, topic) => {
-      if (topic === ROOM_EVENTS_TOPIC) {
+    .on(RoomEvent.DataReceived, (_payload, participant, _kind, topic) => {
+      // A message sent by the backend has no participant. One that names a participant came from a client: the media server does
+      // not let clients write to the data channel, and this is the second lock, so a modified client cannot fake a room event.
+      if (participant === undefined && topic === ROOM_EVENTS_TOPIC) {
         listener.roomEvent();
       }
     })

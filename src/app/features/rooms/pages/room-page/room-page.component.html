@@ -104,7 +104,7 @@
         [soundBlocked]="facade.audio.soundBlocked()"
         (toggleMic)="facade.audio.toggleMicrophone()"
         (enableSound)="facade.audio.enableSound()"
-        (retryAudio)="facade.audio.retry()"
+        (retryAudio)="facade.reconnectAudio()"
         (leave)="leave()"
         (raiseHand)="facade.raiseHand()"
         (lowerHand)="facade.lowerHand()"

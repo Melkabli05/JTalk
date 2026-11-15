@@ -14,7 +14,6 @@ export class RealtimeService {
   private readonly connector = inject(REALTIME_CONNECTOR);
   private readonly pushed = new Subject<void>();
   private connection: RealtimeConnection | null = null;
-  private session: RoomSession | null = null;
   /** Counts connections, so a slow one that finishes after the person left or retried cannot take over. */
   private generation = 0;
 
@@ -34,7 +33,6 @@ export class RealtimeService {
   }
 
   async connect(session: RoomSession): Promise<void> {
-    this.session = session;
     const generation = ++this.generation;
     this.status.set('connecting');
     await this.close();
@@ -61,13 +59,6 @@ export class RealtimeService {
     }
   }
 
-  /** Tries again with the session last used, e.g. after the connection was lost. */
-  async retry(): Promise<void> {
-    if (this.session) {
-      await this.connect(this.session);
-    }
-  }
-
   async toggleMicrophone(): Promise<void> {
     if (this.canSpeak()) {
       await this.turnMicrophone(!this.micOn());
@@ -85,7 +76,6 @@ export class RealtimeService {
 
   async disconnect(): Promise<void> {
     this.generation++;
-    this.session = null;
     await this.close();
     this.status.set('idle');
   }

@@ -155,7 +155,7 @@ describe('RealtimeService', () => {
     expect(audio.status()).toBe('connected');
   });
 
-  it('fails, rather than pretending, when it cannot connect, and connects on retry', async () => {
+  it('fails, rather than pretending, when it cannot connect, and connects when asked again', async () => {
     const { link, audio } = setup();
     link.connectFailure = new Error('unreachable');
     await audio.connect(SPEAKER);
@@ -164,7 +164,7 @@ describe('RealtimeService', () => {
     expect(audio.micOn()).toBe(false);
 
     link.connectFailure = null;
-    await audio.retry();
+    await audio.connect(SPEAKER);
     expect(audio.status()).toBe('connected');
     expect(audio.micOn()).toBe(true);
   });
@@ -192,8 +192,6 @@ describe('RealtimeService', () => {
     expect(audio.status()).toBe('idle');
     expect(audio.micOn()).toBe(false);
     expect(audio.speaking()).toEqual([]);
-    await audio.retry();
-    expect(link.connections).toHaveLength(1);
   });
 
   it('closes the old connection when it connects again', async () => {

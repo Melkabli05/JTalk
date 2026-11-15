@@ -307,10 +307,34 @@ describe('RoomFacade', () => {
       expect(link.last.soundStarts).toBe(1);
 
       link.last.listener.connectionLost();
-      await facade.audio.retry();
+      facade.reconnectAudio();
       await settle();
       expect(link.connections).toHaveLength(2);
       expect(facade.audio.status()).toBe('connected');
+    });
+
+    it('asks the backend for a fresh token to reconnect, since the first one is short-lived', async () => {
+      await enter();
+      link.last.listener.connectionLost();
+      sent.length = 0;
+
+      facade.reconnectAudio();
+      await settle();
+
+      expect(count('POST', `${BASE}/participants/join`)).toBe(1);
+      expect(link.connections).toHaveLength(2);
+    });
+
+    it('does not reconnect the audio of someone the host removed, or of a room that has ended', async () => {
+      await enter();
+      link.last.listener.connectionLost();
+      failing[`POST ${BASE}/participants/join`] = 403;
+
+      facade.reconnectAudio();
+      await settle();
+
+      expect(exits).toEqual(['removed']);
+      expect(link.connections).toHaveLength(1);
     });
   });
 

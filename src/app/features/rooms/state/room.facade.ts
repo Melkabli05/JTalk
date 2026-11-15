@@ -151,21 +151,35 @@ export class RoomFacade {
     });
   }
 
+  /**
+   * Connects the audio again, with a fresh token: the one issued on joining is short-lived, so a copy taken from the page is
+   * soon useless, and so is the one this connection started with.
+   */
+  reconnectAudio(): void {
+    this.participants.join(this.state.roomId()).subscribe({
+      next: (session) => void this.audio.connect(session),
+      error: (error: unknown) => this.exitIfPushedOut(error),
+    });
+  }
+
   /** Says "still here", which the backend answers with 403 once the host removed this person, and refreshes the room. */
   private refresh(): void {
     if (!this.state.joined()) {
       return;
     }
     this.participants.heartbeat(this.state.roomId()).subscribe({
-      error: (error: unknown) => {
-        if (httpStatus(error) === 403) {
-          this.exit('removed');
-        } else if (httpStatus(error) === 404) {
-          this.exit('ended');
-        }
-      },
+      error: (error: unknown) => this.exitIfPushedOut(error),
     });
     this.state.reload();
+  }
+
+  /** The backend answers 403 once the host removed this person, and 404 once the room is gone. */
+  private exitIfPushedOut(error: unknown): void {
+    if (httpStatus(error) === 403) {
+      this.exit('removed');
+    } else if (httpStatus(error) === 404) {
+      this.exit('ended');
+    }
   }
 
   private run(request: Observable<void>, failure: string, after?: () => void): void {
