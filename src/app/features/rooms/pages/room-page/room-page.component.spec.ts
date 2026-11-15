@@ -8,6 +8,8 @@ import {
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MessageService } from '@openng/optimus-ui/api';
 import { provideRouter, Router } from '@angular/router';
+import { REALTIME_CONNECTOR } from '../../data-access/realtime-connector.token';
+import { FakeRealtimeLink } from '../../data-access/realtime-link.fake';
 import RoomPageComponent from './room-page.component';
 
 @Component({ selector: 'app-stub', template: '' })
@@ -44,6 +46,7 @@ describe('RoomPageComponent (container)', () => {
   let fixture: ComponentFixture<RoomPageComponent>;
   let http: HttpTestingController;
   let requests: { method: string; url: string; body: unknown }[];
+  let link: FakeRealtimeLink;
   let server: { room: object; stage: object; people: object[]; session: object };
 
   const root = () => fixture.nativeElement as HTMLElement;
@@ -128,17 +131,25 @@ describe('RoomPageComponent (container)', () => {
     localStorage.clear();
     sessionStorage.clear();
     requests = [];
+    link = new FakeRealtimeLink();
     server = {
       room: ROOM,
       stage: { speakers: ['h-1'], handRaiseQueue: ['b-1'] },
       people: PEOPLE,
-      session: { room: ROOM, role: 'LISTENER', canPublishAudio: false, liveKitToken: 'x' },
+      session: {
+        room: ROOM,
+        role: 'LISTENER',
+        canPublishAudio: false,
+        liveKitToken: 'x',
+        liveKitUrl: 'wss://livekit.test',
+      },
     };
     TestBed.configureTestingModule({
       providers: [
         provideRouter([{ path: '', component: Stub }]),
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: REALTIME_CONNECTOR, useValue: link.connector },
         MessageService,
       ],
     });
@@ -384,6 +395,159 @@ describe('RoomPageComponent (container)', () => {
         maxStageSeats: 4,
       });
       expect(root().querySelector('h1')?.textContent).toBe('Spanish II');
+    });
+  });
+  describe('audio', () => {
+    const speakerSession = () => ({
+      ...server.session,
+      role: 'SPEAKER',
+      canPublishAudio: true,
+    });
+    const controls = () => root().querySelector('app-room-controls')!;
+    const controlLabels = () =>
+      [...controls().querySelectorAll('button')].map((b) => b.textContent?.trim());
+
+    it('connects to the room audio with the address and token the backend gave', async () => {
+      await open();
+
+      expect(link.connections).toHaveLength(1);
+      expect(link.last).toMatchObject({ url: 'wss://livekit.test', token: 'x' });
+      expect(controls().textContent).toContain('Audio connected');
+    });
+
+    it('gives a listener no microphone button', async () => {
+      await open();
+
+      expect(controlLabels()).not.toContain('Mute');
+      expect(controlLabels()).not.toContain('Unmute');
+      expect(link.last.microphone).toEqual([]);
+    });
+
+    it('opens the microphone of a speaker, who can mute and unmute from the controls', async () => {
+      server.session = speakerSession();
+      server.stage = { speakers: ['h-1', 'm-1'], handRaiseQueue: [] };
+      await open();
+
+      expect(link.last.microphone).toEqual([true]);
+      expect(controlLabels()).toContain('Mute');
+
+      press('Mute', root());
+      await settle();
+      expect(link.last.microphone).toEqual([true, false]);
+      expect(controlLabels()).toContain('Unmute');
+    });
+
+    it('lets a listener speak the moment the server gives them a seat', async () => {
+      await open();
+      expect(controlLabels()).not.toContain('Mute');
+
+      link.last.listener.canPublishChanged(true);
+      await settle();
+
+      expect(link.last.microphone).toEqual([true]);
+      expect(controlLabels()).toContain('Mute');
+    });
+
+    it('refreshes the room at once when the server says something changed, without waiting', async () => {
+      await open();
+      requests.length = 0;
+      server.stage = { speakers: ['h-1', 'b-1'], handRaiseQueue: [] };
+
+      link.last.listener.roomEvent();
+      await settle();
+
+      expect(sent('GET', `${BASE}`)).toBe(true);
+      expect(sent('GET', `${BASE}/stage`)).toBe(true);
+      expect(sent('GET', `${BASE}/participants`)).toBe(true);
+      expect(root().querySelectorAll('app-stage-seats .person')).toHaveLength(2);
+    });
+
+    it('shows who is speaking on the stage', async () => {
+      await open();
+      expect(root().querySelector('app-stage-seats .person.speaking')).toBeNull();
+
+      link.last.listener.speakersChanged(['h-1']);
+      await settle();
+
+      expect(root().querySelectorAll('app-stage-seats .person.speaking')).toHaveLength(1);
+      expect(root().querySelector('app-stage-seats app-person-avatar.speaking')).not.toBeNull();
+
+      link.last.listener.speakersChanged([]);
+      await settle();
+      expect(root().querySelector('app-stage-seats .person.speaking')).toBeNull();
+    });
+
+    it('asks for a tap when the browser blocks sound, and starts the sound from it', async () => {
+      await open();
+      link.last.listener.soundBlocked(true);
+      await settle();
+
+      press('Turn on sound', root());
+      await settle();
+
+      expect(link.last.soundStarts).toBe(1);
+      expect(controlLabels()).not.toContain('Turn on sound');
+    });
+
+    it('says so, and offers to reconnect, when the audio is lost', async () => {
+      await open();
+
+      link.last.listener.connectionLost();
+      await settle();
+      expect(controls().textContent).toContain('Audio is not available.');
+
+      press('Reconnect audio', root());
+      await settle();
+      expect(link.connections).toHaveLength(2);
+      expect(controls().textContent).toContain('Audio connected');
+    });
+
+    it('keeps the room usable when the audio cannot connect at all', async () => {
+      link.connectFailure = new Error('unreachable');
+      await open();
+
+      expect(controls().textContent).toContain('Audio is not available.');
+      expect(root().querySelector('h1')?.textContent).toBe('Spanish for beginners');
+    });
+
+    it('warns, and tells them what to do, when the browser refuses the microphone', async () => {
+      server.session = speakerSession();
+      server.stage = { speakers: ['h-1', 'm-1'], handRaiseQueue: [] };
+      link.microphoneFailure = new Error('NotAllowedError');
+      const toast = vi.spyOn(TestBed.inject(MessageService), 'add');
+      await open();
+
+      expect(toast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          summary: 'We could not use your microphone. Allow it in your browser, then press Unmute.',
+        }),
+      );
+      expect(controlLabels()).toContain('Unmute');
+    });
+
+    it('hangs up when the person leaves, is removed, or the room ends', async () => {
+      await open();
+      press('Leave quietly', root());
+      await settle();
+      expect(link.last.disconnected).toBe(true);
+    });
+
+    it('hangs up when the host removes the person', async () => {
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+      await open();
+
+      vi.advanceTimersByTime(3000);
+      await settle({ [`POST ${BASE}/participants/heartbeat`]: { status: 403 } });
+
+      expect(link.last.disconnected).toBe(true);
+    });
+
+    it('hangs up when the page goes away', async () => {
+      await open();
+
+      fixture.destroy();
+
+      expect(link.last.disconnected).toBe(true);
     });
   });
 });

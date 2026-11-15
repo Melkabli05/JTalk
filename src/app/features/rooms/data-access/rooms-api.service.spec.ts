@@ -80,7 +80,13 @@ describe('RoomsApiService', () => {
     const request = http.expectOne('/api/v1/voice-rooms');
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual(draft);
-    request.flush({ room, role: 'HOST', canPublishAudio: true, liveKitToken: 'x' });
+    request.flush({
+      room,
+      role: 'HOST',
+      canPublishAudio: true,
+      liveKitToken: 'x',
+      liveKitUrl: 'wss://livekit.test',
+    });
 
     expect(role).toBe('HOST');
   });

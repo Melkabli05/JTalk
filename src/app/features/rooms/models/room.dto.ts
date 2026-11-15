@@ -20,6 +20,8 @@ export interface RoomSessionDto {
   readonly room: VoiceRoomDto;
   readonly role: MemberRoleDto;
   readonly canPublishAudio: boolean;
+  readonly liveKitUrl: string;
+  readonly liveKitToken: string;
 }
 
 export interface StageDto {

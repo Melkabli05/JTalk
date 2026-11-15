@@ -22,6 +22,67 @@ describe('RoomControlsComponent (presentational)', () => {
     expect(labels()).toEqual(['Leave quietly', 'Raise hand']);
   });
 
+  it('offers no audio controls, and no status, before there is any audio', async () => {
+    await render({});
+
+    expect(labels()).toEqual(['Leave quietly', 'Raise hand']);
+    expect(root().querySelector('.audio')?.textContent?.trim()).toBe('');
+  });
+
+  it('says how the audio is doing, politely', async () => {
+    await render({ audio: 'connecting' });
+    expect(root().querySelector('.audio')?.getAttribute('role')).toBe('status');
+    expect(root().querySelector('.audio')?.textContent).toContain('Connecting audio…');
+
+    fixture.componentRef.setInput('audio', 'connected');
+    await fixture.whenStable();
+    expect(root().querySelector('.audio')?.textContent).toContain('Audio connected');
+
+    fixture.componentRef.setInput('audio', 'failed');
+    await fixture.whenStable();
+    expect(root().querySelector('.audio')?.textContent).toContain('Audio is not available.');
+  });
+
+  it('lets someone who may speak mute and unmute', async () => {
+    const toggled = vi.fn();
+    await render({ canSpeak: true, onStage: true, micOn: true });
+    fixture.componentInstance.toggleMic.subscribe(toggled);
+
+    expect(labels()).toEqual(['Leave quietly', 'Mute']);
+    click('Mute');
+    expect(toggled).toHaveBeenCalledOnce();
+
+    fixture.componentRef.setInput('micOn', false);
+    await fixture.whenStable();
+    expect(labels()).toEqual(['Leave quietly', 'Unmute']);
+  });
+
+  it('asks for a tap to turn the sound on only while the browser blocks it', async () => {
+    const enabled = vi.fn();
+    await render({ soundBlocked: true });
+    fixture.componentInstance.enableSound.subscribe(enabled);
+
+    click('Turn on sound');
+    expect(enabled).toHaveBeenCalledOnce();
+
+    fixture.componentRef.setInput('soundBlocked', false);
+    await fixture.whenStable();
+    expect(labels()).not.toContain('Turn on sound');
+  });
+
+  it('offers to reconnect the audio only once it has failed', async () => {
+    const retried = vi.fn();
+    await render({ audio: 'connected' });
+    expect(labels()).not.toContain('Reconnect audio');
+
+    fixture.componentRef.setInput('audio', 'failed');
+    await fixture.whenStable();
+    fixture.componentInstance.retryAudio.subscribe(retried);
+    click('Reconnect audio');
+
+    expect(retried).toHaveBeenCalledOnce();
+  });
+
   it('lets a listener with a hand up lower it', async () => {
     await render({ handRaised: true });
 

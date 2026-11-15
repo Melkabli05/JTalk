@@ -110,7 +110,7 @@ the endpoints, polling and the heartbeat in the `room-page` container, and no mo
 person fills in a profile (a name, a picture chosen from the ten in `public/avatars/` by id, and two languages; kept in this browser, registered with the backend's `POST /dev/users`) before the shell shows any page, and `devIdentityInterceptor` sends its id
 as `X-User-Id`; with a token the user id is the token's subject. A user service will replace this. The mock API has only the account endpoints (`pnpm start:mock`).
 Account pages are listed under Auth (sign-in honors a safe `?returnUrl=`). `authGuard` is not applied to any route on purpose (auth is off while testing); to
-protect the app add `canActivateChild: [authGuard]` to the shell route in `layout.routes.ts`. The LiveKit audio client is not added yet.
+protect the app add `canActivateChild: [authGuard]` to the shell route in `layout.routes.ts`. Room audio: `RealtimeService` (per room page, `data-access/`) holds the connection state as signals; `adapters/livekit.adapter.ts` is the only code that knows `livekit-client` (loaded on demand); specs swap it through the `REALTIME_CONNECTOR` token with `realtime-link.fake.ts`.
 
 ## Accessibility and safety
 

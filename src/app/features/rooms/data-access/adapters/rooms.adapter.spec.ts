@@ -58,11 +58,34 @@ describe('rooms adapter', () => {
       role: 'HOST',
       canPublishAudio: true,
       liveKitToken: 'x',
+      liveKitUrl: 'wss://livekit.test',
     });
 
     expect(session.role).toBe('HOST');
     expect(session.room.id).toBe('r-1');
+    expect(session).toMatchObject({
+      canPublishAudio: true,
+      liveKitUrl: 'wss://livekit.test',
+      liveKitToken: 'x',
+    });
     expect(() => parseSession({ room: dto, role: 'KING' })).toThrow('expected a room session');
+  });
+
+  it('refuses a session that does not say where and how to connect to the audio', () => {
+    const complete = {
+      room: dto,
+      role: 'HOST',
+      canPublishAudio: true,
+      liveKitToken: 'x',
+      liveKitUrl: 'wss://x',
+    };
+
+    for (const missing of ['canPublishAudio', 'liveKitToken', 'liveKitUrl']) {
+      const incomplete = Object.fromEntries(
+        Object.entries(complete).filter(([key]) => key !== missing),
+      );
+      expect(() => parseSession(incomplete), missing).toThrow('expected a room session');
+    }
   });
 
   it('sends only what the API takes', () => {

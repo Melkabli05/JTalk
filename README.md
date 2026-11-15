@@ -27,8 +27,11 @@ which `authInterceptor` sends.
   flags hidden from screen readers, changes announced politely through the CDK `LiveAnnouncer` ("Maya joined the stage", "You raised your hand"),
   focus moved to the room title on arrival, a sticky controls bar with large targets, status in words and not only dimming, and logical CSS so Arabic
   right-to-left works.
-- **Not built yet**: the audio itself. Joining a room takes a stage seat or a place in the audience, but nothing is heard until the LiveKit client
-  (`livekit-client`) is added; the backend already issues the tokens.
+- **Audio** (LiveKit): entering a room connects to its audio with the address and token the backend returns in the session. A
+  speaker's microphone opens by itself (Mute/Unmute in the controls), listeners hear the stage, and the stage shows a ring around whoever is
+  speaking. The server grants and takes away the right to speak while connected, so no token refresh is needed, and it pushes room events
+  (seats, hands) so the screen updates at once instead of waiting for the 3 s refresh. If the browser blocks sound a "Turn on sound" button
+  appears; if the connection is lost, "Reconnect audio". `livekit-client` is loaded only when a room opens (its own lazy chunk).
 
 There is no mock data for rooms: the hallway shows what the backend has, which is nothing until someone opens a room.
 

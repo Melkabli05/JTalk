@@ -204,6 +204,7 @@ describe('RoomListPageComponent (container)', () => {
         role: 'HOST',
         canPublishAudio: true,
         liveKitToken: 'x',
+        liveKitUrl: 'wss://livekit.test',
       });
       await fixture.whenStable();
 

@@ -30,9 +30,13 @@ export interface RoomEdit {
   readonly maxStageSeats: number;
 }
 
+/** What the backend hands over on entering a room: the room, the rights, and where and how to connect to its audio. */
 export interface RoomSession {
   readonly room: Room;
   readonly role: MemberRole;
+  readonly canPublishAudio: boolean;
+  readonly liveKitUrl: string;
+  readonly liveKitToken: string;
 }
 
 export interface Stage {

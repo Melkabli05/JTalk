@@ -21,3 +21,12 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+.audio {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: 0.875rem;
+}

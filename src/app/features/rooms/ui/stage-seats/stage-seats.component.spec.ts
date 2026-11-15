@@ -40,6 +40,18 @@ describe('StageSeatsComponent (presentational)', () => {
     expect(people[1].textContent).toContain('You');
   });
 
+  it('rings the people who are being heard, and no one else', async () => {
+    await render({ speaking: ['s-2'] });
+
+    const people = [...root().querySelectorAll('.person')];
+    expect(people.map((p) => p.classList.contains('speaking'))).toEqual([false, true]);
+    expect(
+      [...root().querySelectorAll('app-person-avatar')].map((a) =>
+        a.classList.contains('speaking'),
+      ),
+    ).toEqual([false, true]);
+  });
+
   it('hides the visual name and avatar from screen readers, which get one full name instead', async () => {
     await render();
 

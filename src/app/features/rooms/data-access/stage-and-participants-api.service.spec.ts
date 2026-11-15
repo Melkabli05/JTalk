@@ -63,6 +63,8 @@ describe('the stage and participants services', () => {
       },
       role: 'LISTENER',
       canPublishAudio: false,
+      liveKitToken: 'x',
+      liveKitUrl: 'wss://livekit.test',
     });
 
     expect(role).toBe('LISTENER');

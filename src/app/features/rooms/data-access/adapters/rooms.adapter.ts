@@ -39,7 +39,14 @@ function isRoomDto(raw: unknown): raw is VoiceRoomDto {
 
 function isSessionDto(raw: unknown): raw is RoomSessionDto {
   const dto = asRecord(raw);
-  return dto !== undefined && isRoomDto(dto['room']) && isRole(dto['role']);
+  return (
+    dto !== undefined &&
+    isRoomDto(dto['room']) &&
+    isRole(dto['role']) &&
+    typeof dto['canPublishAudio'] === 'boolean' &&
+    typeof dto['liveKitUrl'] === 'string' &&
+    typeof dto['liveKitToken'] === 'string'
+  );
 }
 
 export function toRoom(dto: VoiceRoomDto): Room {
@@ -94,5 +101,11 @@ export function parseSession(raw: unknown): RoomSession {
   if (!isSessionDto(raw)) {
     throw new Error('Unexpected response: expected a room session');
   }
-  return { room: toRoom(raw.room), role: raw.role };
+  return {
+    room: toRoom(raw.room),
+    role: raw.role,
+    canPublishAudio: raw.canPublishAudio,
+    liveKitUrl: raw.liveKitUrl,
+    liveKitToken: raw.liveKitToken,
+  };
 }

@@ -27,6 +27,7 @@ import { I18n } from '@shared/utils/i18n/i18n.service';
 import { msg } from '@shared/utils/i18n/msg';
 import { saveRequest } from '@shared/utils/save-request';
 import { ParticipantsApiService } from '../../data-access/participants-api.service';
+import { RealtimeService } from '../../data-access/realtime.service';
 import { RoomsApiService } from '../../data-access/rooms-api.service';
 import { StageApiService } from '../../data-access/stage-api.service';
 import type { MemberRole, RoomEdit, Stage } from '../../models/room.model';
@@ -46,9 +47,10 @@ function statusOf(error: unknown): number | undefined {
 }
 
 /**
- * Container: one room. Joins it, says "still here" and refreshes the stage and the people every few seconds, and
- * turns what the person does (take a seat, raise a hand, leave) and what the host does (invite, remove, edit, end)
- * into requests. Being removed by the host or the room ending sends the person back to the hallway.
+ * Container: one room. Joins it, connects its audio, says "still here" and refreshes the stage and the people every few
+ * seconds (and at once when the server announces a change), and turns what the person does (take a seat, raise a hand,
+ * mute, leave) and what the host does (invite, remove, edit, end) into requests. Being removed by the host or the room
+ * ending sends the person back to the hallway.
  */
 @Component({
   selector: 'app-room-page',
@@ -67,7 +69,7 @@ function statusOf(error: unknown): number | undefined {
     StageSeatsComponent,
     TranslatePipe,
   ],
-  providers: [ConfirmationService],
+  providers: [ConfirmationService, RealtimeService],
   templateUrl: './room-page.component.html',
   styleUrl: './room-page.component.scss',
 })
@@ -75,6 +77,7 @@ export default class RoomPageComponent {
   private readonly rooms = inject(RoomsApiService);
   private readonly participants = inject(ParticipantsApiService);
   private readonly stages = inject(StageApiService);
+  protected readonly audio = inject(RealtimeService);
   private readonly router = inject(Router);
   private readonly confirmation = inject(ConfirmationService);
   private readonly toast = inject(MessageService);
@@ -84,6 +87,7 @@ export default class RoomPageComponent {
   private left = false;
   private focused = false;
   private previous: Stage | null = null;
+  private heardMicrophone = false;
 
   readonly id = input.required<string>();
 
@@ -184,9 +188,26 @@ export default class RoomPageComponent {
         heading.nativeElement.focus();
       }
     });
+    effect(() => {
+      const on = this.audio.micOn();
+      untracked(() => this.announceMicrophone(on));
+    });
+    effect(() => {
+      if (this.audio.micRefused()) {
+        untracked(() =>
+          this.toast.add({
+            severity: 'warn',
+            summary: this.i18n.t(
+              'We could not use your microphone. Allow it in your browser, then press Unmute.',
+            ),
+          }),
+        );
+      }
+    });
     interval(REFRESH_MS)
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.refresh());
+    this.audio.roomEvents.pipe(takeUntilDestroyed()).subscribe(() => this.reloadAll());
     inject(DestroyRef).onDestroy(() => this.sayGoodbye());
   }
 
@@ -197,6 +218,18 @@ export default class RoomPageComponent {
 
   protected raiseHand(): void {
     this.run(this.stages.raiseHand(this.id()), msg('Could not raise your hand. Please try again.'));
+  }
+
+  protected toggleMic(): void {
+    void this.audio.toggleMicrophone();
+  }
+
+  protected enableSound(): void {
+    void this.audio.enableSound();
+  }
+
+  protected retryAudio(): void {
+    void this.audio.retry();
   }
 
   protected lowerHand(): void {
@@ -278,7 +311,10 @@ export default class RoomPageComponent {
     this.joined.set(false);
     this.left = false;
     this.joining.run(this.participants.join(id), {
-      next: () => this.joined.set(true),
+      next: (session) => {
+        this.joined.set(true);
+        void this.audio.connect(session);
+      },
       failure: (error) =>
         statusOf(error) === 403
           ? msg('The host removed you from this room.')
@@ -301,6 +337,10 @@ export default class RoomPageComponent {
         }
       },
     });
+    this.reloadAll();
+  }
+
+  private reloadAll(): void {
     this.room.reload();
     this.stage.reload();
     this.people.reload();
@@ -310,9 +350,7 @@ export default class RoomPageComponent {
     this.action.run(request, {
       next: () => {
         after?.();
-        this.stage.reload();
-        this.people.reload();
-        this.room.reload();
+        this.reloadAll();
       },
       failure,
     });
@@ -324,6 +362,7 @@ export default class RoomPageComponent {
     }
     this.left = true;
     this.joined.set(false);
+    void this.audio.disconnect();
     this.toast.add({ severity: 'warn', summary: this.i18n.t(summary) });
     void this.router.navigate(['/']);
   }
@@ -366,7 +405,19 @@ export default class RoomPageComponent {
     }
   }
 
+  /** Tells screen readers when the microphone goes on or off, since the button's look is the only other sign. */
+  private announceMicrophone(on: boolean): void {
+    if (on !== this.heardMicrophone) {
+      this.heardMicrophone = on;
+      void this.announcer.announce(
+        this.i18n.t(on ? msg('Your microphone is on.') : msg('Your microphone is off.')),
+        'polite',
+      );
+    }
+  }
+
   private sayGoodbye(): void {
+    void this.audio.disconnect();
     if (this.joined() && !this.left) {
       this.left = true;
       this.participants.leave(this.id()).subscribe({ error: () => undefined });

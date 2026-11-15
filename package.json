@@ -35,6 +35,7 @@
     "@openng/optimus-ui": "^2.0.2",
     "@openng/optimus-ui-themes": "^2.0.2",
     "@radix-ui/colors": "^3.0.0",
+    "livekit-client": "^2.24.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

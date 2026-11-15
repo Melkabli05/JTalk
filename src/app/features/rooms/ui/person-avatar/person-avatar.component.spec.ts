@@ -34,6 +34,17 @@ describe('PersonAvatarComponent (presentational)', () => {
     }
   });
 
+  it('marks itself while the person is being heard', async () => {
+    const fixture = TestBed.createComponent(PersonAvatarComponent);
+    fixture.componentRef.setInput('member', ADA);
+    await fixture.whenStable();
+    expect((fixture.nativeElement as HTMLElement).classList.contains('speaking')).toBe(false);
+
+    fixture.componentRef.setInput('speaking', true);
+    await fixture.whenStable();
+    expect((fixture.nativeElement as HTMLElement).classList.contains('speaking')).toBe(true);
+  });
+
   it('is decorative: the name always sits beside it', async () => {
     const root = await render({ ...ADA, avatar: 'avatar-03' });
 

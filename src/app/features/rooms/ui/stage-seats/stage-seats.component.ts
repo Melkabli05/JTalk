@@ -20,6 +20,8 @@ export class StageSeatsComponent {
   readonly meId = input<string | null>(null);
   readonly members = input.required<ReadonlyMap<string, Member>>();
   readonly canTakeSeat = input(false);
+  /** Who is being heard right now. */
+  readonly speaking = input<readonly string[]>([]);
 
   readonly memberSelected = output<string>();
   readonly seatTaken = output<void>();
@@ -31,6 +33,7 @@ export class StageSeatsComponent {
         member: memberOf(this.members(), id),
         host,
         me: id === this.meId(),
+        speaking: this.speaking().includes(id),
         role: host ? msg('Host') : msg('Speaker'),
       };
     }),

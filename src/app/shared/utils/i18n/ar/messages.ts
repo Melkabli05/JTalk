@@ -183,4 +183,15 @@ export const messages: Readonly<Record<string, string>> = {
   'This is how others will see you.': 'هكذا سيراك الآخرون.',
   'Choose your picture': 'اختر صورتك',
   'Avatar {number}': 'الصورة الرمزية {number}',
+  Mute: 'كتم الصوت',
+  Unmute: 'إلغاء الكتم',
+  'Turn on sound': 'تشغيل الصوت',
+  'Reconnect audio': 'إعادة الاتصال بالصوت',
+  'Connecting audio\u2026': 'جارٍ الاتصال بالصوت…',
+  'Audio connected': 'الصوت متصل',
+  'Audio is not available.': 'الصوت غير متاح.',
+  'We could not use your microphone. Allow it in your browser, then press Unmute.':
+    'تعذّر استخدام الميكروفون. اسمح به في المتصفح ثم اضغط «إلغاء الكتم».',
+  'Your microphone is on.': 'الميكروفون يعمل.',
+  'Your microphone is off.': 'الميكروفون متوقف.',
 };
