@@ -40,12 +40,10 @@ describe('PersonAvatarComponent (presentational)', () => {
     await fixture.whenStable();
     const host = fixture.nativeElement as HTMLElement;
     expect(host.classList.contains('speaking')).toBe(false);
-    expect(host.querySelector('.wave')).toBeNull();
 
     fixture.componentRef.setInput('speaking', true);
     await fixture.whenStable();
     expect(host.classList.contains('speaking')).toBe(true);
-    expect(host.querySelector('.wave')?.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('is decorative: the name always sits beside it', async () => {

@@ -119,17 +119,10 @@ h2 {
   margin-block-start: 1rem;
 }
 
-// Level 2: the side panels are paper with a hairline.
-.panel {
+// Level 2: the side panels are Optimus cards (paper, hairline).
+.panel h2 {
   margin: 0;
-  padding: 1rem 1.25rem;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-jtalk-radius-card);
-  background: var(--p-content-background);
-
-  h2 {
-    font-size: var(--p-jtalk-type-card);
-  }
+  font-size: var(--p-jtalk-type-card);
 }
 
 .details {

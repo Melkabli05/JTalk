@@ -15,6 +15,7 @@ import { Router, RouterLink } from '@angular/router';
 import { ConfirmationService, MessageService } from '@openng/optimus-ui/api';
 import { Badge } from '@openng/optimus-ui/badge';
 import { ButtonDirective } from '@openng/optimus-ui/button';
+import { Card } from '@openng/optimus-ui/card';
 import { ConfirmDialog } from '@openng/optimus-ui/confirmdialog';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
@@ -51,6 +52,7 @@ const EXIT_MESSAGES: Readonly<Record<RoomExit, string | null>> = {
     AudienceSectionComponent,
     Badge,
     ButtonDirective,
+    Card,
     ConfirmDialog,
     Message,
     PersonDialogComponent,

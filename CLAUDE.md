@@ -182,3 +182,14 @@ a change against them before shipping:
 - **Gather Town accessibility guide** ([article](https://support.gather.town/articles/1489858946-accessibility-best-practices-for-inclusive-space-design)): do not rely on
   color alone, label roles in text, respect reduced motion.
 - Out of reach for now: live captions for audio (WCAG 1.2.9, AAA), an in-app reduce-motion switch (the system preference is honored).
+
+### Optimus first, in the room (what is builtin, what is custom and why)
+
+Builtin: the dock is a `p-toolbar` (start: leave, microphone, raise hand; center: status; end: host controls) with `p-message` for audio lost and a refused microphone
+(it is `role="alert"` already); the listeners are a toggleable `p-panel` (collapsed, header with the count and a `p-avatargroup`); the side panels are `p-card`; `Live`, `Host`,
+`Speaking`, `Muted` are `p-tag`; counts are `p-badge`; buttons are `pButton` (`[rounded]` for the dock's pills); the header and navigation are `p-menubar`; confirmations,
+toasts, skeletons, avatars as before. Theming goes through preset tokens (`toolbar`, `panel`, `card`, `tag`, `button`, `avatar`), with a `css` hook only where no token exists
+(minimum button height, the toolbar's shadow). Custom on purpose: the stage tiles and open seats (Optimus has no stage or seat), the speaking ring (no ring token), the
+hand-raised list (a numbered list of person + action), the `.pi-slashed` crossed-out microphone (the icon set has none), the brand mark and voice bubbles (decorative), and the
+stage's scroll past eight speakers (native overflow, which keyboards and screen readers already handle; `p-scrollpanel` draws its own bars). A `#end` template reference shadows a
+component output named `end`, so the dock's output is `endRoom`.

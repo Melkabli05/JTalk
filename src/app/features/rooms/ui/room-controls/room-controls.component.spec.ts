@@ -128,7 +128,7 @@ describe('RoomControlsComponent (presentational)', () => {
     c.leave.subscribe(() => emitted.push('leave'));
     c.raiseHand.subscribe(() => emitted.push('raise'));
     c.edit.subscribe(() => emitted.push('edit'));
-    c.end.subscribe(() => emitted.push('end'));
+    c.endRoom.subscribe(() => emitted.push('end'));
 
     click('Leave quietly');
     click('Raise hand');

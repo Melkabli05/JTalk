@@ -1,5 +1,6 @@
 import { Component, computed, input, output, signal } from '@angular/core';
 import { AvatarGroup } from '@openng/optimus-ui/avatargroup';
+import { Panel } from '@openng/optimus-ui/panel';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import type { Member } from '../../models/room.model';
 import { memberOf } from '../../utils/members';
@@ -7,44 +8,42 @@ import { AudienceGridComponent } from '../audience-grid/audience-grid.component'
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
 const PREVIEW = 5;
+let nextId = 0;
 
 /**
- * The listeners, kept out of the way: a heading with the count and a few faces, and the full list only when asked for, so a
- * big room's audience never competes with the conversation.
+ * The listeners, kept out of the way: an Optimus `p-panel` (collapsed by default) whose header carries the count and a few
+ * faces, and whose content is the full list, so a big room's audience never competes with the conversation.
  */
 @Component({
   selector: 'app-audience-section',
-  imports: [AudienceGridComponent, AvatarGroup, PersonAvatarComponent, TranslatePipe],
+  imports: [AudienceGridComponent, AvatarGroup, Panel, PersonAvatarComponent, TranslatePipe],
   template: `
-    <h2 class="heading">
-      <button
-        type="button"
-        class="toggle"
-        [attr.aria-expanded]="open()"
-        [attr.aria-controls]="listId"
-        (click)="open.set(!open())"
-      >
-        <span class="title">{{ 'Listeners' | t }}</span>
-        <span class="count">{{ ids().length }}</span>
-        @if (!open() && preview().length > 0) {
-          <p-avatargroup aria-hidden="true">
-            @for (member of preview(); track member.id) {
-              <app-person-avatar size="normal" [member]="member" />
+    <p-panel
+      toggler="header"
+      [id]="panelId"
+      [toggleable]="true"
+      [collapsed]="!open()"
+      [toggleButtonProps]="{ ariaLabel: 'Listeners' | t }"
+      (collapsedChange)="open.set(!$event)"
+    >
+      <ng-template #header>
+        <div class="summary">
+          <h2 class="heading">
+            <span class="title">{{ 'Listeners' | t }}</span>
+            <span class="count">{{ ids().length }}</span>
+          </h2>
+          @if (!open() && preview().length > 0) {
+            <p-avatargroup aria-hidden="true">
+              @for (member of preview(); track member.id) {
+                <app-person-avatar size="normal" [member]="member" />
+              }
+            </p-avatargroup>
+            @if (more() > 0) {
+              <span class="more" aria-hidden="true">+{{ more() }}</span>
             }
-          </p-avatargroup>
-          @if (more() > 0) {
-            <span class="more" aria-hidden="true">+{{ more() }}</span>
           }
-        }
-        <i
-          class="pi chevron"
-          aria-hidden="true"
-          [class.pi-chevron-down]="!open()"
-          [class.pi-chevron-up]="open()"
-        ></i>
-      </button>
-    </h2>
-    <div [id]="listId" [hidden]="!open()">
+        </div>
+      </ng-template>
       @if (open()) {
         <app-audience-grid
           [ids]="ids()"
@@ -54,7 +53,7 @@ const PREVIEW = 5;
           (memberSelected)="memberSelected.emit($event)"
         />
       }
-    </div>
+    </p-panel>
   `,
   styleUrl: './audience-section.component.scss',
 })
@@ -67,7 +66,7 @@ export class AudienceSectionComponent {
   readonly memberSelected = output<string>();
 
   protected readonly open = signal(false);
-  protected readonly listId = `app-audience-${nextId++}`;
+  protected readonly panelId = `app-audience-${nextId++}`;
   protected readonly preview = computed(() =>
     this.ids()
       .slice(0, PREVIEW)
@@ -75,5 +74,3 @@ export class AudienceSectionComponent {
   );
   protected readonly more = computed(() => Math.max(0, this.ids().length - PREVIEW));
 }
-
-let nextId = 0;

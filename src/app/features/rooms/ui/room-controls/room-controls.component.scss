@@ -3,47 +3,19 @@
   inset-block-end: 0;
   z-index: 2;
   display: block;
-}
-
-.bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-block-end: 0.75rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-jtalk-radius-panel);
-  background: var(--p-content-background);
-  box-shadow: var(--p-jtalk-elevation-2);
+  padding-block-end: 0.75rem;
 }
 
 .group {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-
-  &:empty {
-    display: none;
-  }
-}
-
-// Primary controls (microphone, leave) come first; the rest follow by importance, host controls last.
-.secondary {
-  padding-inline-start: 0.75rem;
-  border-inline-start: 1px solid var(--p-content-border-color);
-}
-
-.host {
-  padding-inline-start: 0.75rem;
-  border-inline-start: 1px solid var(--p-content-border-color);
 }
 
 .status {
   display: flex;
-  flex: 1;
   flex-direction: column;
+  gap: 0.25rem;
   min-inline-size: 10rem;
 }
 
@@ -61,13 +33,4 @@
   color: var(--p-text-muted-color);
   font-size: var(--p-jtalk-type-secondary);
   font-weight: 450;
-}
-
-.warning {
-  color: var(--p-text-color);
-  font-weight: 600;
-
-  .pi {
-    color: var(--p-jtalk-danger);
-  }
 }

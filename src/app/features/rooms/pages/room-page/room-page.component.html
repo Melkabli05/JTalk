@@ -96,13 +96,15 @@
         (raiseHand)="facade.raiseHand()"
         (lowerHand)="facade.lowerHand()"
         (edit)="editing.set(true)"
-        (end)="end()"
+        (endRoom)="end()"
       />
     </div>
 
     <aside class="side">
-      <section class="panel" aria-labelledby="details-heading">
-        <h2 id="details-heading">{{ 'Room details' | t }}</h2>
+      <p-card class="panel" role="group" aria-labelledby="details-heading">
+        <ng-template #title>
+          <h2 id="details-heading">{{ 'Room details' | t }}</h2>
+        </ng-template>
         <dl class="details">
           <div>
             <dt>{{ 'Host' | t }}</dt>
@@ -123,21 +125,23 @@
             <dd>{{ current.participantCount }}</dd>
           </div>
         </dl>
-      </section>
+      </p-card>
 
       @if (state.isHost() && state.queue().length > 0) {
-        <section class="panel" aria-labelledby="hands-heading">
-          <h2 id="hands-heading">
-            {{ 'Raised hands' | t }}
-            <p-badge severity="secondary" [value]="state.queue().length" />
-          </h2>
+        <p-card class="panel" role="group" aria-labelledby="hands-heading">
+          <ng-template #title>
+            <h2 id="hands-heading">
+              {{ 'Raised hands' | t }}
+              <p-badge severity="secondary" [value]="state.queue().length" />
+            </h2>
+          </ng-template>
           <app-raised-hands
             [ids]="state.queue()"
             [members]="state.members()"
             [canInvite]="state.isHost()"
             (invited)="invite($event)"
           />
-        </section>
+        </p-card>
       }
     </aside>
   </div>

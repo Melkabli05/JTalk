@@ -382,6 +382,21 @@ export const JtalkPreset = definePreset(Aura, {
         borderRadius: radius.pill,
       },
     },
+    // The control dock: a floating panel (level 2), its groups wrapping on narrow screens.
+    toolbar: {
+      root: { borderRadius: radius.panel, padding: '0.75rem 1rem', gap: '0.75rem' },
+      css: () => `
+        .p-toolbar {
+          box-shadow: var(--p-jtalk-elevation-2);
+        }
+      `,
+    },
+    // A collapsible section that sits open on the canvas (the audience): no box, no rule.
+    panel: {
+      root: { background: 'transparent', borderColor: 'transparent' },
+      header: { background: 'transparent', padding: '0.25rem 0.5rem' },
+      content: { padding: '0' },
+    },
     toast: { root: { borderRadius: radius.card } },
     message: { root: { borderRadius: radius.card } },
     button: {

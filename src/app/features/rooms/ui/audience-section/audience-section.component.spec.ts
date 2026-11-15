@@ -12,7 +12,7 @@ const MEMBERS: ReadonlyMap<string, Member> = new Map(
 describe('AudienceSectionComponent (presentational)', () => {
   let fixture: ComponentFixture<AudienceSectionComponent>;
   const root = () => fixture.nativeElement as HTMLElement;
-  const toggle = () => root().querySelector<HTMLButtonElement>('.toggle')!;
+  const toggle = () => root().querySelector<HTMLElement>('[aria-expanded]')!;
 
   async function render(ids: string[]) {
     fixture = TestBed.createComponent(AudienceSectionComponent);

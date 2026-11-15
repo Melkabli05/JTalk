@@ -158,7 +158,7 @@ describe('RoomPageComponent (container)', () => {
   afterEach(() => vi.useRealTimers());
 
   async function openAudience() {
-    root().querySelector<HTMLButtonElement>('app-audience-section .toggle')!.click();
+    root().querySelector<HTMLButtonElement>('app-audience-section [aria-expanded]')!.click();
     await settle();
   }
 
@@ -214,7 +214,8 @@ describe('RoomPageComponent (container)', () => {
     expect(headings[0]).toBe('On stage 1/4');
     expect(headings[1]).toContain('Listeners');
     expect(headings[2]).toBe('Room details');
-    expect(root().querySelectorAll('section[aria-labelledby]')).toHaveLength(2);
+    expect(root().querySelectorAll('section[aria-labelledby]')).toHaveLength(1);
+    expect(root().querySelectorAll('p-card[aria-labelledby]')).toHaveLength(1);
   });
 
   it('gives a listener a hand to raise, and no host controls or invitations', async () => {
