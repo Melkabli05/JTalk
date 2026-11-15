@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { Tooltip } from '@openng/optimus-ui/tooltip';
 import type { Member, Room } from '../../models/room.model';
 import { RoomCardComponent } from './room-card.component';
 
@@ -38,24 +40,34 @@ describe('RoomCardComponent (presentational)', () => {
     expect(root.textContent).toContain('for English speakers');
   });
 
-  it('names who is on stage, the host first and marked, not a pile of faces', async () => {
-    const { root } = await render({ ...ROOM, speakers: ['s-2', 'h-1'] });
+  it('names only the host, marked, and shows the others as faces with their names for a tooltip', async () => {
+    const { fixture, root } = await render({ ...ROOM, speakers: ['s-2', 'h-1'] });
 
-    const rows = [...root.querySelectorAll('.speakers li')].map((li) =>
-      li.querySelector('.name')?.textContent?.trim(),
-    );
-    expect(rows).toEqual(['Alice Host', 'Maya Speaker']);
-    expect(root.querySelector('.speakers li .pi-crown')).not.toBeNull();
+    expect(root.querySelector('.host .name')?.textContent).toBe('Alice Host');
     expect(root.querySelectorAll('.pi-crown')).toHaveLength(1);
+    expect(root.querySelectorAll('.name')).toHaveLength(1);
+    expect(root.querySelectorAll('p-avatargroup app-person-avatar')).toHaveLength(1);
+    expect(
+      fixture.debugElement
+        .queryAll(By.directive(Tooltip))
+        .map((el) => el.injector.get(Tooltip).content),
+    ).toEqual(['Maya Speaker']);
     expect(root.textContent).not.toContain('Hosted by');
   });
 
-  it('shows a few speakers and says how many more there are', async () => {
-    const speakers = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
-    const { root } = await render({ ...ROOM, speakers });
+  it('keeps every name for screen readers, since the tooltips are for the pointer', async () => {
+    const { root } = await render();
 
-    expect(root.querySelectorAll('.speakers li')).toHaveLength(3);
-    expect(root.querySelector('.more')?.textContent).toContain('+4 more');
+    expect(root.querySelector('.speakers')?.textContent).toContain('Maya Speaker');
+    expect(root.querySelector('p-avatargroup')?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('shows a few faces and says how many more there are', async () => {
+    const speakers = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+    const { root } = await render({ ...ROOM, hostId: 'a', speakers });
+
+    expect(root.querySelectorAll('p-avatargroup app-person-avatar')).toHaveLength(4);
+    expect(root.querySelector('.more')?.textContent).toContain('+2');
   });
 
   it('says how many are in the room, and how many seats are open, only while there are some', async () => {

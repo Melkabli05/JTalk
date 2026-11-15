@@ -170,8 +170,8 @@ bottom sheet, speaker invitations to accept or decline, per-speaker mute from ot
 
 ### The hallway (`room-list-page` and `room-card`)
 
-A room card answers what, who and how busy, and is a row of information, not a poster: one muted line (flag, language, "for X speakers"), the title, a two-line topic, the
-people on stage **by name** with the host first and a crown (who is inside decides whether to join; the Clubhouse redesign studies keep coming back to it), "+N more", and a footer line
+A room card answers what, who and how busy, and is a row of information, not a poster: one muted line (flag, language, "for X speakers"), the title, a two-line topic, one
+row of people: the host **by name** with a crown, then the others on stage as faces only (their names in a tooltip, and in hidden text for screen readers; who is inside decides whether to join, so recognising a face matters), "+N" past four, and a footer line
 with a still green dot, "N in the room" and "Open seats: N" while there are some. The whole card is the way in: the title is the one real button, stretched over the card, with a quiet hover
 and a focus ring on the card, so there is no second Join button and no "Live" label on cards that are all live. The page: the title and one concrete line, the language filter, a grid of
 cards of equal height. Empty is two different states, said differently: no rooms at all ("Quiet right now", and the header's single Start a room button, not a second one), and a language with no
