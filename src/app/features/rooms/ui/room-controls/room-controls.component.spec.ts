@@ -83,10 +83,11 @@ describe('RoomControlsComponent (presentational)', () => {
     expect(retried).toHaveBeenCalledOnce();
   });
 
-  it('lets a listener with a hand up lower it', async () => {
+  it('lets a listener with a hand up cancel the request, and tells them it is pending', async () => {
     await render({ handRaised: true });
 
-    expect(labels()).toEqual(['Leave quietly', 'Lower hand']);
+    expect(labels()).toEqual(['Leave quietly', 'Cancel request']);
+    expect(root().textContent).toContain('Waiting for the host to let you speak.');
   });
 
   it('has no hand to raise for someone already on stage', async () => {

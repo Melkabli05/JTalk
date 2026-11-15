@@ -150,3 +150,16 @@ and fields (the preset enforces it). Initials avatars and room banners take `--p
 microphone is an icon and a label (muted is not danger), roles are labeled badges. The stage is an open centered composition whose avatar
 size follows the speaker count; controls are grouped by importance (primary: leave and microphone; secondary: raise hand, sound; host last).
 Never show a server-confirmed action as done before the server confirms it. No gradients or glassmorphism.
+
+### The live room (`features/rooms/pages/room-page`)
+
+The conversation is the center; everything else is effortless. Mobile first (one column, details after the stage, bottom dock); from 1024px the stage
+is the main column and a side panel holds the room details and, for the host only, the raised hands (the route is `wide`, the content stays 80rem).
+Header: back link, a `Live` tag with the count, title and topic. The stage is a centered wrapping composition: one speaker is a hero avatar, up to
+four are large, five to eight smaller, past eight it scrolls instead of shrinking; open seats are quiet dashed circles; each speaker shows a Host
+tag, a visible `Speaking` or `Muted` tag (the page knows only its own microphone) and the speaking ring. The audience is collapsed by default
+(`app-audience-section`: count, a few faces, the list on demand). The dock is by role: a listener can leave or raise a hand and then cancel the
+request (with "waiting for the host" text), a speaker has the microphone beside leave, the host has edit and end last; it always says who you are in
+the room ("You're listening" / "You're on stage") and how the audio is (`connecting`, `reconnecting`, `connected`, `failed`), and a refused
+microphone says how to fix it, persistently. A crossed-out icon is `.pi-slashed` (the icon set has none). Not built yet: chat and reactions, a
+moderator bottom sheet, speaker invitations to accept or decline, per-speaker mute from other people, room privacy and share.

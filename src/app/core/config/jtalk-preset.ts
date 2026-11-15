@@ -417,9 +417,10 @@ export const JtalkPreset = definePreset(Aura, {
         dark: {
           outlined: {
             primary: { borderColor: '{primary.color}' },
-            secondary: { borderColor: '{surface.500}' },
+            secondary: { borderColor: '{surface.500}', color: '{surface.200}' },
             danger: { borderColor: '{red.400}' },
           },
+          text: { secondary: { color: '{surface.300}' } },
         },
       },
     },
@@ -474,6 +475,19 @@ export const JtalkPreset = definePreset(Aura, {
     h1 { font-size: ${dt('jtalk.type.title')}; font-weight: 700; line-height: 1.2; }
     h2 { font-size: ${dt('jtalk.type.section')}; font-weight: 650; line-height: 1.3; }
     h3 { font-size: ${dt('jtalk.type.card')}; font-weight: 650; line-height: 1.35; }
+
+    /* The icon set has no crossed-out microphone: any icon with .pi-slashed gets a diagonal stroke. */
+    .pi-slashed {
+      position: relative;
+    }
+    .pi-slashed::after {
+      content: '';
+      position: absolute;
+      inset-inline: -0.1em;
+      top: 50%;
+      border-block-start: 0.14em solid currentColor;
+      transform: rotate(-45deg);
+    }
 
     /* Counts and timers keep their width as they change. */
     .p-tag, .p-badge, time {

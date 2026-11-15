@@ -1,5 +1,8 @@
-/** Where the room's audio connection stands. `failed` means it could not be made or was lost; the person may try again. */
-export type AudioStatus = 'idle' | 'connecting' | 'connected' | 'failed';
+/**
+ * Where the room's audio connection stands. `reconnecting` is a connection that dropped and is being re-made; `failed` means
+ * it could not be made or was lost for good, and the person may try again.
+ */
+export type AudioStatus = 'idle' | 'connecting' | 'reconnecting' | 'connected' | 'failed';
 
 /** What the audio connection tells the app about. Each call is one fact, so the app never reads the media library's events. */
 export interface RealtimeListener {

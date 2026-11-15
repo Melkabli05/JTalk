@@ -1,4 +1,10 @@
-<ul class="stage" [attr.aria-label]="'On stage' | t" [attr.data-size]="avatarSize()">
+<ul
+  class="stage"
+  tabindex="-1"
+  [class.scrolls]="scrolls()"
+  [attr.aria-label]="'On stage' | t"
+  [attr.data-size]="avatarSize()"
+>
   @for (speaker of onStage(); track speaker.member.id) {
     <li>
       <button
@@ -6,6 +12,9 @@
         class="tile person"
         [class.speaking]="speaker.speaking"
         aria-haspopup="dialog"
+        [attr.aria-describedby]="
+          speaker.speaking || speaker.muted ? `state-${speaker.member.id}` : null
+        "
         [attr.aria-label]="
           speaker.me
             ? ('{name} (you), {role}' | t: { name: speaker.member.name, role: speaker.role | t })
@@ -18,6 +27,15 @@
           [member]="speaker.member"
           [speaking]="speaker.speaking"
         />
+        @if (speaker.speaking) {
+          <span class="cdk-visually-hidden" [id]="`state-${speaker.member.id}`">{{
+            'Speaking' | t
+          }}</span>
+        } @else if (speaker.muted) {
+          <span class="cdk-visually-hidden" [id]="`state-${speaker.member.id}`">{{
+            'Muted' | t
+          }}</span>
+        }
         <span class="name" aria-hidden="true">{{ speaker.member.name }}</span>
         <span class="badges" aria-hidden="true">
           @if (speaker.host) {
@@ -25,6 +43,11 @@
           }
           @if (speaker.me) {
             <p-tag severity="info" [value]="'You' | t" />
+          }
+          @if (speaker.speaking) {
+            <p-tag severity="success" icon="pi pi-volume-up" [value]="'Speaking' | t" />
+          } @else if (speaker.muted) {
+            <p-tag severity="secondary" icon="pi pi-microphone pi-slashed" [value]="'Muted' | t" />
           }
         </span>
       </button>
@@ -41,7 +64,7 @@
         "
         (click)="seatTaken.emit()"
       >
-        <i class="pi pi-plus" aria-hidden="true"></i>
+        <span class="ring" aria-hidden="true"><i class="pi pi-plus"></i></span>
         <span class="open" aria-hidden="true">{{ 'Open seat' | t }}</span>
       </button>
     </li>

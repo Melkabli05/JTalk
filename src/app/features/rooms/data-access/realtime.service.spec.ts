@@ -145,12 +145,12 @@ describe('RealtimeService', () => {
     expect(audio.soundBlocked()).toBe(true);
   });
 
-  it('shows connecting while the link is being re-made, and connected again after', async () => {
+  it('shows reconnecting while the link is being re-made, and connected again after', async () => {
     const { link, audio } = setup();
     await audio.connect(SESSION);
 
     link.last.listener.linkChanged(false);
-    expect(audio.status()).toBe('connecting');
+    expect(audio.status()).toBe('reconnecting');
     link.last.listener.linkChanged(true);
     expect(audio.status()).toBe('connected');
   });

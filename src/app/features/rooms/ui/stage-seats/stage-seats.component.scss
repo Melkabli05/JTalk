@@ -10,14 +10,28 @@
   padding: 0;
   list-style: none;
 
+  &[data-size='hero'] {
+    --tile: 14rem;
+  }
+
   &[data-size='large'] {
     --tile: 7rem;
+  }
+
+  // Past eight speakers the stage scrolls rather than shrinking avatars further.
+  &.scrolls {
+    max-block-size: 24rem;
+    overflow-y: auto;
   }
 }
 
 li {
   display: flex;
   inline-size: var(--tile);
+
+  &:has(.seat) {
+    inline-size: 7rem;
+  }
 }
 
 .tile {
@@ -49,14 +63,21 @@ li {
   transform: scale(0.98);
 }
 
+// An open seat is a quiet dashed circle in the rhythm of the avatars, so empty places never outweigh the people.
 .seat {
-  justify-content: center;
-  min-block-size: 7rem;
-  border: 1px dashed var(--p-form-field-border-color);
   color: var(--p-text-muted-color);
 
+  .ring {
+    display: grid;
+    place-items: center;
+    inline-size: 3.5rem;
+    block-size: 3.5rem;
+    border: 1px dashed var(--p-form-field-border-color);
+    border-radius: 50%;
+  }
+
   .pi {
-    font-size: 1.5rem;
+    font-size: 1rem;
   }
 
   &:disabled {

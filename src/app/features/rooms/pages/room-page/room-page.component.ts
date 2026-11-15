@@ -18,12 +18,13 @@ import { ButtonDirective } from '@openng/optimus-ui/button';
 import { ConfirmDialog } from '@openng/optimus-ui/confirmdialog';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
+import { Tag } from '@openng/optimus-ui/tag';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 import { msg } from '@shared/utils/i18n/msg';
 import type { MemberRole, RoomEdit, Stage } from '../../models/room.model';
 import { provideRoom, RoomFacade, type RoomExit } from '../../state/room.facade';
-import { AudienceGridComponent } from '../../ui/audience-grid/audience-grid.component';
+import { AudienceSectionComponent } from '../../ui/audience-section/audience-section.component';
 import { PersonDialogComponent } from '../../ui/person-dialog/person-dialog.component';
 import { RaisedHandsComponent } from '../../ui/raised-hands/raised-hands.component';
 import { RoomControlsComponent } from '../../ui/room-controls/room-controls.component';
@@ -47,7 +48,7 @@ const EXIT_MESSAGES: Readonly<Record<RoomExit, string | null>> = {
 @Component({
   selector: 'app-room-page',
   imports: [
-    AudienceGridComponent,
+    AudienceSectionComponent,
     Badge,
     ButtonDirective,
     ConfirmDialog,
@@ -59,6 +60,7 @@ const EXIT_MESSAGES: Readonly<Record<RoomExit, string | null>> = {
     RouterLink,
     Skeleton,
     StageSeatsComponent,
+    Tag,
     TranslatePipe,
   ],
   providers: [ConfirmationService, provideRoom()],
@@ -80,6 +82,19 @@ export default class RoomPageComponent {
 
   protected readonly state = this.facade.state;
   protected readonly look = computed(() => roomLook(this.state.room()));
+  protected readonly host = computed(() => memberOf(this.state.members(), this.state.hostId()));
+  /** Who is on stage with the microphone off: only this person's own is known, from the audio they are connected to. */
+  protected readonly mutedIds = computed(() => {
+    const me = this.state.meId();
+    const audio = this.facade.audio;
+    return me !== null &&
+      this.state.onStage() &&
+      audio.canSpeak() &&
+      audio.status() === 'connected' &&
+      !audio.micOn()
+      ? [me]
+      : [];
+  });
   protected readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
   protected readonly editing = signal(false);
   protected readonly selectedId = signal<string | null>(null);

@@ -17,22 +17,28 @@ import { avatarColors } from '../../utils/members';
       <span class="wave" aria-hidden="true"><i></i><i></i><i></i></span>
     }
     @if (picture(); as image) {
-      <p-avatar shape="circle" aria-hidden="true" [image]="image" [size]="size()" />
+      <p-avatar shape="circle" aria-hidden="true" [image]="image" [size]="pictureSize()" />
     } @else {
       <p-avatar
         shape="circle"
         aria-hidden="true"
         [label]="member().name | initials"
-        [size]="size()"
+        [size]="pictureSize()"
         [style]="colors()"
       />
     }
   `,
-  host: { '[class.speaking]': 'speaking()' },
+  host: { '[class.speaking]': 'speaking()', '[class.hero]': "size() === 'hero'" },
   styles: `
     :host {
       position: relative;
       display: inline-flex;
+    }
+
+    :host(.hero) p-avatar {
+      --p-avatar-xl-width: 7.5rem;
+      --p-avatar-xl-height: 7.5rem;
+      --p-avatar-xl-font-size: 2.5rem;
     }
 
     :host(.speaking) p-avatar {
@@ -104,10 +110,15 @@ import { avatarColors } from '../../utils/members';
 })
 export class PersonAvatarComponent {
   readonly member = input.required<Member>();
-  readonly size = input<'normal' | 'large' | 'xlarge'>('large');
+  /** `hero` is one avatar alone on a stage: larger than the scale's biggest. */
+  readonly size = input<'normal' | 'large' | 'xlarge' | 'hero'>('large');
   /** Shown as a ring around the picture, with a waveform badge, while the person is heard. */
   readonly speaking = input(false);
 
+  protected readonly pictureSize = computed<'normal' | 'large' | 'xlarge'>(() => {
+    const size = this.size();
+    return size === 'hero' ? 'xlarge' : size;
+  });
   protected readonly picture = computed(() => avatarUrl(this.member().avatar));
   protected readonly colors = computed(() => avatarColors(this.member().id));
 }

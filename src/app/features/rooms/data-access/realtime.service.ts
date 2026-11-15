@@ -129,7 +129,7 @@ export class RealtimeService {
         this.canSpeak.set(canPublish);
         void this.turnMicrophone(canPublish);
       }),
-      linkChanged: live((up) => this.status.set(up ? 'connected' : 'connecting')),
+      linkChanged: live((up) => this.status.set(up ? 'connected' : 'reconnecting')),
       connectionLost: live(() => {
         this.connection = null;
         this.micOn.set(false);

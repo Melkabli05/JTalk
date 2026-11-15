@@ -22,13 +22,18 @@ export class StageSeatsComponent {
   readonly canTakeSeat = input(false);
   /** Who is being heard right now. */
   readonly speaking = input<readonly string[]>([]);
+  /** Whose microphone is known to be off. */
+  readonly muted = input<readonly string[]>([]);
 
   readonly memberSelected = output<string>();
   readonly seatTaken = output<void>();
 
-  protected readonly avatarSize = computed<'large' | 'xlarge'>(() =>
-    this.speakers().length > 6 ? 'large' : 'xlarge',
-  );
+  /** One speaker is the whole stage, up to four are large, more are smaller; past eight the stage scrolls. */
+  protected readonly avatarSize = computed<'hero' | 'xlarge' | 'large'>(() => {
+    const count = this.speakers().length;
+    return count <= 1 ? 'hero' : count <= 4 ? 'xlarge' : 'large';
+  });
+  protected readonly scrolls = computed(() => this.speakers().length > 8);
 
   protected readonly onStage = computed(() =>
     this.speakers().map((id) => {
@@ -38,6 +43,7 @@ export class StageSeatsComponent {
         host,
         me: id === this.meId(),
         speaking: this.speaking().includes(id),
+        muted: this.muted().includes(id),
         role: host ? msg('Host') : msg('Speaker'),
       };
     }),

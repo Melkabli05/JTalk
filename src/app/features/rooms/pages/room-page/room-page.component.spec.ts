@@ -157,7 +157,12 @@ describe('RoomPageComponent (container)', () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it('joins the room and shows what it is, who is on stage, who has a hand up and who is listening', async () => {
+  async function openAudience() {
+    root().querySelector<HTMLButtonElement>('app-audience-section .toggle')!.click();
+    await settle();
+  }
+
+  it('joins the room and shows what it is, who is on stage and who is listening, once the list is opened', async () => {
     await open();
 
     expect(sent('POST', `${BASE}/participants/join`)).toBe(true);
@@ -165,10 +170,20 @@ describe('RoomPageComponent (container)', () => {
     expect(root().textContent).toContain('Ordering food');
     expect(root().querySelectorAll('app-stage-seats .person')).toHaveLength(1);
     expect(root().querySelectorAll('app-stage-seats .seat')).toHaveLength(3);
-    expect(root().querySelector('app-raised-hands')?.textContent).toContain('b-1');
+    expect(root().querySelector('app-audience-grid')).toBeNull();
+
+    await openAudience();
     expect(
       root().querySelector('app-audience-grid [aria-label="Mona (you), Listener"]'),
     ).not.toBeNull();
+  });
+
+  it('shows the live room and its details beside the stage, and the requests to the host only', async () => {
+    await open();
+
+    expect(root().querySelector('.live')?.textContent).toContain('Live');
+    expect(root().querySelector('.details')?.textContent).toContain('Host');
+    expect(root().querySelector('app-raised-hands')).toBeNull();
   });
 
   it('moves focus to the room title once it has opened, so screen readers announce it', async () => {
@@ -192,10 +207,14 @@ describe('RoomPageComponent (container)', () => {
   it('structures the room with a heading for each part', async () => {
     await open();
 
-    expect(
-      [...root().querySelectorAll('h2')].map((h) => h.textContent?.replace(/\s+/g, ' ').trim()),
-    ).toEqual(['On stage 1/4', 'Raised hands 1', 'In the audience 2']);
-    expect(root().querySelectorAll('section[aria-labelledby]')).toHaveLength(3);
+    const headings = [...root().querySelectorAll('h2')].map((h) =>
+      h.textContent?.replace(/\s+/g, ' ').trim(),
+    );
+    expect(headings).toHaveLength(3);
+    expect(headings[0]).toBe('On stage 1/4');
+    expect(headings[1]).toContain('Listeners');
+    expect(headings[2]).toBe('Room details');
+    expect(root().querySelectorAll('section[aria-labelledby]')).toHaveLength(2);
   });
 
   it('gives a listener a hand to raise, and no host controls or invitations', async () => {
@@ -214,7 +233,7 @@ describe('RoomPageComponent (container)', () => {
     await settle();
 
     expect(sent('POST', `${BASE}/stage/raise-hand`)).toBe(true);
-    expect(root().querySelector('app-room-controls')?.textContent).toContain('Lower hand');
+    expect(root().querySelector('app-room-controls')?.textContent).toContain('Cancel request');
   });
 
   it('takes a free seat', async () => {
@@ -341,6 +360,7 @@ describe('RoomPageComponent (container)', () => {
 
     it('removes someone only after asking', async () => {
       await open(asHost);
+      await openAudience();
       [...root().querySelectorAll<HTMLButtonElement>('app-audience-grid .person')]
         .find((p) => p.textContent?.includes('b-1'))!
         .click();
