@@ -1,0 +1,14 @@
+<label [for]="inputId">{{ label() }}</label>
+<p-inputnumber
+  mode="currency"
+  [currency]="currency()"
+  [inputId]="inputId"
+  [ngModel]="value()"
+  (ngModelChange)="value.set($event)"
+  [disabled]="disabled()"
+  [invalid]="showErrors()"
+  [ariaRequired]="required()"
+  [ariaDescribedBy]="showErrors() ? errorsId : undefined"
+  (onBlur)="touch.emit()"
+/>
+<app-field-errors [attr.id]="errorsId" [errors]="errors()" [visible]="showErrors()" />

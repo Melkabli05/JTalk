@@ -1,0 +1,51 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+}
+
+span {
+  display: block;
+  inline-size: 1em;
+  block-size: 1em;
+}
+
+.triangle {
+  background: var(--p-jtalk-bauhaus-yellow);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.square {
+  background: var(--p-jtalk-bauhaus-red);
+}
+
+.circle {
+  background: var(--p-jtalk-bauhaus-blue);
+  border-radius: 50%;
+}
+
+// "Working": the three shapes light up in turn.
+:host(.animated) span {
+  animation: pulse 1.2s ease-in-out infinite;
+
+  &.square {
+    animation-delay: 0.2s;
+  }
+
+  &.circle {
+    animation-delay: 0.4s;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

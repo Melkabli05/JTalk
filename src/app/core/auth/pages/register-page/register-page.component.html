@@ -1,0 +1,24 @@
+<app-auth-layout
+  [locale]="locales.locale()"
+  (localeChange)="locales.switchTo($event)"
+  [heading]="'Create account' | t"
+  [lead]="'Create an account to get started.' | t"
+>
+  @if (sent()) {
+    <p-message severity="success">
+      {{
+        'If this address can be used, we have sent you a message with a link to finish creating your account.'
+          | t
+      }}
+    </p-message>
+  } @else {
+    <app-register-form
+      [submitting]="registering.submitting()"
+      [error]="registering.error()"
+      (register)="register($event)"
+    />
+  }
+  <a pButton routerLink="/login" [text]="true" severity="secondary">{{
+    'Already have an account? Sign in' | t
+  }}</a>
+</app-auth-layout>

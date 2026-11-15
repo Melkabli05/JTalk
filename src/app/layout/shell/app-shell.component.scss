@@ -1,0 +1,81 @@
+@use 'tokens' as t;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.skip-link {
+  position: absolute;
+  inset-block-start: 0.5rem;
+  inset-inline-start: 0.5rem;
+  z-index: 10;
+  padding: 0.5rem 1rem;
+  background: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
+  transform: translateY(-200%);
+
+  &:focus-visible {
+    transform: none;
+  }
+}
+
+// A thin indeterminate bar across the top of the viewport while a route loads.
+.navigation-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 20;
+}
+
+// A thick black rule under the header: Bauhaus separates with hard lines, not shadows.
+.header {
+  border-block-end: 4px solid var(--p-text-color);
+  background: var(--p-content-background);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--p-jtalk-font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  color: var(--p-text-color);
+  text-decoration: none;
+
+  app-brand-mark {
+    font-size: 1rem;
+  }
+}
+
+.breadcrumb {
+  display: block;
+  margin-block-end: 1rem;
+}
+
+.main {
+  box-sizing: border-box;
+  flex: 1;
+  width: 100%;
+  max-width: t.$content-width + 2 * t.$gutter;
+  margin-inline: auto;
+  padding: 2rem t.$gutter;
+
+  &:focus {
+    outline: none;
+  }
+
+  // Pages that ask for it (route data `wide`) use the whole content area.
+  &.wide {
+    max-width: none;
+  }
+}

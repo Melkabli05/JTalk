@@ -1,0 +1,109 @@
+:host {
+  display: block;
+}
+
+.auth {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  min-block-size: 100dvh;
+}
+
+// ---- The poster: ink ground, the brand, a slogan and four flat blocks (circle, triangle, square, quarter circle).
+.poster {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 2.5rem;
+  background: var(--p-surface-950);
+  color: #ffffff;
+}
+
+.poster-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  font-family: var(--p-jtalk-font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+
+  app-brand-mark {
+    font-size: 1.25rem;
+  }
+}
+
+.slogan {
+  margin: 0;
+  max-inline-size: 12ch;
+  font-family: var(--p-jtalk-font-display);
+  font-size: clamp(2.25rem, 4.5vw, 4rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+.blocks {
+  inline-size: min(100%, 20rem);
+}
+
+// ---- The column with the form.
+.panel {
+  display: grid;
+  place-items: center;
+  padding: 3rem 1.5rem;
+  background: var(--p-content-background);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  inline-size: min(100%, 26rem);
+}
+
+.locale {
+  align-self: flex-end;
+  margin-block-start: -1rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2.25rem;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.lead {
+  margin: -0.75rem 0 0;
+  color: var(--p-text-muted-color);
+  line-height: 1.5;
+}
+
+// ---- Narrow screens: the poster becomes a band with the brand and a strip of the four blocks.
+@media (max-width: 52rem) {
+  .auth {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+
+  .poster {
+    flex-direction: row;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+  }
+
+  .slogan {
+    display: none;
+  }
+
+  .blocks {
+    grid-template-columns: repeat(4, 2.5rem);
+    inline-size: auto;
+  }
+
+  .panel {
+    place-items: start center;
+    padding-block: 2rem;
+  }
+}

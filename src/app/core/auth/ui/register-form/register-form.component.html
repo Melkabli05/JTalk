@@ -1,0 +1,30 @@
+<form class="form" [formRoot]="registerForm">
+  @if (error(); as message) {
+    <p-message severity="error">{{ message | t }}</p-message>
+  }
+
+  <app-text-field
+    [label]="'Email' | t"
+    type="email"
+    autocomplete="email"
+    [formField]="registerForm.email"
+  />
+  <app-password-field
+    [label]="'Password' | t"
+    autocomplete="new-password"
+    [hint]="
+      'At least {min} characters. A phrase of a few words works well.' | t: { min: minLength }
+    "
+    [formField]="registerForm.password"
+  />
+
+  <div class="actions">
+    <button
+      pButton
+      type="submit"
+      [label]="'Create account' | t"
+      [loading]="submitting()"
+      [disabled]="submitting()"
+    ></button>
+  </div>
+</form>

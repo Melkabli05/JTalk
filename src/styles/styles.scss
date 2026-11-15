@@ -1,0 +1,50 @@
+@use '@fontsource-variable/jost';
+@use '@fontsource-variable/atkinson-hyperlegible-next';
+@use '@fontsource-variable/atkinson-hyperlegible-mono';
+@use '@fontsource-variable/noto-sans-arabic';
+@use '@openng/icons/openng-icons.css';
+@use '@angular/cdk' as cdk;
+
+// `.cdk-visually-hidden`: text for screen readers only (also used by the CDK's LiveAnnouncer).
+@include cdk.a11y-visually-hidden();
+
+// Page background and text come from the Jtalk preset's tokens (core/theme/jtalk-preset.ts).
+html {
+  color-scheme: light;
+
+  &.app-dark {
+    color-scheme: dark;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--p-surface-50);
+  color: var(--p-text-color);
+
+  .app-dark & {
+    background: var(--p-surface-950);
+  }
+}
+
+a {
+  color: var(--p-primary-color);
+}
+
+// An anchor styled as an Optimus button (`<a pButton>`) is a button, not an underlined link.
+a.p-button {
+  text-decoration: none;
+}
+
+// Centers an Optimus progress spinner while a page is loading.
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1rem;
+}
+
+.pi-send:dir(rtl),
+.pi-arrow-right:dir(rtl),
+.pi-arrow-left:dir(rtl) {
+  transform: scaleX(-1);
+}

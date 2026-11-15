@@ -1,0 +1,18 @@
+<app-auth-layout
+  [locale]="locales.locale()"
+  (localeChange)="locales.switchTo($event)"
+  [heading]="'Sign in' | t"
+  [lead]="'Welcome back. Sign in to carry on.' | t"
+>
+  <app-login-form
+    [submitting]="signingIn.submitting()"
+    [error]="signingIn.error()"
+    (signIn)="signIn($event)"
+  />
+  <a pButton routerLink="/forgot-password" [text]="true" severity="secondary">{{
+    'Forgot your password?' | t
+  }}</a>
+  <a pButton routerLink="/register" [text]="true" severity="secondary">{{
+    'New here? Create an account' | t
+  }}</a>
+</app-auth-layout>

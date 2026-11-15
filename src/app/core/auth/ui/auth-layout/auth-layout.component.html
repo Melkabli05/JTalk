@@ -1,0 +1,18 @@
+<div class="auth">
+  <aside class="poster" aria-hidden="true">
+    <p class="poster-brand"><app-brand-mark /> {{ appName | t }}</p>
+    <p class="slogan">{{ 'Form follows function.' | t }}</p>
+    <app-bauhaus-blocks class="blocks" />
+  </aside>
+
+  <main class="panel">
+    <div class="content">
+      <app-locale-switch class="locale" [(locale)]="locale" />
+      <h1>{{ heading() }}</h1>
+      @if (lead(); as text) {
+        <p class="lead">{{ text }}</p>
+      }
+      <ng-content />
+    </div>
+  </main>
+</div>

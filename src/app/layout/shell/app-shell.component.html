@@ -1,0 +1,77 @@
+<a class="skip-link" href="#main-content">{{ 'Skip to main content' | t }}</a>
+
+@if (navigating()) {
+  <p-progressbar
+    class="navigation-progress"
+    mode="indeterminate"
+    [attr.aria-label]="'Loading page' | t"
+  />
+}
+
+<header class="header">
+  <nav [attr.aria-label]="'Primary' | t" appAriaCurrent>
+    <p-menubar [model]="navItems()" [ariaLabel]="'Primary' | t">
+      <ng-template #start>
+        <a class="brand" routerLink="/">
+          <app-brand-mark />
+          {{ appName | t }}
+        </a>
+      </ng-template>
+      <ng-template #end>
+        @let directionLabel =
+          direction.isRtl()
+            ? ('Switch to left-to-right layout' | t)
+            : ('Switch to right-to-left layout' | t);
+        @let themeLabel =
+          colorScheme.isDark() ? ('Switch to light theme' | t) : ('Switch to dark theme' | t);
+        <div class="controls">
+          <app-locale-switch
+            [locale]="locales.locale()"
+            (localeChange)="locales.switchTo($event)"
+          />
+          <button
+            pButton
+            type="button"
+            icon="pi pi-arrow-right-arrow-left"
+            [attr.aria-label]="directionLabel"
+            [pTooltip]="directionLabel"
+            tooltipPosition="bottom"
+            severity="secondary"
+            [text]="true"
+            (click)="direction.toggle()"
+          ></button>
+          <button
+            pButton
+            type="button"
+            [icon]="colorScheme.isDark() ? 'pi pi-sun' : 'pi pi-moon'"
+            [attr.aria-label]="themeLabel"
+            [pTooltip]="themeLabel"
+            tooltipPosition="bottom"
+            severity="secondary"
+            [text]="true"
+            (click)="colorScheme.toggle()"
+          ></button>
+          @if (auth.isAuthenticated()) {
+            <button
+              pButton
+              type="button"
+              [label]="'Sign out' | t"
+              severity="secondary"
+              [outlined]="true"
+              (click)="signOut()"
+            ></button>
+          }
+        </div>
+      </ng-template>
+    </p-menubar>
+  </nav>
+</header>
+
+<main id="main-content" class="main" [class.wide]="wide()" tabindex="-1">
+  <p-breadcrumb
+    class="breadcrumb"
+    [model]="breadcrumbs()"
+    [pt]="{ root: { 'aria-label': 'Breadcrumb' | t } }"
+  />
+  <router-outlet />
+</main>
