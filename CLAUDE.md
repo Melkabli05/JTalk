@@ -41,7 +41,7 @@ in the container page, pictures `p-avatar` (profile pictures, with initials as t
   Never `firstValueFrom`, never `httpResource` for POST/PUT/DELETE.
 - Container specs use the real data-access service + `HttpTestingController`; in a spec call `TestBed.tick()` to start a resource and
   `await fixture.whenStable()` after flushing (never before, it waits for the pending request).
-- Signal Forms with `[formRoot]`; use `app-text-field` / `app-number-field` for inputs. Do not bind `[invalid]` on `[formField]` hosts.
+- Signal Forms with `[formRoot]`; use `app-text-field` for inputs. Do not bind `[invalid]` on `[formField]` hosts.
 - Smart/dumb: services, the router and data loading live ONLY in containers, in every feature. A container is exactly one file:
   `pages/<x>-page/<x>-page.component.ts` or `layout/shell/app-shell.component.ts` (a page's own `ui/` is NOT exempt). Every other
   component is presentational: `input()`/`output()` only. Lint rejects, outside containers: `inject()`, constructor parameters, `providers`,
@@ -55,8 +55,8 @@ in the container page, pictures `p-avatar` (profile pictures, with initials as t
 - Layout: `features/` and `layout/` -> `core/`, `shared/`; `core/` -> `shared/`; `shared/` -> nothing. Features never import each
   other; only `app.routes.ts` wires `layout/` and `features/`. ESLint enforces this; never silence it.
 - Shared helpers: `shared/utils/form-submission` (submit + focus-first-error for Signal Forms), `save-request` (state of a write),
-  `unsaved-changes` (discard guard), `as-record` (response checks), `form-harness` (spec helper for field forms). Field controls
-  (`text-field`, `number-field`) extend `shared/ui/field-control.directive`; the system color scheme comes from the CDK `BreakpointObserver`. Do not
+  `as-record` (response checks), `form-harness` (spec helper for field forms). Field controls
+  (`text-field`, `password-field`, `select-field`, `avatar-picker`) extend `shared/ui/field-control.directive`; the system color scheme comes from the CDK `BreakpointObserver`. Do not
   copy-paste these into features.
 - Layout numbers live in `styles/_tokens.scss`. Keep it simple: no abstraction until a second use exists.
 - Lint also enforces modern Angular (`prefer-signals`, `prefer-signal-model`, `prefer-output-emitter-ref`, `prefer-host-metadata-property`,
@@ -84,8 +84,6 @@ in the container page, pictures `p-avatar` (profile pictures, with initials as t
   progress bar while `router.currentNavigation()` is set.
 - Route data and params reach pages as `input()` (`withComponentInputBinding`); static metadata goes in `data` (breadcrumbs).
 - Guards are functional and redirect with a `UrlTree`; client guards are convenience, the API must enforce access.
-  Pages that hold edits implement `HasUnsavedChanges` and the route uses `canDeactivate: [unsavedChangesGuard]`
-  (`shared/utils/unsaved-changes`); a saved form sets its `saved` flag before navigating.
 - After a save navigate with `replaceUrl: true` so Back does not return to the form.
 - Test routes with `RouterTestingHarness` and real route configs; never mock the Router for behavior.
 
@@ -127,7 +125,7 @@ protect the app add `canActivateChild: [authGuard]` to the shell route in `layou
   `.cdk-visually-hidden` (included once in `styles.scss`). A live region in a presentational component is a `role="status"` whose text changes.
 - Icon-only buttons have an `aria-label` and an Optimus `pTooltip` (the same text; `@let` it once in the template); a toggle keeps
   one label and uses `aria-pressed`. Return focus sensibly after a dialog, a delete or a new item.
-- Browser APIs get a util in `shared/utils` (`download-file`, `safe-storage`), never a call inside a component.
+- Browser APIs get a util in `shared/utils` (`safe-storage`), never a call inside a component.
 
 ## Design system: Gather UI 2.0
 
@@ -190,7 +188,7 @@ Read the component's page before using it (`https://optimus.openng.org/llms/comp
   its tokens. There is no ring or status pattern in the docs: the speaking ring and the mic badge are ours, on purpose.
 - **Toolbar**: `ariaLabelledBy`; it has no keyboard handling of its own, so its buttons follow the page's tab order.
 - **Tooltip** is advisory only: an icon-only button always also has an `aria-label`.
-  Dead code goes: the skeleton's stage marker and the theme hooks that only served it are gone; `copy-button`, `download-file` and `speech-input` are unused skeleton pieces, kept because the owner's tree names them.
+  Dead code goes: the skeleton's stage marker and the theme hooks that only served it are gone; `copy-button`, `number-field`, `download-file`, `speech-input` and `unsaved-changes` were unused and are removed.
 
 ### The banner and the profile popup
 

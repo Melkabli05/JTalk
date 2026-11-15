@@ -9,11 +9,11 @@ export type Locale = keyof typeof LOCALES;
 
 export const LOCALE_OPTIONS = Object.entries(LOCALES).map(([code, { name }]) => ({ code, name }));
 
-export const DEFAULT_LOCALE: Locale = 'en';
+const DEFAULT_LOCALE: Locale = 'en';
 
 export const LOCALE_STORAGE_KEY = 'jtalk:locale';
 
-export const isLocale = (value: string | null): value is Locale =>
+const isLocale = (value: string | null): value is Locale =>
   value !== null && Object.hasOwn(LOCALES, value);
 
 export const savedLocale = (): Locale => {

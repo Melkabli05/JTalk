@@ -5,7 +5,7 @@ import { map } from 'rxjs';
 import { readItem, writeItem } from '@shared/utils/safe-storage';
 import { STORAGE_KEYS } from './app-config';
 
-export type ColorSchemePreference = 'light' | 'dark' | 'system';
+type ColorSchemePreference = 'light' | 'dark' | 'system';
 
 export const DARK_CLASS = 'app-dark';
 

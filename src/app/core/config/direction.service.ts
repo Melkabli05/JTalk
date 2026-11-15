@@ -3,7 +3,7 @@ import { LOCALES, savedLocale } from '@shared/utils/i18n/locales';
 import { readItem, writeItem } from '@shared/utils/safe-storage';
 import { STORAGE_KEYS } from './app-config';
 
-export type TextDirection = 'ltr' | 'rtl';
+type TextDirection = 'ltr' | 'rtl';
 
 const isDirection = (value: string | null): value is TextDirection =>
   value === 'ltr' || value === 'rtl';

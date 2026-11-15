@@ -108,7 +108,7 @@ src/
       shell/             container: auth, theme, router; its header with the navigation (p-menubar) and
                          breadcrumb (p-breadcrumb) are Optimus components
     shared/          reusable across features, business-agnostic (@shared/*)
-      ui/                text-field/, number-field/ (thin Signal Forms controls; see Optimus first)
+      ui/                text-field/ (a thin Signal Forms control; see Optimus first)
       pipes/  directives/ (aria-current, trim-on-blur)  utils/ (safe-storage, form-submission, as-record)
     features/        one folder per business area, lazy-loaded
       <feature>/
@@ -235,8 +235,6 @@ What we still build, and why:
 
 - **text-field**: a Signal Forms control. `[formField]` pushes the raw `invalid` state into `pInputText`, which would flag
   untouched fields; this component shows `invalid`, `touched` and `errors` only after interaction (errors render as `p-message`).
-- **number-field**: the same wrapper around `p-inputnumber` (currency mode does the parsing, grouping and decimals, so a form
-  has no amount regex or string-to-number conversion). It also sets `aria-invalid` on the inner input, which `p-inputnumber` does not.
 - **appAriaCurrent** directive and a few preset lines: `p-menubar` adds a class to the current link but styles nothing and sets no
   `aria-current`, so the preset styles `.p-menubar-item-link-active` and the directive sets `aria-current="page"` (using the
   router's `isActive`). Delete both if Optimus fixes it. Also **trim-on-blur**, the **initials** pipe (Avatar needs the text)

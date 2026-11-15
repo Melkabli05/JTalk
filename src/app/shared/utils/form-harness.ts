@@ -4,7 +4,7 @@ export function formHarness(fixture: () => ComponentFixture<unknown>) {
   const root = () => fixture().nativeElement as HTMLElement;
 
   const field = (label: string) =>
-    [...root().querySelectorAll('app-text-field, app-number-field, app-password-field')]
+    [...root().querySelectorAll('app-text-field, app-password-field')]
       .find((f) => f.querySelector('label')?.textContent === label)!
       .querySelector('input')!;
 
