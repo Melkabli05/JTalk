@@ -3,96 +3,131 @@
   height: 100%;
 }
 
+// The whole card is the way in: the title is the one real button, stretched over the card (a quiet hover and a focus ring
+// on the card tell where it goes, so there is no second "Join" button to read).
 .card {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
   transition:
-    box-shadow var(--p-jtalk-motion-normal) ease,
+    background-color var(--p-jtalk-motion-normal) ease,
     transform var(--p-jtalk-motion-fast) ease;
 
-  &:hover,
-  &:focus-within {
-    box-shadow: var(--p-jtalk-elevation-2);
+  &:hover {
+    background: var(--p-content-hover-background);
   }
 
   &:active {
     transform: scale(0.99);
   }
+
+  &:has(.open:focus-visible) {
+    outline: 2px solid var(--p-primary-color);
+    outline-offset: 2px;
+  }
 }
 
-.banner {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.875rem 1rem;
-}
-
-.flag {
-  font-size: 2rem;
-  line-height: 1;
-}
-
-.language {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.practise {
-  font-size: var(--p-jtalk-type-card);
-  font-weight: 650;
-}
-
-.audience {
+.meta {
+  margin: 0 0 0.25rem;
+  color: var(--p-text-muted-color);
   font-size: var(--p-jtalk-type-secondary);
+  font-weight: 450;
 }
 
 .title {
   margin: 0;
   font-size: var(--p-jtalk-type-card);
-  font-weight: 600;
+  font-weight: 650;
   line-height: 1.3;
+  text-wrap: balance;
+}
+
+.open {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
 }
 
 .topic {
-  margin: 0 0 0.75rem;
+  display: -webkit-box;
+  margin: 0.25rem 0 0;
+  overflow: hidden;
   color: var(--p-text-muted-color);
   font-size: var(--p-jtalk-type-secondary);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
-.people,
-.footer,
-.counts {
+// Who is in the room is what decides whether to join: names, not a pile of faces.
+.speakers {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.people {
-  flex-wrap: wrap;
-}
-
-.host {
-  color: var(--p-text-muted-color);
-  font-size: var(--p-jtalk-type-secondary);
-}
-
-.footer {
-  flex-wrap: wrap;
-  justify-content: space-between;
-}
-
-.counts {
-  margin: 0;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin: 0.875rem 0 0;
   padding: 0;
   list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-inline-size: 0;
+  }
+
+  .name {
+    overflow: hidden;
+    font-size: var(--p-jtalk-type-secondary);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pi-crown {
+    color: var(--p-jtalk-moderator);
+    font-size: 0.75rem;
+  }
+}
+
+.more {
+  margin: 0.375rem 0 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  margin: auto 0 0;
+  padding-block-start: 0.875rem;
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-secondary);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
 
-.counts li {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
+.dot {
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: var(--p-jtalk-brand);
 }

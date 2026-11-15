@@ -32,59 +32,57 @@ describe('RoomCardComponent (presentational)', () => {
   it('shows what the room is: title, topic, the language practised and who it is for', async () => {
     const { root } = await render();
 
-    expect(root.querySelector('.p-card-title, [class*="card-title"]')?.textContent).toContain(
-      'Spanish for beginners',
-    );
+    expect(root.querySelector('h2')?.textContent).toContain('Spanish for beginners');
     expect(root.textContent).toContain('Ordering food');
     expect(root.textContent).toContain('Spanish');
     expect(root.textContent).toContain('for English speakers');
   });
 
-  it('names the host and shows the speakers by their initials', async () => {
-    const { root } = await render();
+  it('names who is on stage, the host first and marked, not a pile of faces', async () => {
+    const { root } = await render({ ...ROOM, speakers: ['s-2', 'h-1'] });
 
-    expect(root.textContent).toContain('Hosted by Alice Host');
-    expect([...root.querySelectorAll('p-avatar')].map((a) => a.textContent?.trim())).toEqual([
-      'AH',
-      'MS',
-    ]);
+    const rows = [...root.querySelectorAll('.speakers li')].map((li) =>
+      li.querySelector('.name')?.textContent?.trim(),
+    );
+    expect(rows).toEqual(['Alice Host', 'Maya Speaker']);
+    expect(root.querySelector('.speakers li .pi-crown')).not.toBeNull();
+    expect(root.querySelectorAll('.pi-crown')).toHaveLength(1);
+    expect(root.textContent).not.toContain('Hosted by');
   });
 
-  it('collapses a long speaker list into a +n avatar', async () => {
+  it('shows a few speakers and says how many more there are', async () => {
     const speakers = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
     const { root } = await render({ ...ROOM, speakers });
 
-    const avatars = [...root.querySelectorAll('p-avatar')].map((a) => a.textContent?.trim());
-    expect(avatars).toHaveLength(6);
-    expect(avatars.at(-1)).toBe('+2');
+    expect(root.querySelectorAll('.speakers li')).toHaveLength(3);
+    expect(root.querySelector('.more')?.textContent).toContain('+4 more');
   });
 
-  it('counts seats taken, people in the room, and raised hands only when there are some', async () => {
+  it('says how many are in the room, and how many seats are open, only while there are some', async () => {
     const { root } = await render();
     const counts = root.querySelector('.counts')?.textContent?.replace(/\s+/g, ' ') ?? '';
-    expect(counts).toContain('On stage: 2/6');
-    expect(counts).toContain('In the room: 5');
-    expect(counts).toContain('Raised hands: 2');
+    expect(counts).toContain('5 in the room');
+    expect(counts).toContain('Open seats: 4');
 
-    const quiet = await render({ ...ROOM, handRaiseCount: 0 });
-    expect(quiet.root.querySelectorAll('.counts li')).toHaveLength(2);
+    const full = await render({ ...ROOM, maxStageSeats: 2 });
+    expect(full.root.querySelector('.counts')?.textContent).not.toContain('Open seats');
   });
 
-  it('is a labelled group with a real heading, and a Join button that names its room', async () => {
+  it('is a labelled group with a real heading whose button is the way in', async () => {
     const { root } = await render();
 
     const heading = root.querySelector('h2');
-    expect(heading?.textContent).toBe('Spanish for beginners');
+    expect(heading?.textContent?.trim()).toBe('Spanish for beginners');
     expect(root.querySelector('p-card')?.getAttribute('aria-labelledby')).toBe(heading?.id);
+    expect(root.querySelectorAll('button')).toHaveLength(1);
     expect(root.querySelector('button')?.getAttribute('aria-label')).toBe(
       'Join Spanish for beginners',
     );
   });
 
-  it('hides the decorative avatars and flag from screen readers', async () => {
+  it('hides the decorative flag from screen readers', async () => {
     const { root } = await render();
 
-    expect(root.querySelector('p-avatargroup')?.getAttribute('aria-hidden')).toBe('true');
     expect(root.querySelector('.flag')?.getAttribute('aria-hidden')).toBe('true');
   });
 
@@ -94,12 +92,12 @@ describe('RoomCardComponent (presentational)', () => {
     expect(root.querySelector('.topic')).toBeNull();
   });
 
-  it('asks to open the room from the Join button', async () => {
+  it('asks to open the room from the title button', async () => {
     const { fixture, root } = await render();
     const opened = vi.fn();
     fixture.componentInstance.opened.subscribe(opened);
 
-    [...root.querySelectorAll('button')].find((b) => b.textContent?.includes('Join'))!.click();
+    root.querySelector('button')!.click();
 
     expect(opened).toHaveBeenCalledOnce();
   });

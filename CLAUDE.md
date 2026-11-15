@@ -168,6 +168,15 @@ a tooltip and an `aria-label`); the host's actions behind a `...` menu whose ite
 when audio is connecting, coming back, lost, or the microphone is refused. A crossed-out icon is `.pi-slashed` (the icon set has none). Not built yet: chat and reactions, a moderator
 bottom sheet, speaker invitations to accept or decline, per-speaker mute from other people, room privacy and share.
 
+### The hallway (`room-list-page` and `room-card`)
+
+A room card answers what, who and how busy, and is a row of information, not a poster: one muted line (flag, language, "for X speakers"), the title, a two-line topic, the
+people on stage **by name** with the host first and a crown (who is inside decides whether to join; the Clubhouse redesign studies keep coming back to it), "+N more", and a footer line
+with a still green dot, "N in the room" and "Open seats: N" while there are some. The whole card is the way in: the title is the one real button, stretched over the card, with a quiet hover
+and a focus ring on the card, so there is no second Join button and no "Live" label on cards that are all live. The page: the title and one concrete line, the language filter, a grid of
+cards of equal height. Empty is two different states, said differently: no rooms at all ("Quiet right now", and the header's single Start a room button, not a second one), and a language with no
+rooms ("Nothing in this language yet" with Show all rooms). Loading is skeleton cards.
+
 ### Not looking generated
 
 Rules we hold ourselves to (sources: [DEV: fix the "AI-generated" look](https://dev.to/alanwest/how-to-fix-the-ai-generated-look-in-your-frontend-1ahh), [Clubhouse room case study](https://medium.com/design-bootcamp/case-study-redefining-the-room-experience-for-clubhouse-a3bcd6d3081a)): no box

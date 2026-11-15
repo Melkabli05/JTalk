@@ -35,17 +35,23 @@
       }
     </ul>
   } @else {
-    <div class="empty">
-      <app-brand-mark aria-hidden="true" />
-      <p>{{ 'No open rooms yet. Start one to practise.' | t }}</p>
-      <button
-        pButton
-        type="button"
-        icon="pi pi-plus"
-        [label]="'Start a room' | t"
-        (click)="starting.set(true)"
-      ></button>
-    </div>
+    <section class="empty">
+      @if (state.filter() === '') {
+        <h2>{{ 'Quiet right now' | t }}</h2>
+        <p>{{ 'Nobody has opened a room. Start one and others can join you.' | t }}</p>
+      } @else {
+        <h2>{{ 'Nothing in this language yet' | t }}</h2>
+        <p>{{ 'No open room matches. Try another language, or start one.' | t }}</p>
+        <button
+          pButton
+          type="button"
+          severity="secondary"
+          [outlined]="true"
+          [label]="'Show all rooms' | t"
+          (click)="state.filter.set('')"
+        ></button>
+      }
+    </section>
   }
 } @else if (state.failed()) {
   <p-message severity="error">{{ 'Could not load the rooms. Please try again.' | t }}</p-message>

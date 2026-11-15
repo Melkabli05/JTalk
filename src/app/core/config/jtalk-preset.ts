@@ -360,10 +360,19 @@ export const JtalkPreset = definePreset(Aura, {
       root: { borderRadius: radius.card, shadow: 'var(--p-jtalk-elevation-1)' },
       body: { padding: '1rem', gap: '0.5rem' },
       title: { fontSize: type.card, fontWeight: '650' },
+      // A card in a grid fills its cell, and its content grows, so a footer line can sit at the bottom.
       css: ({ dt }) => `
         .p-card {
+          display: flex;
+          flex-direction: column;
           border: 1px solid ${dt('content.border.color')};
           overflow: hidden;
+        }
+        .p-card-body,
+        .p-card-content {
+          display: flex;
+          flex: 1;
+          flex-direction: column;
         }
       `,
     },
@@ -381,6 +390,15 @@ export const JtalkPreset = definePreset(Aura, {
         padding: '0.125rem 0.5rem',
         borderRadius: radius.pill,
       },
+    },
+    // Options keep their label on one line, and the row scrolls instead of squeezing them.
+    selectbutton: {
+      css: () => `
+        .p-selectbutton .p-togglebutton {
+          flex-shrink: 0;
+          white-space: nowrap;
+        }
+      `,
     },
     // The control dock: a floating panel (level 2), its groups wrapping on narrow screens.
     toolbar: {

@@ -1,70 +1,48 @@
 <p-card class="card" role="group" [attr.aria-labelledby]="titleId">
-  <ng-template #header>
-    <div
-      class="banner"
-      [style.background]="look().colors.background"
-      [style.color]="look().colors.color"
-    >
-      <span class="flag" aria-hidden="true">{{ look().target.flag }}</span>
-      <span class="language">
-        <span class="practise">{{ look().target.name | t }}</span>
-        <span class="audience">{{
-          'for {language} speakers' | t: { language: look().native.name | t }
-        }}</span>
-      </span>
-    </div>
-  </ng-template>
+  <p class="meta">
+    <span class="flag" aria-hidden="true">{{ look().target.flag }}</span>
+    {{ look().target.name | t }}
+    <span aria-hidden="true">·</span>
+    {{ 'for {language} speakers' | t: { language: look().native.name | t } }}
+  </p>
 
-  <ng-template #title>
-    <h2 class="title" [id]="titleId">{{ room().title }}</h2>
-  </ng-template>
+  <h2 class="title" [id]="titleId">
+    <button
+      type="button"
+      class="open"
+      [attr.aria-label]="'Join {title}' | t: { title: room().title }"
+      (click)="opened.emit()"
+    >
+      {{ room().title }}
+    </button>
+  </h2>
 
   @if (room().topic) {
     <p class="topic">{{ room().topic }}</p>
   }
 
-  <div class="people">
-    <p-avatargroup aria-hidden="true">
-      @for (speaker of speakers(); track speaker.id) {
-        <app-person-avatar size="normal" [member]="speaker" />
-      }
-      @if (more() > 0) {
-        <p-avatar shape="circle" size="normal" [label]="`+${more()}`" />
-      }
-    </p-avatargroup>
-    <span class="host">{{ 'Hosted by {name}' | t: { name: host().name } }}</span>
-  </div>
-
-  <ng-template #footer>
-    <div class="footer">
-      <ul class="counts">
-        <li>
-          <i class="pi pi-microphone" aria-hidden="true"></i>
-          <span class="cdk-visually-hidden">{{ 'On stage' | t }}:</span>
-          {{ room().speakers.length }}/{{ room().maxStageSeats }}
-        </li>
-        <li>
-          <i class="pi pi-users" aria-hidden="true"></i>
-          <span class="cdk-visually-hidden">{{ 'In the room' | t }}:</span>
-          {{ room().participantCount }}
-        </li>
-        @if (room().handRaiseCount > 0) {
-          <li>
-            <i class="pi pi-megaphone" aria-hidden="true"></i>
-            <span class="cdk-visually-hidden">{{ 'Raised hands' | t }}:</span>
-            {{ room().handRaiseCount }}
-          </li>
+  <ul class="speakers" [attr.aria-label]="'On stage' | t">
+    @for (speaker of speakers(); track speaker.member.id) {
+      <li>
+        <app-person-avatar size="normal" [member]="speaker.member" />
+        <span class="name">{{ speaker.member.name }}</span>
+        @if (speaker.host) {
+          <i class="pi pi-crown" aria-hidden="true"></i>
+          <span class="cdk-visually-hidden">{{ 'Host' | t }}</span>
         }
-      </ul>
-      <button
-        pButton
-        type="button"
-        icon="pi pi-arrow-right"
-        iconPos="right"
-        [label]="'Join' | t"
-        [attr.aria-label]="'Join {title}' | t: { title: room().title }"
-        (click)="opened.emit()"
-      ></button>
-    </div>
-  </ng-template>
+      </li>
+    }
+  </ul>
+  @if (more() > 0) {
+    <p class="more">{{ '+{count} more' | t: { count: more() } }}</p>
+  }
+
+  <p class="counts">
+    <span class="dot" aria-hidden="true"></span>
+    <span>{{ '{count} in the room' | t: { count: room().participantCount } }}</span>
+    @if (openSeats() > 0) {
+      <span aria-hidden="true">·</span>
+      <span>{{ 'Open seats: {count}' | t: { count: openSeats() } }}</span>
+    }
+  </p>
 </p-card>

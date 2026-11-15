@@ -5,7 +5,6 @@ import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import { BrandMarkComponent } from '@shared/ui/brand-mark/brand-mark.component';
 import type { Room, RoomDraft } from '../../models/room.model';
 import { provideRooms, RoomsFacade } from '../../state/rooms.facade';
 import { LanguageFilterComponent } from '../../ui/language-filter/language-filter.component';
@@ -19,7 +18,6 @@ import { RoomFormDialogComponent } from '../../ui/room-form-dialog/room-form-dia
 @Component({
   selector: 'app-room-list-page',
   imports: [
-    BrandMarkComponent,
     ButtonDirective,
     LanguageFilterComponent,
     Message,

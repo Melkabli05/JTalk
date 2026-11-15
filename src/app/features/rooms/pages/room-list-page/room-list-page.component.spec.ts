@@ -29,7 +29,7 @@ describe('RoomListPageComponent (container)', () => {
   let http: HttpTestingController;
   const root = () => fixture.nativeElement as HTMLElement;
   const titles = () =>
-    [...root().querySelectorAll('app-room-card .p-card-title')].map((t) => t.textContent?.trim());
+    [...root().querySelectorAll('app-room-card h2')].map((t) => t.textContent?.trim());
   const press = (label: string) =>
     [...document.body.querySelectorAll<HTMLButtonElement>('button')]
       .find((b) => b.textContent?.includes(label))!
@@ -72,7 +72,7 @@ describe('RoomListPageComponent (container)', () => {
   it('says so, and offers to start one, when there are no rooms', async () => {
     await render(withRooms());
 
-    expect(root().textContent).toContain('No open rooms yet.');
+    expect(root().textContent).toContain('Quiet right now');
     expect(root().querySelector('app-room-card')).toBeNull();
   });
 
@@ -103,13 +103,14 @@ describe('RoomListPageComponent (container)', () => {
     await render(withRooms(roomDto('r-1', 'Spanish', 'es')));
 
     expect(root().querySelectorAll('h1')).toHaveLength(1);
-    expect(root().querySelector('app-room-card h2')?.textContent).toBe('Spanish');
+    expect(root().querySelector('app-room-card h2')?.textContent?.trim()).toBe('Spanish');
   });
 
-  it('offers to start a room from the empty state too', async () => {
+  it('points to the one Start a room button instead of repeating it in the empty state', async () => {
     await render(withRooms());
 
-    expect(root().querySelector('.empty button')?.textContent).toContain('Start a room');
+    expect(root().querySelector('.empty button')).toBeNull();
+    expect(root().querySelector('.head button')?.textContent).toContain('Start a room');
   });
 
   it('lets the person try again when the rooms could not be loaded', async () => {
