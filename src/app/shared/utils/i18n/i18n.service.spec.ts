@@ -14,19 +14,20 @@ describe('I18n', () => {
     localStorage.clear();
   });
 
-  it('starts in Arabic when nothing is saved, and in English when that is saved', async () => {
+  it('starts in English when nothing is saved, and in Arabic when that is saved', async () => {
     const i18n = TestBed.inject(I18n);
     await i18n.init();
-    expect(i18n.locale()).toBe('ar');
-    expect(i18n.direction()).toBe('rtl');
+    expect(i18n.locale()).toBe('en');
+    expect(i18n.direction()).toBe('ltr');
+    expect(i18n.t('Sign in')).toBe('Sign in');
 
     TestBed.resetTestingModule();
-    localStorage.setItem(LOCALE_STORAGE_KEY, 'en');
-    const english = TestBed.inject(I18n);
-    await english.init();
-    expect(english.locale()).toBe('en');
-    expect(english.direction()).toBe('ltr');
-    expect(english.t('Sign in')).toBe('Sign in');
+    localStorage.setItem(LOCALE_STORAGE_KEY, 'ar');
+    const arabic = TestBed.inject(I18n);
+    await arabic.init();
+    expect(arabic.locale()).toBe('ar');
+    expect(arabic.direction()).toBe('rtl');
+    expect(arabic.t('Sign in')).toBe(messages['Sign in']);
   });
 
   it('translates into Arabic, and falls back to the English for a text it does not know', async () => {
@@ -66,7 +67,7 @@ describe('I18n', () => {
     localStorage.setItem(LOCALE_STORAGE_KEY, 'xx');
     const i18n = TestBed.inject(I18n);
     await i18n.init();
-    expect(i18n.locale()).toBe('ar');
+    expect(i18n.locale()).toBe('en');
   });
 
   it('sets the lang of the page', async () => {

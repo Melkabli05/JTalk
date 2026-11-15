@@ -65,7 +65,7 @@ in the container page, pictures `p-avatar` (profile pictures, with initials as t
 
 ## Languages and direction (README "Languages (i18n)" and "Right-to-left")
 
-- English and Arabic, runtime switch. Text is keyed by its English wording: `| t` in templates (presentational components may use
+- English and Arabic, runtime switch. English is the default (`DEFAULT_LOCALE` and the static `<html lang="en" dir="ltr">` with its boot script in `index.html`); a saved choice always wins, so a returning Arabic user stays Arabic and right-to-left. Text is keyed by its English wording: `| t` in templates (presentational components may use
   the pipe), `I18n.t` in containers, `msg('...')` for text kept in constants, routes and validation messages. Every text needs
   its entry in `shared/utils/i18n/ar/messages.ts`; `pnpm i18n:check` fails for a missing or an unused one. Keep texts literal
   (`cond ? ('A' | t) : ('B' | t)`, a `msg` map) so the check can see them.

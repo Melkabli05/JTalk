@@ -9,7 +9,7 @@ export type Locale = keyof typeof LOCALES;
 
 export const LOCALE_OPTIONS = Object.entries(LOCALES).map(([code, { name }]) => ({ code, name }));
 
-export const DEFAULT_LOCALE: Locale = 'ar';
+export const DEFAULT_LOCALE: Locale = 'en';
 
 export const LOCALE_STORAGE_KEY = 'jtalk:locale';
 

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8" />
     <title>Jtalk</title>
@@ -12,9 +12,9 @@
         try {
           var locale = localStorage.getItem('jtalk:locale');
           var direction = localStorage.getItem('jtalk:direction');
-          if (locale === 'en') document.documentElement.lang = 'en';
-          if (direction === 'ltr' || (direction === null && locale === 'en'))
-            document.documentElement.dir = 'ltr';
+          if (locale === 'ar') document.documentElement.lang = 'ar';
+          if (direction === 'rtl' || (direction === null && locale === 'ar'))
+            document.documentElement.dir = 'rtl';
           var saved = localStorage.getItem('jtalk:color-scheme');
           var dark =
             saved === 'dark' ||
