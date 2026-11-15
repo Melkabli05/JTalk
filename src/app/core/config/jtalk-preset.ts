@@ -326,36 +326,6 @@ export const JtalkPreset = definePreset(Aura, {
         dark: { root: { background: '{surface.100}', color: '{surface.950}' } },
       },
     },
-    timeline: {
-      eventConnector: { size: '4px', color: '{surface.200}' },
-      css: ({ dt }) => `
-        .p-timeline.p-timeline-horizontal {
-          direction: inherit;
-        }
-        .p-timeline-horizontal .p-timeline-event:last-child {
-          flex: 1;
-        }
-        .p-timeline-event:has(+ .p-timeline-event [data-state='done']) .p-timeline-event-connector,
-        .p-timeline-event:has(+ .p-timeline-event [data-state='current']) .p-timeline-event-connector {
-          background: ${dt('primary.color')};
-        }
-      `,
-    },
-    listbox: {
-      css: () => `
-        .p-listbox-option-group {
-          font-size: var(--p-jtalk-type-metadata);
-          font-weight: 600;
-        }
-        .p-listbox-option {
-          min-height: 2.75rem;
-        }
-        .p-listbox-option.p-listbox-option-selected {
-          box-shadow: inset 3px 0 0 var(--p-primary-color);
-          font-weight: 650;
-        }
-      `,
-    },
     card: {
       root: { borderRadius: radius.card, shadow: 'var(--p-jtalk-elevation-1)' },
       body: { padding: '1rem', gap: '0.5rem' },
@@ -412,12 +382,12 @@ export const JtalkPreset = definePreset(Aura, {
     // The host's menu: the destructive item reads as one (the text color that passes 4.5:1 on each canvas).
     menu: {
       css: () => `
-        .p-menu-item.danger-item .p-menu-item-link,
-        .p-menu-item.danger-item .p-menu-item-icon {
+        .p-menu-item-link.danger-item,
+        .p-menu-item-link.danger-item .p-menu-item-icon {
           color: var(--p-red-500);
         }
-        .app-dark .p-menu-item.danger-item .p-menu-item-link,
-        .app-dark .p-menu-item.danger-item .p-menu-item-icon {
+        .app-dark .p-menu-item-link.danger-item,
+        .app-dark .p-menu-item-link.danger-item .p-menu-item-icon {
           color: var(--p-red-400);
         }
       `,

@@ -31,9 +31,8 @@ let nextId = 0;
         toggler="header"
         [id]="panelId"
         [toggleable]="true"
-        [collapsed]="!open()"
+        [(collapsed)]="closed"
         [toggleButtonProps]="{ ariaLabel: 'Listeners' | t }"
-        (collapsedChange)="open.set(!$event)"
       >
         <ng-template #header>
           <div class="summary">
@@ -41,7 +40,7 @@ let nextId = 0;
               <span class="title">{{ 'Listeners' | t }}</span>
               <span class="count">{{ ids().length }}</span>
             </h2>
-            @if (!open() && preview().length > 0) {
+            @if (closed() && preview().length > 0) {
               <p-avatargroup aria-hidden="true">
                 @for (member of preview(); track member.id) {
                   <app-person-avatar size="normal" [member]="member" />
@@ -53,7 +52,7 @@ let nextId = 0;
             }
           </div>
         </ng-template>
-        @if (open()) {
+        @if (!closed()) {
           <ng-container *ngTemplateOutlet="list" />
         }
       </p-panel>
@@ -89,7 +88,7 @@ export class AudienceSectionComponent {
 
   readonly memberSelected = output<string>();
 
-  protected readonly open = signal(false);
+  protected readonly closed = signal(true);
   protected readonly panelId = `app-audience-${nextId++}`;
   protected readonly preview = computed(() =>
     this.ids()

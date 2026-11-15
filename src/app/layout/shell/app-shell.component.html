@@ -37,7 +37,7 @@
             <i class="pi pi-user" aria-hidden="true"></i>
           }
         </button>
-        <p-popover #account [ariaLabel]="'Profile and settings' | t">
+        <p-popover #account appendTo="body" [ariaLabel]="'Profile and settings' | t">
           <div class="settings">
             @if (identity.devMode && identity.profile(); as me) {
               <div class="me">

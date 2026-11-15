@@ -104,7 +104,7 @@ export default class RoomPageComponent {
           {
             label: this.i18n.t('End the room'),
             icon: 'pi pi-stop-circle',
-            styleClass: 'danger-item',
+            linkClass: 'danger-item',
             command: () => this.end(),
           },
         ]

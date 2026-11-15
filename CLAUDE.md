@@ -177,6 +177,20 @@ and a focus ring on the card, so there is no second Join button and no "Live" la
 cards of equal height. Empty is two different states, said differently: no rooms at all ("Quiet right now", and the header's single Start a room button, not a second one), and a language with no
 rooms ("Nothing in this language yet" with Show all rooms). Loading is skeleton cards.
 
+### Using Optimus as its docs say
+
+Read the component's page before using it (`https://optimus.openng.org/llms/components/<name>.md`, listed in `llms.txt`); what the docs state, and we follow:
+
+- **Menu** (`popup`): `menu.toggle($event)` from the trigger; the component sets the trigger's `aria-haspopup`, `aria-expanded` and `aria-controls` itself, so never add them by hand; label the menu with
+  `ariaLabel`; style one item with the item's `linkClass` (our danger item), never a template of our own.
+- **Popover**: `op.toggle($event)`, `appendTo="body"`, `ariaLabel`; it sets `aria-expanded` and `aria-controls` on the trigger and moves focus in; Escape returns it.
+- **Panel**: two-way `[(collapsed)]` with a signal, `toggler` for what opens it, `toggleButtonProps` for the toggle's label.
+- **Avatar**: no roles by default, so an informative one gets `ariaLabel` and a decorative one `aria-hidden`; sizes only by the `--p-avatar-*` and `-xl-*` tokens (our hero size); the group's overlap and border by
+  its tokens. There is no ring or status pattern in the docs: the speaking ring and the mic badge are ours, on purpose.
+- **Toolbar**: `ariaLabelledBy`; it has no keyboard handling of its own, so its buttons follow the page's tab order.
+- **Tooltip** is advisory only: an icon-only button always also has an `aria-label`.
+  Dead code goes: the skeleton's stage marker and the theme hooks that only served it are gone; `copy-button`, `download-file` and `speech-input` are unused skeleton pieces, kept because the owner's tree names them.
+
 ### The banner and the profile popup
 
 Banner (`layout/shell`, the `<header>` landmark): the brand, the navigation and one account button, on one row at every width (the menubar never collapses, `breakpoint="0px"`,

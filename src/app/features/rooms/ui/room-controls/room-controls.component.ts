@@ -131,14 +131,19 @@ let nextId = 0;
             class="round"
             icon="pi pi-ellipsis-h"
             severity="secondary"
-            aria-haspopup="menu"
             [rounded]="true"
             [text]="true"
             [attr.aria-label]="moreLabel"
             [pTooltip]="moreLabel"
             (click)="menu.toggle($event)"
           ></button>
-          <p-menu #menu [popup]="true" appendTo="body" [model]="[...actions()]" />
+          <p-menu
+            #menu
+            appendTo="body"
+            [popup]="true"
+            [ariaLabel]="moreLabel"
+            [model]="[...actions()]"
+          />
         }
       </ng-template>
     </p-toolbar>
