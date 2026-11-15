@@ -44,9 +44,9 @@ describe('the stage and participants services', () => {
   });
 
   it('joins a room and reads the session', () => {
-    let role: string | undefined;
+    let joined: string | undefined;
 
-    participants.join('r-1').subscribe((session) => (role = session.role));
+    participants.join('r-1').subscribe((session) => (joined = session.room.id));
     http.expectOne(`${base}/participants/join`).flush({
       room: {
         id: 'r-1',
@@ -61,13 +61,12 @@ describe('the stage and participants services', () => {
         participantCount: 0,
         handRaiseCount: 0,
       },
-      role: 'LISTENER',
       canPublishAudio: false,
       liveKitToken: 'x',
       liveKitUrl: 'wss://livekit.test',
     });
 
-    expect(role).toBe('LISTENER');
+    expect(joined).toBe('r-1');
   });
 
   it('loads the stage and the people in the room', async () => {

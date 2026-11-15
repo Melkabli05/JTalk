@@ -8,12 +8,12 @@ export function memberOf(members: ReadonlyMap<string, Member>, id: string): Memb
 }
 
 const PALETTE = [
-  { background: 'var(--p-jtalk-bauhaus-red)', color: '#fff' },
-  { background: 'var(--p-jtalk-bauhaus-yellow)', color: '#111' },
-  { background: 'var(--p-jtalk-bauhaus-blue)', color: '#fff' },
+  { background: 'var(--p-jtalk-tone-green)', color: '#fff' },
+  { background: 'var(--p-jtalk-tone-gold)', color: '#252525' },
+  { background: 'var(--p-jtalk-tone-coral)', color: '#fff' },
 ] as const;
 
-/** A steady Bauhaus primary (and the text color that reads on it) for any seed: a person's id, a language code. */
+/** A steady brand tone (and the text color that reads on it) for any seed: a person's id, a language code. */
 export function blockColors(seed: string): { background: string; color: string } {
   const hash = [...seed].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) % 997, 7);
   return PALETTE[hash % PALETTE.length] ?? PALETTE[0];

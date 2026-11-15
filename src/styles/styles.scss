@@ -1,6 +1,4 @@
-@use '@fontsource-variable/jost';
-@use '@fontsource-variable/atkinson-hyperlegible-next';
-@use '@fontsource-variable/atkinson-hyperlegible-mono';
+@use '@fontsource-variable/inter';
 @use '@fontsource-variable/noto-sans-arabic';
 @use '@openng/icons/openng-icons.css';
 @use '@angular/cdk' as cdk;
@@ -8,7 +6,8 @@
 // `.cdk-visually-hidden`: text for screen readers only (also used by the CDK's LiveAnnouncer).
 @include cdk.a11y-visually-hidden();
 
-// Page background and text come from the Jtalk preset's tokens (core/theme/jtalk-preset.ts).
+// Page background and text come from the Jtalk preset's tokens (core/config/jtalk-preset.ts): the warm canvas
+// (surface 50) in light, the dark canvas (surface 950) in dark.
 html {
   color-scheme: light;
 

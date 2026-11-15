@@ -41,7 +41,7 @@ legend {
   }
 
   &.selected {
-    border-color: var(--p-text-color);
+    border-color: var(--p-primary-color);
   }
 }
 
@@ -62,8 +62,8 @@ legend {
   height: 1.5rem;
   border: 2px solid var(--p-content-background);
   border-radius: 50%;
-  background: var(--p-text-color);
-  color: var(--p-content-background);
+  background: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
   font-size: 0.75rem;
   line-height: 1;
 }

@@ -1,12 +1,5 @@
 import type { VoiceRoomDto } from '../../models/room.dto';
-import {
-  parseRoom,
-  parseRooms,
-  parseSession,
-  toCreatePayload,
-  toRoom,
-  toUpdatePayload,
-} from './rooms.adapter';
+import { parseRoom, parseRooms, parseSession, toRoom } from './rooms.adapter';
 
 const dto: VoiceRoomDto = {
   id: 'r-1',
@@ -16,18 +9,16 @@ const dto: VoiceRoomDto = {
   targetLanguage: 'es',
   nativeLanguage: 'en',
   maxStageSeats: 6,
-  createdAt: '2026-11-14T10:00:00Z',
   speakers: ['h-1', 's-2'],
   participantCount: 5,
   handRaiseCount: 1,
 };
 
 describe('rooms adapter', () => {
-  it('maps a room, with no topic as an empty one and the date as a Date', () => {
+  it('maps a room, with no topic as an empty one', () => {
     const room = toRoom(dto);
 
     expect(room.topic).toBe('');
-    expect(room.createdAt.toISOString()).toBe('2026-11-14T10:00:00.000Z');
     expect(room.speakers).toEqual(['h-1', 's-2']);
   });
 
@@ -43,7 +34,6 @@ describe('rooms adapter', () => {
     ['a list instead of a page', [dto]],
     ['a room without a title', { content: [{ ...dto, title: undefined }] }],
     ['a room whose speakers are not ids', { content: [{ ...dto, speakers: [1] }] }],
-    ['a room with an impossible date', { content: [{ ...dto, createdAt: 'yesterday' }] }],
   ])('refuses %s', (_name, raw) => {
     expect(() => parseRooms(raw)).toThrow('Unexpected response');
   });
@@ -61,7 +51,6 @@ describe('rooms adapter', () => {
       liveKitUrl: 'wss://livekit.test',
     });
 
-    expect(session.role).toBe('HOST');
     expect(session.room.id).toBe('r-1');
     expect(session).toMatchObject({
       canPublishAudio: true,
@@ -86,24 +75,5 @@ describe('rooms adapter', () => {
       );
       expect(() => parseSession(incomplete), missing).toThrow('expected a room session');
     }
-  });
-
-  it('sends only what the API takes', () => {
-    const draft = {
-      title: 'T',
-      topic: 'p',
-      targetLanguage: 'es',
-      nativeLanguage: 'en',
-      maxStageSeats: 4,
-    };
-
-    expect(toCreatePayload({ ...draft, extra: 1 } as typeof draft)).toEqual(draft);
-    expect(
-      toUpdatePayload({ title: 'T', topic: 'p', maxStageSeats: 4, extra: 1 } as never),
-    ).toEqual({
-      title: 'T',
-      topic: 'p',
-      maxStageSeats: 4,
-    });
   });
 });

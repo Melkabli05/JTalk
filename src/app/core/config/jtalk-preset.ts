@@ -1,222 +1,280 @@
 import { definePreset } from '@openng/optimus-ui-themes';
 import Aura from '@openng/optimus-ui-themes/aura';
-import { amber, blue, blueDark, gray, grayDark, green, orange, red, sky } from '@radix-ui/colors';
+import { blue, sky } from '@radix-ui/colors';
 
 /**
- * Jtalk design tokens, layered on the Aura preset: a Bauhaus system.
+ * Jtalk design tokens, layered on the Aura preset: "Social Audio", a warm, calm, people-first system
+ * in the spirit of Clubhouse.
  *
- * Bauhaus, as a UI vocabulary (sources in README "Design system"):
- *  - color: the three primaries (red, yellow, blue) used as flat blocks on black, white and grey;
- *    never gradients, never color alone for state (Kandinsky / Itten, Bauhaus Weimar 1919-25);
- *  - form: the circle, square and triangle, with sharp corners (radius 0) everywhere else;
- *  - flat: no shadows; separation comes from hard rules and borders, not elevation;
- *  - type: a geometric sans (Jost, after the 1920s German geometric faces) for headings, with
- *    Atkinson Hyperlegible kept for running text so unfamiliar words stay unambiguous.
+ *  - color: a warm canvas, off-white cards, near-black ink; Active Green for anything live, Moderator
+ *    Gold for roles, Danger for destructive actions. The six brand values are proposals, not an
+ *    official palette, and every other step is a mix of them with white or black (see `ramp`);
+ *  - form: 8px small controls, 14px buttons, 18px cards, 24px panels, circular avatars;
+ *  - elevation: three soft levels (1 cards, 2 floating controls, 3 dialogs and menus), no heavy shadows;
+ *  - type: Inter, with hierarchy from size and spacing rather than from many weights;
+ *  - state: never color alone (speaking also shows a waveform, muted an icon, roles a labeled badge);
+ *  - dark: its own warm theme, not an inverted light one.
  *
- * Nothing here is invented: every color is a Radix Colors value read from `@radix-ui/colors`. Radix
- * scales have 12 steps with fixed roles (1-2 backgrounds, 3-5 component fills, 6-8 borders, 9-10
- * solid fills, 11-12 text). Optimus scales have 11 slots (50-950), so each `*Ramp` below maps
- * slot -> Radix step.
+ * Contrast is verified numerically: text on solids >= 4.5:1, borders and indicators >= 3:1. That is why
+ * the brand green (2.98:1 against white) is the solid only in dark mode, where ink text sits on it
+ * (5.8:1); light mode fills buttons with the 700 step (5.5:1 against white).
  */
 
-type Scale = Record<string, string>;
-type Ramp = Record<number, number>;
+type Slot = 50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 | 950;
+type Scale = Record<Slot, string>;
 
-/** `{ blue1 … blue12 }` -> `{ 1 … 12 }`, the shape Optimus references as `{radixBlue.9}`. */
-const steps = (scale: Scale): Record<number, string> =>
-  Object.fromEntries(Object.values(scale).map((hex, i) => [i + 1, hex]));
+const brand = { green: '#3ba875', gold: '#e8b95b', danger: '#d95d58' };
+const ink = '#252525';
+const canvas = '#f5f1e8';
+const surface = '#fffefa';
 
-/** Slot -> token reference into the primitive `name` (resolved by Optimus per color scheme). */
-const refs = (name: string, ramp: Ramp) =>
-  Object.fromEntries(Object.entries(ramp).map(([slot, step]) => [slot, `{${name}.${step}}`]));
+const channel = (hex: string, at: number) => parseInt(hex.slice(at, at + 2), 16);
 
-/** Slot -> literal hex, for palettes Aura reads directly (status colors). */
-const hexes = (scale: Scale, ramp: Ramp) =>
-  Object.fromEntries(Object.entries(ramp).map(([slot, step]) => [slot, steps(scale)[step]]));
+/** `base` mixed `amount` (0-1) of the way towards `to`, as a hex color. */
+function mix(base: string, to: string, amount: number): string {
+  const part = (at: number) =>
+    Math.round(channel(base, at) + (channel(to, at) - channel(base, at)) * amount)
+      .toString(16)
+      .padStart(2, '0');
+  return `#${part(1)}${part(3)}${part(5)}`;
+}
 
-// Dark ramps run the other way: Aura reads a lower slot as lighter on dark backgrounds.
-const accentLight: Ramp = {
-  50: 2,
-  100: 3,
-  200: 4,
-  300: 5,
-  400: 7,
-  500: 9,
-  600: 10,
-  700: 11,
-  800: 12,
-  900: 12,
-  950: 12,
-};
-const accentDark: Ramp = {
-  50: 12,
-  100: 12,
-  200: 11,
-  300: 10,
-  400: 9,
-  500: 8,
-  600: 7,
-  700: 6,
-  800: 5,
-  900: 4,
-  950: 3,
-};
-const neutralLight: Ramp = {
-  50: 2,
-  100: 3,
-  200: 4,
-  300: 6,
-  400: 7,
-  500: 9,
-  600: 10,
-  700: 11,
-  800: 12,
-  900: 12,
-  950: 12,
-};
-// Panels sit one step lighter than the page (gray-dark 2 vs 1): separation by lightness, not shadow.
-const neutralDark: Ramp = {
-  50: 12,
-  100: 12,
-  200: 12,
-  300: 11,
-  400: 11,
-  500: 9,
-  600: 8,
-  700: 6,
-  800: 4,
-  900: 2,
-  950: 1,
-};
-// Aura reads slot 500 for light solids and 400 for dark solids. Radix step 9 is only ~3:1 against
-// white text, so 500 -> step 11 (>= 4.5:1) and 400 -> step 9; 600+ -> step 12 for hover/pressed.
-const status: Ramp = {
-  50: 2,
-  100: 3,
-  200: 5,
-  300: 8,
-  400: 9,
-  500: 11,
-  600: 12,
-  700: 12,
-  800: 12,
-  900: 12,
-  950: 12,
+/** An 11-slot Optimus ramp whose 500 is the brand color: tints towards white, shades towards black. */
+function ramp(base: string): Scale {
+  return {
+    50: mix(base, '#ffffff', 0.92),
+    100: mix(base, '#ffffff', 0.84),
+    200: mix(base, '#ffffff', 0.68),
+    300: mix(base, '#ffffff', 0.5),
+    400: mix(base, '#ffffff', 0.25),
+    500: base,
+    600: mix(base, '#000000', 0.15),
+    700: mix(base, '#000000', 0.3),
+    800: mix(base, '#000000', 0.45),
+    900: mix(base, '#000000', 0.58),
+    950: mix(base, '#000000', 0.7),
+  };
+}
+
+const green = ramp(brand.green);
+const gold = ramp(brand.gold);
+const danger = ramp(brand.danger);
+
+/**
+ * A status palette (Aura's severities). Aura reads slot 500 for solids in light mode (white text on
+ * it) and slot 400 for solids in dark mode (dark text on it), so those two take the steps that pass
+ * 4.5:1; slots 600+ are darker for hover and pressed.
+ */
+function status(scale: Scale, light: Slot, dark: Slot): Scale {
+  return {
+    50: scale[50],
+    100: scale[100],
+    200: scale[200],
+    300: scale[300],
+    400: scale[dark],
+    500: scale[light],
+    600: scale[800],
+    700: scale[900],
+    800: scale[900],
+    900: scale[950],
+    950: scale[950],
+  };
+}
+
+/** A Radix scale (12 steps, "blue1" ... "blue12") as an Optimus status palette: 500 -> step 11, 400 -> step 9. */
+const radix = (scale: Record<string, string>): Scale => {
+  const steps = Object.values(scale);
+  const step = (n: number) => steps[n - 1] ?? '';
+  return {
+    50: step(2),
+    100: step(3),
+    200: step(5),
+    300: step(8),
+    400: step(9),
+    500: step(11),
+    600: step(12),
+    700: step(12),
+    800: step(12),
+    900: step(12),
+    950: step(12),
+  };
 };
 
-// Sharp corners. Round shapes are circles on purpose (avatar), never a soft radius.
-const borderRadius = { none: '0', xs: '0', sm: '0', md: '0', lg: '0', xl: '0' };
+// Warm neutrals. Light: 0 card, 50 canvas, 500 the muted tone (borders, icons), 600 muted text, 950 ink.
+// Dark runs the other way (a lower slot is lighter): 950 canvas, 900 card, 100 text.
+const lightSurface: Record<0 | Slot, string> = {
+  0: surface,
+  50: canvas,
+  100: '#ece7da',
+  200: '#ded8c8',
+  300: '#cdc7b6',
+  400: '#a9a79e',
+  500: '#85847e',
+  600: '#6b6a64',
+  700: '#504f4b',
+  800: '#3a3936',
+  900: '#2e2d2b',
+  950: ink,
+};
+const darkSurface: Record<0 | Slot, string> = {
+  0: surface,
+  50: canvas,
+  100: '#e8e5db',
+  200: '#d2cfc4',
+  300: '#b3b0a6',
+  400: '#9c9a91',
+  500: '#6f6d66',
+  600: '#4a4843',
+  700: '#3a3935',
+  800: '#2e2d29',
+  900: '#242320',
+  950: '#1b1a18',
+};
 
-// Flat: Bauhaus has no elevation. Overlays are told apart by a hard border (see overlay borders below).
-const noShadow = 'none';
+const radius = { control: '8px', button: '14px', card: '18px', panel: '24px' };
 
-// The three Bauhaus primaries as decorative shape fills (Kandinsky's yellow triangle, red square,
-// blue circle): Radix step 9, the "solid" step. They carry no state and no text.
-const bauhaus = { red: red.red9, yellow: amber.amber9, blue: blue.blue9 };
+const elevation = {
+  light: [
+    '0 1px 2px rgba(37, 37, 37, 0.06), 0 1px 1px rgba(37, 37, 37, 0.04)',
+    '0 4px 14px rgba(37, 37, 37, 0.1)',
+    '0 12px 32px rgba(37, 37, 37, 0.16)',
+  ],
+  dark: [
+    '0 1px 2px rgba(0, 0, 0, 0.35)',
+    '0 4px 14px rgba(0, 0, 0, 0.45)',
+    '0 12px 32px rgba(0, 0, 0, 0.55)',
+  ],
+};
 
-// Jost (Owen Earl, OFL), inspired by 1920s German geometric sans-serifs: headings, brand, buttons.
-// Atkinson Hyperlegible Next (Braille Institute + Applied Design) stays for running text: unambiguous
-// letterforms (I / l / 1, 0 / O) for a chat where people read unfamiliar words. Files are self-hosted
-// via @fontsource-variable (styles.scss); Noto Sans Arabic is fetched only when Arabic text appears.
-const fallbackSans =
-  "'Noto Sans Arabic Variable', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+// Inter has no Arabic glyphs, so Arabic text falls through to Noto Sans Arabic (fetched only when it appears).
 const fontFamily = {
-  sans: `'Atkinson Hyperlegible Next Variable', ${fallbackSans}`,
-  display: `'Jost Variable', ${fallbackSans}`,
-  mono: "'Atkinson Hyperlegible Mono Variable', ui-monospace, Menlo, Consolas, monospace",
+  sans: "'Inter Variable', 'Noto Sans Arabic Variable', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  mono: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
 };
+
+// Type scale: size by role, weight 400/500/600/700 only.
+const type = {
+  display: '2rem',
+  h1: '1.625rem',
+  h2: '1.25rem',
+  h3: '1rem',
+  body: '0.9375rem',
+  secondary: '0.8125rem',
+  caption: '0.6875rem',
+};
+
+// Fills for initials avatars and room banners: the brand colors at depths that carry text (white on
+// green and coral >= 4.9:1, ink on gold 8.4:1), and fine on both canvases.
+const tone = { green: green[700], gold: gold[500], coral: danger[600] };
 
 export const JtalkPreset = definePreset(Aura, {
   primitive: {
-    radixBlue: steps(blue),
-    radixBlueDark: steps(blueDark),
-    radixGray: steps(gray),
-    radixGrayDark: steps(grayDark),
-    // Aura's Tailwind-default status palettes, replaced by Radix. Warnings use Radix amber, the
-    // warmer of the two yellows (closer to the Bauhaus cadmium than lemon yellow-9).
-    // `purple` (the rarely used "help" severity) stays Aura's: Radix purple-9 under dark text is 3.7:1.
-    red: hexes(red, status),
-    green: hexes(green, status),
-    orange: hexes(orange, status),
-    yellow: hexes(amber, status),
-    blue: hexes(blue, status),
-    sky: hexes(sky, status),
-    borderRadius,
+    // Aura's Tailwind-default palettes, replaced. Warnings and the other warm severities are gold.
+    // `purple` (the rarely used "help" severity) stays Aura's.
+    green: status(green, 700, 500),
+    red: status(danger, 600, 400),
+    yellow: status(gold, 800, 500),
+    orange: status(gold, 800, 500),
+    // Information keeps Radix blue and sky (white on blue-11 is 4.8:1): the brand has no blue.
+    blue: radix(blue),
+    sky: radix(sky),
+    borderRadius: {
+      none: '0',
+      xs: '4px',
+      sm: radius.control,
+      md: '10px',
+      lg: '14px',
+      xl: radius.card,
+    },
   },
 
   semantic: {
-    primary: refs('radixBlue', accentLight),
+    primary: green,
 
-    // 200ms is inside the 100-250ms range recommended for UI feedback.
     transitionDuration: '0.2s',
 
     // WCAG 2.4.7 / 2.4.11: a clearly visible, >= 2px, >= 3:1 focus indicator.
     focusRing: { width: '2px', style: 'solid', color: '{primary.color}', offset: '2px' },
 
+    formField: { borderRadius: radius.control },
+    content: { borderRadius: radius.control },
+
     overlay: {
-      select: { shadow: noShadow },
-      popover: { shadow: noShadow },
-      modal: { shadow: noShadow },
-      navigation: { shadow: noShadow },
+      select: { borderRadius: radius.button, shadow: 'var(--p-jtalk-elevation-3)' },
+      popover: { borderRadius: radius.button, shadow: 'var(--p-jtalk-elevation-3)' },
+      modal: { borderRadius: radius.panel, shadow: 'var(--p-jtalk-elevation-3)' },
+      navigation: { shadow: 'var(--p-jtalk-elevation-3)' },
     },
 
     colorScheme: {
       light: {
-        surface: { 0: '#ffffff', ...refs('radixGray', neutralLight) },
-        // Solid fill is step 11: white text on blue-11 is 4.8:1 (on step 9 it is 3.3:1).
+        surface: lightSurface,
+        // The 700 step under white text: 5.5:1.
         primary: {
           color: '{primary.700}',
           contrastColor: '#ffffff',
           hoverColor: '{primary.800}',
-          activeColor: '{primary.800}',
+          activeColor: '{primary.900}',
         },
-        // Gray 11 (5.9:1 on white) for muted and placeholder text (>= 4.5:1).
         text: {
-          color: '{surface.800}',
-          hoverColor: '{surface.800}',
-          mutedColor: '{surface.700}',
-          hoverMutedColor: '{surface.800}',
+          color: '{surface.950}',
+          hoverColor: '{surface.950}',
+          mutedColor: '{surface.600}',
+          hoverMutedColor: '{surface.700}',
         },
-        // Field borders are the darkest gray (12): hard black-on-white edges, far above 3:1 (WCAG 1.4.11).
+        // Field borders are the muted tone (3.3:1 on the canvas, 3.7:1 on a card): WCAG 1.4.11.
         formField: {
-          borderColor: '{surface.800}',
-          hoverBorderColor: '{surface.950}',
-          placeholderColor: '{surface.700}',
-          iconColor: '{surface.700}', // the password show/hide toggle: a control, so >= 3:1
-          floatLabelColor: '{surface.700}',
-          floatLabelActiveColor: '{surface.700}',
+          background: '{surface.0}',
+          borderColor: '{surface.500}',
+          hoverBorderColor: '{surface.600}',
+          placeholderColor: '{surface.600}',
+          iconColor: '{surface.600}',
+          floatLabelColor: '{surface.600}',
+          floatLabelActiveColor: '{surface.600}',
         },
-        // Overlays are flat, so a hard border separates them from the page.
         overlay: {
-          select: { borderColor: '{surface.800}' },
-          popover: { borderColor: '{surface.800}' },
-          modal: { borderColor: '{surface.800}' },
+          select: { borderColor: '{surface.200}' },
+          popover: { borderColor: '{surface.200}' },
+          modal: { borderColor: '{surface.200}' },
         },
+        mask: { background: 'rgba(37, 37, 37, 0.45)' },
       },
       dark: {
-        surface: { 0: '#ffffff', ...refs('radixGrayDark', neutralDark) },
-        // Dark text on the solid (gray-dark 1 on blue-dark 9 is 5.8:1).
+        surface: darkSurface,
+        // The brand green itself, with near-black text on it: 5.8:1.
         primary: {
-          ...refs('radixBlueDark', accentDark),
-          color: '{primary.400}',
+          color: '{primary.500}',
           contrastColor: '{surface.950}',
-          hoverColor: '{primary.300}',
-          activeColor: '{primary.200}',
+          hoverColor: '{primary.400}',
+          activeColor: '{primary.300}',
         },
+        text: {
+          color: '{surface.100}',
+          hoverColor: '{surface.50}',
+          mutedColor: '{surface.400}',
+          hoverMutedColor: '{surface.300}',
+        },
+        formField: {
+          background: '{surface.900}',
+          borderColor: '{surface.500}',
+          hoverBorderColor: '{surface.400}',
+          placeholderColor: '{surface.400}',
+          iconColor: '{surface.400}',
+          floatLabelColor: '{surface.400}',
+          floatLabelActiveColor: '{surface.400}',
+        },
+        content: { borderColor: '{surface.700}', hoverBackground: '{surface.800}' },
         overlay: {
-          select: { borderColor: '{surface.400}' },
-          popover: { borderColor: '{surface.400}' },
-          modal: { borderColor: '{surface.400}' },
+          select: { borderColor: '{surface.700}' },
+          popover: { borderColor: '{surface.700}' },
+          modal: { borderColor: '{surface.700}' },
         },
-        // Softer than pure white on dark backgrounds (less halation).
-        text: { color: '{surface.100}', hoverColor: '{surface.100}' },
-        formField: { borderColor: '{surface.400}', hoverBorderColor: '{surface.300}' },
+        mask: { background: 'rgba(0, 0, 0, 0.6)' },
       },
     },
   },
 
   components: {
-    // The breadcrumb sits directly on the page, so it takes no panel of its own.
     breadcrumb: {
       root: { background: 'transparent', padding: '0' },
       // WCAG 2.5.8: the links are pointer targets, so they get the 24 px minimum height.
@@ -228,7 +286,6 @@ export const JtalkPreset = definePreset(Aura, {
         }
       `,
     },
-    // The header draws its own edge, so the menubar is not a floating panel.
     menubar: {
       root: {
         background: 'transparent',
@@ -236,41 +293,40 @@ export const JtalkPreset = definePreset(Aura, {
         borderRadius: '0',
         padding: '0.75rem 1.5rem',
       },
-      // Optimus only adds a class to the current page's link and leaves it unstyled; make it a flat
-      // block of the primary color (white text on blue-11 is 4.8:1).
+      // Optimus only adds a class to the current page's link: tint it and set it in a heavier weight.
       css: ({ dt }) => `
         .p-menubar {
           flex-wrap: wrap;
           row-gap: 0.5rem;
         }
         .p-menubar-item-link-active {
-          background: ${dt('primary.color')};
-          color: ${dt('primary.contrast.color')};
+          background: color-mix(in srgb, ${dt('primary.color')} 14%, transparent);
+          color: ${dt('text.color')};
           font-weight: 600;
         }
         .p-menubar-item-link-active .p-menubar-item-icon {
-          color: inherit;
+          color: ${dt('primary.color')};
         }
       `,
     },
-    // The navigation progress bar is a thin rule, not a form control.
     progressbar: { root: { height: '0.25rem' } },
     tooltip: {
-      root: { borderRadius: '0', shadow: 'none', padding: '0.375rem 0.75rem' },
+      root: {
+        borderRadius: radius.control,
+        shadow: 'var(--p-jtalk-elevation-2)',
+        padding: '0.375rem 0.75rem',
+      },
       colorScheme: {
-        light: { root: { background: '{surface.950}', color: '#ffffff' } },
-        dark: { root: { background: '{surface.0}', color: '{surface.950}' } },
+        light: { root: { background: '{surface.950}', color: surface } },
+        dark: { root: { background: '{surface.100}', color: '{surface.950}' } },
       },
     },
-    // Timelines (the order stages): a flat 4px rule between stages, filled with the primary color up to
-    // the stage the order has reached. Markers carry `data-state="done|current|todo"` (see the order page).
     timeline: {
-      eventConnector: { size: '4px', color: '{surface.300}' },
+      eventConnector: { size: '4px', color: '{surface.200}' },
       css: ({ dt }) => `
         .p-timeline.p-timeline-horizontal {
           direction: inherit;
         }
-        /* Equal columns: Optimus shrinks the last stage to its content, which wraps its text. */
         .p-timeline-horizontal .p-timeline-event:last-child {
           flex: 1;
         }
@@ -280,42 +336,68 @@ export const JtalkPreset = definePreset(Aura, {
         }
       `,
     },
-    // Lists with grouped options (the chat's conversations): date headings in the display face, and the
-    // selected option marked by a rule in the primary color as well as by color (not by color alone).
     listbox: {
       css: () => `
         .p-listbox-option-group {
-          font-family: var(--p-jtalk-font-display);
-          font-size: 0.75rem;
-          font-weight: 700;
-          letter-spacing: 0.06em;
+          font-size: var(--p-jtalk-type-caption);
+          font-weight: 500;
+          letter-spacing: 0.04em;
           text-transform: uppercase;
         }
         .p-listbox-option.p-listbox-option-selected {
-          box-shadow: inset 4px 0 0 var(--p-primary-color);
+          box-shadow: inset 3px 0 0 var(--p-primary-color);
           font-weight: 600;
         }
       `,
     },
-    // A circle, the one round form (Kandinsky's blue circle).
-    avatar: { root: { borderRadius: '50%' } },
-    // Outlined buttons keep a full-strength edge instead of Aura's pale tint (Bauhaus: hard lines), and
-    // secondary text takes gray 11 (5.9:1) instead of gray 9 (3.3:1).
+    card: {
+      root: { borderRadius: radius.card, shadow: 'var(--p-jtalk-elevation-1)' },
+      body: { padding: '1rem', gap: '0.5rem' },
+      title: { fontSize: type.h3, fontWeight: '600' },
+      css: ({ dt }) => `
+        .p-card {
+          border: 1px solid ${dt('content.border.color')};
+          overflow: hidden;
+        }
+      `,
+    },
+    // Sizes of the avatar scale: 36 (normal), 48 (large), 88 (xlarge); 28 and 64 are set by the component.
+    avatar: {
+      root: { width: '2.25rem', height: '2.25rem', fontSize: '0.875rem', borderRadius: '50%' },
+      lg: { width: '3rem', height: '3rem', fontSize: '1.125rem' },
+      xl: { width: '5.5rem', height: '5.5rem', fontSize: '1.75rem' },
+    },
+    // Badges: small, labeled, pill-shaped; role colors (gold for moderators) come from the severities.
+    tag: {
+      root: {
+        fontSize: type.caption,
+        fontWeight: '500',
+        padding: '0.125rem 0.5rem',
+        borderRadius: '999px',
+      },
+    },
+    toast: { root: { borderRadius: radius.button } },
+    message: { root: { borderRadius: radius.button } },
     button: {
-      root: { label: { fontWeight: '600' } },
+      root: {
+        borderRadius: radius.button,
+        label: { fontWeight: '600' },
+        paddingY: '0.625rem',
+        paddingX: '1rem',
+      },
       colorScheme: {
         light: {
           outlined: {
             primary: { borderColor: '{primary.color}' },
-            secondary: { borderColor: '{surface.800}', color: '{surface.800}' },
+            secondary: { borderColor: '{surface.500}', color: '{surface.800}' },
             danger: { borderColor: '{red.500}' },
           },
-          text: { secondary: { color: '{surface.700}' } },
+          text: { secondary: { color: '{surface.600}' } },
         },
         dark: {
           outlined: {
             primary: { borderColor: '{primary.color}' },
-            secondary: { borderColor: '{surface.400}' },
+            secondary: { borderColor: '{surface.500}' },
             danger: { borderColor: '{red.400}' },
           },
         },
@@ -326,10 +408,32 @@ export const JtalkPreset = definePreset(Aura, {
     radiobutton: { root: { width: '1.5rem', height: '1.5rem' } },
   },
 
-  // Exposed as CSS variables (--p-jtalk-font-sans, --p-jtalk-bauhaus-red, ...).
-  extend: { jtalk: { font: fontFamily, bauhaus } },
+  // Exposed as CSS variables (--p-jtalk-font-sans, --p-jtalk-brand, --p-jtalk-type-h1, ...).
+  extend: {
+    jtalk: {
+      font: fontFamily,
+      type,
+      tone,
+      brand: brand.green,
+      moderator: brand.gold,
+      danger: brand.danger,
+      radius,
+    },
+  },
 
   css: ({ dt }) => `
+    :root {
+      --p-jtalk-elevation-1: ${elevation.light[0]};
+      --p-jtalk-elevation-2: ${elevation.light[1]};
+      --p-jtalk-elevation-3: ${elevation.light[2]};
+    }
+
+    .app-dark {
+      --p-jtalk-elevation-1: ${elevation.dark[0]};
+      --p-jtalk-elevation-2: ${elevation.dark[1]};
+      --p-jtalk-elevation-3: ${elevation.dark[2]};
+    }
+
     :is(
       [data-p-icon='chevron-right'], [data-p-icon='chevron-left'],
       [data-p-icon='angle-right'], [data-p-icon='angle-left'],
@@ -340,14 +444,20 @@ export const JtalkPreset = definePreset(Aura, {
 
     html {
       font-family: ${dt('jtalk.font.sans')};
+      font-size: 100%;
       font-optical-sizing: auto;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
 
-    h1, h2, h3, h4, h5, h6, .p-button, .p-tag {
-      font-family: ${dt('jtalk.font.display')};
+    body {
+      font-size: ${dt('jtalk.type.body')};
+      line-height: 1.5;
     }
+
+    h1 { font-size: ${dt('jtalk.type.h1')}; font-weight: 700; line-height: 1.2; }
+    h2 { font-size: ${dt('jtalk.type.h2')}; font-weight: 600; line-height: 1.3; }
+    h3 { font-size: ${dt('jtalk.type.h3')}; font-weight: 600; line-height: 1.4; }
 
     code, kbd, pre, samp {
       font-family: ${dt('jtalk.font.mono')};

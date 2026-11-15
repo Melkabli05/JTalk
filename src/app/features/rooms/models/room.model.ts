@@ -8,7 +8,6 @@ export interface Room {
   readonly targetLanguage: string;
   readonly nativeLanguage: string;
   readonly maxStageSeats: number;
-  readonly createdAt: Date;
   readonly speakers: readonly string[];
   readonly participantCount: number;
   readonly handRaiseCount: number;
@@ -33,7 +32,6 @@ export interface RoomEdit {
 /** What the backend hands over on entering a room: the room, the rights, and where and how to connect to its audio. */
 export interface RoomSession {
   readonly room: Room;
-  readonly role: MemberRole;
   readonly canPublishAudio: boolean;
   readonly liveKitUrl: string;
   readonly liveKitToken: string;
@@ -46,7 +44,6 @@ export interface Stage {
 
 export interface Participant {
   readonly userId: string;
-  readonly role: MemberRole;
   readonly reconnecting: boolean;
 }
 

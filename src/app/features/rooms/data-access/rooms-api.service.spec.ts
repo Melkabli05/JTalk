@@ -74,21 +74,20 @@ describe('RoomsApiService', () => {
       nativeLanguage: 'en',
       maxStageSeats: 4,
     };
-    let role: string | undefined;
+    let opened: string | undefined;
 
-    api.create(draft).subscribe((session) => (role = session.role));
+    api.create(draft).subscribe((session) => (opened = session.room.id));
     const request = http.expectOne('/api/v1/voice-rooms');
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual(draft);
     request.flush({
       room,
-      role: 'HOST',
       canPublishAudio: true,
       liveKitToken: 'x',
       liveKitUrl: 'wss://livekit.test',
     });
 
-    expect(role).toBe('HOST');
+    expect(opened).toBe('r-1');
   });
 
   it('updates and closes a room', () => {

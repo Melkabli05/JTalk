@@ -10,7 +10,6 @@ const ROOM: Room = {
   targetLanguage: 'es',
   nativeLanguage: 'en',
   maxStageSeats: 6,
-  createdAt: new Date('2026-11-14T10:00:00Z'),
   speakers: ['h-1', 's-2'],
   participantCount: 5,
   handRaiseCount: 2,

@@ -1,11 +1,15 @@
 <p-card class="card" role="group" [attr.aria-labelledby]="titleId">
   <ng-template #header>
-    <div class="banner" [style.background]="colors().background" [style.color]="colors().color">
-      <span class="flag" aria-hidden="true">{{ target().flag }}</span>
+    <div
+      class="banner"
+      [style.background]="look().colors.background"
+      [style.color]="look().colors.color"
+    >
+      <span class="flag" aria-hidden="true">{{ look().target.flag }}</span>
       <span class="language">
-        <span class="practise">{{ target().name | t }}</span>
+        <span class="practise">{{ look().target.name | t }}</span>
         <span class="audience">{{
-          'for {language} speakers' | t: { language: native().name | t }
+          'for {language} speakers' | t: { language: look().native.name | t }
         }}</span>
       </span>
     </div>

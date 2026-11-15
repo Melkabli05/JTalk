@@ -18,20 +18,19 @@ describe('stage adapter', () => {
   it('reads who is in the room, and who is reconnecting', () => {
     expect(
       parseParticipants([
-        { userId: 'a', role: 'HOST', status: 'ACTIVE' },
-        { userId: 'b', role: 'SPEAKER', status: 'RECONNECTING' },
+        { userId: 'a', status: 'ACTIVE' },
+        { userId: 'b', status: 'RECONNECTING' },
       ]),
     ).toEqual([
-      { userId: 'a', role: 'HOST', reconnecting: false },
-      { userId: 'b', role: 'SPEAKER', reconnecting: true },
+      { userId: 'a', reconnecting: false },
+      { userId: 'b', reconnecting: true },
     ]);
   });
 
-  it.each([
-    {},
-    [{ userId: 'a', role: 'KING', status: 'ACTIVE' }],
-    [{ userId: 'a', role: 'HOST', status: 'GONE' }],
-  ])('refuses %j as participants', (raw) => {
-    expect(() => parseParticipants(raw)).toThrow('Unexpected response');
-  });
+  it.each([{}, [{ userId: 'a', status: 'GONE' }], [{ status: 'ACTIVE' }]])(
+    'refuses %j as participants',
+    (raw) => {
+      expect(() => parseParticipants(raw)).toThrow('Unexpected response');
+    },
+  );
 });

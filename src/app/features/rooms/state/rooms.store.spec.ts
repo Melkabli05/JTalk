@@ -54,11 +54,11 @@ describe('RoomsStore', () => {
   it('narrows the list to one language, and back', async () => {
     const { store } = await listed([room('a', 'es'), room('b', 'fr'), room('c', 'es')]);
 
-    store.setFilter('es');
+    store.filter.set('es');
     expect(store.filter()).toBe('es');
     expect(store.shown().map((r) => r.id)).toEqual(['a', 'c']);
 
-    store.setFilter('');
+    store.filter.set('');
     expect(store.shown()).toHaveLength(3);
   });
 

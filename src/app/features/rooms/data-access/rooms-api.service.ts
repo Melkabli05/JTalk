@@ -3,13 +3,7 @@ import { inject, Service } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 import { API_BASE_URL } from '@core/http/api-base-url.token';
 import type { Room, RoomDraft, RoomEdit, RoomSession } from '../models/room.model';
-import {
-  parseRoom,
-  parseRooms,
-  parseSession,
-  toCreatePayload,
-  toUpdatePayload,
-} from './adapters/rooms.adapter';
+import { parseRoom, parseRooms, parseSession } from './adapters/rooms.adapter';
 
 const PAGE_SIZE = 100;
 
@@ -31,13 +25,11 @@ export class RoomsApiService {
 
   /** Opens a room and joins it as host. A host with a room already open gets that room back. */
   create(draft: RoomDraft): Observable<RoomSession> {
-    return this.http.post<unknown>(this.url, toCreatePayload(draft)).pipe(map(parseSession));
+    return this.http.post<unknown>(this.url, draft).pipe(map(parseSession));
   }
 
   update(id: string, edit: RoomEdit): Observable<Room> {
-    return this.http
-      .patch<unknown>(`${this.url}/${id}`, toUpdatePayload(edit))
-      .pipe(map(parseRoom));
+    return this.http.patch<unknown>(`${this.url}/${id}`, edit).pipe(map(parseRoom));
   }
 
   close(id: string): Observable<void> {

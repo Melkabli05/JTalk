@@ -16,25 +16,28 @@
   width: 100%;
   min-height: 11rem;
   padding: 1rem 0.5rem;
-  border: 2px solid var(--p-text-color);
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-jtalk-radius-card);
   background: var(--p-content-background);
+  box-shadow: var(--p-jtalk-elevation-1);
   color: inherit;
   font: inherit;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
+    box-shadow 0.15s ease,
     background-color 0.15s ease;
 }
 
 .tile:hover:not(:disabled),
 .tile:focus-visible {
-  border-color: var(--p-primary-color);
-  background: var(--p-surface-100);
+  box-shadow: var(--p-jtalk-elevation-2);
 }
 
 .seat {
   border-style: dashed;
-  border-color: var(--p-text-muted-color);
+  border-color: var(--p-form-field-border-color);
+  background: transparent;
+  box-shadow: none;
   color: var(--p-text-muted-color);
 
   .pi {
@@ -50,7 +53,7 @@
 .name {
   max-width: 100%;
   overflow: hidden;
-  font-weight: 700;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -64,9 +67,9 @@
 }
 
 .open {
-  font-size: 0.875rem;
+  font-size: var(--p-jtalk-type-secondary);
 }
 
 .person.speaking {
-  border-color: var(--p-primary-color);
+  border-color: var(--p-jtalk-brand);
 }

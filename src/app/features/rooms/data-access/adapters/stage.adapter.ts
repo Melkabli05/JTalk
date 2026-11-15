@@ -1,6 +1,6 @@
 import { asRecord } from '@shared/utils/as-record';
 import type { Participant, Stage } from '../../models/room.model';
-import { isRole, isStringList } from './rooms.adapter';
+import { isStringList } from './rooms.adapter';
 
 /** `parse` for an `httpResource`: who is on the stage and who has a hand up, in order. */
 export function parseStage(raw: unknown): Stage {
@@ -16,14 +16,12 @@ function parseParticipant(raw: unknown): Participant {
   if (
     dto === undefined ||
     typeof dto['userId'] !== 'string' ||
-    !isRole(dto['role']) ||
     (dto['status'] !== 'ACTIVE' && dto['status'] !== 'RECONNECTING')
   ) {
     throw new Error('Unexpected response: expected a participant');
   }
   return {
     userId: dto['userId'],
-    role: dto['role'],
     reconnecting: dto['status'] === 'RECONNECTING',
   };
 }

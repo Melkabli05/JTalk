@@ -21,7 +21,6 @@ import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 import { msg } from '@shared/utils/i18n/msg';
-import { languageOf } from '@shared/utils/languages';
 import type { MemberRole, RoomEdit, Stage } from '../../models/room.model';
 import { provideRoom, RoomFacade, type RoomExit } from '../../state/room.facade';
 import { AudienceGridComponent } from '../../ui/audience-grid/audience-grid.component';
@@ -30,7 +29,8 @@ import { RaisedHandsComponent } from '../../ui/raised-hands/raised-hands.compone
 import { RoomControlsComponent } from '../../ui/room-controls/room-controls.component';
 import { RoomFormDialogComponent } from '../../ui/room-form-dialog/room-form-dialog.component';
 import { StageSeatsComponent } from '../../ui/stage-seats/stage-seats.component';
-import { blockColors, memberOf } from '../../utils/members';
+import { memberOf } from '../../utils/members';
+import { roomLook } from '../../utils/room-look';
 
 /** What to tell the person, when something other than their own choice took them out of the room. */
 const EXIT_MESSAGES: Readonly<Record<RoomExit, string | null>> = {
@@ -66,7 +66,7 @@ const EXIT_MESSAGES: Readonly<Record<RoomExit, string | null>> = {
   styleUrl: './room-page.component.scss',
 })
 export default class RoomPageComponent {
-  private readonly facade = inject(RoomFacade);
+  protected readonly facade = inject(RoomFacade);
   private readonly router = inject(Router);
   private readonly confirmation = inject(ConfirmationService);
   private readonly toast = inject(MessageService);
@@ -79,55 +79,32 @@ export default class RoomPageComponent {
   readonly id = input.required<string>();
 
   protected readonly state = this.facade.state;
-  protected readonly audio = this.facade.audio;
-  protected readonly room = this.state.room;
-  protected readonly members = this.state.members;
-  protected readonly meId = this.state.meId;
-  protected readonly joined = this.state.joined;
-  protected readonly hostId = this.state.hostId;
-  protected readonly isHost = this.state.isHost;
-  protected readonly speakers = this.state.speakers;
-  protected readonly queue = this.state.queue;
-  protected readonly onStage = this.state.onStage;
-  protected readonly handRaised = this.state.handRaised;
-  protected readonly audience = this.state.audience;
-  protected readonly reconnecting = this.state.reconnecting;
-  protected readonly joining = this.facade.joining;
-  protected readonly action = this.facade.action;
-  protected readonly saving = this.facade.saving;
-
+  protected readonly look = computed(() => roomLook(this.state.room()));
   protected readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
   protected readonly editing = signal(false);
   protected readonly selectedId = signal<string | null>(null);
 
-  protected readonly target = computed(() =>
-    languageOf(this.room.hasValue() ? this.room.value().targetLanguage : ''),
-  );
-  protected readonly native = computed(() =>
-    languageOf(this.room.hasValue() ? this.room.value().nativeLanguage : ''),
-  );
-  protected readonly colors = computed(() =>
-    blockColors(this.room.hasValue() ? this.room.value().targetLanguage : ''),
-  );
-
+  // The person picked on screen, and what the one looking may do about them.
   protected readonly selected = computed(() => {
     const id = this.selectedId();
-    return id === null ? undefined : memberOf(this.members(), id);
+    return id === null ? undefined : memberOf(this.state.members(), id);
   });
   protected readonly selectedRole = computed<MemberRole>(() => {
     const id = this.selectedId();
-    return id === this.hostId()
+    return id === this.state.hostId()
       ? 'HOST'
-      : this.speakers().includes(id ?? '')
+      : this.state.speakers().includes(id ?? '')
         ? 'SPEAKER'
         : 'LISTENER';
   });
-  protected readonly selectedIsMe = computed(() => this.selectedId() === this.meId());
+  protected readonly selectedIsMe = computed(() => this.selectedId() === this.state.meId());
   protected readonly canInvite = computed(
-    () => this.isHost() && !this.selectedIsMe() && this.selectedRole() === 'LISTENER',
+    () => this.state.isHost() && !this.selectedIsMe() && this.selectedRole() === 'LISTENER',
   );
-  protected readonly canDemote = computed(() => this.isHost() && this.selectedRole() === 'SPEAKER');
-  protected readonly canRemove = computed(() => this.isHost() && !this.selectedIsMe());
+  protected readonly canDemote = computed(
+    () => this.state.isHost() && this.selectedRole() === 'SPEAKER',
+  );
+  protected readonly canRemove = computed(() => this.state.isHost() && !this.selectedIsMe());
   protected readonly canStepDown = computed(
     () => this.selectedIsMe() && this.selectedRole() === 'SPEAKER',
   );
@@ -138,7 +115,7 @@ export default class RoomPageComponent {
       untracked(() => this.facade.enter(id));
     });
     effect(() => {
-      const stage = this.state.stage.hasValue() ? this.state.stage.value() : null;
+      const stage = this.state.stage();
       if (stage) {
         untracked(() => this.announceChanges(stage));
       }
@@ -151,11 +128,11 @@ export default class RoomPageComponent {
       }
     });
     effect(() => {
-      const on = this.audio.micOn();
+      const on = this.facade.audio.micOn();
       untracked(() => this.announceMicrophone(on));
     });
     effect(() => {
-      if (this.audio.micRefused()) {
+      if (this.facade.audio.micRefused()) {
         untracked(() =>
           this.toast.add({
             severity: 'warn',
@@ -172,30 +149,6 @@ export default class RoomPageComponent {
   protected leave(): void {
     this.facade.leave();
     void this.router.navigate(['/']);
-  }
-
-  protected raiseHand(): void {
-    this.facade.raiseHand();
-  }
-
-  protected lowerHand(): void {
-    this.facade.lowerHand();
-  }
-
-  protected takeSeat(): void {
-    this.facade.takeSeat();
-  }
-
-  protected toggleMic(): void {
-    this.facade.toggleMicrophone();
-  }
-
-  protected enableSound(): void {
-    this.facade.enableSound();
-  }
-
-  protected retryAudio(): void {
-    this.facade.reconnectAudio();
   }
 
   protected invite(userId: string): void {
@@ -215,7 +168,7 @@ export default class RoomPageComponent {
 
   protected remove(userId: string): void {
     this.selectedId.set(null);
-    const name = memberOf(this.members(), userId).name;
+    const name = memberOf(this.state.members(), userId).name;
     this.confirmation.confirm({
       header: this.i18n.t('Remove from the room'),
       message: this.i18n.t('{name} will leave the room and cannot come back.', { name }),
@@ -261,15 +214,15 @@ export default class RoomPageComponent {
     if (!before) {
       return;
     }
-    const me = this.meId();
-    const nameOf = (id: string) => memberOf(this.members(), id).name;
+    const me = this.state.meId();
+    const nameOf = (id: string) => memberOf(this.state.members(), id).name;
     const said: string[] = [];
     for (const id of stage.handRaiseQueue.filter(
       (queued) => !before.handRaiseQueue.includes(queued),
     )) {
       if (id === me) {
         said.push(this.i18n.t('You raised your hand.'));
-      } else if (this.isHost()) {
+      } else if (this.state.isHost()) {
         said.push(this.i18n.t('{name} raised a hand.', { name: nameOf(id) }));
       }
     }

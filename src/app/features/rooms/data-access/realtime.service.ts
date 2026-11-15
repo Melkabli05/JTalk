@@ -112,23 +112,25 @@ export class RealtimeService {
     }
   }
 
+  /** What the connection reports, ignored once a newer connection has replaced it. */
   private listenerFor(generation: number): RealtimeListener {
-    const current = (action: () => void) => () => {
-      if (generation === this.generation) {
-        action();
-      }
+    const live = <Args extends unknown[]>(handle: (...args: Args) => void) => {
+      return (...args: Args) => {
+        if (generation === this.generation) {
+          handle(...args);
+        }
+      };
     };
     return {
-      speakersChanged: (ids) => current(() => this.speaking.set(ids))(),
-      roomEvent: current(() => this.pushed.next()),
-      soundBlocked: (blocked) => current(() => this.soundBlocked.set(blocked))(),
-      canPublishChanged: (canPublish) =>
-        current(() => {
-          this.canSpeak.set(canPublish);
-          void this.turnMicrophone(canPublish);
-        })(),
-      linkChanged: (up) => current(() => this.status.set(up ? 'connected' : 'connecting'))(),
-      connectionLost: current(() => {
+      speakersChanged: live((ids) => this.speaking.set(ids)),
+      roomEvent: live(() => this.pushed.next()),
+      soundBlocked: live((blocked) => this.soundBlocked.set(blocked)),
+      canPublishChanged: live((canPublish) => {
+        this.canSpeak.set(canPublish);
+        void this.turnMicrophone(canPublish);
+      }),
+      linkChanged: live((up) => this.status.set(up ? 'connected' : 'connecting')),
+      connectionLost: live(() => {
         this.connection = null;
         this.micOn.set(false);
         this.speaking.set([]);

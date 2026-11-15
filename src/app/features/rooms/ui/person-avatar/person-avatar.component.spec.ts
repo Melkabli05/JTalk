@@ -38,11 +38,14 @@ describe('PersonAvatarComponent (presentational)', () => {
     const fixture = TestBed.createComponent(PersonAvatarComponent);
     fixture.componentRef.setInput('member', ADA);
     await fixture.whenStable();
-    expect((fixture.nativeElement as HTMLElement).classList.contains('speaking')).toBe(false);
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.classList.contains('speaking')).toBe(false);
+    expect(host.querySelector('.wave')).toBeNull();
 
     fixture.componentRef.setInput('speaking', true);
     await fixture.whenStable();
-    expect((fixture.nativeElement as HTMLElement).classList.contains('speaking')).toBe(true);
+    expect(host.classList.contains('speaking')).toBe(true);
+    expect(host.querySelector('.wave')?.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('is decorative: the name always sits beside it', async () => {

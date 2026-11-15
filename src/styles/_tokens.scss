@@ -1,6 +1,6 @@
 // Layout scale shared by the shell, the navigation and every page, so no component repeats a magic
-// number. Color, type, radius and shadow tokens are not here: they come from the Optimus preset
-// (src/app/core/theme/jtalk-preset.ts) and are used as CSS variables, e.g. var(--p-primary-color).
+// number. Color, type, radius and elevation tokens are not here: they come from the Optimus preset
+// (src/app/core/config/jtalk-preset.ts) and are used as CSS variables, e.g. var(--p-primary-color).
 //
 // In a component stylesheet:  @use 'tokens' as t;  ...  padding: t.$gutter;
 
@@ -12,3 +12,13 @@ $content-width: 40rem;
 
 /// Below this width two-column layouts stack.
 $breakpoint-md: 48rem;
+
+/// The 4px spacing scale of the Social Audio system.
+$space-1: 0.25rem;
+$space-2: 0.5rem;
+$space-3: 0.75rem;
+$space-4: 1rem;
+$space-5: 1.25rem;
+$space-6: 1.5rem;
+$space-8: 2rem;
+$space-12: 3rem;

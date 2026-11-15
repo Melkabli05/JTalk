@@ -4,9 +4,9 @@ import { AvatarGroup } from '@openng/optimus-ui/avatargroup';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import { languageOf } from '@shared/utils/languages';
 import type { Member, Room } from '../../models/room.model';
-import { blockColors, memberOf } from '../../utils/members';
+import { memberOf } from '../../utils/members';
+import { roomLook } from '../../utils/room-look';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
 const SHOWN_SPEAKERS = 5;
@@ -27,9 +27,7 @@ export class RoomCardComponent {
   readonly opened = output<void>();
 
   protected readonly titleId = `app-room-card-${nextId++}`;
-  protected readonly target = computed(() => languageOf(this.room().targetLanguage));
-  protected readonly native = computed(() => languageOf(this.room().nativeLanguage));
-  protected readonly colors = computed(() => blockColors(this.room().targetLanguage));
+  protected readonly look = computed(() => roomLook(this.room()));
   protected readonly host = computed(() => memberOf(this.members(), this.room().hostId));
   protected readonly speakers = computed(() =>
     this.room()

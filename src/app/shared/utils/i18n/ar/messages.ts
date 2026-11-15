@@ -11,7 +11,7 @@ export const messages: Readonly<Record<string, string>> = {
   'Page not found': 'الصفحة غير موجودة',
   'The page you are looking for does not exist.': 'الصفحة التي تبحث عنها غير موجودة.',
   'Back to home': 'العودة إلى الرئيسية',
-  'Form follows function.': 'الشكل يتبع الوظيفة.',
+  'Say it out loud.': 'قلها بصوت عالٍ.',
   'Sign in': 'تسجيل الدخول',
   'Welcome back. Sign in to carry on.': 'أهلًا بعودتك. سجّل الدخول للمتابعة.',
   'Create account': 'إنشاء حساب',

@@ -13,17 +13,15 @@ const SESSION: RoomSession = {
     targetLanguage: 'es',
     nativeLanguage: 'en',
     maxStageSeats: 4,
-    createdAt: new Date('2026-11-14T10:00:00Z'),
     speakers: [],
     participantCount: 0,
     handRaiseCount: 0,
   },
-  role: 'LISTENER',
   canPublishAudio: false,
   liveKitUrl: 'wss://livekit.test',
   liveKitToken: 'token-1',
 };
-const SPEAKER: RoomSession = { ...SESSION, role: 'SPEAKER', canPublishAudio: true };
+const SPEAKER: RoomSession = { ...SESSION, canPublishAudio: true };
 
 describe('RealtimeService', () => {
   function setup() {

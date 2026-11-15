@@ -41,45 +41,26 @@ describe('RoomsFacade', () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it('narrows the list by language', () => {
-    facade.filterBy('es');
-
-    expect(facade.state.filter()).toBe('es');
-  });
-
-  it('opens and closes the start-a-room form', () => {
-    expect(facade.starting()).toBe(false);
-
-    facade.showStartForm(true);
-    expect(facade.starting()).toBe(true);
-
-    facade.showStartForm(false);
-    expect(facade.starting()).toBe(false);
-  });
-
-  it('starts a room, closes the form, and gives the new room to the page', () => {
+  it('starts a room, and gives the new room to the page', () => {
     const opened = vi.fn();
-    facade.showStartForm(true);
 
     facade.start(DRAFT, opened);
     const request = http.expectOne({ method: 'POST', url: '/api/v1/voice-rooms' });
     expect(request.request.body).toEqual(DRAFT);
+    expect(facade.opening.submitting()).toBe(true);
     request.flush({
       room: ROOM,
-      role: 'HOST',
       canPublishAudio: true,
       liveKitToken: 'x',
       liveKitUrl: 'wss://livekit.test',
     });
 
     expect(opened).toHaveBeenCalledExactlyOnceWith('r-9');
-    expect(facade.starting()).toBe(false);
     expect(facade.opening.submitting()).toBe(false);
   });
 
-  it('says so, and keeps the form open, when the room cannot be opened', () => {
+  it('says so, and does not move on, when the room cannot be opened', () => {
     const opened = vi.fn();
-    facade.showStartForm(true);
 
     facade.start(DRAFT, opened);
     http
@@ -87,7 +68,6 @@ describe('RoomsFacade', () => {
       .flush('error', { status: 500, statusText: 'Error' });
 
     expect(facade.opening.error()).toBe('Could not open the room. Please try again.');
-    expect(facade.starting()).toBe(true);
     expect(opened).not.toHaveBeenCalled();
   });
 

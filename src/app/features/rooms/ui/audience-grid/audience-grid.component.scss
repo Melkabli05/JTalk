@@ -15,24 +15,25 @@
   width: 100%;
   min-height: 7.5rem;
   padding: 0.75rem 0.25rem;
-  border: 2px solid transparent;
+  border: 0;
+  border-radius: var(--p-jtalk-radius-card);
   background: none;
   color: inherit;
   font: inherit;
   cursor: pointer;
-  transition: border-color 0.15s ease;
+  transition: background-color 0.15s ease;
 
   &:hover,
   &:focus-visible {
-    border-color: var(--p-primary-color);
+    background: var(--p-content-hover-background);
   }
 }
 
 .name {
   max-width: 100%;
   overflow: hidden;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--p-jtalk-type-secondary);
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

@@ -5,26 +5,30 @@
 .hero {
   display: flex;
   align-items: stretch;
-  border: 2px solid var(--p-text-color);
+  overflow: hidden;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-jtalk-radius-panel);
+  background: var(--p-content-background);
+  box-shadow: var(--p-jtalk-elevation-1);
 }
 
 .mark {
   display: grid;
   place-items: center;
   min-width: 5.5rem;
-  border-inline-end: 2px solid var(--p-text-color);
+  background: var(--p-surface-50);
   font-size: 2.5rem;
 }
 
 .info {
-  padding: 1rem 1.25rem;
+  padding: 1.25rem 1.5rem;
 }
 
 h1 {
   margin: 0 0 0.25rem;
-  font-family: var(--p-jtalk-font-display);
-  font-size: 2rem;
-  line-height: 1.15;
+  font-size: var(--p-jtalk-type-display);
+  font-weight: 700;
+  line-height: 1.2;
 
   // Focus moves here when the room opens so screen readers announce it. A heading is not a control: no ring.
   &:focus,
@@ -56,10 +60,7 @@ h2 {
   align-items: center;
   gap: 0.625rem;
   margin: 0 0 0.75rem;
-  font-family: var(--p-jtalk-font-display);
-  font-size: 1.125rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: var(--p-jtalk-type-h2);
 }
 
 .failure {

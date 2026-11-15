@@ -9,29 +9,28 @@
     size="large"
     icon="pi pi-plus"
     [label]="'Start a room' | t"
-    (click)="showStartForm(true)"
+    (click)="starting.set(true)"
   ></button>
 </header>
 
-@if (rooms.hasValue()) {
-  @if (languages().length > 1) {
+@if (state.rooms()) {
+  @if (state.languages().length > 1) {
     <app-language-filter
       class="filter"
-      [languages]="languages()"
-      [selected]="filter()"
-      (selectedChange)="filterBy($event)"
+      [languages]="state.languages()"
+      [(selected)]="state.filter"
     />
   }
 
   <p class="cdk-visually-hidden" role="status">
-    {{ 'Rooms shown: {count}' | t: { count: shown().length } }}
+    {{ 'Rooms shown: {count}' | t: { count: state.shown().length } }}
   </p>
 
-  @if (shown().length > 0) {
+  @if (state.shown().length > 0) {
     <ul class="rooms">
-      @for (room of shown(); track room.id) {
+      @for (room of state.shown(); track room.id) {
         <li>
-          <app-room-card [room]="room" [members]="members()" (opened)="open(room)" />
+          <app-room-card [room]="room" [members]="state.members()" (opened)="open(room)" />
         </li>
       }
     </ul>
@@ -44,11 +43,11 @@
         type="button"
         icon="pi pi-plus"
         [label]="'Start a room' | t"
-        (click)="showStartForm(true)"
+        (click)="starting.set(true)"
       ></button>
     </div>
   }
-} @else if (rooms.error()) {
+} @else if (state.failed()) {
   <p-message severity="error">{{ 'Could not load the rooms. Please try again.' | t }}</p-message>
   <button
     pButton
@@ -57,7 +56,7 @@
     icon="pi pi-refresh"
     severity="secondary"
     [label]="'Try again' | t"
-    (click)="rooms.reload()"
+    (click)="state.reload()"
   ></button>
 } @else {
   <p class="cdk-visually-hidden" role="status">{{ 'Loading' | t }}</p>
@@ -69,10 +68,9 @@
 }
 
 <app-room-form-dialog
-  [visible]="starting()"
-  (visibleChange)="showStartForm($event)"
+  [(visible)]="starting"
   [defaults]="defaults()"
-  [submitting]="saving.submitting()"
-  [error]="saving.error()"
+  [submitting]="facade.opening.submitting()"
+  [error]="facade.opening.error()"
   (saved)="start($event)"
 />

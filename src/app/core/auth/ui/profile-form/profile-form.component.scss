@@ -9,8 +9,9 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  border: 2px solid var(--p-text-color);
-  background: var(--p-surface-100);
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-jtalk-radius-card);
+  background: var(--p-surface-50);
 }
 
 .who {
@@ -22,8 +23,8 @@
 
 .name {
   overflow: hidden;
-  font-family: var(--p-jtalk-font-display);
-  font-size: 1.25rem;
+  font-size: var(--p-jtalk-type-h2);
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -34,7 +35,7 @@
 
 .caption {
   color: var(--p-text-muted-color);
-  font-size: 0.875rem;
+  font-size: var(--p-jtalk-type-secondary);
 }
 
 .pair {

@@ -15,7 +15,7 @@ describe('member helpers', () => {
         (id) => avatarColors(id)['--p-avatar-background'],
       ),
     );
-    expect([...backgrounds].every((value) => /bauhaus-(red|yellow|blue)/.test(value))).toBe(true);
+    expect([...backgrounds].every((value) => /tone-(green|gold|coral)/.test(value))).toBe(true);
     expect(backgrounds.size).toBeGreaterThan(1);
   });
 });

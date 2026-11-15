@@ -124,7 +124,7 @@ describe('RoomFacade', () => {
 
     expect(count('POST', `${BASE}/participants/join`)).toBe(1);
     expect(facade.state.joined()).toBe(true);
-    expect(facade.state.room.hasValue()).toBe(true);
+    expect(facade.state.room()?.id).toBe('r-1');
     expect(link.last).toMatchObject({ url: 'wss://livekit.test', token: 'token-1' });
     expect(facade.audio.status()).toBe('connected');
   });
@@ -287,13 +287,13 @@ describe('RoomFacade', () => {
   describe('the audio', () => {
     it('lets a speaker mute and unmute, and a listener neither', async () => {
       await enter();
-      facade.toggleMicrophone();
+      await facade.audio.toggleMicrophone();
       await settle();
       expect(link.last.microphone).toEqual([]);
 
       link.last.listener.canPublishChanged(true);
       await settle();
-      facade.toggleMicrophone();
+      await facade.audio.toggleMicrophone();
       await settle();
 
       expect(link.last.microphone).toEqual([true, false]);
@@ -302,12 +302,12 @@ describe('RoomFacade', () => {
     it('starts blocked sound, and connects again when the connection is lost', async () => {
       await enter();
       link.last.listener.soundBlocked(true);
-      facade.enableSound();
+      await facade.audio.enableSound();
       await settle();
       expect(link.last.soundStarts).toBe(1);
 
       link.last.listener.connectionLost();
-      facade.reconnectAudio();
+      await facade.audio.retry();
       await settle();
       expect(link.connections).toHaveLength(2);
       expect(facade.audio.status()).toBe('connected');

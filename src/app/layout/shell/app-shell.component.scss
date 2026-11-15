@@ -28,9 +28,9 @@
   z-index: 20;
 }
 
-// A thick black rule under the header: Bauhaus separates with hard lines, not shadows.
+// The header sits on the card surface with a hairline under it: calm, no heavy rule.
 .header {
-  border-block-end: 4px solid var(--p-text-color);
+  border-block-end: 1px solid var(--p-content-border-color);
   background: var(--p-content-background);
 }
 
@@ -45,10 +45,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  font-family: var(--p-jtalk-font-display);
   font-weight: 700;
-  font-size: 1.5rem;
-  letter-spacing: -0.01em;
+  font-size: var(--p-jtalk-type-h2);
   color: var(--p-text-color);
   text-decoration: none;
 
@@ -82,8 +80,4 @@
 
 .profile {
   gap: 0.5rem;
-
-  p-avatar {
-    border: 2px solid var(--p-text-color);
-  }
 }

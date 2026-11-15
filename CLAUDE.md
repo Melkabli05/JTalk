@@ -98,7 +98,7 @@ in the container page, pictures `p-avatar` (profile pictures, with initials as t
   `pInputText`, `p-password` (+ `p-fluid`), `pButton` (also for links: `<a pButton [text]="true">`), `p-message`, `p-toast`. Custom only where Optimus has
   no equivalent: the field wrappers (they bridge Optimus inputs to Signal Forms and show errors only after touch; `p-password` also has no
   `aria-invalid`/`aria-describedby`), the poster layout and brand mark, and the account logic (service, guards, interceptors).
-- Look: `app-auth-layout` is a Bauhaus poster panel (ink ground, brand, slogan, four primary blocks) beside the form column, collapsing to a
+- Look: `app-auth-layout` is a poster panel on the brand green (brand, slogan, `app-voice-bubbles`) beside the form column, collapsing to a
   band on phones; every account page passes a `heading` and a one-line `lead`. The four forms share `core/auth/ui/auth-form.scss`, and the
   brand mark is `shared/ui/brand-mark` (also used by the shell header).
 - Error text comes from `authFailure(fallback, { status: message })` (429 is always "slow down"); the sign-in redirect URL is built in one place,
@@ -128,10 +128,17 @@ protect the app add `canActivateChild: [authGuard]` to the shell route in `layou
   one label and uses `aria-pressed`. Return focus sensibly after a dialog, a delete or a new item.
 - Browser APIs get a util in `shared/utils` (`download-file`, `safe-storage`), never a call inside a component.
 
-## Design system: Bauhaus
+## Design system: Social Audio
 
-Do not invent colors or patterns. Tokens come from published, human-designed systems (Radix Colors) via
-`core/config/jtalk-preset.ts`; see README "Theme: Bauhaus". Rules: flat primary-color blocks on black/white/grey, radius 0 (the
-avatar is the one circle), no shadows (hard borders instead), no gradients or glassmorphism, Jost for headings/buttons and Atkinson
-Hyperlegible for text, color never the only carrier of state. Change tokens in the preset, not per component.
-Verify contrast numerically (white text on solids >= 4.5:1, borders >= 3:1).
+A warm, calm, people-first system in the spirit of Clubhouse; all tokens live in `core/config/jtalk-preset.ts` (change them there, never per
+component). Color: canvas `#F5F1E8` (surface 50), card `#FFFEFA` (surface 0), ink `#252525`, Active Green `#3BA875` for anything live,
+Moderator Gold `#E8B95B` for roles, Danger `#D95D58`; these are proposed values, and every other step is a mix of them with white or black.
+Light buttons fill with the green 700 step (white text 5.5:1), dark mode uses the brand green with ink text (5.8:1); muted text is surface 600
+(the proposed `#85847E` is only 3.7:1, so it is for borders and icons). Shape: 8px small controls, 14px buttons, 18px cards, 24px panels and
+the control dock, circular avatars (`--p-jtalk-radius-*`). Elevation: three soft levels, `--p-jtalk-elevation-1` cards, `-2` floating controls,
+`-3` dialogs and menus; separate with a hairline `--p-content-border-color`, not heavy rules. Type: Inter (Noto Sans Arabic falls in for Arabic),
+sizes from `--p-jtalk-type-*` (display 32, h1 26, h2 20, h3 16, body 15, secondary 13, caption 11), weights 400/500/600/700 only. Spacing: the 4px
+scale in `styles/_tokens.scss` (`$space-*`). Initials avatars and room banners take `--p-jtalk-tone-{green,gold,coral}`. Dark is its own warm
+theme (surface 950 canvas, 900 cards), not an inversion. State is never color alone: speaking is a green ring plus a waveform badge. Motion is
+subtle and still under `prefers-reduced-motion`. No gradients or glassmorphism. Verify contrast numerically (text on solids >= 4.5:1, borders and
+indicators >= 3:1).

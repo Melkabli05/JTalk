@@ -48,7 +48,7 @@ import { ProfileFormComponent } from '../profile-form/profile-form.component';
       gap: 1rem;
       margin-block-end: 1.25rem;
       padding-block-end: 1rem;
-      border-block-end: 2px solid var(--p-text-color);
+      border-block-end: 1px solid var(--p-content-border-color);
 
       app-brand-mark {
         font-size: 1.75rem;
