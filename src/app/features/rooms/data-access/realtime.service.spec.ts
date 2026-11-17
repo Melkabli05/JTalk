@@ -115,10 +115,12 @@ describe('RealtimeService', () => {
     audio.roomEvents.subscribe(heard);
     await audio.connect(SESSION);
 
-    link.last.listener.roomEvent();
-    link.last.listener.roomEvent();
+    const update = { type: 'SPEAKER_RECONNECTED', userId: 'b-1' } as const;
+    link.last.listener.roomEvent(update);
+    link.last.listener.roomEvent(update);
 
     expect(heard).toHaveBeenCalledTimes(2);
+    expect(heard).toHaveBeenCalledWith(update);
   });
 
   it('asks for a tap when the browser blocks sound, and starts it from that tap', async () => {

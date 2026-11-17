@@ -1,6 +1,6 @@
 import { DestroyRef, effect, inject, Service, untracked, type Provider } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval, Subject, type Observable } from 'rxjs';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { filter, interval, Subject, switchMap, tap, timer, type Observable } from 'rxjs';
 import { httpStatus } from '@shared/utils/http-status';
 import { msg } from '@shared/utils/i18n/msg';
 import { saveRequest } from '@shared/utils/save-request';
@@ -11,7 +11,9 @@ import { StageApiService } from '../data-access/stage-api.service';
 import type { RoomEdit } from '../models/room.model';
 import { RoomStore } from './room.store';
 
-const REFRESH_MS = 3000;
+const RESYNC_MS = 30_000;
+const RECOVER_MS = 3000;
+const RECOVER_TRIES = 3;
 
 export type RoomExit = 'removed' | 'ended' | 'closed';
 
@@ -24,6 +26,7 @@ export class RoomFacade {
   readonly audio = inject(RealtimeService);
   private readonly pushedOut = new Subject<RoomExit>();
   private left = false;
+  private recoveries = 0;
 
   readonly joining = saveRequest();
   readonly action = saveRequest();
@@ -36,10 +39,33 @@ export class RoomFacade {
         untracked(() => this.exit('ended'));
       }
     });
-    interval(REFRESH_MS)
+    const audioStatus = toObservable(this.audio.status);
+    audioStatus
+      .pipe(
+        filter((status) => status === 'connected'),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        this.recoveries = 0;
+        this.state.reload();
+      });
+    audioStatus
+      .pipe(
+        filter(
+          (status) => status === 'failed' && this.state.joined() && this.recoveries < RECOVER_TRIES,
+        ),
+        tap(() => this.recoveries++),
+        switchMap(() => timer(RECOVER_MS)),
+        filter(() => this.state.joined() && this.audio.status() === 'failed'),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.reconnectAudio());
+    interval(RESYNC_MS)
       .pipe(takeUntilDestroyed())
-      .subscribe(() => this.refresh());
-    this.audio.roomEvents.pipe(takeUntilDestroyed()).subscribe(() => this.state.reload());
+      .subscribe(() => this.resync());
+    this.audio.roomEvents
+      .pipe(takeUntilDestroyed())
+      .subscribe((update) => this.state.apply(update));
     inject(DestroyRef).onDestroy(() => this.leave());
   }
 
@@ -142,14 +168,10 @@ export class RoomFacade {
     });
   }
 
-  private refresh(): void {
-    if (!this.state.joined()) {
-      return;
+  private resync(): void {
+    if (this.state.joined()) {
+      this.state.reload();
     }
-    this.participants.heartbeat(this.state.roomId()).subscribe({
-      error: (error: unknown) => this.exitIfPushedOut(error),
-    });
-    this.state.reload();
   }
 
   private exitIfPushedOut(error: unknown): void {

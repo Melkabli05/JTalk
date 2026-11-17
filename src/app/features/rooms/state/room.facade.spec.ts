@@ -143,65 +143,105 @@ describe('RoomFacade', () => {
     expect(facade.joining.error()).toBe('Could not join the room. Please try again.');
   });
 
-  it('says "still here" and refreshes every few seconds, once joined', async () => {
+  it('re-reads the room now and then, once joined, in case it missed something', async () => {
     withFakeTimers();
     await enter();
     sent.length = 0;
 
-    vi.advanceTimersByTime(3000);
+    vi.advanceTimersByTime(30_000);
     await settle();
 
-    expect(count('POST', `${BASE}/participants/heartbeat`)).toBe(1);
     expect(count('GET', BASE)).toBe(1);
     expect(count('GET', `${BASE}/stage`)).toBe(1);
     expect(count('GET', `${BASE}/participants`)).toBe(1);
   });
 
-  it('does not say "still here" before it has joined', async () => {
+  it('does not re-read the room before it has joined', async () => {
     withFakeTimers();
     failing[`POST ${BASE}/participants/join`] = 500;
     await enter();
     sent.length = 0;
 
-    vi.advanceTimersByTime(3000);
+    vi.advanceTimersByTime(30_000);
     await settle();
 
-    expect(count('POST', `${BASE}/participants/heartbeat`)).toBe(0);
+    expect(count('GET', BASE)).toBe(0);
   });
 
-  it('refreshes at once when the server announces a change', async () => {
+  it('joins again to get its audio back when the link is lost, and gives up after a few tries', async () => {
+    withFakeTimers();
+    await enter();
+    link.connectFailure = new Error('unreachable');
+
+    link.last.listener.connectionLost();
+    for (let attempt = 0; attempt < 6; attempt++) {
+      TestBed.tick();
+      vi.advanceTimersByTime(3000);
+      await settle();
+    }
+
+    expect(count('POST', `${BASE}/participants/join`)).toBe(1 + 3);
+  });
+
+  it('applies what the server announces without asking for it again', async () => {
     await enter();
     sent.length = 0;
 
-    link.last.listener.roomEvent();
+    link.last.listener.roomEvent({
+      type: 'HAND_RAISED',
+      at: Date.now(),
+      stage: { speakers: ['h-1'], handRaiseQueue: ['b-1'] },
+    });
+    await settle();
+
+    expect(facade.state.queue()).toEqual(['b-1']);
+    expect(sent).toEqual([]);
+  });
+
+  it('reads the room again whenever its audio link comes back, in case it missed something', async () => {
+    await enter();
+    sent.length = 0;
+
+    link.last.listener.linkChanged(false);
+    link.last.listener.linkChanged(true);
     await settle();
 
     expect(count('GET', `${BASE}/stage`)).toBe(1);
-    expect(count('GET', `${BASE}/participants`)).toBe(1);
   });
 
   describe('when the person is pushed out', () => {
-    it('reports "removed" once, hangs up, and does not say goodbye, when the host removes them', async () => {
+    it('reports "removed" once, stops the audio, and does not say goodbye, when the host removes them', async () => {
       withFakeTimers();
       await enter();
-      failing[`POST ${BASE}/participants/heartbeat`] = 403;
+      failing[`POST ${BASE}/participants/join`] = 403;
 
-      vi.advanceTimersByTime(3000);
-      await settle();
+      link.last.listener.connectionLost();
+      TestBed.tick();
       vi.advanceTimersByTime(3000);
       await settle();
 
       expect(exits).toEqual(['removed']);
       expect(facade.state.joined()).toBe(false);
-      expect(link.last.disconnected).toBe(true);
+      expect(facade.audio.status()).toBe('idle');
       expect(count('POST', `${BASE}/participants/leave`)).toBe(0);
     });
 
-    it('reports "ended" when the room is gone, by the heartbeat or by the room itself', async () => {
+    it('reports "ended" when the room is gone, found by reading it or by joining again after the link dropped', async () => {
       withFakeTimers();
       await enter();
       failing[`GET ${BASE}`] = 404;
 
+      vi.advanceTimersByTime(30_000);
+      await settle();
+
+      expect(exits).toEqual(['ended']);
+
+      build();
+      await enter();
+      failing[`POST ${BASE}/participants/join`] = 404;
+
+      link.last.listener.connectionLost();
+      TestBed.tick();
       vi.advanceTimersByTime(3000);
       await settle();
 

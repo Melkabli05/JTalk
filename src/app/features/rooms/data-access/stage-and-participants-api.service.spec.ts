@@ -33,7 +33,6 @@ describe('the stage and participants services', () => {
     ['promotes someone', 'POST', `${base}/stage/promote/u-9`, (s) => s.promote('r-1', 'u-9')],
     ['demotes someone', 'POST', `${base}/stage/demote/u-9`, (s) => s.demote('r-1', 'u-9')],
     ['leaves the room', 'POST', `${base}/participants/leave`, (_s, p) => p.leave('r-1')],
-    ['sends a heartbeat', 'POST', `${base}/participants/heartbeat`, (_s, p) => p.heartbeat('r-1')],
     ['removes someone', 'DELETE', `${base}/participants/u-9`, (_s, p) => p.remove('r-1', 'u-9')],
   ])('%s with %s %s', (_name, method, url, call) => {
     call(stage, participants).subscribe();

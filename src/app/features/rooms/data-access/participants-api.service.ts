@@ -27,10 +27,6 @@ export class ParticipantsApiService {
     return this.http.post<void>(`${this.base}/${id}/participants/leave`, null);
   }
 
-  heartbeat(id: string): Observable<void> {
-    return this.http.post<void>(`${this.base}/${id}/participants/heartbeat`, null);
-  }
-
   remove(id: string, userId: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}/participants/${userId}`);
   }

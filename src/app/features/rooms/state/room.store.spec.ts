@@ -136,6 +136,92 @@ describe('RoomStore', () => {
     expect(store.reconnecting()).toEqual(['h-1']);
   });
 
+  describe('what the server announces', () => {
+    async function ready() {
+      const store = setup('m-1');
+      store.show('r-1');
+      await load(store, {
+        stage: { speakers: ['h-1'], handRaiseQueue: [] },
+        people: [
+          { userId: 'h-1', role: 'HOST', status: 'ACTIVE' },
+          { userId: 'b-1', role: 'LISTENER', status: 'ACTIVE' },
+        ],
+      });
+      return store;
+    }
+
+    it('replaces the stage and the room numbers with the stage an event carries', async () => {
+      const store = await ready();
+
+      store.apply({
+        type: 'HAND_RAISED',
+        at: 10,
+        stage: { speakers: ['h-1', 'b-1'], handRaiseQueue: ['c-1', 'd-1'] },
+      });
+
+      expect(store.speakers()).toEqual(['h-1', 'b-1']);
+      expect(store.queue()).toEqual(['c-1', 'd-1']);
+      expect(store.room()).toMatchObject({ speakers: ['h-1', 'b-1'], handRaiseCount: 2 });
+      http.expectNone(() => true);
+    });
+
+    it('ignores a stage older than the one it already shows', async () => {
+      const store = await ready();
+      store.apply({
+        type: 'STAGE_UPDATED',
+        at: 20,
+        stage: { speakers: ['h-1', 'b-1'], handRaiseQueue: [] },
+      });
+
+      store.apply({
+        type: 'STAGE_UPDATED',
+        at: 10,
+        stage: { speakers: ['h-1'], handRaiseQueue: [] },
+      });
+
+      expect(store.speakers()).toEqual(['h-1', 'b-1']);
+    });
+
+    it('adds the people who came and removes the ones who left, and keeps the room count', async () => {
+      const store = await ready();
+
+      store.apply({
+        type: 'PRESENCE_CHANGED',
+        participantCount: 3,
+        joined: ['c-1', 'b-1'],
+        left: ['h-1'],
+      });
+
+      expect(store.audience()).toEqual(['b-1', 'c-1']);
+      expect(store.room()?.participantCount).toBe(3);
+    });
+
+    it('marks a speaker as reconnecting, and back', async () => {
+      const store = await ready();
+
+      store.apply({ type: 'SPEAKER_RECONNECTING', userId: 'h-1' });
+      expect(store.reconnecting()).toEqual(['h-1']);
+
+      store.apply({ type: 'SPEAKER_RECONNECTED', userId: 'h-1' });
+      expect(store.reconnecting()).toEqual([]);
+    });
+
+    it('goes back to what the server says when the room is read again', async () => {
+      const store = await ready();
+      store.apply({
+        type: 'STAGE_UPDATED',
+        at: 20,
+        stage: { speakers: ['h-1', 'b-1'], handRaiseQueue: [] },
+      });
+
+      store.reload();
+      await load(store, { stage: { speakers: ['h-1'], handRaiseQueue: ['b-1'] } });
+
+      expect(store.speakers()).toEqual(['h-1']);
+      expect(store.queue()).toEqual(['b-1']);
+    });
+  });
+
   it('forgets that the person had joined when another room is shown', () => {
     const store = setup();
     store.show('r-1');

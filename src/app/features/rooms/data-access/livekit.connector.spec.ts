@@ -80,18 +80,59 @@ describe('connectLiveKit', () => {
   });
   afterEach(() => document.body.replaceChildren());
 
-  it('turns a room event from the backend into a refresh', async () => {
+  const message = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
+  const stageEvent = {
+    type: 'HAND_RAISED',
+    roomId: 'r-1',
+    targetUserId: 'b-1',
+    timestamp: '2026-11-17T10:00:00.250Z',
+    stage: { speakers: ['h-1'], handRaiseQueue: ['b-1'] },
+  };
+
+  it('hands the update a backend event carries to the listener', async () => {
+    await connectLiveKit('wss://x', 't', listener);
+
+    room().emit('dataReceived', message(stageEvent), undefined, undefined, ROOM_EVENTS_TOPIC);
+
+    expect(listener.roomEvent).toHaveBeenCalledExactlyOnceWith({
+      type: 'HAND_RAISED',
+      at: Date.parse('2026-11-17T10:00:00.250Z'),
+      stage: { speakers: ['h-1'], handRaiseQueue: ['b-1'] },
+    });
+  });
+
+  it('ignores a backend message it cannot understand', async () => {
     await connectLiveKit('wss://x', 't', listener);
 
     room().emit('dataReceived', server, undefined, undefined, ROOM_EVENTS_TOPIC);
+    room().emit(
+      'dataReceived',
+      message({ type: 'SOMETHING_NEW' }),
+      undefined,
+      undefined,
+      ROOM_EVENTS_TOPIC,
+    );
+    room().emit(
+      'dataReceived',
+      message({ ...stageEvent, stage: null }),
+      undefined,
+      undefined,
+      ROOM_EVENTS_TOPIC,
+    );
 
-    expect(listener.roomEvent).toHaveBeenCalledOnce();
+    expect(listener.roomEvent).not.toHaveBeenCalled();
   });
 
   it('ignores a "room event" that came from another client, since only the backend may send one', async () => {
     await connectLiveKit('wss://x', 't', listener);
 
-    room().emit('dataReceived', server, { identity: 'mallory' }, undefined, ROOM_EVENTS_TOPIC);
+    room().emit(
+      'dataReceived',
+      message(stageEvent),
+      { identity: 'mallory' },
+      undefined,
+      ROOM_EVENTS_TOPIC,
+    );
 
     expect(listener.roomEvent).not.toHaveBeenCalled();
   });
@@ -99,7 +140,7 @@ describe('connectLiveKit', () => {
   it('ignores data on any other topic', async () => {
     await connectLiveKit('wss://x', 't', listener);
 
-    room().emit('dataReceived', server, undefined, undefined, 'something-else');
+    room().emit('dataReceived', message(stageEvent), undefined, undefined, 'something-else');
 
     expect(listener.roomEvent).not.toHaveBeenCalled();
   });

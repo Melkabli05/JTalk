@@ -1,6 +1,15 @@
-import type { RealtimeConnection, RealtimeListener } from '../models/realtime.model';
+import type { RealtimeConnection, RealtimeListener, RoomUpdate } from '../models/realtime.model';
+import { parseRoomEvent } from './parsers/room-event.parser';
 
 export const ROOM_EVENTS_TOPIC = 'room-events';
+
+function readRoomEvent(payload: Uint8Array): RoomUpdate | undefined {
+  try {
+    return parseRoomEvent(JSON.parse(new TextDecoder().decode(payload)));
+  } catch {
+    return undefined;
+  }
+}
 
 export async function connectLiveKit(
   url: string,
@@ -29,9 +38,12 @@ export async function connectLiveKit(
     .on(RoomEvent.ActiveSpeakersChanged, (active) => {
       listener.speakersChanged(active.map((participant) => participant.identity));
     })
-    .on(RoomEvent.DataReceived, (_payload, participant, _kind, topic) => {
+    .on(RoomEvent.DataReceived, (payload, participant, _kind, topic) => {
       if (participant === undefined && topic === ROOM_EVENTS_TOPIC) {
-        listener.roomEvent();
+        const event = readRoomEvent(payload);
+        if (event !== undefined) {
+          listener.roomEvent(event);
+        }
       }
     })
     .on(RoomEvent.AudioPlaybackStatusChanged, (playing) => listener.soundBlocked(!playing))

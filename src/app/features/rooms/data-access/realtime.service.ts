@@ -1,13 +1,18 @@
 import { DestroyRef, inject, Service, signal } from '@angular/core';
 import { Subject } from 'rxjs';
-import type { AudioStatus, RealtimeConnection, RealtimeListener } from '../models/realtime.model';
+import type {
+  AudioStatus,
+  RealtimeConnection,
+  RealtimeListener,
+  RoomUpdate,
+} from '../models/realtime.model';
 import type { RoomSession } from '../models/room.model';
 import { REALTIME_CONNECTOR } from './realtime-connector.token';
 
 @Service()
 export class RealtimeService {
   private readonly connector = inject(REALTIME_CONNECTOR);
-  private readonly pushed = new Subject<void>();
+  private readonly pushed = new Subject<RoomUpdate>();
   private connection: RealtimeConnection | null = null;
   private generation = 0;
 
@@ -104,7 +109,7 @@ export class RealtimeService {
     };
     return {
       speakersChanged: live((ids) => this.speaking.set(ids)),
-      roomEvent: live(() => this.pushed.next()),
+      roomEvent: live((event) => this.pushed.next(event)),
       soundBlocked: live((blocked) => this.soundBlocked.set(blocked)),
       canPublishChanged: live((canPublish) => {
         this.canSpeak.set(canPublish);

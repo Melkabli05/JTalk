@@ -291,15 +291,14 @@ describe('RoomPageComponent (container)', () => {
     expect(TestBed.inject(Router).url).toBe('/');
   });
 
-  it('says it is still here every few seconds, and refreshes', async () => {
+  it('checks the room now and then in case it missed something', async () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     await open();
     requests.length = 0;
 
-    vi.advanceTimersByTime(3000);
+    vi.advanceTimersByTime(30_000);
     await settle();
 
-    expect(sent('POST', `${BASE}/participants/heartbeat`)).toBe(true);
     expect(sent('GET', `${BASE}/stage`)).toBe(true);
     expect(sent('GET', `${BASE}/participants`)).toBe(true);
   });
@@ -310,8 +309,11 @@ describe('RoomPageComponent (container)', () => {
     await open({ me: 'h-1' });
     const live = () => document.querySelector('.cdk-live-announcer-element')?.textContent ?? '';
 
-    server.stage = { speakers: ['h-1', 'b-1'], handRaiseQueue: ['c-1'] };
-    vi.advanceTimersByTime(3000);
+    link.last.listener.roomEvent({
+      type: 'HAND_RAISED',
+      at: Date.now(),
+      stage: { speakers: ['h-1', 'b-1'], handRaiseQueue: ['c-1'] },
+    });
     await settle();
     await new Promise((resolve) => setTimeout(resolve, 200));
 
@@ -324,8 +326,10 @@ describe('RoomPageComponent (container)', () => {
     await open();
     const toast = vi.spyOn(TestBed.inject(MessageService), 'add');
 
+    link.last.listener.connectionLost();
+    TestBed.tick();
     vi.advanceTimersByTime(3000);
-    await settle({ [`POST ${BASE}/participants/heartbeat`]: { status: 403 } });
+    await settle({ [`POST ${BASE}/participants/join`]: { status: 403 } });
 
     expect(TestBed.inject(Router).url).toBe('/');
     expect(toast).toHaveBeenCalledWith(
@@ -479,17 +483,18 @@ describe('RoomPageComponent (container)', () => {
       expect(controlLabels()).toContain('Mute');
     });
 
-    it('refreshes the room at once when the server says something changed, without waiting', async () => {
+    it('shows what the server announces at once, without asking for it again', async () => {
       await open();
       requests.length = 0;
-      server.stage = { speakers: ['h-1', 'b-1'], handRaiseQueue: [] };
 
-      link.last.listener.roomEvent();
+      link.last.listener.roomEvent({
+        type: 'STAGE_UPDATED',
+        at: Date.now(),
+        stage: { speakers: ['h-1', 'b-1'], handRaiseQueue: [] },
+      });
       await settle();
 
-      expect(sent('GET', `${BASE}`)).toBe(true);
-      expect(sent('GET', `${BASE}/stage`)).toBe(true);
-      expect(sent('GET', `${BASE}/participants`)).toBe(true);
+      expect(sent('GET', `${BASE}/stage`)).toBe(false);
       expect(root().querySelectorAll('app-stage-seats .person')).toHaveLength(2);
     });
 
@@ -560,16 +565,6 @@ describe('RoomPageComponent (container)', () => {
       await open();
       press('Leave quietly', root());
       await settle();
-      expect(link.last.disconnected).toBe(true);
-    });
-
-    it('hangs up when the host removes the person', async () => {
-      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
-      await open();
-
-      vi.advanceTimersByTime(3000);
-      await settle({ [`POST ${BASE}/participants/heartbeat`]: { status: 403 } });
-
       expect(link.last.disconnected).toBe(true);
     });
 
