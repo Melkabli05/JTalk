@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { computed, inject, Service, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '@auth0/auth0-angular';
-import { firstValueFrom } from 'rxjs';
+import { catchError, defer, firstValueFrom, type Observable, tap, throwError } from 'rxjs';
 import { avatarPath } from '@shared/utils/avatars';
 import { httpStatus } from '@shared/utils/http-status';
 import { loadedValue } from '@shared/utils/resource-value';
@@ -46,16 +46,11 @@ export class IdentityService {
 
   private readonly meResource = this.api.meResource(this.signedIn);
   private readonly mine = loadedValue(this.meResource);
-  private readonly learningResource = this.api.learningResource(() => this.meResource.hasValue());
-  private readonly learning = loadedValue(this.learningResource);
 
   private readonly others = signal<ReadonlyMap<string, Person>>(new Map());
   private readonly asked = new Set<string>();
 
-  readonly profile = computed<Person | null>(() => {
-    const me = this.mine();
-    return me === undefined ? null : { ...me, learning: this.learning()?.[0] ?? '' };
-  });
+  readonly profile = computed<Person | null>(() => this.mine() ?? null);
   readonly userId = computed(() => this.mine()?.id ?? null);
   readonly needsProfile = computed(
     () => this.signedIn() && httpStatus(this.meResource.error()) === 404,
@@ -90,16 +85,15 @@ export class IdentityService {
     }
   }
 
-  /** Creates the profile on the first save, and changes it after that. */
-  async saveProfile(draft: ProfileDraft): Promise<void> {
+  /**
+   * Creates the profile on the first save, and changes it after that: one request either way, the languages included, so a save either
+   * happens whole or not at all. The answer is the saved profile, which becomes the one shown (no second round trip to read it back).
+   */
+  saveProfile(draft: ProfileDraft): Observable<Person> {
     const current = this.mine();
-    if (current === undefined) {
-      await this.createProfile(draft);
-    } else {
-      await this.changeProfile(draft);
-    }
-    this.meResource.reload();
-    this.learningResource.reload();
+    return (
+      current === undefined ? this.createProfile(draft) : this.changeProfile(draft, current)
+    ).pipe(tap((saved) => this.meResource.set(saved)));
   }
 
   async signOut(): Promise<void> {
@@ -107,43 +101,37 @@ export class IdentityService {
     await firstValueFrom(this.auth.logout({ logoutParams: { returnTo: window.location.origin } }));
   }
 
-  private async createProfile(draft: ProfileDraft): Promise<void> {
-    const profile = (username: string) => ({
-      username,
-      displayName: draft.name.trim(),
-      avatarUrl: avatarPath(draft.avatar),
-      nativeLanguage: draft.nativeLanguage,
-      ...extras(draft, false),
-    });
-    try {
-      await firstValueFrom(this.api.create(profile(usernameFor(draft.name))));
-    } catch (error) {
-      if (!(error instanceof HttpErrorResponse) || error.status !== 409) {
-        throw error;
-      }
-      // The random tail collided with someone else's handle (or the first request already went through): try once with another.
-      await firstValueFrom(this.api.create(profile(usernameFor(draft.name))));
-    }
-    await firstValueFrom(this.api.addLearning(draft.learning));
-  }
-
-  private async changeProfile(draft: ProfileDraft): Promise<void> {
-    // The language being learned first: a new native language may be one that is being dropped here, and the service keeps a language
-    // either native or learned, never both.
-    const learned = this.learning() ?? [];
-    for (const code of learned.filter((language) => language !== draft.learning)) {
-      await firstValueFrom(this.api.removeLanguage(code));
-    }
-    if (!learned.includes(draft.learning)) {
-      await firstValueFrom(this.api.addLearning(draft.learning));
-    }
-    await firstValueFrom(
-      this.api.update({
+  private createProfile(draft: ProfileDraft): Observable<Person> {
+    const create = () =>
+      this.api.create({
+        username: usernameFor(draft.name),
         displayName: draft.name.trim(),
         avatarUrl: avatarPath(draft.avatar),
         nativeLanguage: draft.nativeLanguage,
-        ...extras(draft, true),
-      }),
+        learningLanguages: [{ languageCode: draft.learning }],
+        ...extras(draft, false),
+      });
+    return defer(create).pipe(
+      // The random tail collided with someone else's handle: try once with another.
+      catchError((error: unknown) =>
+        error instanceof HttpErrorResponse && error.status === 409
+          ? defer(create)
+          : throwError(() => error),
+      ),
     );
+  }
+
+  private changeProfile(draft: ProfileDraft, current: Person): Observable<Person> {
+    return this.api.update({
+      displayName: draft.name.trim(),
+      avatarUrl: avatarPath(draft.avatar),
+      nativeLanguage: draft.nativeLanguage,
+      // Only when the language being learned changed: sending it replaces the whole list, and so would drop the levels and any other
+      // language a person has listed.
+      ...(draft.learning === current.learning
+        ? {}
+        : { learningLanguages: [{ languageCode: draft.learning }] }),
+      ...extras(draft, true),
+    });
   }
 }

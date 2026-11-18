@@ -137,5 +137,10 @@
 </main>
 
 @defer (when identity.needsProfile()) {
-  <app-profile-dialog [visible]="identity.needsProfile()" (saved)="saveProfile($event)" />
+  <app-profile-dialog
+    [visible]="identity.needsProfile()"
+    [busy]="creating.submitting()"
+    [error]="creating.error()"
+    (saved)="saveProfile($event)"
+  />
 }

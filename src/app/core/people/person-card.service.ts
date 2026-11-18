@@ -16,15 +16,9 @@ export class PersonCardService {
   private readonly shown = signal<string | null>(null);
   private readonly detailsResource = this.api.detailsResource(this.shown);
   private readonly socialResource = this.api.socialResource(this.shown);
-  private readonly languagesResource = this.api.languagesResource(this.shown);
-  private readonly mineResource = this.api.languagesResource(() =>
-    this.shown() === null ? null : this.identity.userId(),
-  );
 
   private readonly details = loadedValue(this.detailsResource);
   private readonly social = loadedValue(this.socialResource);
-  private readonly languages = loadedValue(this.languagesResource);
-  private readonly mine = loadedValue(this.mineResource);
 
   readonly userId = this.shown.asReadonly();
   readonly action = saveRequest();
@@ -36,16 +30,15 @@ export class PersonCardService {
   );
 
   readonly card = computed<PersonCard | undefined>(() => {
-    const loaded = this.details();
-    const languages = this.languages();
-    const mine = this.mine();
+    const details = this.details();
+    const mine = this.identity.profile()?.languages;
     const isMe = this.isMe();
-    if (loaded?.id !== this.shown()) {
+    if (details?.id !== this.shown()) {
       return undefined;
     }
-    const details = loaded;
+    const languages = details.languages;
     return {
-      details: { ...details, learning: languages?.learning[0]?.code ?? '' },
+      details,
       social: this.social(),
       languages,
       match:
@@ -63,7 +56,6 @@ export class PersonCardService {
   reload(): void {
     this.detailsResource.reload();
     this.socialResource.reload();
-    this.languagesResource.reload();
   }
 
   follow(): void {

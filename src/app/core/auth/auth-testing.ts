@@ -48,7 +48,7 @@ export function fakeIdentity(
         return new Map(me ? [[me.id, me]] : []);
       }),
       resolve,
-      saveProfile: () => Promise.resolve(),
+      saveProfile: () => of(person),
       signOut: () => Promise.resolve(),
     },
   };

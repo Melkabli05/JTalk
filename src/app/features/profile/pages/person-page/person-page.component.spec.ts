@@ -11,7 +11,14 @@ import { fakeIdentity } from '@core/auth/auth-testing';
 import PersonPageComponent from './person-page.component';
 
 const BASE = '/api/v1/users';
-const ME = { id: 'me-1', name: 'Mona', nativeLanguage: 'ar', learning: 'es', avatar: '' };
+const ME = {
+  id: 'me-1',
+  name: 'Mona',
+  nativeLanguage: 'ar',
+  learning: 'es',
+  avatar: '',
+  languages: { native: ['ar'], learning: [{ code: 'es', level: 'BEGINNER' as const }] },
+};
 const NOUR = {
   id: 'u-2',
   username: 'nour',
@@ -20,6 +27,8 @@ const NOUR = {
   nativeLanguage: 'es',
   countryCode: 'ES',
   createdAt: '2026-10-01T10:00:00Z',
+  nativeLanguages: ['es'],
+  learningLanguages: [{ languageCode: 'ar', proficiencyLevel: 'INTERMEDIATE' }],
 };
 
 describe('PersonPageComponent (container)', () => {
@@ -53,19 +62,7 @@ describe('PersonPageComponent (container)', () => {
           : NOUR
         : url === `${BASE}/u-2/social` || url === `${BASE}/me-1/social`
           ? social
-          : url === `${BASE}/u-2/languages`
-            ? {
-                userId: 'u-2',
-                nativeLanguages: ['es'],
-                learningLanguages: [{ languageCode: 'ar', proficiencyLevel: 'INTERMEDIATE' }],
-              }
-            : url === `${BASE}/me-1/languages`
-              ? {
-                  userId: 'me-1',
-                  nativeLanguages: ['ar'],
-                  learningLanguages: [{ languageCode: 'es', proficiencyLevel: 'BEGINNER' }],
-                }
-              : null;
+          : null;
     request.flush(
       body,
       body === null ? { status: 204, statusText: 'No Content' } : { status: 200, statusText: 'OK' },

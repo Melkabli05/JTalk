@@ -1,8 +1,9 @@
 import { asRecord } from '@shared/utils/as-record';
 import { avatarIdOf } from '@shared/utils/avatars';
+import { readLanguages } from '@shared/utils/people';
 import type { Person } from './identity.models';
 
-/** Reads a profile or a summary from the user service. Others' learning language is not part of a summary, so it stays empty. */
+/** Reads a profile or a summary from the user service. A summary has no languages, so the language being learned stays empty. */
 function readPerson(raw: unknown): Person | undefined {
   const user = asRecord(raw);
   if (
@@ -14,14 +15,16 @@ function readPerson(raw: unknown): Person | undefined {
     return undefined;
   }
   const picture = user['avatarUrl'];
+  const languages = readLanguages(user);
   return {
     id: user['id'],
     name: user['displayName'],
     nativeLanguage: user['nativeLanguage'],
-    learning: '',
+    learning: languages?.learning[0]?.code ?? '',
     avatar: avatarIdOf(typeof picture === 'string' ? picture : null),
     ...(typeof user['bio'] === 'string' ? { bio: user['bio'] } : {}),
     ...(typeof user['countryCode'] === 'string' ? { countryCode: user['countryCode'] } : {}),
+    ...(languages ? { languages } : {}),
   };
 }
 
@@ -38,19 +41,4 @@ export function parsePeople(raw: unknown): Person[] {
     throw new Error('Unexpected response: expected a list of profiles');
   }
   return raw.map((item) => parsePerson(item));
-}
-
-/** The codes of the languages being learned, from the language matrix. */
-export function parseLearningLanguages(raw: unknown): string[] {
-  const learning = asRecord(raw)?.['learningLanguages'];
-  if (!Array.isArray(learning)) {
-    throw new Error('Unexpected response: expected a language matrix');
-  }
-  return learning.map((entry) => {
-    const code = asRecord(entry)?.['languageCode'];
-    if (typeof code !== 'string') {
-      throw new Error('Unexpected response: expected a language code');
-    }
-    return code;
-  });
 }

@@ -9,7 +9,14 @@ import { fakeIdentity } from '../auth/auth-testing';
 import { PersonCardService } from './person-card.service';
 
 const BASE = '/api/v1/users';
-const ME = { id: 'me-1', name: 'Mona', nativeLanguage: 'ar', learning: 'es', avatar: '' };
+const ME = {
+  id: 'me-1',
+  name: 'Mona',
+  nativeLanguage: 'ar',
+  learning: 'es',
+  avatar: '',
+  languages: { native: ['ar'], learning: [{ code: 'es', level: 'BEGINNER' as const }] },
+};
 const NOUR = {
   id: 'u-2',
   username: 'nour',
@@ -18,6 +25,8 @@ const NOUR = {
   nativeLanguage: 'es',
   countryCode: 'ES',
   createdAt: '2026-10-01T10:00:00Z',
+  nativeLanguages: ['es'],
+  learningLanguages: [{ languageCode: 'ar', proficiencyLevel: 'INTERMEDIATE' }],
 };
 
 describe('PersonCardService', () => {
@@ -34,24 +43,7 @@ describe('PersonCardService', () => {
       request.flush('error', { status, statusText: 'Error' });
       return;
     }
-    const body =
-      url === `${BASE}/u-2`
-        ? NOUR
-        : url === `${BASE}/u-2/social`
-          ? social
-          : url === `${BASE}/u-2/languages`
-            ? {
-                userId: 'u-2',
-                nativeLanguages: ['es'],
-                learningLanguages: [{ languageCode: 'ar', proficiencyLevel: 'INTERMEDIATE' }],
-              }
-            : url === `${BASE}/me-1/languages`
-              ? {
-                  userId: 'me-1',
-                  nativeLanguages: ['ar'],
-                  learningLanguages: [{ languageCode: 'es', proficiencyLevel: 'BEGINNER' }],
-                }
-              : null;
+    const body = url === `${BASE}/u-2` ? NOUR : url === `${BASE}/u-2/social` ? social : null;
     request.flush(
       body,
       body === null ? { status: 204, statusText: 'No Content' } : { status: 200, statusText: 'OK' },

@@ -44,6 +44,8 @@ interface ProfileFormModel {
 export class ProfileFormComponent {
   readonly profile = input<Person>();
   readonly locale = input('en');
+  /** A save is in flight: a second submit is ignored and the button waits. */
+  readonly busy = input(false);
 
   readonly saved = output<ProfileDraft>();
 
@@ -82,7 +84,7 @@ export class ProfileFormComponent {
     },
     {
       submission: formSubmission<ProfileFormModel>({
-        busy: () => false,
+        busy: () => this.busy(),
         submit: (value) =>
           this.saved.emit({
             name: value.name.trim(),

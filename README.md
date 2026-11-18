@@ -16,7 +16,7 @@ the SDK's `authGuardFn`, so someone who is not signed in is sent to Auth0 and br
 its HTTP interceptor adds the access token (for the audience `https://api.jtalk.app`) to every `/api` call, which both services check. There are no
 account pages of our own: Auth0 does sign-up, password reset and the rest.
 
-**Who people are** comes from the user service. `IdentityService` (`core/auth`) loads the signed-in person's profile; a person Auth0 has signed in but
+**Who people are** comes from the user service. `IdentityService` (`core/auth`) loads the signed-in person's profile and languages in one request; a person Auth0 has signed in but
 the user service does not know yet is asked for a **profile** in a dialog (a name, one of ten bundled pictures from `public/avatars/`, the language they
 speak and the one they are learning), which creates it; after that the **profile page** (`/profile`, reached from the account menu in the banner) is where they change their name, picture and languages. The rooms show names and pictures for everyone on the screen: `RoomListStore` and `RoomStore`
 ask `IdentityService.resolve()` for the hosts, speakers and participants they have not seen, and it fetches them in one batched call (`POST

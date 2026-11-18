@@ -1,7 +1,6 @@
 import {
   parseDetails,
   parseFollowPage,
-  parseLanguages,
   parsePartnerPage,
   parseSocial,
   parseSummaries,
@@ -57,29 +56,19 @@ describe('people parsers', () => {
     expect(() => parseSocial({ followerCount: '12' })).toThrow('expected social stats');
   });
 
-  it('reads native languages and learned ones with their levels, dropping a level it does not know', () => {
+  it('reads the languages a profile carries, and the language being learned', () => {
     expect(
-      parseLanguages({
-        userId: 'u-1',
+      parseDetails({
+        id: 'u-1',
+        displayName: 'Mona',
+        nativeLanguage: 'ar',
         nativeLanguages: ['ar'],
-        learningLanguages: [
-          { languageCode: 'es', proficiencyLevel: 'BEGINNER' },
-          { languageCode: 'en', proficiencyLevel: null },
-          { languageCode: 'de', proficiencyLevel: 'NATIVE' },
-          { proficiencyLevel: 'FLUENT' },
-        ],
+        learningLanguages: [{ languageCode: 'es', proficiencyLevel: 'BEGINNER' }],
       }),
-    ).toEqual({
-      native: ['ar'],
-      learning: [
-        { code: 'es', level: 'BEGINNER' },
-        { code: 'en', level: null },
-        { code: 'de', level: null },
-      ],
+    ).toMatchObject({
+      learning: 'es',
+      languages: { native: ['ar'], learning: [{ code: 'es', level: 'BEGINNER' }] },
     });
-    expect(() => parseLanguages({ nativeLanguages: 'ar', learningLanguages: [] })).toThrow(
-      'expected a language matrix',
-    );
   });
 
   describe('lists of people', () => {

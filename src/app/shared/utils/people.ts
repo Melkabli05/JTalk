@@ -1,3 +1,4 @@
+import { asRecord, isStringList } from '@shared/utils/as-record';
 import { msg } from '@shared/utils/i18n/msg';
 
 /** Someone as a row in a list: enough to recognise them and open their profile. */
@@ -35,6 +36,31 @@ export interface LearningLanguage {
 export interface LanguageMatrix {
   readonly native: readonly string[];
   readonly learning: readonly LearningLanguage[];
+}
+
+/**
+ * The languages a profile response carries (`nativeLanguages` and `learningLanguages`), or `undefined` when it carries none: a summary
+ * in a list does not, and neither does a response from before the languages were added to the profile. A level it does not know is dropped.
+ */
+export function readLanguages(raw: unknown): LanguageMatrix | undefined {
+  const profile = asRecord(raw);
+  const learning = profile?.['learningLanguages'];
+  if (
+    profile === undefined ||
+    !isStringList(profile['nativeLanguages']) ||
+    !Array.isArray(learning)
+  ) {
+    return undefined;
+  }
+  return {
+    native: profile['nativeLanguages'],
+    learning: learning.flatMap((entry: unknown): LearningLanguage[] => {
+      const language = asRecord(entry);
+      const code = language?.['languageCode'];
+      const level = language?.['proficiencyLevel'];
+      return typeof code === 'string' ? [{ code, level: isProficiency(level) ? level : null }] : [];
+    }),
+  };
 }
 
 export interface SocialStats {

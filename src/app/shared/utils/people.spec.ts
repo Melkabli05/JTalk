@@ -5,6 +5,7 @@ import {
   isProficiency,
   partnerMatch,
   proficiencyShare,
+  readLanguages,
   type LanguageMatrix,
 } from './people';
 
@@ -85,5 +86,34 @@ describe('people helpers', () => {
     expect(compactCount(980, 'en')).toBe('980');
     expect(compactCount(1250, 'en')).toBe('1.3K');
     expect(compactCount(2_400_000, 'en')).toBe('2.4M');
+  });
+});
+
+describe('readLanguages', () => {
+  it('reads native languages and learned ones with their levels, dropping a level it does not know', () => {
+    expect(
+      readLanguages({
+        nativeLanguages: ['ar'],
+        learningLanguages: [
+          { languageCode: 'es', proficiencyLevel: 'BEGINNER' },
+          { languageCode: 'en', proficiencyLevel: null },
+          { languageCode: 'de', proficiencyLevel: 'NATIVE' },
+          { proficiencyLevel: 'FLUENT' },
+        ],
+      }),
+    ).toEqual({
+      native: ['ar'],
+      learning: [
+        { code: 'es', level: 'BEGINNER' },
+        { code: 'en', level: null },
+        { code: 'de', level: null },
+      ],
+    });
+  });
+
+  it('has nothing to read when the response carries no languages', () => {
+    expect(readLanguages({ id: 'u-1' })).toBeUndefined();
+    expect(readLanguages({ nativeLanguages: 'ar', learningLanguages: [] })).toBeUndefined();
+    expect(readLanguages('nope')).toBeUndefined();
   });
 });

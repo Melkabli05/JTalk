@@ -1,12 +1,6 @@
-import { asRecord, isStringList } from '@shared/utils/as-record';
+import { asRecord } from '@shared/utils/as-record';
 import { avatarIdOf } from '@shared/utils/avatars';
-import {
-  isProficiency,
-  type LanguageMatrix,
-  type LearningLanguage,
-  type PersonSummary,
-  type SocialStats,
-} from '@shared/utils/people';
+import { readLanguages, type PersonSummary, type SocialStats } from '@shared/utils/people';
 import type { Page } from '@shared/utils/paged-list';
 import type { PersonDetails } from './person-card.model';
 
@@ -24,16 +18,18 @@ export function parseDetails(raw: unknown): PersonDetails {
   ) {
     throw new Error('Unexpected response: expected a profile');
   }
+  const languages = readLanguages(user);
   return {
     id: user['id'],
     name: user['displayName'],
     nativeLanguage: user['nativeLanguage'],
-    learning: '',
+    learning: languages?.learning[0]?.code ?? '',
     avatar: avatarIdOf(typeof user['avatarUrl'] === 'string' ? user['avatarUrl'] : null),
     username: text(user['username']),
     bio: text(user['bio']),
     countryCode: text(user['countryCode']),
     joinedAt: text(user['createdAt']),
+    ...(languages ? { languages } : {}),
   };
 }
 
@@ -51,27 +47,6 @@ export function parseSocial(raw: unknown): SocialStats {
     following: stats['followingCount'],
     followedByMe: stats['followedByMe'] === true,
     followsMe: stats['followsMe'] === true,
-  };
-}
-
-export function parseLanguages(raw: unknown): LanguageMatrix {
-  const matrix = asRecord(raw);
-  const learning = matrix?.['learningLanguages'];
-  if (
-    matrix === undefined ||
-    !isStringList(matrix['nativeLanguages']) ||
-    !Array.isArray(learning)
-  ) {
-    throw new Error('Unexpected response: expected a language matrix');
-  }
-  return {
-    native: matrix['nativeLanguages'],
-    learning: learning.flatMap((entry: unknown): LearningLanguage[] => {
-      const language = asRecord(entry);
-      const code = language?.['languageCode'];
-      const level = language?.['proficiencyLevel'];
-      return typeof code === 'string' ? [{ code, level: isProficiency(level) ? level : null }] : [];
-    }),
   };
 }
 

@@ -19,7 +19,17 @@
   <p-card class="editor">
     <h2>{{ 'Edit profile' | t }}</h2>
     <p class="lead">{{ 'Your name and picture are what people see in the rooms.' | t }}</p>
-    <app-profile-form [profile]="me" [locale]="locale()" (saved)="save($event)" />
+    @if (saving.error(); as error) {
+      <p-message class="error" severity="error" variant="simple" role="alert">{{
+        error | t
+      }}</p-message>
+    }
+    <app-profile-form
+      [profile]="me"
+      [locale]="locale()"
+      [busy]="saving.submitting()"
+      (saved)="save($event)"
+    />
   </p-card>
 } @else {
   <div class="loading">

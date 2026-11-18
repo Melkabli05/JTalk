@@ -376,13 +376,10 @@ describe('AppShellComponent profile gate', () => {
     avatarUrl: null,
     nativeLanguage: 'ar',
     createdAt: '2026-11-18T10:00:00Z',
-    ...extra,
-  });
-  const matrix = {
-    userId: 'm-1',
     nativeLanguages: ['ar'],
     learningLanguages: [{ languageCode: 'en', proficiencyLevel: 'BEGINNER' }],
-  };
+    ...extra,
+  });
 
   beforeEach(() => {
     localStorage.clear();
@@ -412,8 +409,6 @@ describe('AppShellComponent profile gate', () => {
       request.flush({ status: 404 }, { status: 404, statusText: 'Not Found' });
     } else {
       request.flush(me);
-      await settle();
-      http.expectOne('/api/v1/users/me/languages').flush(matrix);
     }
     await settle();
   }
@@ -451,22 +446,42 @@ describe('AppShellComponent profile gate', () => {
       displayName: 'Mona',
       avatarUrl: '/avatars/avatar-01.svg',
       nativeLanguage: 'ar',
+      learningLanguages: [{ languageCode: 'en' }],
     });
     created.flush(profile());
     await settle();
-    http
-      .expectOne((r) => r.method === 'POST' && r.url === '/api/v1/users/me/languages')
-      .flush(null);
-    await settle();
-
-    http.expectOne((r) => r.method === 'GET' && r.url === '/api/v1/users/me').flush(profile());
-    await settle();
-    http.expectOne('/api/v1/users/me/languages').flush(matrix);
-    await settle();
+    http.expectNone(() => true); // the answer is the profile: nothing is read back, no second call
 
     expect(root().querySelector('router-outlet')).not.toBeNull();
     await openAccount();
     expect(settings()?.textContent).toContain('Mona');
+  });
+
+  it('says so in the dialog when the profile could not be created, and keeps it open to try again', async () => {
+    await render(null);
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(page().querySelector('app-profile-form input')).not.toBeNull();
+    });
+    const name = page().querySelector<HTMLInputElement>('app-profile-form input')!;
+    name.value = 'Mona';
+    name.dispatchEvent(new Event('input'));
+    name.dispatchEvent(new Event('blur'));
+    await settle();
+
+    page()
+      .querySelector('app-profile-form form')!
+      .dispatchEvent(new Event('submit', { cancelable: true }));
+    await settle();
+    http
+      .expectOne((r) => r.method === 'POST' && r.url === '/api/v1/users/me')
+      .flush({}, { status: 500, statusText: 'Server Error' });
+    await settle();
+
+    expect(
+      page().querySelector('app-profile-dialog p-message[role="alert"]')?.textContent,
+    ).toContain('Could not save your profile. Please try again.');
+    expect(root().querySelector('router-outlet')).toBeNull();
   });
 
   it('shows who the person is in the account popover, straight into the app', async () => {

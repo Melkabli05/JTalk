@@ -12,9 +12,6 @@ const profile = {
   avatarUrl: '/avatars/avatar-06.svg',
   nativeLanguage: 'ar',
   createdAt: '2026-11-18T10:00:00Z',
-};
-const matrix = {
-  userId: 'm-1',
   nativeLanguages: ['ar'],
   learningLanguages: [{ languageCode: 'en', proficiencyLevel: 'BEGINNER' }],
 };
@@ -51,8 +48,6 @@ describe('ProfilePageComponent (container)', () => {
   async function load() {
     http.expectOne('/api/v1/users/me').flush(profile);
     await settle();
-    http.expectOne('/api/v1/users/me/languages').flush(matrix);
-    await settle();
   }
 
   async function submit() {
@@ -81,15 +76,20 @@ describe('ProfilePageComponent (container)', () => {
 
     const patch = http.expectOne((r) => r.method === 'PATCH' && r.url === '/api/v1/users/me');
     expect(patch.request.body).toMatchObject({ displayName: 'Mona H', nativeLanguage: 'ar' });
+    expect(patch.request.body).not.toHaveProperty('learningLanguages');
     patch.flush({ ...profile, displayName: 'Mona H' });
     await settle();
     http
-      .expectOne((r) => r.method === 'GET' && r.url === '/api/v1/users/me')
-      .flush({
-        ...profile,
-        displayName: 'Mona H',
-      });
-    http.expectOne('/api/v1/users/me/languages').flush(matrix);
+      .match('/api/v1/users/m-1')
+      .forEach((request) => request.flush({ ...profile, displayName: 'Mona H' }));
+    http.match('/api/v1/users/m-1/social').forEach((request) =>
+      request.flush({
+        followerCount: 0,
+        followingCount: 0,
+        followedByMe: false,
+        followsMe: false,
+      }),
+    );
     await settle();
 
     expect(toast.add).toHaveBeenCalledWith(
@@ -98,7 +98,7 @@ describe('ProfilePageComponent (container)', () => {
     expect(root().querySelector('app-profile-hero h1')?.textContent).toBe('Mona H');
   });
 
-  it('says so when the profile could not be saved', async () => {
+  it('says so above the form when the profile could not be saved, and lets the person try again', async () => {
     await load();
     await submit();
     http
@@ -106,12 +106,12 @@ describe('ProfilePageComponent (container)', () => {
       .flush({}, { status: 500, statusText: 'Server Error' });
     await settle();
 
-    expect(toast.add).toHaveBeenCalledWith(
-      expect.objectContaining({
-        severity: 'error',
-        summary: 'Could not save your profile. Please try again.',
-      }),
+    expect(root().querySelector('p-message[role="alert"]')?.textContent).toContain(
+      'Could not save your profile. Please try again.',
     );
+    expect(toast.add).not.toHaveBeenCalled();
+    await submit();
+    http.expectOne((r) => r.method === 'PATCH' && r.url === '/api/v1/users/me');
   });
 
   it('shows your own numbers, what is in your bio, and your languages with their levels', async () => {
@@ -120,7 +120,6 @@ describe('ProfilePageComponent (container)', () => {
     http
       .expectOne('/api/v1/users/m-1/social')
       .flush({ followerCount: 12, followingCount: 3, followedByMe: false, followsMe: false });
-    http.match('/api/v1/users/m-1/languages').forEach((request) => request.flush(matrix));
     await settle();
 
     expect(root().textContent).toContain('@mona_1a2b3c');

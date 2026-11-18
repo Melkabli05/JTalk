@@ -32,6 +32,7 @@ import { I18n } from '@shared/utils/i18n/i18n.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 import { languageOf } from '@shared/utils/languages';
+import { saveRequest } from '@shared/utils/save-request';
 import { Popover } from '@openng/optimus-ui/popover';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { ToggleSwitch } from '@openng/optimus-ui/toggleswitch';
@@ -102,6 +103,7 @@ export class AppShellComponent {
   protected readonly locales = inject(LocaleService);
   private readonly i18n = inject(I18n);
   protected readonly appName = APP_NAME;
+  protected readonly creating = saveRequest();
   protected readonly myPicture = computed(() => avatarUrl(this.identity.profile()?.avatar));
   protected readonly firstName = computed(
     () => this.identity.profile()?.name.trim().split(/\s+/)[0] ?? '',
@@ -146,8 +148,11 @@ export class AppShellComponent {
     return items.map((item) => ({ ...item, label: this.i18n.t(item.label ?? '') }));
   }
 
-  protected async saveProfile(draft: ProfileDraft): Promise<void> {
-    await this.identity.saveProfile(draft);
+  protected saveProfile(draft: ProfileDraft): void {
+    this.creating.run(this.identity.saveProfile(draft), {
+      next: () => undefined,
+      failure: msg('Could not save your profile. Please try again.'),
+    });
   }
 
   protected signOut(): Promise<void> {

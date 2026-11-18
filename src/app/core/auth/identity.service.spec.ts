@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ActiveRoomService } from '../rooms/active-room.service';
+import type { Person, ProfileDraft } from './identity.models';
 import { fakeAuth0 } from './auth-testing';
 import { IdentityService } from './identity.service';
 
@@ -17,14 +18,16 @@ const profile = (extra: object = {}) => ({
   createdAt: '2026-11-18T10:00:00Z',
   ...extra,
 });
-const matrix = (...learning: string[]) => ({
-  userId: 'm-1',
-  nativeLanguages: ['ar'],
-  learningLanguages: learning.map((languageCode) => ({
-    languageCode,
-    proficiencyLevel: 'BEGINNER',
-  })),
-});
+/** A full profile: the same fields, and the languages the person speaks and learns. */
+const full = (learning: string[], extra: object = {}) =>
+  profile({
+    nativeLanguages: ['ar'],
+    learningLanguages: learning.map((languageCode) => ({
+      languageCode,
+      proficiencyLevel: 'BEGINNER',
+    })),
+    ...extra,
+  });
 const DRAFT = { name: '  Mona B  ', nativeLanguage: 'ar', learning: 'fr', avatar: 'avatar-03' };
 
 describe('IdentityService', () => {
@@ -58,12 +61,21 @@ describe('IdentityService', () => {
     return sent;
   }
 
-  /** A signed-in person the user service knows, with their profile and languages loaded. */
+  /** A signed-in person the user service knows: one request gives their profile and languages. */
   async function known(...learning: string[]) {
     setup();
     await settle();
-    await answer('GET', ME, profile());
-    await answer('GET', `${ME}/languages`, matrix(...learning));
+    await answer('GET', ME, full(learning));
+  }
+
+  /** Starts a save and keeps what came of it, so a spec can answer the requests in between. */
+  function save(draft: ProfileDraft) {
+    const outcome: { saved?: Person; failure?: unknown } = {};
+    identity.saveProfile(draft).subscribe({
+      next: (saved) => (outcome.saved = saved),
+      error: (failure: unknown) => (outcome.failure = failure),
+    });
+    return outcome;
   }
 
   afterEach(() => logout.mockClear());
@@ -77,7 +89,7 @@ describe('IdentityService', () => {
     expect(identity.needsProfile()).toBe(false);
   });
 
-  it('knows the person from their profile and the language they are learning', async () => {
+  it('knows the person, and the languages they speak and learn, from one request', async () => {
     await known('en');
 
     expect(identity.profile()).toEqual({
@@ -86,6 +98,7 @@ describe('IdentityService', () => {
       nativeLanguage: 'ar',
       learning: 'en',
       avatar: 'avatar-06',
+      languages: { native: ['ar'], learning: [{ code: 'en', level: 'BEGINNER' }] },
     });
     expect(identity.userId()).toBe('m-1');
     expect(identity.needsProfile()).toBe(false);
@@ -154,149 +167,137 @@ describe('IdentityService', () => {
   });
 
   describe('saving the profile', () => {
-    it('creates it for a new person: a handle made from the name, the bundled picture as a path, then the language to learn', async () => {
+    async function newcomer() {
       setup();
       await settle();
       await answer('GET', ME, { status: 404 }, 404);
+    }
 
-      const saving = identity.saveProfile(DRAFT);
-      const created = await answer('POST', ME, profile({ displayName: 'Mona B' }));
-      const learning = await answer('POST', `${ME}/languages`);
-      await answer('GET', ME, profile({ displayName: 'Mona B' }));
-      await answer('GET', `${ME}/languages`, matrix('fr'));
-      await saving;
+    it('creates it for a new person in one request: a handle made from the name, the bundled picture as a path, the language to learn', async () => {
+      await newcomer();
+
+      const outcome = save(DRAFT);
+      const created = await answer('POST', ME, full(['fr'], { displayName: 'Mona B' }));
 
       expect(created).toEqual({
         username: expect.stringMatching(/^mona_b_[0-9a-f]{6}$/) as unknown,
         displayName: 'Mona B',
         avatarUrl: '/avatars/avatar-03.svg',
         nativeLanguage: 'ar',
+        learningLanguages: [{ languageCode: 'fr' }],
       });
-      expect(learning).toEqual({ languageCode: 'fr', languageType: 'LEARNING' });
+      expect(outcome.saved?.name).toBe('Mona B');
       expect(identity.needsProfile()).toBe(false);
       expect(identity.profile()?.learning).toBe('fr');
+      http.expectNone(() => true); // the answer is the profile: nothing is read back
     });
 
     it('sends the bio and country of a new person only when they wrote or chose them', async () => {
-      setup();
-      await settle();
-      await answer('GET', ME, { status: 404 }, 404);
+      await newcomer();
 
-      const saving = identity.saveProfile({
-        ...DRAFT,
-        bio: '  Tea and Spanish  ',
-        countryCode: 'MA',
-      });
-      const created = await answer('POST', ME, profile());
-      await answer('POST', `${ME}/languages`);
-      await answer('GET', ME, profile());
-      await answer('GET', `${ME}/languages`, matrix('fr'));
-      await saving;
+      save({ ...DRAFT, bio: '  Tea and Spanish  ', countryCode: 'MA' });
+      const created = await answer('POST', ME, full(['fr']));
 
       expect(created).toMatchObject({ bio: 'Tea and Spanish', countryCode: 'MA' });
     });
 
     it('leaves an empty bio and no country out of a new profile', async () => {
-      setup();
-      await settle();
-      await answer('GET', ME, { status: 404 }, 404);
+      await newcomer();
 
-      const saving = identity.saveProfile({ ...DRAFT, bio: '', countryCode: '' });
-      const created = (await answer('POST', ME, profile())) as Record<string, unknown>;
-      await answer('POST', `${ME}/languages`);
-      await answer('GET', ME, profile());
-      await answer('GET', `${ME}/languages`, matrix('fr'));
-      await saving;
+      save({ ...DRAFT, bio: '', countryCode: '' });
+      const created = (await answer('POST', ME, full(['fr']))) as Record<string, unknown>;
 
       expect('bio' in created).toBe(false);
       expect('countryCode' in created).toBe(false);
     });
 
     it('makes a handle even from a name with no Latin letters', async () => {
-      setup();
-      await settle();
-      await answer('GET', ME, { status: 404 }, 404);
+      await newcomer();
 
-      const saving = identity.saveProfile({ ...DRAFT, name: 'منى' });
-      const created = (await answer('POST', ME, profile())) as { username: string };
-      await answer('POST', `${ME}/languages`);
-      await answer('GET', ME, profile());
-      await answer('GET', `${ME}/languages`, matrix('fr'));
-      await saving;
+      save({ ...DRAFT, name: 'منى' });
+      const created = (await answer('POST', ME, full(['fr']))) as { username: string };
 
       expect(created.username).toMatch(/^user_[0-9a-f]{6}$/);
     });
 
     it('tries once more with another handle when the first one was taken', async () => {
-      setup();
-      await settle();
-      await answer('GET', ME, { status: 404 }, 404);
+      await newcomer();
 
-      const saving = identity.saveProfile(DRAFT);
+      const outcome = save(DRAFT);
       const first = (await answer('POST', ME, { status: 409 }, 409)) as { username: string };
-      const second = (await answer('POST', ME, profile())) as { username: string };
-      await answer('POST', `${ME}/languages`);
-      await answer('GET', ME, profile());
-      await answer('GET', `${ME}/languages`, matrix('fr'));
-      await saving;
+      const second = (await answer('POST', ME, full(['fr']))) as { username: string };
 
       expect(second.username).not.toBe(first.username);
+      expect(outcome.saved).toBeDefined();
     });
 
     it('does not hide a failure that is not a taken handle', async () => {
-      setup();
-      await settle();
-      await answer('GET', ME, { status: 404 }, 404);
+      await newcomer();
 
-      const saving = identity.saveProfile(DRAFT);
-      const failed = saving.catch((error: unknown) => error);
+      const outcome = save(DRAFT);
       await answer('POST', ME, { status: 400 }, 400);
 
-      expect(await failed).toMatchObject({ status: 400 });
+      expect(outcome.failure).toMatchObject({ status: 400 });
+      expect(identity.needsProfile()).toBe(true);
     });
 
-    it('changes an existing profile: drops the old language, adds the new one, then updates the profile', async () => {
+    it('changes an existing profile in one request, the new language included', async () => {
       await known('en');
 
-      const saving = identity.saveProfile(DRAFT);
-      await answer('DELETE', `${ME}/languages/en`);
-      const learning = await answer('POST', `${ME}/languages`);
-      const changed = await answer('PATCH', ME, profile({ displayName: 'Mona B' }));
-      await answer('GET', ME, profile({ displayName: 'Mona B' }));
-      await answer('GET', `${ME}/languages`, matrix('fr'));
-      await saving;
+      const outcome = save(DRAFT);
+      const changed = await answer('PATCH', ME, full(['fr'], { displayName: 'Mona B' }));
 
-      expect(learning).toEqual({ languageCode: 'fr', languageType: 'LEARNING' });
       expect(changed).toEqual({
         displayName: 'Mona B',
         avatarUrl: '/avatars/avatar-03.svg',
         nativeLanguage: 'ar',
+        learningLanguages: [{ languageCode: 'fr' }],
       });
+      expect(outcome.saved?.name).toBe('Mona B');
       expect(identity.profile()?.name).toBe('Mona B');
+      expect(identity.profile()?.learning).toBe('fr');
+      http.expectNone(() => true);
     });
 
     it('sends an emptied bio when changing a profile, so a bio can be cleared', async () => {
       await known('fr');
 
-      const saving = identity.saveProfile({ ...DRAFT, bio: '   ', countryCode: 'ES' });
-      const changed = await answer('PATCH', ME, profile());
-      await answer('GET', ME, profile());
-      await answer('GET', `${ME}/languages`, matrix('fr'));
-      await saving;
+      save({ ...DRAFT, bio: '   ', countryCode: 'ES' });
+      const changed = await answer('PATCH', ME, full(['fr']));
 
       expect(changed).toMatchObject({ bio: '', countryCode: 'ES' });
     });
 
-    it('leaves the languages alone when the one being learned did not change', async () => {
+    it('leaves the languages alone when the one being learned did not change, so their levels stay', async () => {
       await known('fr');
 
-      const saving = identity.saveProfile(DRAFT);
-      await answer('PATCH', ME, profile());
-      await answer('GET', ME, profile());
-      await answer('GET', `${ME}/languages`, matrix('fr'));
-      await saving;
+      save(DRAFT);
+      const changed = (await answer('PATCH', ME, full(['fr']))) as Record<string, unknown>;
 
-      http.expectNone((r) => r.url.includes('/languages') && r.method !== 'GET');
+      expect('learningLanguages' in changed).toBe(false);
+    });
+
+    it('can swap the language spoken and the one learned in one save', async () => {
+      await known('en');
+
+      save({ ...DRAFT, nativeLanguage: 'en', learning: 'ar' });
+      const changed = await answer('PATCH', ME, full(['ar']));
+
+      expect(changed).toMatchObject({
+        nativeLanguage: 'en',
+        learningLanguages: [{ languageCode: 'ar' }],
+      });
+    });
+
+    it('keeps the profile it had when the change failed', async () => {
+      await known('en');
+
+      const outcome = save(DRAFT);
+      await answer('PATCH', ME, { status: 422 }, 422);
+
+      expect(outcome.failure).toMatchObject({ status: 422 });
+      expect(identity.profile()?.name).toBe('Mona');
+      expect(identity.profile()?.learning).toBe('en');
     });
   });
 

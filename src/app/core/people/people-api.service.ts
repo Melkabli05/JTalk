@@ -3,12 +3,11 @@ import { inject, Service } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 import { API_BASE_URL } from '@core/http/api-base-url.token';
 import type { Page } from '@shared/utils/paged-list';
-import type { LanguageMatrix, SocialStats, PersonSummary } from '@shared/utils/people';
+import type { SocialStats, PersonSummary } from '@shared/utils/people';
 import type { PersonDetails } from './person-card.model';
 import {
   parseDetails,
   parseFollowPage,
-  parseLanguages,
   parsePartnerPage,
   parseSocial,
   parseSummaries,
@@ -27,12 +26,6 @@ export class PeopleApiService {
   socialResource(id: () => string | null): HttpResourceRef<SocialStats | undefined> {
     return httpResource(() => (id() ? `${this.url}/${id()}/social` : undefined), {
       parse: parseSocial,
-    });
-  }
-
-  languagesResource(id: () => string | null): HttpResourceRef<LanguageMatrix | undefined> {
-    return httpResource(() => (id() ? `${this.url}/${id()}/languages` : undefined), {
-      parse: parseLanguages,
     });
   }
 

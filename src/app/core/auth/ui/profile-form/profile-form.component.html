@@ -31,6 +31,7 @@
       pButton
       type="submit"
       size="large"
+      [loading]="busy()"
       [label]="profile() ? ('Save' | t) : ('Continue' | t)"
     ></button>
   </div>

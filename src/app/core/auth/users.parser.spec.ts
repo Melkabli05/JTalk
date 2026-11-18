@@ -1,4 +1,4 @@
-import { parseLearningLanguages, parsePeople, parsePerson } from './users.parser';
+import { parsePeople, parsePerson } from './users.parser';
 
 const PROFILE = {
   id: 'm-1',
@@ -33,17 +33,28 @@ describe('users parser', () => {
     ).toEqual(['Mona', 'Omar']);
   });
 
-  it('reads the languages being learned from the matrix', () => {
-    expect(
-      parseLearningLanguages({
-        userId: 'm-1',
-        nativeLanguages: ['ar'],
-        learningLanguages: [
-          { languageCode: 'en', proficiencyLevel: 'BEGINNER' },
-          { languageCode: 'fr', proficiencyLevel: 'FLUENT' },
-        ],
-      }),
-    ).toEqual(['en', 'fr']);
+  it('reads the languages a full profile carries, and the first one being learned', () => {
+    const person = parsePerson({
+      ...PROFILE,
+      nativeLanguages: ['ar'],
+      learningLanguages: [
+        { languageCode: 'en', proficiencyLevel: 'BEGINNER' },
+        { languageCode: 'fr', proficiencyLevel: 'FLUENT' },
+      ],
+    });
+
+    expect(person.learning).toBe('en');
+    expect(person.languages).toEqual({
+      native: ['ar'],
+      learning: [
+        { code: 'en', level: 'BEGINNER' },
+        { code: 'fr', level: 'FLUENT' },
+      ],
+    });
+  });
+
+  it('has no languages for a summary, which does not carry them', () => {
+    expect(parsePerson(PROFILE)).not.toHaveProperty('languages');
   });
 
   it('keeps the bio and country of a full profile, and leaves them out of a summary', () => {
@@ -65,8 +76,6 @@ describe('users parser', () => {
     ['a profile without a name', () => parsePerson({ id: 'm-1', nativeLanguage: 'ar' })],
     ['a profile that is not an object', () => parsePerson('nope')],
     ['a list that is not a list', () => parsePeople({})],
-    ['a matrix without languages', () => parseLearningLanguages({})],
-    ['a language without a code', () => parseLearningLanguages({ learningLanguages: [{}] })],
   ])('refuses %s', (_name, parse) => {
     expect(parse).toThrow(/Unexpected response/);
   });

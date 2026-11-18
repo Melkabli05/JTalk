@@ -86,6 +86,7 @@ describe('RoomPageComponent (container)', () => {
     nativeLanguage: 'ar',
     learning: 'es',
     avatar: '',
+    languages: { native: ['ar'], learning: [{ code: 'es', level: 'BEGINNER' as const }] },
   });
 
   function asPerson(id: string) {
@@ -95,6 +96,7 @@ describe('RoomPageComponent (container)', () => {
       nativeLanguage: 'ar',
       learning: 'es',
       avatar: '',
+      languages: { native: ['ar'], learning: [{ code: 'es', level: 'BEGINNER' as const }] },
     });
   }
 
@@ -304,27 +306,13 @@ describe('RoomPageComponent (container)', () => {
           nativeLanguage: 'es',
           countryCode: 'ES',
           createdAt: '2026-10-01T10:00:00Z',
+          nativeLanguages: ['es'],
+          learningLanguages: [{ languageCode: 'ar', proficiencyLevel: 'INTERMEDIATE' }],
         },
       },
       'GET /api/v1/users/b-1/social': {
         status: 200,
         body: { followerCount: 1250, followingCount: 3, followedByMe: false, followsMe: true },
-      },
-      'GET /api/v1/users/b-1/languages': {
-        status: 200,
-        body: {
-          userId: 'b-1',
-          nativeLanguages: ['es'],
-          learningLanguages: [{ languageCode: 'ar', proficiencyLevel: 'INTERMEDIATE' }],
-        },
-      },
-      'GET /api/v1/users/m-1/languages': {
-        status: 200,
-        body: {
-          userId: 'm-1',
-          nativeLanguages: ['ar'],
-          learningLanguages: [{ languageCode: 'es', proficiencyLevel: 'BEGINNER' }],
-        },
       },
     };
 
