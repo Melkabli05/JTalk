@@ -11,11 +11,11 @@
     <header class="strip">
       <p class="pass">
         <span class="dot" [class.live]="speaking()" aria-hidden="true"></span>
-        {{ roleName() | t }} · {{ placeName() | t }}
+        {{ roleName() | t }} · {{ caption() | t }}
+        @if (isMe()) {
+          · {{ 'You' | t }}
+        }
       </p>
-      @if (isMe()) {
-        <span class="you">{{ 'You' | t }}</span>
-      }
       @if (card()) {
         <button
           pButton
@@ -71,20 +71,12 @@
             </p>
           }
         }
-        <p class="tags">
-          <p-tag [severity]="role() === 'HOST' ? 'warn' : onStage() ? 'success' : 'secondary'">
-            {{ roleName() | t }}
-            @if (stateName(); as state) {
-              · {{ state | t }}
-            }
-          </p-tag>
-          @if (origin(); as place) {
-            <span class="place">
-              <span aria-hidden="true">{{ place.flag }}</span>
-              {{ place.name }}
-            </span>
-          }
-        </p>
+        @if (origin(); as place) {
+          <p class="place">
+            <span aria-hidden="true">{{ place.flag }}</span>
+            {{ place.name }}
+          </p>
+        }
       </div>
     </div>
 
@@ -109,50 +101,58 @@
             <button
               pButton
               type="button"
-              class="tile host"
+              class="tile"
+              icon="pi pi-microphone pi-slashed"
+              iconPos="top"
+              severity="warn"
+              [outlined]="true"
               [disabled]="muted()"
               [attr.aria-label]="muted() ? ('Muted' | t) : ('Mute' | t)"
+              [label]="muted() ? ('Muted' | t) : ('Mute mic' | t)"
               (click)="mute.emit()"
-            >
-              <i class="pi pi-microphone pi-slashed" aria-hidden="true"></i>
-              <span>{{ muted() ? ('Muted' | t) : ('Mute mic' | t) }}</span>
-            </button>
+            ></button>
           }
           @if (canInvite()) {
             <button
               pButton
               type="button"
-              class="tile host"
+              class="tile"
+              icon="pi pi-microphone"
+              iconPos="top"
+              severity="warn"
+              [outlined]="true"
               [attr.aria-label]="'Invite to the stage' | t"
+              [label]="'To the stage' | t"
               (click)="invite.emit()"
-            >
-              <i class="pi pi-microphone" aria-hidden="true"></i>
-              <span>{{ 'To the stage' | t }}</span>
-            </button>
+            ></button>
           }
           @if (canDemote()) {
             <button
               pButton
               type="button"
               class="tile"
+              icon="pi pi-arrow-down"
+              iconPos="top"
+              severity="secondary"
+              [outlined]="true"
               [attr.aria-label]="'Move to the audience' | t"
+              [label]="'To the audience' | t"
               (click)="demote.emit()"
-            >
-              <i class="pi pi-arrow-down" aria-hidden="true"></i>
-              <span>{{ 'To the audience' | t }}</span>
-            </button>
+            ></button>
           }
           @if (canStepDown()) {
             <button
               pButton
               type="button"
               class="tile"
+              icon="pi pi-arrow-down"
+              iconPos="top"
+              severity="secondary"
+              [outlined]="true"
               [attr.aria-label]="'Step down to the audience' | t"
+              [label]="'Step down' | t"
               (click)="stepDown.emit()"
-            >
-              <i class="pi pi-arrow-down" aria-hidden="true"></i>
-              <span>{{ 'Step down' | t }}</span>
-            </button>
+            ></button>
           }
         </div>
       }
@@ -192,7 +192,7 @@
         }
       } @else if (loading()) {
         <div class="placeholders" role="status" [attr.aria-label]="'Finding their profile' | t">
-          <p-skeleton width="100%" height="4rem" borderRadius="14px" />
+          <p-skeleton width="100%" height="4rem" borderRadius="var(--p-jtalk-radius-card)" />
           <p-skeleton width="90%" height="1rem" />
           <p-skeleton width="60%" height="1rem" />
         </div>

@@ -370,6 +370,8 @@ export const JtalkPreset = definePreset(Aura, {
             max-inline-size: 100%;
             max-block-size: 88dvh;
             margin: 0;
+            border-start-start-radius: var(--p-jtalk-radius-sheet);
+            border-start-end-radius: var(--p-jtalk-radius-sheet);
             border-end-start-radius: 0;
             border-end-end-radius: 0;
           }
@@ -442,6 +444,7 @@ export const JtalkPreset = definePreset(Aura, {
           outlined: {
             primary: { borderColor: '{primary.color}' },
             secondary: { borderColor: '{surface.500}', color: '{surface.800}' },
+            warn: { borderColor: '{yellow.500}' },
             danger: { borderColor: '{red.500}' },
           },
           text: { secondary: { color: '{surface.600}' } },
@@ -450,6 +453,7 @@ export const JtalkPreset = definePreset(Aura, {
           outlined: {
             primary: { borderColor: '{primary.color}' },
             secondary: { borderColor: '{surface.500}', color: '{surface.200}' },
+            warn: { borderColor: '{yellow.400}' },
             danger: { borderColor: '{red.400}' },
           },
           text: { secondary: { color: '{surface.300}' } },

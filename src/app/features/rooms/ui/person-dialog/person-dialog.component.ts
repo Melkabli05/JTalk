@@ -10,7 +10,6 @@ import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Dialog } from '@openng/optimus-ui/dialog';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
-import { Tag } from '@openng/optimus-ui/tag';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { FollowButtonComponent } from '@shared/ui/follow-button/follow-button.component';
@@ -47,7 +46,6 @@ let nextId = 0;
     PersonAvatarComponent,
     Skeleton,
     SocialStatsComponent,
-    Tag,
     Tooltip,
     TranslatePipe,
   ],
@@ -96,13 +94,10 @@ export class PersonDialogComponent {
         ? msg('Speaker')
         : msg('Listener'),
   );
-  protected readonly placeName = computed(() =>
-    this.onStage() ? msg('On stage') : msg('In the audience'),
-  );
-  /** What their microphone is doing, for someone on the stage. */
-  protected readonly stateName = computed(() =>
+  /** What to say after the role: their microphone for someone on the stage, else that they are listening. */
+  protected readonly caption = computed(() =>
     !this.onStage()
-      ? ''
+      ? msg('In the audience')
       : this.muted()
         ? msg('Muted')
         : this.speaking()

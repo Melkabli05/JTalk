@@ -53,37 +53,42 @@ describe('PersonDialogComponent (presentational)', () => {
     });
 
     it('says in a strip on top where they are, with the close button at its end', async () => {
+      const pass = () => strip().querySelector('.pass')?.textContent?.replace(/\s+/g, ' ').trim();
       await render({ role: 'SPEAKER' });
-      expect(strip().querySelector('.pass')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-        'Speaker · On stage',
-      );
+      expect(pass()).toBe('Speaker · On mic');
       expect(strip().querySelector('button')?.getAttribute('aria-label')).toBe('Close');
 
       await render({ role: 'LISTENER' });
-      expect(strip().querySelector('.pass')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-        'Listener · In the audience',
-      );
+      expect(pass()).toBe('Listener · In the audience');
+
+      await render({ role: 'HOST', isMe: true });
+      expect(pass()).toBe('Host · On mic · You');
     });
 
-    it('tells what their microphone is doing, for someone on the stage only', async () => {
+    it('says what their microphone is doing in words and in a badge, for someone on the stage only', async () => {
+      const pass = () => strip().querySelector('.pass')?.textContent ?? '';
       await render({ role: 'SPEAKER' });
-      expect(root().querySelector('.tags p-tag')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-        'Speaker · On mic',
-      );
       expect(root().querySelector('.portrait .mic')).not.toBeNull();
       expect(root().querySelector('.portrait .mic.off')).toBeNull();
 
       await render({ role: 'SPEAKER', speaking: true });
-      expect(root().querySelector('.tags p-tag')?.textContent).toContain('Speaking');
+      expect(pass()).toContain('Speaking');
       expect(strip().querySelector('.dot')?.classList.contains('live')).toBe(true);
+      expect(root().querySelector('app-person-avatar')?.classList.contains('speaking')).toBe(true);
 
       await render({ role: 'SPEAKER', muted: true });
-      expect(root().querySelector('.tags p-tag')?.textContent).toContain('Muted');
+      expect(pass()).toContain('Muted');
       expect(root().querySelector('.portrait .mic.off')).not.toBeNull();
 
       await render({ role: 'LISTENER' });
       expect(root().querySelector('.portrait .mic')).toBeNull();
-      expect(root().querySelector('.tags p-tag')?.textContent).not.toContain('·');
+      expect(strip().querySelector('.dot')?.classList.contains('live')).toBe(false);
+    });
+
+    it('stacks nothing under the name: the state is in the strip and on the picture', async () => {
+      await render({ role: 'SPEAKER', card: CARD });
+
+      expect(root().querySelector('.who p-tag')).toBeNull();
     });
 
     it('tells the languages they speak and learn, until their profile is known', async () => {
@@ -159,13 +164,18 @@ describe('PersonDialogComponent (presentational)', () => {
       expect(button('Muted').disabled).toBe(true);
     });
 
-    it('puts the picture of the action above its name, and the host powers in Sand', async () => {
-      await render({ role: 'LISTENER', canInvite: true });
+    it('draws each as a button of the system, the picture above its name: Sand for the host powers, neutral for the rest', async () => {
+      await render({ role: 'SPEAKER', canMute: true, canDemote: true, canInvite: true });
 
-      const tile = button('Invite to the stage');
-      expect(tile.classList).toContain('host');
-      expect(tile.querySelector('i')?.className).toContain('pi-microphone');
-      expect(tile.textContent?.trim()).toBe('To the stage');
+      const invite = button('Invite to the stage');
+      expect(invite.className).toContain('p-button-warn');
+      expect(invite.className).toContain('p-button-outlined');
+      expect(invite.querySelector('.p-button-icon')?.className).toContain('p-button-icon-top');
+      expect(invite.querySelector('.p-button-icon')?.className).toContain('pi-microphone');
+      expect(invite.textContent?.trim()).toBe('To the stage');
+      expect(button('Mute').className).toContain('p-button-warn');
+      expect(button('Move to the audience').className).toContain('p-button-secondary');
+      expect(button('Move to the audience').className).not.toContain('p-button-warn');
     });
   });
 
