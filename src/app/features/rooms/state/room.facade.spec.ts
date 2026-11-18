@@ -366,6 +366,32 @@ describe('RoomFacade', () => {
       expect(active.room()).toBeNull();
     });
 
+    it('keeps a remembered room until the join has been answered, and forgets it if the join fails', async () => {
+      sessionStorage.setItem('jtalk:room', 'r-1');
+      failing[`POST ${BASE}/participants/join`] = 404;
+
+      facade.enter('r-1');
+      expect(sessionStorage.getItem('jtalk:room'), 'not cleared while it is being joined').toBe(
+        'r-1',
+      );
+      await settle();
+
+      expect(
+        sessionStorage.getItem('jtalk:room'),
+        'a room that could not be joined is not gone back to',
+      ).toBeNull();
+    });
+
+    it('writes the room to this tab once it is joined, and clears it when the room is left', async () => {
+      sessionStorage.clear();
+      await enter();
+      expect(sessionStorage.getItem('jtalk:room')).toBe('r-1');
+
+      facade.leave();
+      await settle();
+      expect(sessionStorage.getItem('jtalk:room')).toBeNull();
+    });
+
     it('can be joined again after it was left', async () => {
       await enter();
       facade.leave();

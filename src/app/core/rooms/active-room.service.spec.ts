@@ -23,4 +23,27 @@ describe('ActiveRoomService', () => {
 
     expect(leave).toHaveBeenCalledOnce();
   });
+
+  describe('across a reload', () => {
+    beforeEach(() => sessionStorage.clear());
+
+    it('writes the room to this tab, so a reload can go back to it, and takes it away once the room is left', () => {
+      const active = TestBed.inject(ActiveRoomService);
+
+      active.set({ id: 'r-1', title: 'Spanish coffee' });
+      expect(sessionStorage.getItem('jtalk:room')).toBe('r-1');
+
+      active.set(null);
+      expect(sessionStorage.getItem('jtalk:room')).toBeNull();
+    });
+
+    it('knows which room the tab was in before it was reloaded, and none when it was in none', () => {
+      expect(TestBed.inject(ActiveRoomService).remembered).toBeNull();
+
+      TestBed.resetTestingModule();
+      sessionStorage.setItem('jtalk:room', 'r-9');
+
+      expect(TestBed.inject(ActiveRoomService).remembered).toBe('r-9');
+    });
+  });
 });

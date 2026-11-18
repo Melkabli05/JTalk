@@ -3,6 +3,7 @@ import {
   ApplicationConfig,
   ErrorHandler,
   inject,
+  Injector,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
@@ -21,6 +22,7 @@ import { DirectionService } from '@core/config/direction.service';
 import { JtalkPreset } from '@core/config/jtalk-preset';
 import { PageTitleStrategy } from '@core/config/page-title.strategy';
 import { GlobalErrorHandler } from '@core/error-handling/global-error-handler';
+import { ActiveRoomService } from '@core/rooms/active-room.service';
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
 import { I18n } from '@shared/utils/i18n/i18n.service';
@@ -55,6 +57,14 @@ export const appConfig: ApplicationConfig = {
       inject(ColorSchemeService);
       inject(DirectionService);
       return inject(I18n).init();
+    }),
+    // A reload does not leave the room: the one this tab was in is joined again, without holding up the start of the app.
+    provideAppInitializer(() => {
+      const injector = inject(Injector);
+      const id = inject(ActiveRoomService).remembered;
+      if (id !== null) {
+        void import('./restore-room').then((module) => module.restoreRoom(injector, id));
+      }
     }),
   ],
 };

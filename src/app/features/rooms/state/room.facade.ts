@@ -49,6 +49,7 @@ export class RoomFacade {
   readonly audio = inject(RealtimeService);
   private readonly pushedOut = new Subject<RoomExit>();
   private left = false;
+  private announced = false;
   private recoveries = 0;
   private reactionId = 0;
   private lastReactionAt = 0;
@@ -63,7 +64,14 @@ export class RoomFacade {
     effect(() => {
       const room = this.state.room();
       const joined = this.state.joined();
-      this.active.set(joined && room ? { id: this.state.roomId(), title: room.title } : null);
+      if (joined && room) {
+        this.announced = true;
+        this.active.set({ id: this.state.roomId(), title: room.title });
+      } else if (this.announced) {
+        // Cleared only once the room has been announced and then left: while a room is being rejoined after a reload it is not "left".
+        this.announced = false;
+        this.active.set(null);
+      }
     });
     effect(() => {
       if (this.state.roomGone()) {
@@ -128,12 +136,15 @@ export class RoomFacade {
         this.state.markJoined(true);
         void this.audio.connect(session);
       },
-      failure: (error) =>
-        httpStatus(error) === 403
+      failure: (error) => {
+        // A room that could not be joined is not one to go back to after a reload.
+        this.active.set(null);
+        return httpStatus(error) === 403
           ? msg('The host removed you from this room.')
           : httpStatus(error) === 404
             ? msg('This room has ended.')
-            : msg('Could not join the room. Please try again.'),
+            : msg('Could not join the room. Please try again.');
+      },
     });
   }
 
