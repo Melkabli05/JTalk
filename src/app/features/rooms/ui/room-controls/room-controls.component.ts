@@ -79,76 +79,65 @@ let nextId = 0;
         <div class="controls">
           @if (canSpeak()) {
             @let micLabel = micOn() ? ('Mute' | t) : ('Unmute' | t);
-            <div class="control">
-              <button
-                pButton
-                type="button"
-                size="large"
-                [icon]="micOn() ? 'pi pi-microphone' : 'pi pi-microphone pi-slashed'"
-                [severity]="micOn() ? 'primary' : 'secondary'"
-                [rounded]="true"
-                [attr.aria-label]="micLabel"
-                [pTooltip]="micLabel"
-                tooltipPosition="top"
-                (click)="toggleMic.emit()"
-              ></button>
-              <span class="caption" aria-hidden="true">{{ micLabel }}</span>
-            </div>
+            <button
+              pButton
+              type="button"
+              size="large"
+              [icon]="micOn() ? 'pi pi-microphone' : 'pi pi-microphone pi-slashed'"
+              [severity]="micOn() ? 'primary' : 'secondary'"
+              [outlined]="!micOn()"
+              [rounded]="true"
+              [attr.aria-label]="micLabel"
+              [pTooltip]="micLabel"
+              tooltipPosition="top"
+              (click)="toggleMic.emit()"
+            ></button>
           }
           @if (!onStage()) {
-            @let handLabel = 'Raise hand' | t;
-            <div class="control">
-              <button
-                pButton
-                type="button"
-                size="large"
-                icon="pi pi-hand"
-                [severity]="handRaised() ? 'primary' : 'secondary'"
-                [rounded]="true"
-                [disabled]="busy()"
-                [attr.aria-label]="handLabel"
-                [attr.aria-pressed]="handRaised()"
-                [pTooltip]="handLabel"
-                tooltipPosition="top"
-                (click)="handRaised() ? lowerHand.emit() : raiseHand.emit()"
-              ></button>
-              <span class="caption" aria-hidden="true">{{ handLabel }}</span>
-            </div>
+            <button
+              pButton
+              type="button"
+              class="hand"
+              size="large"
+              icon="pi pi-hand"
+              severity="primary"
+              [outlined]="handRaised()"
+              [rounded]="true"
+              [disabled]="busy()"
+              [label]="'Raise hand' | t"
+              [attr.aria-pressed]="handRaised()"
+              (click)="handRaised() ? lowerHand.emit() : raiseHand.emit()"
+            ></button>
           }
           @let reactLabel = 'React' | t;
-          <div class="control">
-            <button
-              pButton
-              type="button"
-              size="large"
-              icon="pi pi-face-smile"
-              severity="secondary"
-              [rounded]="true"
-              [outlined]="true"
-              [attr.aria-label]="reactLabel"
-              [pTooltip]="reactLabel"
-              tooltipPosition="top"
-              (click)="picker.toggle($event)"
-            ></button>
-            <span class="caption" aria-hidden="true">{{ reactLabel }}</span>
-          </div>
+          <button
+            pButton
+            type="button"
+            size="large"
+            icon="pi pi-face-smile"
+            severity="secondary"
+            [outlined]="true"
+            [rounded]="true"
+            [attr.aria-label]="reactLabel"
+            [pTooltip]="reactLabel"
+            tooltipPosition="top"
+            (click)="picker.toggle($event)"
+          ></button>
+          <span class="divider" aria-hidden="true"></span>
           @let leaveLabel = 'Leave quietly' | t;
-          <div class="control">
-            <button
-              pButton
-              type="button"
-              size="large"
-              icon="pi pi-sign-out"
-              severity="secondary"
-              [rounded]="true"
-              [outlined]="true"
-              [attr.aria-label]="leaveLabel"
-              [pTooltip]="leaveLabel"
-              tooltipPosition="top"
-              (click)="leave.emit()"
-            ></button>
-            <span class="caption" aria-hidden="true">{{ leaveLabel }}</span>
-          </div>
+          <button
+            pButton
+            type="button"
+            class="leave leave-compact"
+            size="large"
+            icon="pi pi-sign-out"
+            severity="danger"
+            [outlined]="true"
+            [rounded]="true"
+            [label]="leaveLabel"
+            [attr.aria-label]="leaveLabel"
+            (click)="leave.emit()"
+          ></button>
         </div>
         <p-popover #picker appendTo="body" [ariaLabel]="'Send a reaction' | t">
           <div class="reactions">

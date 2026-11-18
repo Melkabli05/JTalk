@@ -136,35 +136,48 @@ describe('RoomControlsComponent (presentational)', () => {
     expect(emitted).toEqual(['leave', 'raise']);
   });
 
-  it('draws each control as a round icon button with its name under it', async () => {
+  it('draws the small controls as circles, the main one as a labelled pill, and leaving apart', async () => {
     await render({ canSpeak: true, micOn: true });
 
-    for (const name of ['Mute', 'Raise hand', 'React', 'Leave quietly']) {
+    for (const name of ['Mute', 'React']) {
       const circle = button(name);
       expect(circle.className).toContain('p-button-rounded');
       expect(circle.className).toContain('p-button-icon-only');
       expect(circle.textContent?.trim()).toBe('');
     }
-    expect(button('Raise hand').querySelector('.pi-hand')).not.toBeNull();
-    const captions = [...root().querySelectorAll('.control .caption')];
-    expect(captions.map((c) => c.textContent)).toEqual([
-      'Mute',
-      'Raise hand',
-      'React',
-      'Leave quietly',
-    ]);
-    expect(captions.every((c) => c.getAttribute('aria-hidden') === 'true')).toBe(true);
+    const hand = button('Raise hand');
+    expect(hand.textContent).toContain('Raise hand');
+    expect(hand.className).toContain('p-button-primary');
+    expect(hand.className).not.toContain('p-button-outlined');
+    expect(hand.querySelector('.pi-hand')).not.toBeNull();
+
+    const leave = button('Leave quietly');
+    expect(leave.textContent).toContain('Leave quietly');
+    expect(leave.className).toContain('p-button-danger');
+    expect(leave.classList).toContain('leave-compact');
+    expect(root().querySelector('.divider')?.getAttribute('aria-hidden')).toBe('true');
+    expect(root().querySelector('.caption')).toBeNull();
   });
 
-  it('shows what is on in Forest and what is off in neutral', async () => {
-    await render({ canSpeak: true, micOn: true, handRaised: true });
+  it('shows the microphone in Forest while it is on and neutral while it is off', async () => {
+    await render({ canSpeak: true, micOn: true });
     expect(button('Mute').className).toContain('p-button-primary');
-    expect(button('Raise hand').className).toContain('p-button-primary');
-    expect(button('Raise hand').getAttribute('aria-pressed')).toBe('true');
 
     await render({ canSpeak: true, micOn: false });
     expect(button('Unmute').className).toContain('p-button-secondary');
-    expect(button('Raise hand').className).toContain('p-button-secondary');
+    expect(button('Unmute').className).toContain('p-button-outlined');
+  });
+
+  it('shows the raised hand as pressed, and lowers it with the same press', async () => {
+    const lowered = vi.fn();
+    await render({ handRaised: true });
+    fixture.componentInstance.lowerHand.subscribe(lowered);
+
+    expect(button('Raise hand').getAttribute('aria-pressed')).toBe('true');
+    expect(button('Raise hand').className).toContain('p-button-outlined');
+    click('Raise hand');
+
+    expect(lowered).toHaveBeenCalledOnce();
   });
 
   it('shows the waiting hint with the hand icon, politely', async () => {
