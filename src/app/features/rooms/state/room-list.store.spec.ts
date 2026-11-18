@@ -1,10 +1,9 @@
-import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { fakeIdentity } from '@core/auth/auth-testing';
+import type { Room } from '../models/room.model';
 import { RoomListStore } from './room-list.store';
 
-const room = (id: string, targetLanguage: string) => ({
+const room = (id: string, targetLanguage = 'es'): Room => ({
   id,
   title: id,
   topic: '',
@@ -12,7 +11,6 @@ const room = (id: string, targetLanguage: string) => ({
   targetLanguage,
   nativeLanguage: 'en',
   maxStageSeats: 4,
-  createdAt: '2026-11-14T10:00:00Z',
   speakers: ['h-1'],
   participantCount: 1,
   handRaiseCount: 0,
@@ -22,68 +20,121 @@ describe('RoomListStore', () => {
   function setup(resolve: (ids: Iterable<string>) => void = () => undefined) {
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
         fakeIdentity(
           { id: 'm-1', name: 'Me', nativeLanguage: 'ar', learning: 'es', avatar: '' },
           resolve,
         ).provider,
       ],
     });
-    return { store: TestBed.inject(RoomListStore), http: TestBed.inject(HttpTestingController) };
+    return TestBed.inject(RoomListStore);
   }
 
-  async function listed(rooms: object[], resolve?: (ids: Iterable<string>) => void) {
-    const { store, http } = setup(resolve);
+  function listed(rooms: Room[], resolve?: (ids: Iterable<string>) => void) {
+    const store = setup(resolve);
+    store.apply({ type: 'LISTED', rooms });
     TestBed.tick();
-    http
-      .expectOne((request) => request.url.startsWith('/api/v1/voice-rooms'))
-      .flush({ content: rooms });
-    await Promise.resolve();
-    TestBed.tick();
-    return { store, http };
+    return store;
   }
+  const ids = (store: RoomListStore) => store.shown().map((r) => r.id);
 
-  it('looks the hosts and speakers on the cards up in the user service, once rooms are listed', async () => {
+  it('looks the hosts and speakers on the cards up in the user service, once rooms are listed', () => {
     const resolve = vi.fn();
     const withSpeakers = { ...room('r-2', 'fr'), hostId: 'h-2', speakers: ['h-2', 's-1'] };
 
-    await listed([room('r-1', 'es'), withSpeakers], resolve);
+    listed([room('r-1'), withSpeakers], resolve);
 
     expect(new Set(resolve.mock.lastCall?.[0] as string[])).toEqual(new Set(['h-1', 'h-2', 's-1']));
   });
 
-  it('lists nothing until the server has answered', () => {
-    const { store } = setup();
+  it('lists nothing until the list has been loaded', () => {
+    const store = setup();
 
+    expect(store.rooms()).toBeUndefined();
     expect(store.shown()).toEqual([]);
     expect(store.languages()).toEqual([]);
   });
 
-  it('shows every open room, and the languages they practise once each', async () => {
-    const { store } = await listed([room('a', 'es'), room('b', 'fr'), room('c', 'es')]);
+  it('ignores changes that arrive before the list: the list will already have them', () => {
+    const store = setup();
 
-    expect(store.shown().map((r) => r.id)).toEqual(['a', 'b', 'c']);
+    store.apply({ type: 'ROOM_OPENED', room: room('a') });
+
+    expect(store.rooms()).toBeUndefined();
+  });
+
+  it('shows every open room, and the languages they practise once each', () => {
+    const store = listed([room('a'), room('b', 'fr'), room('c')]);
+
+    expect(ids(store)).toEqual(['a', 'b', 'c']);
     expect(store.languages()).toEqual(['es', 'fr']);
   });
 
-  it('narrows the list to one language, and back', async () => {
-    const { store } = await listed([room('a', 'es'), room('b', 'fr'), room('c', 'es')]);
+  it('narrows the list to one language, and back', () => {
+    const store = listed([room('a'), room('b', 'fr'), room('c')]);
 
     store.filter.set('es');
-    expect(store.filter()).toBe('es');
-    expect(store.shown().map((r) => r.id)).toEqual(['a', 'c']);
+    expect(ids(store)).toEqual(['a', 'c']);
 
     store.filter.set('');
     expect(store.shown()).toHaveLength(3);
   });
 
-  it('asks the server again on reload', async () => {
-    const { store, http } = await listed([room('a', 'es')]);
+  it('puts a room that opens first, as the newest', () => {
+    const store = listed([room('a')]);
 
-    store.reload();
-    TestBed.tick();
+    store.apply({ type: 'ROOM_OPENED', room: room('b') });
 
-    http.expectOne((request) => request.url.startsWith('/api/v1/voice-rooms'));
+    expect(ids(store)).toEqual(['b', 'a']);
+  });
+
+  it('does not show a room twice when the list already had the one that opened', () => {
+    const store = listed([room('b'), room('a')]);
+
+    store.apply({ type: 'ROOM_OPENED', room: { ...room('b'), title: 'fresher' } });
+
+    expect(store.shown().map((r) => r.title)).toEqual(['fresher', 'a']);
+  });
+
+  it('changes a room that was edited, in place', () => {
+    const store = listed([room('a'), room('b')]);
+
+    store.apply({ type: 'ROOM_UPDATED', room: { ...room('a'), title: 'New title' } });
+
+    expect(store.shown().map((r) => r.title)).toEqual(['New title', 'b']);
+  });
+
+  it('drops a room that closes, and the language nobody practises any more', () => {
+    const store = listed([room('a'), room('b', 'fr')]);
+
+    store.apply({ type: 'ROOM_CLOSED', roomId: 'b' });
+
+    expect(ids(store)).toEqual(['a']);
+    expect(store.languages()).toEqual(['es']);
+  });
+
+  it('moves the numbers on a card, and only on that card', () => {
+    const store = listed([room('a'), room('b')]);
+
+    store.apply({
+      type: 'ROOM_STATS',
+      roomId: 'b',
+      speakers: ['h-1', 's-1'],
+      participantCount: 9,
+      handRaiseCount: 2,
+    });
+
+    const [a, b] = store.shown();
+    expect(a.participantCount).toBe(1);
+    expect(b).toMatchObject({ speakers: ['h-1', 's-1'], participantCount: 9, handRaiseCount: 2 });
+  });
+
+  it('loading the list again replaces it, and clears a failure', () => {
+    const store = listed([room('a')]);
+    store.failed.set(true);
+
+    store.apply({ type: 'LISTED', rooms: [room('z')] });
+
+    expect(ids(store)).toEqual(['z']);
+    expect(store.failed()).toBe(false);
   });
 });

@@ -5,11 +5,10 @@ import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import RoomListPageComponent from './room-list-page.component';
 import { fakeIdentity } from '@core/auth/auth-testing';
+import { openFeed, ROOMS_URL } from '../../data-access/room-feed-testing';
 
 @Component({ selector: 'app-stub', template: '' })
 class Stub {}
-
-const ROOMS_URL = '/api/v1/voice-rooms?size=100';
 
 const roomDto = (id: string, title: string, targetLanguage: string) => ({
   id,
@@ -59,8 +58,10 @@ describe('RoomListPageComponent (container)', () => {
   }
   const withRooms =
     (...rooms: object[]) =>
-    () =>
+    () => {
+      openFeed(http).say({ type: 'READY' });
       http.expectOne(ROOMS_URL).flush({ content: rooms });
+    };
 
   it('shows a card for each open room', async () => {
     await render(withRooms(roomDto('r-1', 'Spanish', 'es'), roomDto('r-2', 'French', 'fr')));
@@ -82,6 +83,7 @@ describe('RoomListPageComponent (container)', () => {
     expect(root().querySelectorAll('.rooms li')).toHaveLength(3);
     expect(root().querySelectorAll('.rooms p-card')).toHaveLength(3);
     expect(root().querySelector('[role="status"]')?.textContent).toContain('Finding open rooms');
+    openFeed(http).say({ type: 'READY' });
     http.expectOne(ROOMS_URL).flush({ content: [] });
     await fixture.whenStable();
   });
@@ -114,26 +116,43 @@ describe('RoomListPageComponent (container)', () => {
   });
 
   it('lets the person try again when the rooms could not be loaded', async () => {
-    await render(() =>
-      http.expectOne(ROOMS_URL).flush('no', { status: 500, statusText: 'Server Error' }),
-    );
+    await render(() => openFeed(http).fail());
 
     [...root().querySelectorAll<HTMLButtonElement>('button')]
       .find((b) => b.textContent?.includes('Try again'))!
       .click();
     fixture.detectChanges();
-    http.expectOne(ROOMS_URL).flush({ content: [roomDto('r-1', 'Spanish', 'es')] });
+    withRooms(roomDto('r-1', 'Spanish', 'es'))();
     await fixture.whenStable();
 
     expect(titles()).toEqual(['Spanish']);
   });
 
   it('says so when the rooms cannot be loaded', async () => {
-    await render(() =>
-      http.expectOne(ROOMS_URL).flush('no', { status: 500, statusText: 'Server Error' }),
-    );
+    await render(() => {
+      openFeed(http).say({ type: 'READY' });
+      http.expectOne(ROOMS_URL).flush('no', { status: 500, statusText: 'Server Error' });
+    });
 
     expect(root().textContent).toContain('Could not load the rooms.');
+  });
+
+  it('adds a room the moment it opens, and drops it the moment it closes, without asking again', async () => {
+    let feed!: ReturnType<typeof openFeed>;
+    await render(() => {
+      feed = openFeed(http);
+      feed.say({ type: 'READY' });
+      http.expectOne(ROOMS_URL).flush({ content: [roomDto('r-1', 'Spanish', 'es')] });
+    });
+
+    feed.say({ type: 'ROOM_OPENED', room: roomDto('r-2', 'French', 'fr') });
+    await fixture.whenStable();
+    expect(titles()).toEqual(['French', 'Spanish']);
+
+    feed.say({ type: 'ROOM_CLOSED', roomId: 'r-1' });
+    await fixture.whenStable();
+    expect(titles()).toEqual(['French']);
+    http.verify();
   });
 
   it('filters the rooms by language, when more than one is practised', async () => {

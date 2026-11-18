@@ -69,7 +69,7 @@
         severity="danger"
         [text]="true"
         [label]="'Try again' | t"
-        (click)="state.reload()"
+        (click)="facade.reconnect()"
       ></button>
     </span>
   </p-message>

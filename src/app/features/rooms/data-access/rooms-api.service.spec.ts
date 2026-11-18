@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ApplicationRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { openFeed, ROOMS_URL } from './room-feed-testing';
 import { RoomsApiService } from './rooms-api.service';
 
 const room = {
@@ -32,23 +33,38 @@ describe('RoomsApiService', () => {
   });
   afterEach(() => http.verify());
 
-  it('loads the open rooms as app models', async () => {
-    const rooms = TestBed.runInInjectionContext(() => api.roomsResource());
-    TestBed.tick();
-    http.expectOne('/api/v1/voice-rooms?size=100').flush({ content: [room] });
-    await settle();
+  it('loads the open rooms as app models', () => {
+    let rooms: string[] = [];
 
-    expect(rooms.value()?.[0].title).toBe('Spanish');
+    api.rooms().subscribe((list) => (rooms = list.map((r) => r.title)));
+    http.expectOne(ROOMS_URL).flush({ content: [room] });
+
+    expect(rooms).toEqual(['Spanish']);
   });
 
-  it('turns a response of the wrong shape into an error instead of bad data', async () => {
-    const rooms = TestBed.runInInjectionContext(() => api.roomsResource());
-    TestBed.tick();
-    http.expectOne('/api/v1/voice-rooms?size=100').flush({ content: [{ ...room, hostId: 5 }] });
-    await settle();
+  it('turns a response of the wrong shape into an error instead of bad data', () => {
+    const failed = vi.fn();
 
-    expect(rooms.hasValue()).toBe(false);
-    expect(rooms.error()).toBeDefined();
+    api.rooms().subscribe({ error: failed });
+    http.expectOne(ROOMS_URL).flush({ content: [{ ...room, hostId: 5 }] });
+
+    expect(failed).toHaveBeenCalledOnce();
+  });
+
+  it('streams what happens to the rooms, and skips what it does not know', () => {
+    const heard: string[] = [];
+
+    const subscription = api.feed().subscribe((event) => heard.push(event.type));
+    const feed = openFeed(http);
+    feed.say(
+      { type: 'READY' },
+      { type: 'SOMETHING_NEW' },
+      { type: 'ROOM_OPENED', room },
+      { type: 'ROOM_CLOSED', roomId: 'r-1' },
+    );
+
+    expect(heard).toEqual(['READY', 'ROOM_OPENED', 'ROOM_CLOSED']);
+    subscription.unsubscribe();
   });
 
   it('refetches one room when the id changes', async () => {

@@ -1,16 +1,5 @@
-import { DOCUMENT } from '@angular/common';
-import { inject } from '@angular/core';
-import {
-  defer,
-  distinctUntilChanged,
-  EMPTY,
-  fromEvent,
-  map,
-  type Observable,
-  startWith,
-  switchMap,
-  timer,
-} from 'rxjs';
+import { defer, EMPTY, map, type Observable, switchMap, timer } from 'rxjs';
+import { pageVisible } from './page-visible';
 
 /**
  * A timer for background refreshing: ticks every {@code period} ms while the page is visible and stops while it is hidden, so a tab
@@ -18,15 +7,12 @@ import {
  * carries on every period. Call it in an injection context.
  */
 export function visibleInterval(period: number): Observable<void> {
-  const document = inject(DOCUMENT);
+  const visible = pageVisible();
   return defer(() => {
     let wasHidden = false;
-    return fromEvent(document, 'visibilitychange').pipe(
-      startWith(null),
-      map(() => document.visibilityState === 'visible'),
-      distinctUntilChanged(),
-      switchMap((visible) => {
-        if (!visible) {
+    return visible.pipe(
+      switchMap((isVisible) => {
+        if (!isVisible) {
           wasHidden = true;
           return EMPTY;
         }

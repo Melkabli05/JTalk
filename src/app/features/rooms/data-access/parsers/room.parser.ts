@@ -1,7 +1,7 @@
 import { asRecord, isStringList } from '@shared/utils/as-record';
 import type { Room, RoomSession } from '../../models/room.model';
 
-function readRoom(raw: unknown): Room | undefined {
+export function readRoom(raw: unknown): Room | undefined {
   const room = asRecord(raw);
   if (room === undefined) {
     return undefined;

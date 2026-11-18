@@ -7,6 +7,7 @@ import { MessageService } from '@openng/optimus-ui/api';
 import { of } from 'rxjs';
 import { fakeAuth0, fakeIdentity } from '@core/auth/auth-testing';
 import { routes } from './app.routes';
+import { openFeed, ROOMS_URL } from './features/rooms/data-access/room-feed-testing';
 
 const MONA = { id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en', avatar: '' };
 
@@ -29,10 +30,11 @@ describe('routes', () => {
   const navigation = (harness: RouterTestingHarness) =>
     (harness.fixture.nativeElement as HTMLElement).querySelector('nav[aria-label="Primary"]');
 
-  const answerRoomList = () =>
-    TestBed.inject(HttpTestingController)
-      .expectOne('/api/v1/voice-rooms?size=100')
-      .flush({ content: [] });
+  const answerRoomList = () => {
+    const http = TestBed.inject(HttpTestingController);
+    openFeed(http).say({ type: 'READY' });
+    http.expectOne(ROOMS_URL).flush({ content: [] });
+  };
 
   it('starts on the hallway of rooms, inside the shell', async () => {
     setup();
