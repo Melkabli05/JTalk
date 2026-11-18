@@ -19,6 +19,13 @@
     />
   </div>
 
+  <app-select-field
+    [label]="'Where you live' | t"
+    [options]="countries()"
+    [formField]="profileForm.countryCode"
+  />
+  <app-textarea-field [label]="'About you' | t" [formField]="profileForm.bio" />
+
   <div class="actions">
     <button
       pButton

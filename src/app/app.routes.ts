@@ -13,6 +13,10 @@ export const routes: Routes = [
       loadChildren: () => import('./features/profile/profile').then((m) => m.PROFILE_ROUTES),
     },
     {
+      path: 'people',
+      loadChildren: () => import('./features/profile/profile').then((m) => m.PEOPLE_ROUTES),
+    },
+    {
       path: '**',
       title: msg('Page not found'),
       loadComponent: () =>

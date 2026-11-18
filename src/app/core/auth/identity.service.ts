@@ -12,6 +12,14 @@ import { UsersApiService } from './users-api.service';
 /** The user service takes at most this many ids in one lookup. */
 const MAX_LOOKUP = 500;
 
+function extras(draft: ProfileDraft, clearable: boolean): { bio?: string; countryCode?: string } {
+  const bio = draft.bio?.trim();
+  return {
+    ...(bio === undefined || (bio === '' && !clearable) ? {} : { bio }),
+    ...(draft.countryCode ? { countryCode: draft.countryCode } : {}),
+  };
+}
+
 /** A handle people never see, made from the name and a random tail so two people called Mona do not collide. */
 function usernameFor(name: string): string {
   const base = name
@@ -102,6 +110,7 @@ export class IdentityService {
       displayName: draft.name.trim(),
       avatarUrl: avatarPath(draft.avatar),
       nativeLanguage: draft.nativeLanguage,
+      ...extras(draft, false),
     });
     try {
       await firstValueFrom(this.api.create(profile(usernameFor(draft.name))));
@@ -130,6 +139,7 @@ export class IdentityService {
         displayName: draft.name.trim(),
         avatarUrl: avatarPath(draft.avatar),
         nativeLanguage: draft.nativeLanguage,
+        ...extras(draft, true),
       }),
     );
   }

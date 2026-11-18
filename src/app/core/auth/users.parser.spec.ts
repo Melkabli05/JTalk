@@ -46,6 +46,21 @@ describe('users parser', () => {
     ).toEqual(['en', 'fr']);
   });
 
+  it('keeps the bio and country of a full profile, and leaves them out of a summary', () => {
+    expect(
+      parsePerson({
+        id: 'm-1',
+        displayName: 'Mona',
+        nativeLanguage: 'ar',
+        bio: 'Hi',
+        countryCode: 'MA',
+      }),
+    ).toMatchObject({ bio: 'Hi', countryCode: 'MA' });
+    expect(
+      parsePerson({ id: 'm-1', displayName: 'Mona', nativeLanguage: 'ar' }),
+    ).not.toHaveProperty('bio');
+  });
+
   it.each([
     ['a profile without a name', () => parsePerson({ id: 'm-1', nativeLanguage: 'ar' })],
     ['a profile that is not an object', () => parsePerson('nope')],

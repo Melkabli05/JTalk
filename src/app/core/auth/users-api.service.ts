@@ -10,6 +10,8 @@ export interface NewProfile {
   readonly displayName: string;
   readonly avatarUrl: string;
   readonly nativeLanguage: string;
+  readonly bio?: string;
+  readonly countryCode?: string;
 }
 
 export type ProfileChange = Omit<NewProfile, 'username'>;

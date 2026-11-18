@@ -1,0 +1,21 @@
+<label [for]="inputId">{{ label() }}</label>
+<textarea
+  #control
+  pTextarea
+  dir="auto"
+  [id]="inputId"
+  [rows]="rows()"
+  [attr.maxlength]="maxLength() ?? null"
+  [value]="value()"
+  [disabled]="disabled()"
+  [invalid]="showErrors()"
+  [attr.aria-invalid]="showErrors()"
+  [attr.aria-required]="required() || null"
+  [attr.aria-describedby]="showErrors() ? errorsId : null"
+  (input)="updateValue($event)"
+  (blur)="touch.emit()"
+></textarea>
+@if (maxLength(); as limit) {
+  <p class="count" aria-hidden="true">{{ value().length }}/{{ limit }}</p>
+}
+<app-field-errors [attr.id]="errorsId" [errors]="errors()" [visible]="showErrors()" />

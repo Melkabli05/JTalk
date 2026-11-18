@@ -8,3 +8,11 @@ export const PROFILE_ROUTES: Routes = [
     loadComponent: () => import('./pages/profile-page/profile-page.component'),
   },
 ];
+
+export const PEOPLE_ROUTES: Routes = [
+  {
+    path: ':id',
+    title: msg('Profile'),
+    loadComponent: () => import('./pages/person-page/person-page.component'),
+  },
+];

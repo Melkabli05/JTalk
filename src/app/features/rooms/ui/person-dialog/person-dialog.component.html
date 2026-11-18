@@ -1,7 +1,7 @@
 <p-dialog
   [modal]="true"
   [dismissableMask]="true"
-  [style]="{ width: '26rem', maxWidth: '95vw' }"
+  [style]="{ width: '28rem', maxWidth: '95vw' }"
   [header]="member()?.name ?? ''"
   [visible]="visible()"
   (visibleChange)="visible.set($event)"
@@ -29,20 +29,91 @@
             · {{ 'You' | t }}
           }
         </p-tag>
-        @if (person.nativeLanguage) {
-          <p>
-            <span aria-hidden="true">{{ native().flag }}</span>
-            {{ 'Speaks {language}' | t: { language: native().name | t } }}
-          </p>
-        }
-        @if (person.learning) {
-          <p>
-            <span aria-hidden="true">{{ learning().flag }}</span>
-            {{ 'Learning {language}' | t: { language: learning().name | t } }}
-          </p>
+        @if (card(); as shown) {
+          @if (shown.details.username) {
+            <p class="handle">&#64;{{ shown.details.username }}</p>
+          }
+          @if (origin(); as place) {
+            <p>
+              <span aria-hidden="true">{{ place.flag }}</span>
+              {{ place.name }}
+            </p>
+          }
+        } @else {
+          @if (person.nativeLanguage) {
+            <p>
+              <span aria-hidden="true">{{ native().flag }}</span>
+              {{ 'Speaks {language}' | t: { language: native().name | t } }}
+            </p>
+          }
+          @if (person.learning) {
+            <p>
+              <span aria-hidden="true">{{ learning().flag }}</span>
+              {{ 'Learning {language}' | t: { language: learning().name | t } }}
+            </p>
+          }
         }
       </div>
     </div>
+
+    @if (card(); as shown) {
+      <div class="social">
+        @if (!shown.isMe && shown.social; as stats) {
+          <app-follow-button
+            [following]="stats.followedByMe"
+            [followsMe]="stats.followsMe"
+            [busy]="busy()"
+            (follow)="follow.emit()"
+            (unfollow)="unfollow.emit()"
+          />
+        }
+        <button
+          pButton
+          type="button"
+          icon="pi pi-user"
+          severity="secondary"
+          [rounded]="true"
+          [outlined]="true"
+          [label]="'View profile' | t"
+          (click)="viewProfile.emit()"
+        ></button>
+      </div>
+      <div class="about">
+        @if (shown.details.bio) {
+          <p class="bio">{{ shown.details.bio }}</p>
+        }
+        <app-partner-match [match]="shown.match" />
+        @if (shown.social; as stats) {
+          <app-social-stats
+            [followers]="stats.followers"
+            [following]="stats.following"
+            [followsMe]="stats.followsMe"
+            [locale]="locale()"
+          />
+        }
+        @if (shown.languages; as languages) {
+          <app-language-levels [native]="languages.native" [learning]="languages.learning" />
+        }
+        @if (shown.details.joinedAt) {
+          <p class="joined">
+            {{
+              'Joined {date}'
+                | t: { date: (shown.details.joinedAt | date: 'MMMM y' : undefined : locale()) }
+            }}
+          </p>
+        }
+      </div>
+    } @else if (loading()) {
+      <div class="about" role="status" [attr.aria-label]="'Finding their profile' | t">
+        <p-skeleton width="90%" height="1rem" />
+        <p-skeleton width="60%" height="1rem" />
+        <p-skeleton width="75%" height="1rem" />
+      </div>
+    }
+
+    @if (error(); as failure) {
+      <p-message class="failure" severity="error" size="small">{{ failure | t }}</p-message>
+    }
 
     @if (anything()) {
       <div class="actions">
@@ -87,6 +158,23 @@
           ></button>
         }
       </div>
+    }
+
+    @if (card(); as shown) {
+      @if (!shown.isMe) {
+        <div class="quiet">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-ban"
+            severity="danger"
+            size="small"
+            [text]="true"
+            [label]="'Block' | t"
+            (click)="block.emit()"
+          ></button>
+        </div>
+      }
     }
   }
 </p-dialog>

@@ -1,1 +1,1 @@
-export { PROFILE_ROUTES } from './profile.routes';
+export { PEOPLE_ROUTES, PROFILE_ROUTES } from './profile.routes';

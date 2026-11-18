@@ -1,0 +1,51 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+h3 {
+  margin: 0 0 0.5rem;
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-secondary);
+  font-weight: 600;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.levels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0.375rem 1rem;
+  }
+
+  .name {
+    font-weight: 650;
+  }
+
+  .level {
+    color: var(--p-text-muted-color);
+    font-size: var(--p-jtalk-type-secondary);
+  }
+
+  p-progressbar {
+    grid-column: 1 / -1;
+    --p-progressbar-height: 0.375rem;
+  }
+}

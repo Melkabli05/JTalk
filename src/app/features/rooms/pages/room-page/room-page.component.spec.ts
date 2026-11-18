@@ -155,7 +155,11 @@ describe('RoomPageComponent (container)', () => {
     };
     TestBed.configureTestingModule({
       providers: [
-        provideRouter([{ path: '', component: Stub }]),
+        provideRouter([
+          { path: '', component: Stub },
+          { path: 'people/:id', component: Stub },
+          { path: 'profile', component: Stub },
+        ]),
         provideHttpClient(),
         provideHttpClientTesting(),
         identity.provider,
@@ -272,6 +276,97 @@ describe('RoomPageComponent (container)', () => {
     await settle();
 
     expect(body('POST', `${BASE}/reactions`)).toEqual({ reaction: 'SPARKLES' });
+  });
+
+  describe('a person in the room', () => {
+    const BILAL = {
+      'GET /api/v1/users/b-1': {
+        status: 200,
+        body: {
+          id: 'b-1',
+          username: 'bilal',
+          displayName: 'Bilal',
+          bio: 'Coffee and Spanish',
+          nativeLanguage: 'es',
+          countryCode: 'ES',
+          createdAt: '2026-10-01T10:00:00Z',
+        },
+      },
+      'GET /api/v1/users/b-1/social': {
+        status: 200,
+        body: { followerCount: 1250, followingCount: 3, followedByMe: false, followsMe: true },
+      },
+      'GET /api/v1/users/b-1/languages': {
+        status: 200,
+        body: {
+          userId: 'b-1',
+          nativeLanguages: ['es'],
+          learningLanguages: [{ languageCode: 'ar', proficiencyLevel: 'INTERMEDIATE' }],
+        },
+      },
+      'GET /api/v1/users/m-1/languages': {
+        status: 200,
+        body: {
+          userId: 'm-1',
+          nativeLanguages: ['ar'],
+          learningLanguages: [{ languageCode: 'es', proficiencyLevel: 'BEGINNER' }],
+        },
+      },
+    };
+
+    async function openBilal() {
+      await open();
+      await openAudience();
+      [...root().querySelectorAll<HTMLButtonElement>('app-audience-grid .person')]
+        .find((person) => person.textContent?.includes('b-1'))!
+        .click();
+      await settle(BILAL);
+    }
+
+    it('opens with who they are, how they follow, and what you could practise together', async () => {
+      await openBilal();
+
+      expect(page().textContent).toContain('Language exchange match');
+      expect(page().textContent).toContain('Coffee and Spanish');
+      expect(page().textContent).toContain('Follows you');
+      expect(page().textContent).toContain('1.3K');
+      expect(buttons().map(nameOf)).toEqual(
+        expect.arrayContaining(['Follow back', 'View profile', 'Block']),
+      );
+    });
+
+    it('is followed with one press, and the numbers are read again', async () => {
+      await openBilal();
+      requests.length = 0;
+
+      press('Follow back');
+      await settle(BILAL);
+
+      expect(sent('POST', '/api/v1/users/b-1/follow')).toBe(true);
+      expect(sent('GET', '/api/v1/users/b-1/social')).toBe(true);
+    });
+
+    it('takes you to their profile page', async () => {
+      await openBilal();
+
+      press('View profile');
+      await settle(BILAL);
+
+      expect(TestBed.inject(Router).url).toBe('/people/b-1');
+    });
+
+    it('is blocked only after asking', async () => {
+      await openBilal();
+
+      press('Block');
+      await settle(BILAL);
+      expect(page().textContent).toContain('Blocking removes any follows');
+      expect(sent('POST', '/api/v1/users/b-1/block')).toBe(false);
+
+      pressExactlyLast('Block');
+      await settle(BILAL);
+      expect(sent('POST', '/api/v1/users/b-1/block')).toBe(true);
+    });
   });
 
   it('takes a free seat', async () => {

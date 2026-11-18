@@ -20,6 +20,8 @@ function readPerson(raw: unknown): Person | undefined {
     nativeLanguage: user['nativeLanguage'],
     learning: '',
     avatar: avatarIdOf(typeof picture === 'string' ? picture : null),
+    ...(typeof user['bio'] === 'string' ? { bio: user['bio'] } : {}),
+    ...(typeof user['countryCode'] === 'string' ? { countryCode: user['countryCode'] } : {}),
   };
 }
 

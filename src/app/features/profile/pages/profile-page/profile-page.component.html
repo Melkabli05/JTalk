@@ -1,10 +1,25 @@
 @if (identity.profile(); as me) {
-  <app-profile-hero [person]="me" />
+  @if (cards.card(); as card) {
+    <app-profile-hero [person]="card.details" [details]="card.details" [locale]="locale()">
+      <div stats>
+        @if (card.social; as stats) {
+          <app-social-stats
+            [followers]="stats.followers"
+            [following]="stats.following"
+            [locale]="locale()"
+          />
+        }
+      </div>
+    </app-profile-hero>
+    <app-profile-about [card]="card" />
+  } @else {
+    <app-profile-hero [person]="me" [locale]="locale()" />
+  }
 
   <p-card class="editor">
     <h2>{{ 'Edit profile' | t }}</h2>
     <p class="lead">{{ 'Your name and picture are what people see in the rooms.' | t }}</p>
-    <app-profile-form [profile]="me" (saved)="save($event)" />
+    <app-profile-form [profile]="me" [locale]="locale()" (saved)="save($event)" />
   </p-card>
 } @else {
   <div class="loading">

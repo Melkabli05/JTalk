@@ -45,6 +45,8 @@ describe('ProfileFormComponent (presentational)', () => {
       avatar: 'avatar-01',
       nativeLanguage: 'ar',
       learning: 'en',
+      bio: '',
+      countryCode: '',
     });
   });
 
@@ -82,6 +84,8 @@ describe('ProfileFormComponent (presentational)', () => {
       avatar: 'avatar-04',
       nativeLanguage: 'ar',
       learning: 'en',
+      bio: '',
+      countryCode: '',
     });
   });
 
@@ -118,5 +122,54 @@ describe('ProfileFormComponent (presentational)', () => {
     expect(choices()[0]).toContain('French');
     expect(choices()[1]).toContain('German');
     expect(buttons()).toEqual(['Save']);
+  });
+
+  describe('bio and country', () => {
+    const about = () => root().querySelector<HTMLTextAreaElement>('app-textarea-field textarea')!;
+    const countryChoice = () =>
+      root().querySelectorAll('app-select-field')[2]?.textContent?.replace(/\s+/g, ' ').trim();
+
+    it('starts with what is already saved, and says the country is not set when it is not', async () => {
+      await render();
+      expect(about().value).toBe('');
+      expect(countryChoice()).toContain('Not set');
+
+      await render({ profile: { ...MONA, bio: 'Tea and Spanish', countryCode: 'MA' } });
+      expect(about().value).toBe('Tea and Spanish');
+      expect(countryChoice()).toContain('Morocco');
+    });
+
+    it('emits the bio trimmed and the country chosen', async () => {
+      await render({ profile: { ...MONA, countryCode: 'ES' } });
+      about().value = '  Hola amigos  ';
+      about().dispatchEvent(new Event('input'));
+      about().dispatchEvent(new Event('blur'));
+      await fixture.whenStable();
+
+      await submit();
+
+      expect(saved).toHaveBeenCalledWith(
+        expect.objectContaining({ bio: 'Hola amigos', countryCode: 'ES' }),
+      );
+    });
+
+    it('names the countries in the language of the reader', async () => {
+      await render({ profile: { ...MONA, countryCode: 'MA' }, locale: 'ar' });
+
+      expect(countryChoice()).toContain('المغرب');
+    });
+
+    it('refuses a bio longer than 300 characters', async () => {
+      await render({ profile: MONA });
+      about().value = 'x'.repeat(301);
+      about().dispatchEvent(new Event('input'));
+      about().dispatchEvent(new Event('blur'));
+      await fixture.whenStable();
+
+      await submit();
+
+      expect(saved).not.toHaveBeenCalled();
+      expect(root().textContent).toContain('Use at most 300 characters.');
+    });
   });
 });

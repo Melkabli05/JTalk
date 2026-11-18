@@ -1,0 +1,23 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.quiet {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.message {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding-block: 3rem;
+}

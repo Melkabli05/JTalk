@@ -42,6 +42,8 @@ describe('ProfileDialogComponent (presentational)', () => {
       avatar: 'avatar-01',
       nativeLanguage: 'ar',
       learning: 'en',
+      bio: '',
+      countryCode: '',
     });
   });
 

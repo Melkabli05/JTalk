@@ -1,0 +1,17 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.count {
+  align-self: flex-end;
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-secondary);
+  font-variant-numeric: tabular-nums;
+}

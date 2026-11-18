@@ -23,6 +23,7 @@ import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
+import { PersonCardService } from '@core/people/person-card.service';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 import { msg } from '@shared/utils/i18n/msg';
 import type { RoomRole, RoomEdit, Stage } from '../../models/room.model';
@@ -61,18 +62,20 @@ const EXIT_MESSAGES: Readonly<Record<RoomExit, string | null>> = {
     Tooltip,
     TranslatePipe,
   ],
-  providers: [ConfirmationService, provideRoom()],
+  providers: [ConfirmationService, PersonCardService, provideRoom()],
   templateUrl: './room-page.component.html',
   styleUrl: './room-page.component.scss',
 })
 export default class RoomPageComponent {
   protected readonly facade = inject(RoomFacade);
+  protected readonly cards = inject(PersonCardService);
   private readonly router = inject(Router);
   private readonly confirmation = inject(ConfirmationService);
   private readonly toast = inject(MessageService);
   private readonly i18n = inject(I18n);
   private readonly announcer = inject(LiveAnnouncer);
   private readonly breakpoints = inject(BreakpointObserver);
+  protected readonly locale = this.i18n.locale;
   private focused = false;
   private previous: Stage | null = null;
   private heardMicrophone = false;
@@ -126,6 +129,9 @@ export default class RoomPageComponent {
   );
 
   constructor() {
+    effect(() => {
+      this.cards.show(this.selectedId());
+    });
     effect(() => {
       const id = this.id();
       untracked(() => this.facade.enter(id));
@@ -193,6 +199,41 @@ export default class RoomPageComponent {
       rejectLabel: this.i18n.t('Cancel'),
       acceptButtonProps: { severity: 'danger' },
       accept: () => this.facade.remove(userId),
+    });
+  }
+
+  protected viewProfile(): void {
+    const id = this.selectedId();
+    this.selectedId.set(null);
+    if (id !== null) {
+      void this.router.navigate(id === this.state.meId() ? ['/profile'] : ['/people', id]);
+    }
+  }
+
+  protected block(): void {
+    const id = this.selectedId();
+    if (id === null) {
+      return;
+    }
+    const name = memberOf(this.state.members(), id).name;
+    this.confirmation.confirm({
+      header: this.i18n.t('Block {name}', { name }),
+      message: this.i18n.t(
+        'Blocking removes any follows between you and {name}, and you will not find each other in search or partner suggestions.',
+        { name },
+      ),
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: this.i18n.t('Block'),
+      rejectLabel: this.i18n.t('Cancel'),
+      acceptButtonProps: { severity: 'danger' },
+      accept: () =>
+        this.cards.block(() => {
+          this.selectedId.set(null);
+          this.toast.add({
+            severity: 'success',
+            summary: this.i18n.t('{name} is blocked.', { name }),
+          });
+        }),
     });
   }
 

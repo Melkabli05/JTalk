@@ -113,4 +113,22 @@ describe('ProfilePageComponent (container)', () => {
       }),
     );
   });
+
+  it('shows your own numbers, what is in your bio, and your languages with their levels', async () => {
+    await load();
+    http.expectOne('/api/v1/users/m-1').flush({ ...profile, bio: '', countryCode: 'MA' });
+    http
+      .expectOne('/api/v1/users/m-1/social')
+      .flush({ followerCount: 12, followingCount: 3, followedByMe: false, followsMe: false });
+    http.match('/api/v1/users/m-1/languages').forEach((request) => request.flush(matrix));
+    await settle();
+
+    expect(root().textContent).toContain('@mona_1a2b3c');
+    expect(root().textContent).toContain('Morocco');
+    expect(root().textContent).toContain('Followers');
+    expect(root().textContent).toContain('12');
+    expect(root().textContent).toContain('Add a short bio');
+    expect(root().textContent).toContain('Beginner');
+    expect(root().textContent).not.toContain('Follow back');
+  });
 });

@@ -176,6 +176,41 @@ describe('IdentityService', () => {
       expect(identity.profile()?.learning).toBe('fr');
     });
 
+    it('sends the bio and country of a new person only when they wrote or chose them', async () => {
+      setup();
+      await settle();
+      await answer('GET', ME, { status: 404 }, 404);
+
+      const saving = identity.saveProfile({
+        ...DRAFT,
+        bio: '  Tea and Spanish  ',
+        countryCode: 'MA',
+      });
+      const created = await answer('POST', ME, profile());
+      await answer('POST', `${ME}/languages`);
+      await answer('GET', ME, profile());
+      await answer('GET', `${ME}/languages`, matrix('fr'));
+      await saving;
+
+      expect(created).toMatchObject({ bio: 'Tea and Spanish', countryCode: 'MA' });
+    });
+
+    it('leaves an empty bio and no country out of a new profile', async () => {
+      setup();
+      await settle();
+      await answer('GET', ME, { status: 404 }, 404);
+
+      const saving = identity.saveProfile({ ...DRAFT, bio: '', countryCode: '' });
+      const created = (await answer('POST', ME, profile())) as Record<string, unknown>;
+      await answer('POST', `${ME}/languages`);
+      await answer('GET', ME, profile());
+      await answer('GET', `${ME}/languages`, matrix('fr'));
+      await saving;
+
+      expect('bio' in created).toBe(false);
+      expect('countryCode' in created).toBe(false);
+    });
+
     it('makes a handle even from a name with no Latin letters', async () => {
       setup();
       await settle();
@@ -237,6 +272,18 @@ describe('IdentityService', () => {
         nativeLanguage: 'ar',
       });
       expect(identity.profile()?.name).toBe('Mona B');
+    });
+
+    it('sends an emptied bio when changing a profile, so a bio can be cleared', async () => {
+      await known('fr');
+
+      const saving = identity.saveProfile({ ...DRAFT, bio: '   ', countryCode: 'ES' });
+      const changed = await answer('PATCH', ME, profile());
+      await answer('GET', ME, profile());
+      await answer('GET', `${ME}/languages`, matrix('fr'));
+      await saving;
+
+      expect(changed).toMatchObject({ bio: '', countryCode: 'ES' });
     });
 
     it('leaves the languages alone when the one being learned did not change', async () => {

@@ -1,5 +1,6 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import type { Person } from '@core/auth/identity.models';
+import type { PersonDetails } from '@core/people/person-card.model';
 import { ProfileHeroComponent } from './profile-hero.component';
 
 const MONA: Person = {
@@ -42,5 +43,29 @@ describe('ProfileHeroComponent (presentational)', () => {
 
     expect(text()).toContain('Speaks Arabic');
     expect(text()).not.toContain('Learning');
+  });
+
+  it('adds the handle, the country and when they joined once their profile is known', async () => {
+    fixture = TestBed.createComponent(ProfileHeroComponent);
+    const details: PersonDetails = {
+      ...MONA,
+      username: 'mona_x',
+      bio: '',
+      countryCode: 'MA',
+      joinedAt: '2026-11-01T10:00:00Z',
+    };
+    fixture.componentRef.setInput('person', MONA);
+    fixture.componentRef.setInput('details', details);
+    await fixture.whenStable();
+
+    expect(text()).toContain('@mona_x');
+    expect(text()).toContain('Morocco');
+    expect(text()).toContain('Joined November 2026');
+  });
+
+  it('has no meta line before the profile is known', async () => {
+    await render(MONA);
+
+    expect(root().querySelector('.meta')).toBeNull();
   });
 });

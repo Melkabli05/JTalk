@@ -1,0 +1,67 @@
+@if (cards.card(); as card) {
+  <app-profile-hero [person]="card.details" [details]="card.details" [locale]="locale()">
+    <div actions>
+      @if (!card.isMe && card.social; as stats) {
+        <app-follow-button
+          [following]="stats.followedByMe"
+          [followsMe]="stats.followsMe"
+          [busy]="cards.action.submitting()"
+          (follow)="cards.follow()"
+          (unfollow)="cards.unfollow()"
+        />
+      }
+    </div>
+    <div stats>
+      @if (card.social; as stats) {
+        <app-social-stats
+          [followers]="stats.followers"
+          [following]="stats.following"
+          [followsMe]="stats.followsMe && !card.isMe"
+          [locale]="locale()"
+        />
+      }
+    </div>
+  </app-profile-hero>
+
+  @if (cards.action.error(); as failure) {
+    <p-message severity="error">{{ failure | t }}</p-message>
+  }
+
+  <app-profile-about [card]="card" />
+
+  @if (!card.isMe) {
+    <div class="quiet">
+      <button
+        pButton
+        type="button"
+        icon="pi pi-ban"
+        severity="danger"
+        size="small"
+        [text]="true"
+        [label]="'Block' | t"
+        (click)="block()"
+      ></button>
+    </div>
+  }
+} @else if (cards.failed()) {
+  <p-message severity="error" icon="pi pi-exclamation-triangle">
+    <span class="message">
+      {{ 'This profile could not be found.' | t }}
+      <a
+        pButton
+        routerLink="/"
+        size="small"
+        icon="pi pi-arrow-left"
+        severity="danger"
+        [text]="true"
+        [label]="'Back to the rooms' | t"
+      ></a>
+    </span>
+  </p-message>
+} @else {
+  <div class="loading">
+    <p-progress-spinner [ariaLabel]="'Finding their profile' | t" />
+  </div>
+}
+
+<p-confirmdialog />
