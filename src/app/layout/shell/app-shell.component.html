@@ -31,7 +31,7 @@
           tooltipPosition="bottom"
           (click)="account.toggle($event)"
         >
-          @if (identity.devMode && myPicture(); as picture) {
+          @if (myPicture(); as picture) {
             <p-avatar shape="circle" size="normal" aria-hidden="true" [image]="picture" />
           } @else {
             <i class="pi pi-user" aria-hidden="true"></i>
@@ -39,7 +39,7 @@
         </button>
         <p-popover #account appendTo="body" [ariaLabel]="'Profile and settings' | t">
           <div class="settings">
-            @if (identity.devMode && identity.profile(); as me) {
+            @if (identity.profile(); as me) {
               <div class="me">
                 @if (myPicture(); as picture) {
                   <p-avatar shape="circle" size="large" aria-hidden="true" [image]="picture" />
@@ -82,16 +82,14 @@
                 (ngModelChange)="direction.toggle()"
               />
             </div>
-            @if (auth.isAuthenticated()) {
-              <button
-                pButton
-                type="button"
-                severity="secondary"
-                [outlined]="true"
-                [label]="'Sign out' | t"
-                (click)="account.hide(); signOut()"
-              ></button>
-            }
+            <button
+              pButton
+              type="button"
+              severity="secondary"
+              [outlined]="true"
+              [label]="'Sign out' | t"
+              (click)="account.hide(); signOut()"
+            ></button>
           </div>
         </p-popover>
       </ng-template>

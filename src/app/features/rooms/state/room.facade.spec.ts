@@ -5,6 +5,7 @@ import {
   type TestRequest,
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { fakeIdentity } from '@core/auth/auth-testing';
 import { REALTIME_CONNECTOR } from '../data-access/realtime-connector.token';
 import { FakeRealtimeLink } from '../utils/realtime-link.fake';
 import { provideRoom, RoomFacade, type RoomExit } from './room.facade';
@@ -91,6 +92,8 @@ describe('RoomFacade', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        fakeIdentity({ id: 'm-1', name: 'Me', nativeLanguage: 'ar', learning: 'es', avatar: '' })
+          .provider,
         { provide: REALTIME_CONNECTOR, useValue: link.connector },
         provideRoom(),
       ],
@@ -106,11 +109,6 @@ describe('RoomFacade', () => {
   }
 
   beforeEach(() => {
-    localStorage.clear();
-    localStorage.setItem(
-      'jtalk:profile',
-      JSON.stringify({ id: 'm-1', name: 'Me', nativeLanguage: 'ar', learning: 'es', avatar: '' }),
-    );
     sent = [];
     failing = {};
     build();

@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { fakeIdentity } from '@core/auth/auth-testing';
 import { RoomStore } from './room.store';
 
 const BASE = '/api/v1/voice-rooms/r-1';
@@ -21,14 +22,16 @@ const ROOM = {
 describe('RoomStore', () => {
   let http: HttpTestingController;
 
-  function setup(me = 'm-1') {
-    localStorage.clear();
-    localStorage.setItem(
-      'jtalk:profile',
-      JSON.stringify({ id: me, name: 'Me', nativeLanguage: 'ar', learning: 'es', avatar: '' }),
-    );
+  function setup(me = 'm-1', resolve: (ids: Iterable<string>) => void = () => undefined) {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        fakeIdentity(
+          { id: me, name: 'Me', nativeLanguage: 'ar', learning: 'es', avatar: '' },
+          resolve,
+        ).provider,
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     return TestBed.inject(RoomStore);
@@ -53,6 +56,21 @@ describe('RoomStore', () => {
     TestBed.tick();
     void store;
   }
+
+  it('looks everyone in the room up in the user service: the host, the stage, the raised hands and the audience', async () => {
+    const resolve = vi.fn();
+    const store = setup('m-1', resolve);
+
+    store.show('r-1');
+    await load(store, {
+      stage: { speakers: ['h-1', 's-1'], handRaiseQueue: ['q-1'] },
+      people: [{ userId: 'p-1', status: 'ACTIVE' }],
+    });
+
+    expect(new Set(resolve.mock.lastCall?.[0] as string[])).toEqual(
+      new Set(['h-1', 's-1', 'q-1', 'p-1']),
+    );
+  });
 
   it('asks the server for nothing until a room is shown', () => {
     setup();

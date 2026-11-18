@@ -62,7 +62,7 @@ in the container page, pictures `p-avatar` (profile pictures, with initials as t
 - Lint also enforces modern Angular (`prefer-signals`, `prefer-signal-model`, `prefer-output-emitter-ref`, `prefer-host-metadata-property`,
   `prefer-service-decorator`, `inject-at-top`, template `prefer-*` rules for control flow, built-in pipes, class/style bindings, `button-has-type`).
 - No comments in code (TypeScript, templates, styles): names and structure carry the meaning. Explain in the README or CLAUDE.md, not in the source.
-- Every new behaviour gets a spec. Run `pnpm check` before finishing (lint, format, tests, the mock's own tests, build).
+- Every new behaviour gets a spec. Run `pnpm check` before finishing (lint, format, tests, i18n, build).
 
 ## Languages and direction (README "Languages (i18n)" and "Right-to-left")
 
@@ -87,35 +87,26 @@ in the container page, pictures `p-avatar` (profile pictures, with initials as t
 - After a save navigate with `replaceUrl: true` so Back does not return to the form.
 - Test routes with `RouterTestingHarness` and real route configs; never mock the Router for behavior.
 
-## Auth (from OWASP Authentication Cheat Sheet, NIST SP 800-63B-4 and MDN)
+## Auth (Auth0; OWASP Authentication Cheat Sheet and MDN for the rest)
 
-- Account pages are `core/auth/pages/{login,register,forgot-password,reset-password}-page`, routed by `core/auth/auth.routes.ts` outside the
-  shell. Signed-in users are redirected away from sign-in/register/forgot (`guestGuard`).
-- Never reveal whether an account exists: sign-in has one error for every bad credential; register and forgot-password show the same
-  confirmation for any address; 429 shows "slow down". Lockout and rate limits belong on the API.
-- Built in, nothing hand-rolled: Signal Forms (`form`, `[formRoot]`, `required`/`email`/`minLength`, `submission`, `focusBoundControl`), Optimus
-  `pInputText`, `p-password` (+ `p-fluid`), `pButton` (also for links: `<a pButton [text]="true">`), `p-message`, `p-toast`. Custom only where Optimus has
-  no equivalent: the field wrappers (they bridge Optimus inputs to Signal Forms and show errors only after touch; `p-password` also has no
-  `aria-invalid`/`aria-describedby`), the poster layout and brand mark, and the account logic (service, guards, interceptors).
-- Look: `app-auth-layout` is a poster panel on the brand green (brand, slogan, `app-voice-bubbles`) beside the form column, collapsing to a
-  band on phones; every account page passes a `heading` and a one-line `lead`. The four forms share `core/auth/ui/auth-form.scss`, and the
-  brand mark is `shared/ui/brand-mark` (also used by the shell header).
-- Error text comes from `authFailure(fallback, { status: message })` (429 is always "slow down"); the sign-in redirect URL is built in one place,
-  `loginUrl()` in `auth.guard.ts`. Field errors render through `app-field-errors`. The `pButton` directive only styles `[loading]` (no native `disabled`), so bind `[disabled]` as well.
-- Passwords: minimum 12 (`MIN_PASSWORD_LENGTH`), no composition rules, spaces and Unicode allowed, never trimmed, paste allowed, show/hide
-  toggle (`app-password-field` = Optimus `p-password`, no strength meter). `autocomplete` is `username`/`email`, `current-password` or `new-password`.
-- The session token is in `sessionStorage` (readable by script, so XSS matters); a backend-set httpOnly SameSite cookie is safer, and
-  Angular's built-in XSRF protection (`XSRF-TOKEN` cookie -> `X-XSRF-TOKEN` header) already covers cookie sessions if the API validates it.
+- Signing in is Auth0's Universal Login (`@auth0/auth0-angular`): no account pages, no password field, no token handling of our own. `provideAuth0` in
+  `app.config.ts` sets the tenant, the SPA's client id and the API audience (`environment.ts`, none of it secret), keeps refresh tokens in
+  `localStorage` (falling back to a silent sign-in), and its `authHttpInterceptorFn` adds the access token to calls under `/api` only.
+- `layout/layout.routes.ts` guards the shell with the SDK's `authGuardFn`: someone not signed in is sent to Auth0 and returned to the page they asked
+  for. Do not add our own guard or interceptor for this; use the SDK's.
+- Specs never call Auth0 (a browser round trip): `fakeAuth0()` in `core/auth/auth-testing.ts` stands in for the SDK, and `fakeIdentity()` for
+  `IdentityService` in specs about rooms, where only "who am I" matters. Everything after that, the user service included, is real code answered by
+  `HttpTestingController`.
+- Never reveal more than the API does; show its message through the usual problem handling, and keep tokens out of logs, URLs and templates.
+- The SDK keeps the session in `localStorage` (readable by script, so XSS matters); the CSP and the no-`innerHTML` rule under Accessibility and safety
+  are what protect it.
 
 ## Current state
 
 The live-communication frontend (the Micronaut backend `live-communication-service`, `/api` proxied to port 8080). `features/rooms` is the one
 feature: the hallway (`room-list-page`) and a room (`room-page`), with `RoomsApiService`, `ParticipantsApiService` and `StageApiService` as the only code that knows
-the endpoints, polling and the heartbeat in the `room-page` container, and no mock data. Identity lives in `core/auth/identity.service.ts`: in a development build the
-person fills in a profile (a name, a picture chosen from the ten in `public/avatars/` by id, and two languages; kept in this browser) before the shell shows any page, and `devIdentityInterceptor` sends its id
-as `X-User-Id`; with a token the user id is the token's subject. A user service will replace this. The mock API has only the account endpoints (`pnpm start:mock`).
-Account pages are listed under Auth (sign-in honors a safe `?returnUrl=`). `authGuard` is not applied to any route on purpose (auth is off while testing); to
-protect the app add `canActivateChild: [authGuard]` to the shell route in `layout.routes.ts`. Rooms: `RoomListFacade`/`RoomListStore` (hallway) and `RoomFacade`/`RoomStore` (one room) in `state/` are what the two pages inject. Room audio: `RealtimeService` (per room page, `data-access/`) holds the connection state as signals; `data-access/livekit.connector.ts` is the only code that knows `livekit-client` (loaded on demand); specs swap it through the `REALTIME_CONNECTOR` token with `realtime-link.fake.ts`.
+the endpoints, polling and the heartbeat in the `room-page` container, and no mock data. Identity lives in `core/auth/identity.service.ts`: Auth0 signs the person in, and the user service (`core/auth/users-api.service.ts`, the only code that knows its endpoints) says who they are. A signed-in person
+it does not know yet fills in a profile (a name, a picture chosen from the ten in `public/avatars/` by id, and two languages) before the shell shows any page; it is stored in the user service, the picture as the path of the bundled image. `IdentityService.resolve()` looks other people up in one batched call, which `RoomListStore` and `RoomStore` ask for, so rooms show names and pictures. `/api/v1/users` is proxied to the user service and the rest of `/api` to the live communication service (`proxy.conf.json`, `vercel.json`). Rooms: `RoomListFacade`/`RoomListStore` (hallway) and `RoomFacade`/`RoomStore` (one room) in `state/` are what the two pages inject. Room audio: `RealtimeService` (per room page, `data-access/`) holds the connection state as signals; `data-access/livekit.connector.ts` is the only code that knows `livekit-client` (loaded on demand); specs swap it through the `REALTIME_CONNECTOR` token with `realtime-link.fake.ts`.
 
 ## Accessibility and safety
 

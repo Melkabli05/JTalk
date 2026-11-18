@@ -19,7 +19,7 @@ describe('I18n', () => {
     await i18n.init();
     expect(i18n.locale()).toBe('en');
     expect(i18n.direction()).toBe('ltr');
-    expect(i18n.t('Sign in')).toBe('Sign in');
+    expect(i18n.t('Sign out')).toBe('Sign out');
 
     TestBed.resetTestingModule();
     localStorage.setItem(LOCALE_STORAGE_KEY, 'ar');
@@ -27,14 +27,14 @@ describe('I18n', () => {
     await arabic.init();
     expect(arabic.locale()).toBe('ar');
     expect(arabic.direction()).toBe('rtl');
-    expect(arabic.t('Sign in')).toBe(messages['Sign in']);
+    expect(arabic.t('Sign out')).toBe(messages['Sign out']);
   });
 
   it('translates into Arabic, and falls back to the English for a text it does not know', async () => {
     const i18n = TestBed.inject(I18n);
     await i18n.use('ar');
 
-    expect(i18n.t('Sign in')).toBe(messages['Sign in']);
+    expect(i18n.t('Sign out')).toBe(messages['Sign out']);
     expect(i18n.t('A text nobody translated')).toBe('A text nobody translated');
     expect(i18n.direction()).toBe('rtl');
   });
@@ -43,14 +43,10 @@ describe('I18n', () => {
     const i18n = TestBed.inject(I18n);
     await i18n.use('ar');
 
-    expect(i18n.t('Use at least {minLength} characters.', { minLength: 12 })).toBe(
-      'استخدم 12 أحرف على الأقل.',
-    );
-    expect(i18n.t('At least {min} characters.')).toBe('{min} أحرف على الأقل.');
+    expect(i18n.t('Open seats: {count}', { count: 12 })).toBe('مقاعد شاغرة: 12');
+    expect(i18n.t('Open seats: {count}')).toBe('مقاعد شاغرة: {count}');
     await i18n.use('en');
-    expect(i18n.t('Use at least {minLength} characters.', { minLength: 7 })).toBe(
-      'Use at least 7 characters.',
-    );
+    expect(i18n.t('Open seats: {count}', { count: 7 })).toBe('Open seats: 7');
   });
 
   it('remembers the language, and applies it at startup', async () => {

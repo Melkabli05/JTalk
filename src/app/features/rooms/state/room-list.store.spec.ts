@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { fakeIdentity } from '@core/auth/auth-testing';
 import { RoomListStore } from './room-list.store';
 
 const room = (id: string, targetLanguage: string) => ({
@@ -18,16 +19,22 @@ const room = (id: string, targetLanguage: string) => ({
 });
 
 describe('RoomListStore', () => {
-  function setup() {
-    localStorage.clear();
+  function setup(resolve: (ids: Iterable<string>) => void = () => undefined) {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        fakeIdentity(
+          { id: 'm-1', name: 'Me', nativeLanguage: 'ar', learning: 'es', avatar: '' },
+          resolve,
+        ).provider,
+      ],
     });
     return { store: TestBed.inject(RoomListStore), http: TestBed.inject(HttpTestingController) };
   }
 
-  async function listed(rooms: object[]) {
-    const { store, http } = setup();
+  async function listed(rooms: object[], resolve?: (ids: Iterable<string>) => void) {
+    const { store, http } = setup(resolve);
     TestBed.tick();
     http
       .expectOne((request) => request.url.startsWith('/api/v1/voice-rooms'))
@@ -36,6 +43,15 @@ describe('RoomListStore', () => {
     TestBed.tick();
     return { store, http };
   }
+
+  it('looks the hosts and speakers on the cards up in the user service, once rooms are listed', async () => {
+    const resolve = vi.fn();
+    const withSpeakers = { ...room('r-2', 'fr'), hostId: 'h-2', speakers: ['h-2', 's-1'] };
+
+    await listed([room('r-1', 'es'), withSpeakers], resolve);
+
+    expect(new Set(resolve.mock.lastCall?.[0] as string[])).toEqual(new Set(['h-1', 'h-2', 's-1']));
+  });
 
   it('lists nothing until the server has answered', () => {
     const { store } = setup();

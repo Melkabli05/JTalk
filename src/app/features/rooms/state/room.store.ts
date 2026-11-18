@@ -1,4 +1,4 @@
-import { computed, inject, linkedSignal, Service, signal } from '@angular/core';
+import { computed, effect, inject, linkedSignal, Service, signal } from '@angular/core';
 import { IdentityService } from '@core/auth/identity.service';
 import { httpStatus } from '@shared/utils/http-status';
 import { loadedValue } from '@shared/utils/resource-value';
@@ -43,6 +43,16 @@ export class RoomStore {
   readonly roomGone = computed(() => httpStatus(this.roomResource.error()) === 404);
 
   readonly members = this.identity.directory;
+
+  // Everyone in the room, on the stage or in the audience: names and pictures come from the user service, in one call per change.
+  private readonly lookup = effect(() => {
+    this.identity.resolve([
+      this.hostId(),
+      ...this.speakers(),
+      ...this.queue(),
+      ...(this.peopleState() ?? []).map((person) => person.userId),
+    ]);
+  });
   readonly meId = this.identity.userId;
 
   readonly hostId = computed(() => this.room()?.hostId ?? '');

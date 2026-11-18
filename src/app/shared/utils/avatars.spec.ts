@@ -1,4 +1,4 @@
-import { AVATARS, avatarOrDefault, avatarUrl } from './avatars';
+import { AVATARS, avatarIdOf, avatarOrDefault, avatarPath, avatarUrl } from './avatars';
 
 describe('avatars', () => {
   it('offers ten distinct pictures, numbered from 01', () => {
@@ -21,5 +21,22 @@ describe('avatars', () => {
     expect(avatarOrDefault('')).toBe('avatar-01');
     expect(avatarOrDefault('nope')).toBe('avatar-01');
     expect(avatarOrDefault(undefined)).toBe('avatar-01');
+  });
+});
+
+describe('avatar paths', () => {
+  it('stores a picture as the path of the bundled image and reads the id back', () => {
+    expect(avatarPath('avatar-03')).toBe('/avatars/avatar-03.svg');
+    expect(avatarIdOf('/avatars/avatar-03.svg')).toBe('avatar-03');
+  });
+
+  it('falls back to the first picture for an id that is not bundled', () => {
+    expect(avatarPath('nope')).toBe('/avatars/avatar-01.svg');
+  });
+
+  it('knows no id for a path that is not a bundled picture', () => {
+    expect(avatarIdOf('https://cdn.example.com/a.png')).toBe('');
+    expect(avatarIdOf(null)).toBe('');
+    expect(avatarIdOf('/avatars/other.svg')).toBe('');
   });
 });

@@ -11,6 +11,7 @@ import { provideRouter, Router } from '@angular/router';
 import { REALTIME_CONNECTOR } from '../../data-access/realtime-connector.token';
 import { FakeRealtimeLink } from '../../utils/realtime-link.fake';
 import RoomPageComponent from './room-page.component';
+import { fakeIdentity } from '@core/auth/auth-testing';
 
 @Component({ selector: 'app-stub', template: '' })
 class Stub {}
@@ -72,16 +73,22 @@ describe('RoomPageComponent (container)', () => {
       .at(-1)!
       .click();
 
+  const identity = fakeIdentity({
+    id: 'm-1',
+    name: 'Mona',
+    nativeLanguage: 'ar',
+    learning: 'es',
+    avatar: '',
+  });
+
   function asPerson(id: string) {
-    localStorage.setItem(
-      'jtalk:profile',
-      JSON.stringify({
-        id,
-        name: id === 'h-1' ? 'Hana Host' : 'Mona',
-        nativeLanguage: 'ar',
-        learning: 'es',
-      }),
-    );
+    identity.become({
+      id,
+      name: id === 'h-1' ? 'Hana Host' : 'Mona',
+      nativeLanguage: 'ar',
+      learning: 'es',
+      avatar: '',
+    });
   }
 
   function respond(request: TestRequest, overrides: Record<string, Override>) {
@@ -151,6 +158,7 @@ describe('RoomPageComponent (container)', () => {
         provideRouter([{ path: '', component: Stub }]),
         provideHttpClient(),
         provideHttpClientTesting(),
+        identity.provider,
         { provide: REALTIME_CONNECTOR, useValue: link.connector },
         MessageService,
       ],

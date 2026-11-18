@@ -6,8 +6,8 @@ import { TranslatePipe } from './translate.pipe';
 @Component({
   selector: 'app-host',
   imports: [TranslatePipe],
-  template: `<p>{{ 'Sign in' | t }}</p>
-    <p>{{ 'Use at least {minLength} characters.' | t: { minLength: 12 } }}</p>`,
+  template: `<p>{{ 'Sign out' | t }}</p>
+    <p>{{ 'Open seats: {count}' | t: { count: 3 } }}</p>`,
 })
 class Host {}
 
@@ -18,14 +18,14 @@ describe('TranslatePipe', () => {
     await fixture.whenStable();
     const paragraphs = () =>
       [...(fixture.nativeElement as HTMLElement).querySelectorAll('p')].map((p) => p.textContent);
-    expect(paragraphs()).toEqual(['Sign in', 'Use at least 12 characters.']);
+    expect(paragraphs()).toEqual(['Sign out', 'Open seats: 3']);
 
     await i18n.use('ar');
     await fixture.whenStable();
-    expect(paragraphs()).toEqual(['تسجيل الدخول', 'استخدم 12 أحرف على الأقل.']);
+    expect(paragraphs()).toEqual(['تسجيل الخروج', 'مقاعد شاغرة: 3']);
 
     await i18n.use('en');
     await fixture.whenStable();
-    expect(paragraphs()).toEqual(['Sign in', 'Use at least 12 characters.']);
+    expect(paragraphs()).toEqual(['Sign out', 'Open seats: 3']);
   });
 });

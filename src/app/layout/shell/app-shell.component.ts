@@ -13,7 +13,6 @@ import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Menubar } from '@openng/optimus-ui/menubar';
 import { ProgressBar } from '@openng/optimus-ui/progressbar';
 import { filter, map } from 'rxjs';
-import { AuthService } from '@core/auth/auth.service';
 import type { ProfileDraft } from '@core/auth/identity.models';
 import { IdentityService } from '@core/auth/identity.service';
 import { ProfileDialogComponent } from '@core/auth/ui/profile-dialog/profile-dialog.component';
@@ -88,7 +87,6 @@ function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wid
 export class AppShellComponent {
   private readonly router = inject(Router);
 
-  protected readonly auth = inject(AuthService);
   protected readonly identity = inject(IdentityService);
   protected readonly colorScheme = inject(ColorSchemeService);
   protected readonly direction = inject(DirectionService);
@@ -123,13 +121,12 @@ export class AppShellComponent {
     return items.map((item) => ({ ...item, label: this.i18n.t(item.label ?? '') }));
   }
 
-  protected saveProfile(draft: ProfileDraft): void {
-    this.identity.saveProfile(draft);
+  protected async saveProfile(draft: ProfileDraft): Promise<void> {
+    await this.identity.saveProfile(draft);
     this.editingProfile.set(false);
   }
 
-  protected async signOut(): Promise<void> {
-    this.auth.signOut();
-    await this.router.navigateByUrl('/');
+  protected signOut(): Promise<void> {
+    return this.identity.signOut();
   }
 }

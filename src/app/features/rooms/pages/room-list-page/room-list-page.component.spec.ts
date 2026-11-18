@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import RoomListPageComponent from './room-list-page.component';
+import { fakeIdentity } from '@core/auth/auth-testing';
 
 @Component({ selector: 'app-stub', template: '' })
 class Stub {}
@@ -38,12 +39,10 @@ describe('RoomListPageComponent (container)', () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
-    localStorage.setItem(
-      'jtalk:profile',
-      JSON.stringify({ id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'es' }),
-    );
     TestBed.configureTestingModule({
       providers: [
+        fakeIdentity({ id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'es', avatar: '' })
+          .provider,
         provideRouter([{ path: 'rooms/:id', component: Stub }]),
         provideHttpClient(),
         provideHttpClientTesting(),

@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { fakeIdentity } from '@core/auth/auth-testing';
 import type { RoomDraft } from '../models/room.model';
 import { provideRoomList, RoomListFacade } from './room-list.facade';
 
@@ -33,7 +34,13 @@ describe('RoomListFacade', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRoomList()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        fakeIdentity({ id: 'm-1', name: 'Me', nativeLanguage: 'ar', learning: 'es', avatar: '' })
+          .provider,
+        provideRoomList(),
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     facade = TestBed.inject(RoomListFacade);
@@ -75,7 +82,13 @@ describe('RoomListFacade', () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRoomList()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        fakeIdentity({ id: 'm-1', name: 'Me', nativeLanguage: 'ar', learning: 'es', avatar: '' })
+          .provider,
+        provideRoomList(),
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     TestBed.inject(RoomListFacade);

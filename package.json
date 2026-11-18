@@ -4,9 +4,6 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "start:mock": "node mock/dev.mjs",
-    "mock": "node mock/server.mjs",
-    "mock:test": "node --test mock/*.test.mjs",
     "i18n:check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/i18n.mjs",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
@@ -15,7 +12,7 @@
     "lint": "ng lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm lint && pnpm format:check && pnpm test:ci && pnpm mock:test && pnpm i18n:check && pnpm build"
+    "check": "pnpm lint && pnpm format:check && pnpm test:ci && pnpm i18n:check && pnpm build"
   },
   "private": true,
   "packageManager": "pnpm@12.14.0",
@@ -27,6 +24,7 @@
     "@angular/forms": "^22.2.0",
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
+    "@auth0/auth0-angular": "^2.16.0",
     "@fontsource-variable/manrope": "^5.3.0",
     "@fontsource-variable/noto-sans-arabic": "^5.3.0",
     "@livekit/krisp-noise-filter": "^0.4.6",

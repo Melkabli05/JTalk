@@ -3,15 +3,24 @@
 The web client for the `live-communication-service` backend (voice rooms, stage, hand raising). It starts from an empty
 Angular 22 skeleton: zoneless, signals, Signal Forms, lazy feature routes, functional guards and interceptors,
 [Optimus UI](https://optimus.openng.org) with a custom theme, Vitest, Arabic first (English too). What the skeleton keeps is
-the structure and its enforced rules (`CLAUDE.md`), the application shell, the account pages (`core/auth`), the theme,
-the i18n setup and a mock API. `features/home` is a one-page placeholder for the first real page.
+the structure and its enforced rules (`CLAUDE.md`), the application shell, the Auth0 sign-in and the profile (`core/auth`), the theme
+and the i18n setup. `features/home` is a one-page placeholder for the first real page.
 
-**Talking to the backend.** `pnpm start` proxies `/api` to http://localhost:8080 (`proxy.conf.json`), where
-`live-communication-service` listens. With the backend's security switched off (`MICRONAUT_SECURITY_ENABLED=false`) there is no sign-in: before
-using the app the person fills in a **profile** (a name, one of ten bundled pictures from `public/avatars/`, the language they speak and the one they are learning) in a dialog. It is kept in
-this browser and its generated id is sent as `X-User-Id`. Other people are shown by the start of their id until a user service names them. That is a stand-in for the user service that will replace it: it lives in `IdentityService` (`core/auth`) and is active only
-where `devIdentity` is on. With the backend's default configuration every call needs `Authorization: Bearer <JWT>` whose `sub` is the user's UUID,
-which `authInterceptor` sends.
+**Talking to the backend.** Two services answer on the same origin, `/api`, so the browser needs no second address and no CORS:
+`/api/v1/users/*` goes to the **user service** (profiles, languages, follows) and everything else under `/api` to the **live communication service**
+(rooms). `pnpm start` proxies them to http://localhost:8081 and http://localhost:8080 (`proxy.conf.json`); on Vercel the rewrites in `vercel.json` send
+them to their Render services.
+
+**Signing in is Auth0's** (Universal Login; `@auth0/auth0-angular`, configured in `app.config.ts` and `environment.ts`). The shell route is guarded by
+the SDK's `authGuardFn`, so someone who is not signed in is sent to Auth0 and brought back to the page they asked for. The SDK holds the session and
+its HTTP interceptor adds the access token (for the audience `https://api.jtalk.app`) to every `/api` call, which both services check. There are no
+account pages of our own: Auth0 does sign-up, password reset and the rest.
+
+**Who people are** comes from the user service. `IdentityService` (`core/auth`) loads the signed-in person's profile; a person Auth0 has signed in but
+the user service does not know yet is asked for a **profile** in a dialog (a name, one of ten bundled pictures from `public/avatars/`, the language they
+speak and the one they are learning), which creates it. The rooms show names and pictures for everyone on the screen: `RoomListStore` and `RoomStore`
+ask `IdentityService.resolve()` for the hosts, speakers and participants they have not seen, and it fetches them in one batched call (`POST
+/api/v1/users/batch`, up to 500 at a time). A person's picture is stored as the path of the bundled image (`/avatars/avatar-03.svg`).
 
 **Rooms** (`features/rooms`) are the product so far:
 
@@ -32,62 +41,33 @@ which `authInterceptor` sends.
   (seats, hands) so the screen updates at once instead of waiting for the 3 s refresh. If the browser blocks sound a "Turn on sound" button
   appears; if the connection is lost, "Reconnect audio". `livekit-client` is loaded only when a room opens (its own lazy chunk).
 
-There is no mock data for rooms: the hallway shows what the backend has, which is nothing until someone opens a room.
+There is no mock data: the hallway shows what the backend has, which is nothing until someone opens a room.
 
 ## Getting started
 
 ```bash
 pnpm install
-pnpm start        # http://localhost:4200 (/api is proxied to http://localhost:8080)
+pnpm start        # http://localhost:4200 (/api/v1/users to :8081, the rest of /api to :8080)
 ```
 
-| Script            | What it does                                               |
-| ----------------- | ---------------------------------------------------------- |
-| `pnpm start`      | Dev server (development environment + API proxy)           |
-| `pnpm start:mock` | Dev server plus the in-memory mock API (no backend needed) |
-| `pnpm mock`       | The mock API alone, on http://localhost:3030/api           |
-| `pnpm build`      | Production build into `dist/`                              |
-| `pnpm test`       | Unit tests (Vitest), watch mode; `pnpm test:ci` runs once  |
-| `pnpm lint`       | ESLint: Angular rules, template accessibility, boundaries  |
-| `pnpm format`     | Prettier (`format:check` verifies)                         |
-| `pnpm check`      | lint + format check + tests + build                        |
+| Script        | What it does                                              |
+| ------------- | --------------------------------------------------------- |
+| `pnpm start`  | Dev server (development environment + API proxy)          |
+| `pnpm build`  | Production build into `dist/`                             |
+| `pnpm test`   | Unit tests (Vitest), watch mode; `pnpm test:ci` runs once |
+| `pnpm lint`   | ESLint: Angular rules, template accessibility, boundaries |
+| `pnpm format` | Prettier (`format:check` verifies)                        |
+| `pnpm check`  | lint + format check + tests + i18n check + build          |
 
 Requires Node `^22.22.3 || ^24.15.0` and pnpm.
 
-### Mock API
+### Running against the real services
 
-A stand-in backend, in memory, so the app runs without one (`pnpm start:mock`, or `pnpm mock` alone on port 3030). For now it
-has only the account endpoints the skeleton's pages use: sign in (any password but `wrong` gives 401; five failures lock an
-address out with 429), register and forgot-password (always 202, so they leak nothing), and reset-password (refuses the token
-`expired`). Add a file under `mock/routes/` for each area the app needs.
-
-Every request takes 300-450 ms so loading states show, and one line of log per request (`MOCK_LOG=0` silences it).
-Settings: `MOCK_PORT`, `MOCK_LATENCY`, `MOCK_SCENARIO`, `MOCK_LOG`.
-
-Scenarios make it misbehave, to see the states a real backend produces. Start in one (`MOCK_SCENARIO=errors pnpm start:mock`) or
-switch while it runs. A scenario fails a request before the router runs, so it applies to any data path:
-
-| Scenario          | What happens                                                  |
-| ----------------- | ------------------------------------------------------------- |
-| `default`         | everything works                                              |
-| `slow`            | responses take 2-3 seconds                                    |
-| `flaky`           | 20% of data requests fail with 500 and 5% drop the connection |
-| `errors`          | every data request fails with 500                             |
-| `auth-required`   | data requests need an `Authorization: Bearer` token, else 401 |
-| `session-expired` | data requests always answer 401, even with a token            |
-
-```bash
-curl localhost:3030/__mock                                            # scenarios, current one, counts
-curl -X POST localhost:3030/__mock/scenario -d '{"name":"errors"}'   # switch
-curl -X POST localhost:3030/__mock/reset                              # back to the start
-```
-
-Sign-in and the `/__mock` controls are never failed by the scenarios. `pnpm start:mock` serves the app against it through
-`mock/proxy.conf.json`; extra arguments go to `ng serve` (`pnpm start:mock --port 4300`).
-
-The mock is organised like a small app: `server.mjs` is the request pipeline (CORS, latency, scenarios, routing), `router.mjs` a
-10-line route matcher, `routes/` one file per area, `state.mjs` the data and its reset, `scenarios.mjs` the failures. Its own tests
-(`pnpm mock:test`, Node's built-in runner) keep it honest. The Angular unit tests do not use the mock: they use `HttpTestingController`.
+Signing in needs the Auth0 tenant (see the user service's README for the one-time setup: an API with the identifier `https://api.jtalk.app`, this app
+as a **Single Page Application** with `http://localhost:4200` and the deployed URL as callback, logout and web origins, and the post-login Action that
+adds the person's UUID to the token). Start the user service (port 8081) and the live communication service (port 8080) with the same two settings,
+`AUTH0_DOMAIN` and `AUTH0_AUDIENCE`, then `pnpm start`. The Angular unit tests need none of this: they stand in for Auth0's SDK (`core/auth/auth-testing.ts`)
+and answer the HTTP calls with `HttpTestingController`.
 
 ## Structure
 

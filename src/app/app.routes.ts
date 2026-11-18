@@ -1,10 +1,8 @@
 import { Routes } from '@angular/router';
-import { AUTH_ROUTES } from '@core/auth/auth.routes';
 import { msg } from '@shared/utils/i18n/msg';
 import { layoutRoutes } from './layout/layout.routes';
 
 export const routes: Routes = [
-  ...AUTH_ROUTES,
   ...layoutRoutes([
     {
       path: '',

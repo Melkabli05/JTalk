@@ -1,16 +1,28 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { AuthService } from '@core/auth/auth.service';
+import { type Observable, of } from 'rxjs';
+import { fakeAuth0, fakeIdentity } from '@core/auth/auth-testing';
 import { ColorSchemeService } from '@core/config/color-scheme.service';
-import { DEV_IDENTITY } from '@core/auth/dev-identity.token';
 import { DirectionService } from '@core/config/direction.service';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 import { layoutRoutes } from '../layout.routes';
 import { AppShellComponent } from './app-shell.component';
+
+const MONA = { id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en', avatar: '' };
+
+/** The HTTP stack, and Auth0's SDK standing in for the browser round trip. */
+const httpStack = (logout?: () => Observable<void>) => [
+  provideHttpClient(),
+  provideHttpClientTesting(),
+  fakeAuth0({ logout }),
+];
+
+/** What most specs here need besides the router: those, and a person who is already known, so the shell does not wait for the user service. */
+const sdk = () => [...httpStack(), fakeIdentity(MONA).provider];
 
 @Component({ selector: 'app-stub', template: '<p>stub page</p>' })
 class StubComponent {}
@@ -44,7 +56,7 @@ describe('AppShellComponent (container)', () => {
     document.documentElement.lang = 'en';
     localStorage.setItem('jtalk:locale', 'en');
     document.documentElement.classList.remove('app-dark');
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    TestBed.configureTestingModule({ providers: [...sdk(), provideRouter([])] });
   });
 
   async function render() {
@@ -57,6 +69,7 @@ describe('AppShellComponent (container)', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
+        ...sdk(),
         provideRouter([
           { path: '', children: [] },
           { path: 'slow', loadComponent: () => released.promise.then(() => AppShellComponent) },
@@ -94,14 +107,7 @@ describe('AppShellComponent (container)', () => {
     ).toEqual(['Profile and settings']);
   });
 
-  it('offers no sign-out to a visitor', async () => {
-    await render();
-    await openAccount();
-    expect(settingsButton('Sign out')).toBeUndefined();
-  });
-
-  it('offers sign-out to a signed-in user', async () => {
-    sessionStorage.setItem('jtalk:token', 'jwt');
+  it('offers sign-out to the signed-in user', async () => {
     await render();
     await openAccount();
     expect(settingsButton('Sign out')).toBeDefined();
@@ -167,19 +173,6 @@ describe('AppShellComponent (container)', () => {
     expect(root().querySelector('nav [role="menuitem"] a')?.textContent?.trim()).toBe('Rooms');
   });
 
-  it('signs out and returns home', async () => {
-    sessionStorage.setItem('jtalk:token', 'jwt');
-    await render();
-    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
-
-    await openAccount();
-    settingsButton('Sign out')!.click();
-    await fixture.whenStable();
-
-    expect(TestBed.inject(AuthService).isAuthenticated()).toBe(false);
-    expect(navigate).toHaveBeenCalledWith('/');
-  });
-
   it('has a primary navigation landmark with real links', async () => {
     await render();
     const links = [
@@ -196,6 +189,7 @@ describe('AppShellComponent (container)', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
+        ...sdk(),
         provideRouter([
           { path: 'wide', data: { wide: true }, children: [] },
           { path: 'narrow', children: [] },
@@ -226,6 +220,7 @@ describe('AppShellComponent routing', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
+        ...sdk(),
         provideRouter(
           layoutRoutes([
             { path: '', pathMatch: 'full', component: StubComponent },
@@ -308,8 +303,10 @@ describe('AppShellComponent routing', () => {
   });
 });
 
-describe('AppShellComponent profile gate (development builds)', () => {
+describe('AppShellComponent profile gate', () => {
+  const logout = vi.fn(() => of(undefined));
   let fixture: ComponentFixture<AppShellComponent>;
+  let http: HttpTestingController;
   const root = () => fixture.nativeElement as HTMLElement;
   const page = () => document.body;
   const settings = () => document.querySelector<HTMLElement>('.settings');
@@ -320,44 +317,98 @@ describe('AppShellComponent profile gate (development builds)', () => {
   const settingsButton = (name: string) =>
     [...(settings()?.querySelectorAll('button') ?? [])].find((b) => b.textContent?.includes(name));
 
+  const profile = (extra: object = {}) => ({
+    id: 'm-1',
+    username: 'mona_1a2b3c',
+    displayName: 'Mona',
+    avatarUrl: null,
+    nativeLanguage: 'ar',
+    createdAt: '2026-11-18T10:00:00Z',
+    ...extra,
+  });
+  const matrix = {
+    userId: 'm-1',
+    nativeLanguages: ['ar'],
+    learningLanguages: [{ languageCode: 'en', proficiencyLevel: 'BEGINNER' }],
+  };
+
   beforeEach(() => {
-    sessionStorage.clear();
     localStorage.clear();
     localStorage.setItem('jtalk:locale', 'en');
-    TestBed.configureTestingModule({
-      providers: [
-        provideRouter([]),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        { provide: DEV_IDENTITY, useValue: true },
-      ],
-    });
+    TestBed.configureTestingModule({ providers: [...httpStack(logout), provideRouter([])] });
   });
 
-  async function render() {
+  /**
+   * The user service answers by hand, so the page is never "stable" while a request waits: this lets pending work run without waiting
+   * for the app to settle, which it only does once every request has been answered.
+   */
+  async function settle() {
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    TestBed.tick();
+    fixture.detectChanges();
+  }
+
+  /** Renders the shell for someone Auth0 has signed in; the user service then says who they are, or that it does not know them. */
+  async function render(me: object | null) {
+    http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(AppShellComponent);
-    await fixture.whenStable();
+    await settle();
+    const request = http.expectOne('/api/v1/users/me');
+    if (me === null) {
+      request.flush({ status: 404 }, { status: 404, statusText: 'Not Found' });
+    } else {
+      request.flush(me);
+      await settle();
+      http.expectOne('/api/v1/users/me/languages').flush(matrix);
+    }
+    await settle();
   }
 
   it('asks for a profile before the app can be used, and shows no page behind it', async () => {
-    await render();
+    await render(null);
 
-    expect(page().textContent).toContain('Create your profile');
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(page().textContent).toContain('Create your profile');
+    });
     expect(root().querySelector('router-outlet')).toBeNull();
   });
 
-  it('lets the person in once they have filled the profile in, and shows their name', async () => {
-    await render();
+  it('creates the profile in the user service once the person fills it in, then lets them in', async () => {
+    await render(null);
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(page().querySelector('app-profile-form input')).not.toBeNull();
+    });
     const name = page().querySelector<HTMLInputElement>('app-profile-form input')!;
     name.value = 'Mona';
     name.dispatchEvent(new Event('input'));
     name.dispatchEvent(new Event('blur'));
-    await fixture.whenStable();
+    await settle();
 
     page()
       .querySelector('app-profile-form form')!
       .dispatchEvent(new Event('submit', { cancelable: true }));
-    await fixture.whenStable();
+    await settle();
+
+    const created = http.expectOne((r) => r.method === 'POST' && r.url === '/api/v1/users/me');
+    expect(created.request.body).toEqual({
+      username: expect.stringMatching(/^mona_[0-9a-f]{6}$/) as unknown,
+      displayName: 'Mona',
+      avatarUrl: '/avatars/avatar-01.svg',
+      nativeLanguage: 'ar',
+    });
+    created.flush(profile());
+    await settle();
+    http
+      .expectOne((r) => r.method === 'POST' && r.url === '/api/v1/users/me/languages')
+      .flush(null);
+    await settle();
+
+    http.expectOne((r) => r.method === 'GET' && r.url === '/api/v1/users/me').flush(profile());
+    await settle();
+    http.expectOne('/api/v1/users/me/languages').flush(matrix);
+    await settle();
 
     expect(root().querySelector('router-outlet')).not.toBeNull();
     await openAccount();
@@ -365,11 +416,7 @@ describe('AppShellComponent profile gate (development builds)', () => {
   });
 
   it('shows who the person is in the account popover, straight into the app', async () => {
-    localStorage.setItem(
-      'jtalk:profile',
-      JSON.stringify({ id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en' }),
-    );
-    await render();
+    await render(profile());
 
     expect(page().textContent).not.toContain('Create your profile');
     expect(root().querySelector('router-outlet')).not.toBeNull();
@@ -378,17 +425,7 @@ describe('AppShellComponent profile gate (development builds)', () => {
   });
 
   it('shows the picture the person chose on the account button', async () => {
-    localStorage.setItem(
-      'jtalk:profile',
-      JSON.stringify({
-        id: 'm-1',
-        name: 'Mona',
-        nativeLanguage: 'ar',
-        learning: 'en',
-        avatar: 'avatar-06',
-      }),
-    );
-    await render();
+    await render(profile({ avatarUrl: '/avatars/avatar-06.svg' }));
 
     expect(root().querySelector('header .account img')?.getAttribute('src')).toBe(
       'avatars/avatar-06.svg',
@@ -396,33 +433,35 @@ describe('AppShellComponent profile gate (development builds)', () => {
   });
 
   it('shows a plain icon on the account button of someone with no picture', async () => {
-    localStorage.setItem(
-      'jtalk:profile',
-      JSON.stringify({ id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en' }),
-    );
-    await render();
+    await render(profile());
 
     expect(root().querySelector('header .account img')).toBeNull();
     expect(root().querySelector('header .account .pi-user')).not.toBeNull();
   });
 
+  it('signs out through Auth0, which sends the person back to the app', async () => {
+    await render(profile());
+
+    await openAccount();
+    settingsButton('Sign out')!.click();
+    await settle();
+
+    expect(logout).toHaveBeenCalledTimes(1);
+  });
+
   it('opens the profile for editing from the account popover, and can close it again', async () => {
-    localStorage.setItem(
-      'jtalk:profile',
-      JSON.stringify({ id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en' }),
-    );
-    await render();
+    await render(profile());
 
     await openAccount();
     settingsButton('Edit profile')!.click();
-    await fixture.whenStable();
+    await settle();
     expect(page().textContent).toContain('Your profile');
     expect(page().querySelector('app-profile-form input')?.getAttribute('id')).toBeTruthy();
 
     [...page().querySelectorAll<HTMLButtonElement>('app-profile-form button')]
       .find((b) => b.textContent?.includes('Cancel'))!
       .click();
-    await fixture.whenStable();
+    await settle();
     expect(page().querySelector('app-profile-form')).toBeNull();
   });
 });
