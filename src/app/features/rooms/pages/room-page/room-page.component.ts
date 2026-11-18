@@ -92,13 +92,13 @@ export default class RoomPageComponent {
   protected readonly mutedIds = computed(() => {
     const me = this.state.meId();
     const audio = this.facade.audio;
-    return me !== null &&
+    const mine =
+      me !== null &&
       this.state.onStage() &&
       audio.canSpeak() &&
       audio.status() === 'connected' &&
-      !audio.micOn()
-      ? [me]
-      : [];
+      !audio.micOn();
+    return mine && !audio.muted().includes(me) ? [...audio.muted(), me] : audio.muted();
   });
   protected readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
   protected readonly editing = signal(false);
@@ -124,6 +124,16 @@ export default class RoomPageComponent {
     () => this.state.isHost() && this.selectedRole() === 'SPEAKER',
   );
   protected readonly canRemove = computed(() => this.state.isHost() && !this.selectedIsMe());
+  /** What the host may do to each person from their seat: nobody gets a menu on the host or on themselves. */
+  protected readonly moderation = computed<ReadonlyMap<string, readonly MenuItem[]>>(() => {
+    if (!this.state.isHost()) {
+      return new Map();
+    }
+    const others = [...this.state.speakers(), ...this.state.audience()].filter(
+      (id) => id !== this.state.hostId() && id !== this.state.meId(),
+    );
+    return new Map(others.map((id) => [id, this.moderationFor(id)]));
+  });
   protected readonly personActions = computed<MenuItem[]>(() => {
     const id = this.selectedId();
     const card = this.cards.card();
@@ -131,6 +141,7 @@ export default class RoomPageComponent {
       return [];
     }
     return [
+      ...(this.canMute(id) ? [this.muteItem(id)] : []),
       ...(this.canRemove()
         ? [
             {
@@ -241,9 +252,12 @@ export default class RoomPageComponent {
 
   protected block(): void {
     const id = this.selectedId();
-    if (id === null) {
-      return;
+    if (id !== null) {
+      this.blockPerson(id);
     }
+  }
+
+  private blockPerson(id: string): void {
     const name = memberOf(this.state.members(), id).name;
     this.confirmation.confirm({
       header: this.i18n.t('Block {name}', { name }),
@@ -262,8 +276,56 @@ export default class RoomPageComponent {
             severity: 'success',
             summary: this.i18n.t('{name} is blocked.', { name }),
           });
-        }),
+        }, id),
     });
+  }
+
+  private canMute(id: string): boolean {
+    return (
+      this.state.isHost() &&
+      id !== this.state.meId() &&
+      this.state.speakers().includes(id) &&
+      !this.facade.audio.muted().includes(id)
+    );
+  }
+
+  private muteItem(id: string): MenuItem {
+    return {
+      label: this.i18n.t('Mute'),
+      icon: 'pi pi-microphone pi-slashed',
+      command: () => this.facade.mute(id),
+    };
+  }
+
+  private moderationFor(id: string): MenuItem[] {
+    const speaker = this.state.speakers().includes(id);
+    return [
+      ...(this.canMute(id) ? [this.muteItem(id)] : []),
+      speaker
+        ? {
+            label: this.i18n.t('Move to the audience'),
+            icon: 'pi pi-arrow-down',
+            command: () => this.demote(id),
+          }
+        : {
+            label: this.i18n.t('Invite to the stage'),
+            icon: 'pi pi-microphone',
+            command: () => this.invite(id),
+          },
+      { separator: true },
+      {
+        label: this.i18n.t('Remove from the room'),
+        icon: 'pi pi-user-minus',
+        linkClass: 'danger-item',
+        command: () => this.remove(id),
+      },
+      {
+        label: this.i18n.t('Block'),
+        icon: 'pi pi-ban',
+        linkClass: 'danger-item',
+        command: () => this.blockPerson(id),
+      },
+    ];
   }
 
   protected end(): void {

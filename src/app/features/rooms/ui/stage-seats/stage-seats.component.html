@@ -59,6 +59,9 @@
           </span>
         }
       </button>
+      @if (speaker.actions.length > 0) {
+        <app-moderation-menu [name]="speaker.member.name" [items]="speaker.actions" />
+      }
     </li>
   }
   @if (nextSeat(); as seat) {

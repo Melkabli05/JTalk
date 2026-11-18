@@ -99,6 +99,36 @@ describe('RealtimeService', () => {
     expect(audio.micOn()).toBe(false);
   });
 
+  it('keeps track of whose microphone is muted, and tells the button when the host mutes you', async () => {
+    const { link, audio } = setup();
+    await audio.connect(SPEAKER);
+    expect(audio.micOn()).toBe(true);
+
+    link.last.listener.microphoneMuted('b-1', true, false);
+    link.last.listener.microphoneMuted('b-1', true, false);
+    expect(audio.muted()).toEqual(['b-1']);
+    expect(audio.micOn()).toBe(true);
+
+    link.last.listener.microphoneMuted('h-1', true, true);
+    expect(audio.muted()).toEqual(['b-1', 'h-1']);
+    expect(audio.micOn()).toBe(false);
+
+    link.last.listener.microphoneMuted('b-1', false, false);
+    link.last.listener.microphoneMuted('h-1', false, true);
+    expect(audio.muted()).toEqual([]);
+    expect(audio.micOn()).toBe(true);
+  });
+
+  it('forgets who was muted when the connection ends', async () => {
+    const { link, audio } = setup();
+    await audio.connect(SPEAKER);
+    link.last.listener.microphoneMuted('b-1', true, false);
+
+    await audio.disconnect();
+
+    expect(audio.muted()).toEqual([]);
+  });
+
   it('reports who is speaking', async () => {
     const { link, audio } = setup();
     await audio.connect(SESSION);

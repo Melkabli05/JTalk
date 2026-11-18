@@ -7,6 +7,10 @@
   list-style: none;
 }
 
+li {
+  position: relative;
+}
+
 .person {
   display: flex;
   flex-direction: column;

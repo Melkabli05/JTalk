@@ -1,14 +1,16 @@
 import { Component, computed, input, output } from '@angular/core';
+import type { MenuItem } from '@openng/optimus-ui/api';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 import { memberOf } from '../../utils/members';
+import { ModerationMenuComponent } from '../moderation-menu/moderation-menu.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 import type { Person } from '@core/auth/identity.models';
 import type { FloatingReaction } from '../../models/reaction.model';
 
 @Component({
   selector: 'app-stage-seats',
-  imports: [PersonAvatarComponent, TranslatePipe],
+  imports: [ModerationMenuComponent, PersonAvatarComponent, TranslatePipe],
   templateUrl: './stage-seats.component.html',
   styleUrl: './stage-seats.component.scss',
 })
@@ -22,6 +24,8 @@ export class StageSeatsComponent {
   readonly speaking = input<readonly string[]>([]);
   readonly muted = input<readonly string[]>([]);
   readonly reactions = input<ReadonlyMap<string, FloatingReaction>>(new Map());
+  /** What the host may do to each person, by id; people without an entry get no menu. */
+  readonly moderation = input<ReadonlyMap<string, readonly MenuItem[]>>(new Map());
 
   readonly memberSelected = output<string>();
   readonly seatTaken = output<void>();
@@ -42,6 +46,7 @@ export class StageSeatsComponent {
         speaking: this.speaking().includes(id),
         muted: this.muted().includes(id),
         reaction: this.reactions().get(id) ?? null,
+        actions: this.moderation().get(id) ?? [],
         role: host ? msg('Host') : msg('Speaker'),
       };
     });

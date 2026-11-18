@@ -1,15 +1,17 @@
 import { Component, computed, input, output } from '@angular/core';
+import type { MenuItem } from '@openng/optimus-ui/api';
 import { Tag } from '@openng/optimus-ui/tag';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 import { memberOf } from '../../utils/members';
+import { ModerationMenuComponent } from '../moderation-menu/moderation-menu.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 import type { Person } from '@core/auth/identity.models';
 import type { FloatingReaction } from '../../models/reaction.model';
 
 @Component({
   selector: 'app-audience-grid',
-  imports: [PersonAvatarComponent, Tag, TranslatePipe],
+  imports: [ModerationMenuComponent, PersonAvatarComponent, Tag, TranslatePipe],
   template: `
     <ul class="audience" [attr.aria-label]="'In the audience' | t">
       @for (person of people(); track person.member.id) {
@@ -34,6 +36,9 @@ import type { FloatingReaction } from '../../models/reaction.model';
               <p-tag severity="secondary" icon="pi pi-sync" [value]="'Reconnecting' | t" />
             }
           </button>
+          @if (person.actions.length > 0) {
+            <app-moderation-menu [name]="person.member.name" [items]="person.actions" />
+          }
         </li>
       } @empty {
         <li class="empty">{{ 'Nobody is listening yet.' | t }}</li>
@@ -48,6 +53,8 @@ export class AudienceGridComponent {
   readonly meId = input<string | null>(null);
   readonly reconnecting = input<readonly string[]>([]);
   readonly reactions = input<ReadonlyMap<string, FloatingReaction>>(new Map());
+  /** What the host may do to each person, by id; people without an entry get no menu. */
+  readonly moderation = input<ReadonlyMap<string, readonly MenuItem[]>>(new Map());
 
   readonly memberSelected = output<string>();
 
@@ -57,6 +64,7 @@ export class AudienceGridComponent {
       me: id === this.meId(),
       reconnecting: this.reconnecting().includes(id),
       reaction: this.reactions().get(id) ?? null,
+      actions: this.moderation().get(id) ?? [],
       role: msg('Listener'),
     })),
   );

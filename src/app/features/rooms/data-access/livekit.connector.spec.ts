@@ -51,6 +51,8 @@ vi.mock('livekit-client', () => ({
     TrackUnsubscribed: 'trackUnsubscribed',
     ActiveSpeakersChanged: 'activeSpeakersChanged',
     LocalTrackPublished: 'localTrackPublished',
+    TrackMuted: 'trackMuted',
+    TrackUnmuted: 'trackUnmuted',
     DataReceived: 'dataReceived',
     AudioPlaybackStatusChanged: 'audioPlaybackChanged',
     ParticipantPermissionsChanged: 'participantPermissionsChanged',
@@ -76,6 +78,7 @@ describe('connectLiveKit', () => {
     soundBlocked: vi.fn(),
     canPublishChanged: vi.fn(),
     linkChanged: vi.fn(),
+    microphoneMuted: vi.fn(),
     connectionLost: vi.fn(),
   } satisfies RealtimeListener;
 
@@ -245,12 +248,51 @@ describe('connectLiveKit', () => {
     const element = document.createElement('audio');
     const track = { kind: 'audio', attach: () => element, detach: () => [element] };
 
-    room().emit('trackSubscribed', track);
+    room().emit('trackSubscribed', track, { source: 'unknown' }, { identity: 'b-1' });
     expect(document.body.contains(element)).toBe(true);
     expect(element.parentElement?.hidden).toBe(true);
 
     room().emit('trackUnsubscribed', track);
     expect(document.body.contains(element)).toBe(false);
+  });
+
+  describe('microphones', () => {
+    const publication = (muted: boolean, source = 'microphone') => ({ source, isMuted: muted });
+
+    it('says whose microphone is muted or open, as it changes, and which one is mine', async () => {
+      await connectLiveKit('wss://x', 't', listener);
+
+      room().emit('trackMuted', publication(true), { identity: 'b-1' });
+      expect(listener.microphoneMuted).toHaveBeenLastCalledWith('b-1', true, false);
+
+      room().emit('trackUnmuted', publication(false), { identity: 'b-1' });
+      expect(listener.microphoneMuted).toHaveBeenLastCalledWith('b-1', false, false);
+
+      room().emit('trackMuted', publication(true), room().localParticipant);
+      expect(listener.microphoneMuted).toHaveBeenLastCalledWith('me', true, true);
+    });
+
+    it('says it from the start for someone whose microphone was already muted when it was heard', async () => {
+      await connectLiveKit('wss://x', 't', listener);
+      const track = {
+        kind: 'audio',
+        attach: () => document.createElement('audio'),
+        detach: () => [],
+      };
+
+      room().emit('trackSubscribed', track, publication(true), { identity: 'b-1' });
+
+      expect(listener.microphoneMuted).toHaveBeenLastCalledWith('b-1', true, false);
+    });
+
+    it('ignores anything that is not a microphone', async () => {
+      await connectLiveKit('wss://x', 't', listener);
+      listener.microphoneMuted.mockClear();
+
+      room().emit('trackMuted', publication(true, 'screen_share'), { identity: 'b-1' });
+
+      expect(listener.microphoneMuted).not.toHaveBeenCalled();
+    });
   });
 
   it('reports a lost connection, but not one the app closed itself', async () => {

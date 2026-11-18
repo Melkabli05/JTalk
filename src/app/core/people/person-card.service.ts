@@ -74,16 +74,22 @@ export class PersonCardService {
     this.change((id) => this.api.unfollow(id), msg('Could not unfollow them. Please try again.'));
   }
 
-  block(done: () => void): void {
-    this.change((id) => this.api.block(id), msg('Could not block them. Please try again.'), done);
+  /** Blocks the person whose card is open, or anyone else by id (the host's menu on a seat). */
+  block(done: () => void, id: string | null = this.shown()): void {
+    this.change(
+      (target) => this.api.block(target),
+      msg('Could not block them. Please try again.'),
+      done,
+      id,
+    );
   }
 
   private change(
     request: (id: string) => Observable<void>,
     failure: string,
     done?: () => void,
+    id: string | null = this.shown(),
   ): void {
-    const id = this.shown();
     if (id === null) {
       return;
     }

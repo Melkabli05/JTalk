@@ -522,6 +522,86 @@ describe('RoomPageComponent (container)', () => {
       expect(sent('DELETE', `${BASE}/participants/b-1`)).toBe(true);
     });
 
+    describe('from a seat', () => {
+      const trigger = (within: string) =>
+        root().querySelector<HTMLButtonElement>(`${within} app-moderation-menu button`);
+      const pressSeatItem = async (within: string, label: string) => {
+        trigger(within)!.click();
+        await settle();
+        await new Promise((resolve) => setTimeout(resolve));
+        [...document.querySelectorAll<HTMLElement>('.p-menu-item-link')]
+          .find((item) => item.textContent?.includes(label))!
+          .click();
+      };
+
+      it('offers a menu on everyone in the room except the host and themselves', async () => {
+        server.stage = { speakers: ['h-1', 'b-1'], handRaiseQueue: [] };
+        await open(asHost);
+
+        const triggers = [...root().querySelectorAll('app-stage-seats app-moderation-menu button')];
+        expect(triggers.map(nameOf)).toEqual(['b-1: moderation']);
+      });
+
+      it('offers it to nobody when you are not the host', async () => {
+        server.stage = { speakers: ['h-1', 'b-1'], handRaiseQueue: [] };
+        await open();
+        await openAudience();
+
+        expect(root().querySelector('app-moderation-menu')).toBeNull();
+      });
+
+      it('mutes a speaker', async () => {
+        server.stage = { speakers: ['h-1', 'b-1'], handRaiseQueue: [] };
+        await open(asHost);
+
+        await pressSeatItem('app-stage-seats', 'Mute');
+        await settle();
+
+        expect(sent('POST', `${BASE}/stage/mute/b-1`)).toBe(true);
+      });
+
+      it('stops offering to mute someone whose microphone is already muted', async () => {
+        server.stage = { speakers: ['h-1', 'b-1'], handRaiseQueue: [] };
+        await open(asHost);
+        link.last.listener.microphoneMuted('b-1', true, false);
+        await settle();
+
+        trigger('app-stage-seats')!.click();
+        await settle();
+        await new Promise((resolve) => setTimeout(resolve));
+
+        const items = [...document.querySelectorAll('.p-menu-item-link')].map((i) =>
+          i.textContent?.trim(),
+        );
+        expect(items).toContain('Move to the audience');
+        expect(items).not.toContain('Mute');
+      });
+
+      it('removes a listener only after asking', async () => {
+        await open(asHost);
+        await openAudience();
+
+        await pressSeatItem('app-audience-grid', 'Remove from the room');
+        await settle();
+        expect(page().textContent).toContain('will leave the room and cannot come back.');
+        expect(sent('DELETE', `${BASE}/participants/b-1`)).toBe(false);
+
+        pressExactlyLast('Remove');
+        await settle();
+        expect(sent('DELETE', `${BASE}/participants/b-1`)).toBe(true);
+      });
+
+      it('invites a listener to the stage', async () => {
+        await open(asHost);
+        await openAudience();
+
+        await pressSeatItem('app-audience-grid', 'Invite to the stage');
+        await settle();
+
+        expect(sent('POST', `${BASE}/stage/promote/b-1`)).toBe(true);
+      });
+    });
+
     it('ends the room only after asking, and goes back to the hallway', async () => {
       await open(asHost);
 

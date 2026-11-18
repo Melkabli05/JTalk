@@ -1,5 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, input, output, signal } from '@angular/core';
+import type { MenuItem } from '@openng/optimus-ui/api';
 import { AvatarGroup } from '@openng/optimus-ui/avatargroup';
 import { Panel } from '@openng/optimus-ui/panel';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -74,6 +75,7 @@ let nextId = 0;
         [meId]="meId()"
         [reconnecting]="reconnecting()"
         [reactions]="reactions()"
+        [moderation]="moderation()"
         (memberSelected)="memberSelected.emit($event)"
       />
     </ng-template>
@@ -87,6 +89,7 @@ export class AudienceSectionComponent {
   readonly reconnecting = input<readonly string[]>([]);
   readonly collapsible = input(true);
   readonly reactions = input<ReadonlyMap<string, FloatingReaction>>(new Map());
+  readonly moderation = input<ReadonlyMap<string, readonly MenuItem[]>>(new Map());
 
   readonly memberSelected = output<string>();
 

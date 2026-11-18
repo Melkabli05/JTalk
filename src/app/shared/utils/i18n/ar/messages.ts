@@ -59,6 +59,8 @@ export const messages: Readonly<Record<string, string>> = {
   'Invite to the stage': 'دعوة إلى المنصّة',
   'Step down to the audience': 'النزول إلى الحضور',
   'Move to the audience': 'نقل إلى الحضور',
+  '{name}: moderation': 'إدارة {name}',
+  'Could not mute them. Please try again.': 'تعذّر كتم صوته. حاول مرة أخرى.',
   Invite: 'دعوة',
   'Invite {name} to the stage': 'دعوة {name} إلى المنصّة',
   'Hosted by {name}': 'يستضيفها {name}',

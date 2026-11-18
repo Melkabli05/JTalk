@@ -9,6 +9,7 @@ export interface RealtimeListener {
   readonly soundBlocked: (blocked: boolean) => void;
   readonly canPublishChanged: (canPublish: boolean) => void;
   readonly linkChanged: (up: boolean) => void;
+  readonly microphoneMuted: (identity: string, muted: boolean, local: boolean) => void;
   readonly connectionLost: () => void;
 }
 

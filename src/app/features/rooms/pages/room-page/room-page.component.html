@@ -83,6 +83,7 @@
         [speaking]="facade.audio.speaking()"
         [muted]="mutedIds()"
         [reactions]="state.reactionsByPerson()"
+        [moderation]="moderation()"
         (memberSelected)="selectedId.set($event)"
         (seatTaken)="facade.takeSeat()"
       />
@@ -112,6 +113,7 @@
         [meId]="state.meId()"
         [reconnecting]="state.reconnecting()"
         [reactions]="state.reactionsByPerson()"
+        [moderation]="moderation()"
         (memberSelected)="selectedId.set($event)"
       />
     </div>

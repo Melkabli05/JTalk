@@ -32,6 +32,13 @@ describe('AudienceGridComponent (presentational)', () => {
     ).toEqual(['Ada (you), Listener', 'Bob, Listener']);
   });
 
+  it('shows a menu only on the people the host has actions for', async () => {
+    await render({ moderation: new Map([['b-2', [{ label: 'Remove from the room' }]]]) });
+
+    const triggers = [...root().querySelectorAll('app-moderation-menu button')];
+    expect(triggers.map((t) => t.getAttribute('aria-label'))).toEqual(['Bob: moderation']);
+  });
+
   it('opens the person who was picked', async () => {
     await render();
     const selected = vi.fn();

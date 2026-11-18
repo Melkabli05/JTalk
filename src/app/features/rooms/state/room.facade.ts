@@ -158,6 +158,13 @@ export class RoomFacade {
     );
   }
 
+  mute(userId: string): void {
+    this.run(
+      this.stages.mute(this.state.roomId(), userId),
+      msg('Could not mute them. Please try again.'),
+    );
+  }
+
   remove(userId: string): void {
     this.run(
       this.participants.remove(this.state.roomId(), userId),

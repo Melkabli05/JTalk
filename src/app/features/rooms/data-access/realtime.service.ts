@@ -22,6 +22,8 @@ export class RealtimeService {
   readonly micRefused = signal(false);
   readonly soundBlocked = signal(false);
   readonly speaking = signal<readonly string[]>([]);
+  /** Whose microphone is muted right now, as the media server reports it: their own button or the host. */
+  readonly muted = signal<readonly string[]>([]);
   readonly roomEvents = this.pushed.asObservable();
 
   constructor() {
@@ -84,6 +86,7 @@ export class RealtimeService {
     this.micRefused.set(false);
     this.soundBlocked.set(false);
     this.speaking.set([]);
+    this.muted.set([]);
     this.canSpeak.set(false);
     await connection?.disconnect().catch(() => undefined);
   }
@@ -115,11 +118,25 @@ export class RealtimeService {
         this.canSpeak.set(canPublish);
         void this.turnMicrophone(canPublish);
       }),
+      microphoneMuted: live((identity, muted, local) => {
+        this.muted.update((ids) =>
+          muted
+            ? ids.includes(identity)
+              ? ids
+              : [...ids, identity]
+            : ids.filter((id) => id !== identity),
+        );
+        if (local) {
+          // The host can mute you from the server: the button must then say Unmute.
+          this.micOn.set(!muted && this.connection !== null);
+        }
+      }),
       linkChanged: live((up) => this.status.set(up ? 'connected' : 'reconnecting')),
       connectionLost: live(() => {
         this.connection = null;
         this.micOn.set(false);
         this.speaking.set([]);
+        this.muted.set([]);
         this.status.set('failed');
       }),
     };

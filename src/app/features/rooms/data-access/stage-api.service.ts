@@ -40,6 +40,10 @@ export class StageApiService {
     return this.post(id, `demote/${userId}`);
   }
 
+  mute(id: string, userId: string): Observable<void> {
+    return this.post(id, `mute/${userId}`);
+  }
+
   private post(id: string, action: string): Observable<void> {
     return this.http.post<void>(`${this.base}/${id}/stage/${action}`, null);
   }

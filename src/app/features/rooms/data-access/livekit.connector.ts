@@ -1,3 +1,4 @@
+import type { Participant, TrackPublication } from 'livekit-client';
 import type { RealtimeConnection, RealtimeListener, RoomUpdate } from '../models/realtime.model';
 import { filterNoise } from './noise-filter';
 import { parseRoomEvent } from './parsers/room-event.parser';
@@ -25,12 +26,25 @@ export async function connectLiveKit(
   document.body.append(speakers);
   let closing = false;
 
+  const heardMicrophone = (publication: TrackPublication, participant: Participant) => {
+    if (publication.source === Track.Source.Microphone) {
+      listener.microphoneMuted(
+        participant.identity,
+        publication.isMuted,
+        participant === room.localParticipant,
+      );
+    }
+  };
+
   room
-    .on(RoomEvent.TrackSubscribed, (track) => {
+    .on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
       if (track.kind === Track.Kind.Audio) {
         speakers.append(track.attach());
       }
+      heardMicrophone(publication, participant);
     })
+    .on(RoomEvent.TrackMuted, heardMicrophone)
+    .on(RoomEvent.TrackUnmuted, heardMicrophone)
     .on(RoomEvent.TrackUnsubscribed, (track) => {
       for (const element of track.detach()) {
         element.remove();

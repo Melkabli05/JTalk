@@ -379,6 +379,7 @@ export const JtalkPreset = definePreset(Aura, {
         }
         .p-button.compact.p-button-icon-only {
           inline-size: 2.25rem;
+          block-size: 2.25rem;
           padding: 0;
         }
         .p-button.compact::after {

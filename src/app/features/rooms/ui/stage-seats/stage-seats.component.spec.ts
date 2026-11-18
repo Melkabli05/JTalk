@@ -40,6 +40,20 @@ describe('StageSeatsComponent (presentational)', () => {
     expect(people[1].textContent).toContain('You');
   });
 
+  it('gives the host a menu on the seats it is given actions for, and no other', async () => {
+    await render({ moderation: new Map([['s-2', [{ label: 'Mute' }]]]) });
+
+    const items = [...root().querySelectorAll('li')];
+    expect(items.map((li) => li.querySelector('app-moderation-menu button') !== null)).toEqual([
+      false,
+      true,
+      false,
+    ]);
+    expect(root().querySelector('app-moderation-menu button')?.getAttribute('aria-label')).toBe(
+      'Maya Speaker: moderation',
+    );
+  });
+
   it('rings the people who are being heard, and no one else', async () => {
     await render({ speaking: ['s-2'] });
 
