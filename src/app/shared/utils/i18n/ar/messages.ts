@@ -252,4 +252,6 @@ export const messages: Readonly<Record<string, string>> = {
   Safety: 'الأمان',
   'On mic': 'الميكروفون مفتوح',
   'Back to the room: {title}': 'العودة إلى الغرفة: {title}',
+  Edit: 'تعديل',
+  End: 'إنهاء',
 };

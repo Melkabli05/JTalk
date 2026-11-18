@@ -30,28 +30,36 @@
         </p>
         @if (state.isHost()) {
           <div class="host-tools" role="group" [attr.aria-label]="'Host controls' | t">
-            <button
-              pButton
-              type="button"
-              size="small"
-              icon="pi pi-pencil"
-              severity="warn"
-              [rounded]="true"
-              [text]="true"
-              [label]="'Edit the room' | t"
-              (click)="editing.set(true)"
-            ></button>
-            <button
-              pButton
-              type="button"
-              size="small"
-              icon="pi pi-stop-circle"
-              severity="danger"
-              [rounded]="true"
-              [text]="true"
-              [label]="'End the room' | t"
-              (click)="end()"
-            ></button>
+            @let editLabel = 'Edit the room' | t;
+            <div class="host-tool">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                severity="warn"
+                [rounded]="true"
+                [outlined]="true"
+                [attr.aria-label]="editLabel"
+                [pTooltip]="editLabel"
+                (click)="editing.set(true)"
+              ></button>
+              <span class="caption" aria-hidden="true">{{ 'Edit' | t }}</span>
+            </div>
+            @let endLabel = 'End the room' | t;
+            <div class="host-tool">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-stop-circle"
+                severity="danger"
+                [rounded]="true"
+                [outlined]="true"
+                [attr.aria-label]="endLabel"
+                [pTooltip]="endLabel"
+                (click)="end()"
+              ></button>
+              <span class="caption" aria-hidden="true">{{ 'End' | t }}</span>
+            </div>
           </div>
         }
       </div>

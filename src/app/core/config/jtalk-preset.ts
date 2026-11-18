@@ -439,15 +439,6 @@ export const JtalkPreset = definePreset(Aura, {
           position: absolute;
           inset: -0.25rem;
         }
-        @container dock (max-width: 30rem) {
-          .p-button.leave-compact {
-            inline-size: 3.5rem;
-            padding-inline: 0;
-          }
-          .p-button.leave-compact .p-button-label {
-            display: none;
-          }
-        }
       `,
       colorScheme: {
         light: {

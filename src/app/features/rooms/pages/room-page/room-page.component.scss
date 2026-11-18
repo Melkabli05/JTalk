@@ -71,9 +71,22 @@
 
 .host-tools {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
+  gap: 1rem;
   margin-inline-start: auto;
+}
+
+// The host's two actions are circles with the name under each, like the controls in the dock.
+.host-tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.caption {
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-secondary);
+  font-weight: 500;
 }
 
 .live {

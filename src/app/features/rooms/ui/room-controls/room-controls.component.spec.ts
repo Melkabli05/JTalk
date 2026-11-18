@@ -136,20 +136,35 @@ describe('RoomControlsComponent (presentational)', () => {
     expect(emitted).toEqual(['leave', 'raise']);
   });
 
-  it('labels the mic and the hand in words, and draws the hand as an icon', async () => {
+  it('draws each control as a round icon button with its name under it', async () => {
     await render({ canSpeak: true, micOn: true });
 
-    expect(button('Mute').textContent).toContain('Mute');
-    expect(button('Raise hand').textContent).toContain('Raise hand');
+    for (const name of ['Mute', 'Raise hand', 'React', 'Leave quietly']) {
+      const circle = button(name);
+      expect(circle.className).toContain('p-button-rounded');
+      expect(circle.className).toContain('p-button-icon-only');
+      expect(circle.textContent?.trim()).toBe('');
+    }
     expect(button('Raise hand').querySelector('.pi-hand')).not.toBeNull();
+    const captions = [...root().querySelectorAll('.control .caption')];
+    expect(captions.map((c) => c.textContent)).toEqual([
+      'Mute',
+      'Raise hand',
+      'React',
+      'Leave quietly',
+    ]);
+    expect(captions.every((c) => c.getAttribute('aria-hidden') === 'true')).toBe(true);
   });
 
-  it('keeps the leave button named when its label is hidden on a narrow dock', async () => {
-    await render({});
+  it('shows what is on in Forest and what is off in neutral', async () => {
+    await render({ canSpeak: true, micOn: true, handRaised: true });
+    expect(button('Mute').className).toContain('p-button-primary');
+    expect(button('Raise hand').className).toContain('p-button-primary');
+    expect(button('Raise hand').getAttribute('aria-pressed')).toBe('true');
 
-    const leave = button('Leave quietly');
-    expect(leave.getAttribute('aria-label')).toBe('Leave quietly');
-    expect(leave.classList).toContain('leave-compact');
+    await render({ canSpeak: true, micOn: false });
+    expect(button('Unmute').className).toContain('p-button-secondary');
+    expect(button('Raise hand').className).toContain('p-button-secondary');
   });
 
   it('shows the waiting hint with the hand icon, politely', async () => {
@@ -202,12 +217,15 @@ describe('RoomControlsComponent (presentational)', () => {
     expect(root().querySelector('p-toolbar')?.textContent).not.toContain('Reconnect audio');
   });
 
-  it('keeps the controls together and leaving apart, last in the capsule', async () => {
+  it('keeps all the controls in one centered row, leaving last', async () => {
     await render({ onStage: true, canSpeak: true });
 
-    const slot = (name: string) =>
-      [...root().querySelectorAll(`.p-toolbar-${name} button`)].map(nameOf);
-    expect(slot('start')).toEqual(['Unmute', 'React']);
-    expect(slot('end')).toEqual(['Leave quietly']);
+    expect([...root().querySelectorAll('.p-toolbar-center button')].map(nameOf)).toEqual([
+      'Unmute',
+      'React',
+      'Leave quietly',
+    ]);
+    expect(root().querySelector('.p-toolbar-start button')).toBeNull();
+    expect(root().querySelector('.p-toolbar-end button')).toBeNull();
   });
 });
