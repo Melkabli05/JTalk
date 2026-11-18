@@ -29,7 +29,11 @@
   @if (state.shown().length > 0) {
     <ul class="rooms">
       @for (room of state.shown(); track room.id) {
-        <li>
+        <li
+          animate.enter="room-in"
+          animate.leave="room-out"
+          [style.--position]="$index < 6 ? $index : 6"
+        >
           <app-room-card [room]="room" [members]="state.members()" (opened)="open(room)" />
         </li>
       }
@@ -54,21 +58,38 @@
     </section>
   }
 } @else if (state.failed()) {
-  <p-message severity="error">{{ 'Could not load the rooms. Please try again.' | t }}</p-message>
-  <button
-    pButton
-    type="button"
-    class="retry"
-    icon="pi pi-refresh"
-    severity="secondary"
-    [label]="'Try again' | t"
-    (click)="state.reload()"
-  ></button>
+  <p-message severity="error" icon="pi pi-exclamation-triangle">
+    <span class="message">
+      {{ 'Could not load the rooms. Please try again.' | t }}
+      <button
+        pButton
+        type="button"
+        size="small"
+        icon="pi pi-refresh"
+        severity="danger"
+        [text]="true"
+        [label]="'Try again' | t"
+        (click)="state.reload()"
+      ></button>
+    </span>
+  </p-message>
 } @else {
-  <p class="cdk-visually-hidden" role="status">{{ 'Loading' | t }}</p>
+  <p class="cdk-visually-hidden" role="status">{{ 'Finding open rooms' | t }}</p>
   <ul class="rooms" aria-hidden="true">
     @for (placeholder of [1, 2, 3]; track placeholder) {
-      <li><p-skeleton width="100%" height="16rem" borderRadius="16px" /></li>
+      <li>
+        <p-card class="placeholder">
+          <p-skeleton width="45%" height="0.875rem" />
+          <p-skeleton width="70%" height="1.5rem" />
+          <p-skeleton width="92%" height="0.875rem" />
+          <span class="faces">
+            <p-skeleton shape="circle" size="2rem" />
+            <p-skeleton shape="circle" size="2rem" />
+            <p-skeleton shape="circle" size="2rem" />
+          </span>
+          <p-skeleton width="38%" height="0.875rem" />
+        </p-card>
+      </li>
     }
   </ul>
 }

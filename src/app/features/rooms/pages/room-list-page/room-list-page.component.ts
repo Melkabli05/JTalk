@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ButtonDirective } from '@openng/optimus-ui/button';
+import { Card } from '@openng/optimus-ui/card';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { I18n } from '@shared/utils/i18n/i18n.service';
@@ -15,6 +16,7 @@ import { RoomFormDialogComponent } from '../../ui/room-form-dialog/room-form-dia
   selector: 'app-room-list-page',
   imports: [
     ButtonDirective,
+    Card,
     LanguageFilterComponent,
     Message,
     Skeleton,

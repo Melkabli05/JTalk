@@ -75,12 +75,13 @@ describe('RoomListPageComponent (container)', () => {
     expect(root().querySelector('app-room-card')).toBeNull();
   });
 
-  it('shows placeholders, announced as loading, while the rooms load', async () => {
+  it('shows placeholders shaped like the cards, announced as finding rooms, while the rooms load', async () => {
     fixture = TestBed.createComponent(RoomListPageComponent);
     fixture.detectChanges();
 
-    expect(root().querySelectorAll('p-skeleton')).toHaveLength(3);
-    expect(root().querySelector('[role="status"]')?.textContent).toContain('Loading');
+    expect(root().querySelectorAll('.rooms li')).toHaveLength(3);
+    expect(root().querySelectorAll('.rooms p-card')).toHaveLength(3);
+    expect(root().querySelector('[role="status"]')?.textContent).toContain('Finding open rooms');
     http.expectOne(ROOMS_URL).flush({ content: [] });
     await fixture.whenStable();
   });

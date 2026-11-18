@@ -165,7 +165,7 @@ row of people: the host **by name** with a crown, then the others on stage as fa
 with a still green dot, "N in the room" and "Open seats: N" while there are some. The whole card is the way in: the title is the one real button, stretched over the card, with a quiet hover
 and a focus ring on the card, so there is no second Join button and no "Live" label on cards that are all live. The page: the title and one concrete line, the language filter, a grid of
 cards of equal height. Empty is two different states, said differently: no rooms at all ("Quiet right now", and the header's single Start a room button, not a second one), and a language with no
-rooms ("Nothing in this language yet" with Show all rooms). Loading is skeleton cards.
+rooms ("Nothing in this language yet" with Show all rooms). Loading is skeleton cards shaped like a real card (meta line, title, topic, faces, counts), announced as `Finding open rooms` (never a vague "Loading"); cards fade up when they arrive (a short stagger for the first six) and fade out when a room ends or the filter hides them, so people can follow what changed (`animate.enter` / `animate.leave`); a failed load is a `p-message` that carries its own `Try again`. The language filter's unselected labels use `surface.600` (4.58:1; the Aura default measured 2.75:1) through the preset's `togglebutton` token.
 
 ### Using Optimus as its docs say
 

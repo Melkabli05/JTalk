@@ -311,6 +311,11 @@ export const JtalkPreset = definePreset(Aura, {
         borderRadius: radius.pill,
       },
     },
+    togglebutton: {
+      colorScheme: {
+        light: { root: { color: '{surface.600}', hoverColor: '{surface.800}' } },
+      },
+    },
     selectbutton: {
       css: () => `
         .p-selectbutton .p-togglebutton {

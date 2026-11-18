@@ -21,7 +21,7 @@ export const messages: Readonly<Record<string, string>> = {
   '+{count} more': '+{count} آخرون',
   'Open seats: {count}': 'مقاعد شاغرة: {count}',
   'Could not load the rooms. Please try again.': 'تعذّر تحميل الغرف. حاول مرة أخرى.',
-  Loading: 'جارٍ التحميل',
+  'Finding open rooms': 'جارٍ البحث عن الغرف المفتوحة',
   'Could not open the room. Please try again.': 'تعذّر فتح الغرفة. حاول مرة أخرى.',
   'Back to the rooms': 'العودة إلى الغرف',
   'for {language} speakers': 'للناطقين بـ{language}',
