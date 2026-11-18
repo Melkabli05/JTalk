@@ -4,6 +4,7 @@ import { msg } from '@shared/utils/i18n/msg';
 import { memberOf } from '../../utils/members';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 import type { Person } from '@core/auth/identity.models';
+import type { FloatingReaction } from '../../models/reaction.model';
 
 @Component({
   selector: 'app-stage-seats',
@@ -20,6 +21,7 @@ export class StageSeatsComponent {
   readonly canTakeSeat = input(false);
   readonly speaking = input<readonly string[]>([]);
   readonly muted = input<readonly string[]>([]);
+  readonly reactions = input<ReadonlyMap<string, FloatingReaction>>(new Map());
 
   readonly memberSelected = output<string>();
   readonly seatTaken = output<void>();
@@ -39,6 +41,7 @@ export class StageSeatsComponent {
         me: id === this.meId(),
         speaking: this.speaking().includes(id),
         muted: this.muted().includes(id),
+        reaction: this.reactions().get(id) ?? null,
         role: host ? msg('Host') : msg('Speaker'),
       };
     });

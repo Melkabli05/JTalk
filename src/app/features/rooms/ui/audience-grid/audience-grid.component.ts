@@ -5,6 +5,7 @@ import { msg } from '@shared/utils/i18n/msg';
 import { memberOf } from '../../utils/members';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 import type { Person } from '@core/auth/identity.models';
+import type { FloatingReaction } from '../../models/reaction.model';
 
 @Component({
   selector: 'app-audience-grid',
@@ -24,7 +25,7 @@ import type { Person } from '@core/auth/identity.models';
             "
             (click)="memberSelected.emit(person.member.id)"
           >
-            <app-person-avatar [member]="person.member" />
+            <app-person-avatar [member]="person.member" [reaction]="person.reaction" />
             <span class="name" aria-hidden="true">{{ person.member.name }}</span>
             @if (person.me) {
               <p-tag severity="info" aria-hidden="true" [value]="'You' | t" />
@@ -46,6 +47,7 @@ export class AudienceGridComponent {
   readonly members = input.required<ReadonlyMap<string, Person>>();
   readonly meId = input<string | null>(null);
   readonly reconnecting = input<readonly string[]>([]);
+  readonly reactions = input<ReadonlyMap<string, FloatingReaction>>(new Map());
 
   readonly memberSelected = output<string>();
 
@@ -54,6 +56,7 @@ export class AudienceGridComponent {
       member: memberOf(this.members(), id),
       me: id === this.meId(),
       reconnecting: this.reconnecting().includes(id),
+      reaction: this.reactions().get(id) ?? null,
       role: msg('Listener'),
     })),
   );

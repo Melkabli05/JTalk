@@ -60,4 +60,12 @@ describe('AudienceGridComponent (presentational)', () => {
 
     expect(root().querySelector('ul')?.getAttribute('aria-label')).toBe('In the audience');
   });
+
+  it('shows a reaction on the face of the person who sent it, and only theirs', async () => {
+    await render({ reactions: new Map([['b-2', { id: 1, userId: 'b-2', reaction: 'SPARKLES' }]]) });
+
+    const [ada, bob] = [...root().querySelectorAll('li')];
+    expect(ada?.querySelector('.reaction')).toBeNull();
+    expect(bob?.querySelector('.reaction .pi-sparkles')).not.toBeNull();
+  });
 });

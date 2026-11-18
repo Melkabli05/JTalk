@@ -253,6 +253,8 @@ describe('RoomStore', () => {
     store.float([reaction(1), reaction(2)]);
     expect(store.floating().map((r) => r.id)).toEqual([1, 2]);
 
+    expect(store.reactionsByPerson().get('b-1')?.id).toBe(2);
+
     store.settle(new Set([1]));
     expect(store.floating().map((r) => r.id)).toEqual([2]);
 

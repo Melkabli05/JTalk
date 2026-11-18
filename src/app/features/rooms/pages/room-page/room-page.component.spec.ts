@@ -247,7 +247,7 @@ describe('RoomPageComponent (container)', () => {
     ).toBe('true');
   });
 
-  it('shows a reaction the server announces, over the stage', async () => {
+  it('shows a reaction the server announces on the face of the person who sent it', async () => {
     await open();
 
     link.last.listener.roomEvent({
@@ -256,7 +256,7 @@ describe('RoomPageComponent (container)', () => {
     });
     await settle();
 
-    expect(root().querySelector('app-reaction-stream li .pi-heart-fill')).not.toBeNull();
+    expect(root().querySelector('app-person-avatar .reaction .pi-heart-fill')).not.toBeNull();
   });
 
   it('sends the reaction a person picks', async () => {

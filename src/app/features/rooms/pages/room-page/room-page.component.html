@@ -56,13 +56,9 @@
         [canTakeSeat]="!state.onStage() && !facade.action.submitting()"
         [speaking]="facade.audio.speaking()"
         [muted]="mutedIds()"
+        [reactions]="state.reactionsByPerson()"
         (memberSelected)="selectedId.set($event)"
         (seatTaken)="facade.takeSeat()"
-      />
-      <app-reaction-stream
-        [reactions]="state.floating()"
-        [members]="state.members()"
-        [meId]="state.meId()"
       />
     </section>
 
@@ -89,6 +85,7 @@
         [members]="state.members()"
         [meId]="state.meId()"
         [reconnecting]="state.reconnecting()"
+        [reactions]="state.reactionsByPerson()"
         (memberSelected)="selectedId.set($event)"
       />
     </div>

@@ -51,4 +51,25 @@ describe('PersonAvatarComponent (presentational)', () => {
 
     expect(root.querySelector('p-avatar')?.getAttribute('aria-hidden')).toBe('true');
   });
+
+  it('pops the reaction it is given on the picture as an icon, and shows a new one when it changes', async () => {
+    const fixture = TestBed.createComponent(PersonAvatarComponent);
+    fixture.componentRef.setInput('member', ADA);
+    fixture.componentRef.setInput('reaction', { id: 1, userId: 'a-1', reaction: 'HEART' });
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.querySelector('.reaction .pi-heart-fill')).not.toBeNull();
+    expect(root.querySelector('.reaction')?.getAttribute('aria-hidden')).toBe('true');
+    const first = root.querySelector('.reaction');
+
+    fixture.componentRef.setInput('reaction', { id: 2, userId: 'a-1', reaction: 'SMILE' });
+    await fixture.whenStable();
+    expect(root.querySelector('.reaction .pi-face-smile')).not.toBeNull();
+    expect(root.querySelector('.reaction')).not.toBe(first);
+
+    fixture.componentRef.setInput('reaction', null);
+    await fixture.whenStable();
+    expect(root.querySelector('.reaction')).toBeNull();
+  });
 });

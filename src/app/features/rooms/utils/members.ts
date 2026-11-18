@@ -12,7 +12,7 @@ const PALETTE = [
   { background: 'var(--p-jtalk-tone-coral)', color: '#fff' },
 ] as const;
 
-export function seedHash(seed: string): number {
+function seedHash(seed: string): number {
   return [...seed].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) % 997, 7);
 }
 

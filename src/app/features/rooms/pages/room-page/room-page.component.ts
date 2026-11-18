@@ -29,7 +29,6 @@ import type { RoomRole, RoomEdit, Stage } from '../../models/room.model';
 import { provideRoom, RoomFacade, type RoomExit } from '../../state/room.facade';
 import { AudienceSectionComponent } from '../../ui/audience-section/audience-section.component';
 import { PersonDialogComponent } from '../../ui/person-dialog/person-dialog.component';
-import { ReactionStreamComponent } from '../../ui/reaction-stream/reaction-stream.component';
 import { RaisedHandsComponent } from '../../ui/raised-hands/raised-hands.component';
 import { RoomControlsComponent } from '../../ui/room-controls/room-controls.component';
 import { RoomFormDialogComponent } from '../../ui/room-form-dialog/room-form-dialog.component';
@@ -54,7 +53,6 @@ const EXIT_MESSAGES: Readonly<Record<RoomExit, string | null>> = {
     Message,
     PersonDialogComponent,
     RaisedHandsComponent,
-    ReactionStreamComponent,
     RoomControlsComponent,
     RoomFormDialogComponent,
     RouterLink,

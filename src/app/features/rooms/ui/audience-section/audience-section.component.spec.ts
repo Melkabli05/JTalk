@@ -79,4 +79,18 @@ describe('AudienceSectionComponent (presentational)', () => {
 
     expect(picked).toEqual(['b']);
   });
+
+  it('puts someone who just reacted among the faces, even when the list is long and closed', async () => {
+    fixture = TestBed.createComponent(AudienceSectionComponent);
+    fixture.componentRef.setInput('ids', ['a', 'b', 'c', 'd', 'e', 'f', 'g']);
+    fixture.componentRef.setInput('members', MEMBERS);
+    fixture.componentRef.setInput(
+      'reactions',
+      new Map([['g', { id: 1, userId: 'g', reaction: 'HEART' }]]),
+    );
+    await fixture.whenStable();
+
+    expect(root().querySelectorAll('app-person-avatar')).toHaveLength(5);
+    expect(root().querySelector('.reaction .pi-heart-fill')).not.toBeNull();
+  });
 });

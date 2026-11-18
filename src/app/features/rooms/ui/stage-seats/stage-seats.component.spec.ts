@@ -106,4 +106,14 @@ describe('StageSeatsComponent (presentational)', () => {
 
     expect(root().querySelector('.name')?.textContent).toContain('1f9d2c0e');
   });
+
+  it('shows a reaction on the portrait of the speaker who sent it', async () => {
+    await render({
+      reactions: new Map([['s-2', { id: 1, userId: 's-2', reaction: 'THUMBS_UP' }]]),
+    });
+
+    const tiles = [...root().querySelectorAll('li')];
+    expect(tiles[0]?.querySelector('.reaction')).toBeNull();
+    expect(tiles[1]?.querySelector('.reaction .pi-thumbs-up-fill')).not.toBeNull();
+  });
 });

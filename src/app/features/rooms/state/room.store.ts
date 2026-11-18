@@ -37,6 +37,9 @@ export class RoomStore {
   readonly room = this.roomState.asReadonly();
   readonly stage = this.stageState.asReadonly();
   readonly floating = this.floatingState.asReadonly();
+  readonly reactionsByPerson = computed(
+    () => new Map(this.floating().map((reaction) => [reaction.userId, reaction])),
+  );
   readonly roomGone = computed(() => httpStatus(this.roomResource.error()) === 404);
 
   readonly members = this.identity.directory;

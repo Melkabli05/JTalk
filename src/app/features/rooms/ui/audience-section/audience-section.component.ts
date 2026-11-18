@@ -7,6 +7,7 @@ import { memberOf } from '../../utils/members';
 import { AudienceGridComponent } from '../audience-grid/audience-grid.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 import type { Person } from '@core/auth/identity.models';
+import type { FloatingReaction } from '../../models/reaction.model';
 
 const PREVIEW = 5;
 let nextId = 0;
@@ -39,7 +40,11 @@ let nextId = 0;
             @if (closed() && preview().length > 0) {
               <p-avatargroup aria-hidden="true">
                 @for (member of preview(); track member.id) {
-                  <app-person-avatar size="normal" [member]="member" />
+                  <app-person-avatar
+                    size="normal"
+                    [member]="member"
+                    [reaction]="reactions().get(member.id) ?? null"
+                  />
                 }
               </p-avatargroup>
               @if (more() > 0) {
@@ -68,6 +73,7 @@ let nextId = 0;
         [members]="members()"
         [meId]="meId()"
         [reconnecting]="reconnecting()"
+        [reactions]="reactions()"
         (memberSelected)="memberSelected.emit($event)"
       />
     </ng-template>
@@ -80,6 +86,7 @@ export class AudienceSectionComponent {
   readonly meId = input<string | null>(null);
   readonly reconnecting = input<readonly string[]>([]);
   readonly collapsible = input(true);
+  readonly reactions = input<ReadonlyMap<string, FloatingReaction>>(new Map());
 
   readonly memberSelected = output<string>();
 
@@ -87,6 +94,7 @@ export class AudienceSectionComponent {
   protected readonly panelId = `app-audience-${nextId++}`;
   protected readonly preview = computed(() =>
     this.ids()
+      .toSorted((a, b) => Number(this.reactions().has(b)) - Number(this.reactions().has(a)))
       .slice(0, PREVIEW)
       .map((id) => memberOf(this.members(), id)),
   );
