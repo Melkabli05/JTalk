@@ -1,4 +1,4 @@
-import { parseRoom, parseRooms, parseSession } from './room.parser';
+import { parseRoom, parseSession } from './room.parser';
 
 const dto = {
   id: 'r-1',
@@ -19,22 +19,6 @@ describe('room parser', () => {
 
     expect(room.topic).toBe('');
     expect(room.speakers).toEqual(['h-1', 's-2']);
-  });
-
-  it('reads a page of rooms', () => {
-    expect(parseRooms({ content: [dto, { ...dto, id: 'r-2' }] }).map((room) => room.id)).toEqual([
-      'r-1',
-      'r-2',
-    ]);
-  });
-
-  it.each([
-    ['a page without content', {}],
-    ['a list instead of a page', [dto]],
-    ['a room without a title', { content: [{ ...dto, title: undefined }] }],
-    ['a room whose speakers are not ids', { content: [{ ...dto, speakers: [1] }] }],
-  ])('refuses %s', (_name, raw) => {
-    expect(() => parseRooms(raw)).toThrow('Unexpected response');
   });
 
   it('refuses something that is not a room', () => {

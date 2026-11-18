@@ -25,7 +25,7 @@ ask `IdentityService.resolve()` for the hosts, speakers and participants they ha
 **Rooms** (`features/rooms`) are the product so far:
 
 - **The hallway** lists the open rooms as cards (a colored language banner, the title, who is on stage, how busy it is), filters them by language,
-  and starts a room from a dialog that is filled in for the person (a title and topic, the language they are learning to practise, theirs for the audience).
+  keeps them up to date as rooms open, change and close (one server-sent events stream, no polling), and starts a room from a dialog that is filled in for the person (a title and topic, the language they are learning to practise, theirs for the audience).
 - **A room** shows the stage with its open seats, the raised hands in order, and the audience. Anyone can take a free seat or raise a hand; the host invites,
   moves, removes, edits and ends. The page says "still here" and refreshes every 3 seconds, and sends the person back to the hallway when the host removes
   them or the room ends.
@@ -257,8 +257,8 @@ The app is a static build (`pnpm build`, output `dist/Jtalk/browser`), and `verc
   that did not change (Vercel's default revalidates every file on every visit). Pictures and brand files, whose names do not change, cache for a day.
 - Proxied answers are never cached on the CDN (`x-vercel-enable-rewrite-caching: 0`): rooms and the stage change every few seconds.
 
-The backend on Render sleeps when idle on the free plan, so the first request after a quiet period can be slow or fail; the app refreshes every few
-seconds and recovers by itself. While the backend runs in its open testing mode (`MICRONAUT_SECURITY_ENABLED=false`) the production build uses the dev
+The backend on Render sleeps when idle on the free plan, so the first request after a quiet period can be slow or fail; the hallway retries its
+connection with a growing pause and recovers by itself (or offers Try again). While the backend runs in its open testing mode (`MICRONAUT_SECURITY_ENABLED=false`) the production build uses the dev
 identity (`devIdentity: true` in `environment.ts`); turn that off when a user service issues tokens.
 
 ## Performance
@@ -268,8 +268,10 @@ transferred; the Auth0 SDK (about 58 kB of it) is the one thing that has to load
 LiveKit (129 kB) loads when a room is joined and the Krisp noise filter (a 6 MB WebAssembly chunk, 1.4 MB transferred) only when a speaker's microphone
 is published, so listeners never download it.
 
-- Background refreshing uses `shared/utils/visible-interval`, not `interval`: the room list (5 s) and a joined room's re-sync (30 s) pause while the
-  tab is hidden and refresh at once when it is shown again, so an open background tab costs the servers nothing.
+- The hallway does not poll: `GET /api/v1/voice-rooms/feed` is a server-sent events stream that sends the open rooms first and every change after
+  (`shared/utils/server-sent-events`, through `HttpClient` so the Auth0 interceptor adds the token, which the browser's `EventSource` cannot). The
+  store is an `rxResource` over it, so a failure shows through `error()` and Try again is `reload()`. A joined room's re-sync (30 s) is background
+  refreshing and uses `shared/utils/visible-interval`, not `interval`: it pauses while the tab is hidden and refreshes at once when it is shown again.
 - Hashed assets are cached `immutable` (see Deploying).
 
 ## Quality gates

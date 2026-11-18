@@ -8,8 +8,8 @@ import type { Room, RoomDraft, RoomEdit, RoomSession } from '../models/room.mode
 import { parseRoomFeedEvent } from './parsers/room-feed.parser';
 import { parseRoom, parseSession } from './parsers/room.parser';
 
+const RECONNECT_MS = 1000;
 const RETRIES = 5;
-const RETRY_FIRST_MS = 1000;
 
 @Service()
 export class RoomsApiService {
@@ -28,10 +28,10 @@ export class RoomsApiService {
       }),
       retry({
         count: RETRIES,
-        delay: (_error, attempt) => timer(RETRY_FIRST_MS * 2 ** (attempt - 1)),
+        delay: (_error, attempt) => timer(RECONNECT_MS * 2 ** (attempt - 1)),
         resetOnSuccess: true,
       }),
-      repeat({ delay: RETRY_FIRST_MS }),
+      repeat({ delay: RECONNECT_MS }),
     );
   }
 

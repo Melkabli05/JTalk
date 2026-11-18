@@ -43,14 +43,6 @@ export function parseRoom(raw: unknown): Room {
   return room;
 }
 
-export function parseRooms(raw: unknown): Room[] {
-  const content = asRecord(raw)?.['content'];
-  if (!Array.isArray(content)) {
-    throw new Error('Unexpected response: expected a page of rooms');
-  }
-  return content.map((item) => parseRoom(item));
-}
-
 export function parseSession(raw: unknown): RoomSession {
   const session = asRecord(raw);
   const room = readRoom(session?.['room']);
