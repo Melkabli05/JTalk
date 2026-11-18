@@ -5,3 +5,5 @@ allowBuilds:
   esbuild: false
   lmdb: false
   msgpackr-extract: false
+  # Pulled in by the Auth0 SDK. It ships its compiled code; its install script only runs a post-install notice.
+  browser-tabs-lock: false
