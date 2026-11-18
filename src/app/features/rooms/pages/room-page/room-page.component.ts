@@ -111,8 +111,20 @@ export default class RoomPageComponent {
         : 'LISTENER';
   });
   protected readonly selectedIsMe = computed(() => this.selectedId() === this.state.meId());
+  /** There is a seat to give: inviting is not offered when the stage is full. */
+  protected readonly seatFree = computed(
+    () => this.state.speakers().length < (this.state.room()?.maxStageSeats ?? 0),
+  );
   protected readonly canInvite = computed(
-    () => this.state.isHost() && !this.selectedIsMe() && this.selectedRole() === 'LISTENER',
+    () =>
+      this.state.isHost() &&
+      !this.selectedIsMe() &&
+      this.selectedRole() === 'LISTENER' &&
+      this.seatFree(),
+  );
+  /** Someone on the stage who is not the host may step down from the dock. */
+  protected readonly canStepDownFromDock = computed(
+    () => this.state.onStage() && !this.state.isHost(),
   );
   protected readonly canDemote = computed(
     () => this.state.isHost() && this.selectedRole() === 'SPEAKER',
@@ -278,19 +290,26 @@ export default class RoomPageComponent {
 
   private moderationFor(id: string): MenuItem[] {
     const speaker = this.state.speakers().includes(id);
-    return [
-      ...(this.canMute(id) ? [this.muteItem(id)] : []),
-      speaker
-        ? {
+    const move: MenuItem[] = speaker
+      ? [
+          {
             label: this.i18n.t('Move to the audience'),
             icon: 'pi pi-arrow-down',
             command: () => this.demote(id),
-          }
-        : {
-            label: this.i18n.t('Invite to the stage'),
-            icon: 'pi pi-microphone',
-            command: () => this.invite(id),
           },
+        ]
+      : this.seatFree()
+        ? [
+            {
+              label: this.i18n.t('Invite to the stage'),
+              icon: 'pi pi-microphone',
+              command: () => this.invite(id),
+            },
+          ]
+        : [];
+    return [
+      ...(this.canMute(id) ? [this.muteItem(id)] : []),
+      ...move,
       { separator: true },
       {
         label: this.i18n.t('Remove from the room'),

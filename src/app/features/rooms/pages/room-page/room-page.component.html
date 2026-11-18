@@ -109,7 +109,7 @@
           <app-raised-hands
             [ids]="state.queue()"
             [members]="state.members()"
-            [canInvite]="state.isHost()"
+            [canInvite]="state.isHost() && seatFree()"
             (invited)="invite($event)"
           />
         </p-card>
@@ -136,6 +136,7 @@
         [busy]="facade.action.submitting()"
         [audio]="facade.audio.status()"
         [canSpeak]="facade.audio.canSpeak()"
+        [canStepDown]="canStepDownFromDock()"
         [micOn]="facade.audio.micOn()"
         [micRefused]="facade.audio.micRefused()"
         [soundBlocked]="facade.audio.soundBlocked()"
@@ -143,6 +144,7 @@
         (enableSound)="facade.audio.enableSound()"
         (retryAudio)="facade.reconnectAudio()"
         (leave)="leave()"
+        (stepDown)="facade.stepDown()"
         (raiseHand)="facade.raiseHand()"
         (lowerHand)="facade.lowerHand()"
         (react)="facade.react($event)"

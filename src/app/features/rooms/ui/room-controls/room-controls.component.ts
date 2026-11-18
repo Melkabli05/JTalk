@@ -1,5 +1,5 @@
 import { NgOptimizedImage } from '@angular/common';
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Message } from '@openng/optimus-ui/message';
 import { Popover } from '@openng/optimus-ui/popover';
@@ -77,7 +77,7 @@ let nextId = 0;
     <p-toolbar [ariaLabelledBy]="labelId" [attr.aria-busy]="busy()">
       <ng-template #center>
         <div class="controls">
-          @if (canSpeak()) {
+          @if (micShown()) {
             @let micLabel = micOn() ? ('Mute' | t) : ('Unmute' | t);
             <button
               pButton
@@ -91,6 +91,23 @@ let nextId = 0;
               [pTooltip]="micLabel"
               tooltipPosition="top"
               (click)="toggleMic.emit()"
+            ></button>
+          }
+          @if (canStepDown()) {
+            @let stepLabel = 'Step down to the audience' | t;
+            <button
+              pButton
+              type="button"
+              size="large"
+              icon="pi pi-arrow-down"
+              severity="secondary"
+              [outlined]="true"
+              [rounded]="true"
+              [disabled]="busy()"
+              [attr.aria-label]="stepLabel"
+              [pTooltip]="stepLabel"
+              tooltipPosition="top"
+              (click)="stepDown.emit()"
             ></button>
           }
           @if (!onStage()) {
@@ -171,11 +188,14 @@ export class RoomControlsComponent {
   readonly busy = input(false);
   readonly audio = input<AudioStatus>('idle');
   readonly canSpeak = input(false);
+  /** A speaker who is not the host may step down to the audience; the host keeps the stage. */
+  readonly canStepDown = input(false);
   readonly micOn = input(false);
   readonly soundBlocked = input(false);
   readonly micRefused = input(false);
 
   readonly leave = output<void>();
+  readonly stepDown = output<void>();
   readonly raiseHand = output<void>();
   readonly lowerHand = output<void>();
   readonly toggleMic = output<void>();
@@ -187,5 +207,7 @@ export class RoomControlsComponent {
     reaction,
     ...REACTION_LOOKS[reaction],
   }));
+  /** The microphone is offered only to someone who may speak, and only while there is audio to speak into. */
+  protected readonly micShown = computed(() => this.canSpeak() && this.audio() === 'connected');
   protected readonly labelId = `app-room-controls-${nextId++}`;
 }

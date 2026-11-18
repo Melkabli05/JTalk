@@ -55,7 +55,7 @@ describe('RoomControlsComponent (presentational)', () => {
 
   it('lets someone who may speak mute and unmute, with a button that names what it does', async () => {
     const toggled = vi.fn();
-    await render({ canSpeak: true, onStage: true, micOn: true });
+    await render({ canSpeak: true, audio: 'connected', onStage: true, micOn: true });
     fixture.componentInstance.toggleMic.subscribe(toggled);
 
     expect(names()).toEqual(['Mute', 'React', 'Leave quietly']);
@@ -137,7 +137,7 @@ describe('RoomControlsComponent (presentational)', () => {
   });
 
   it('draws the small controls as circles, the main one as a labelled pill, and leaving apart', async () => {
-    await render({ canSpeak: true, micOn: true });
+    await render({ canSpeak: true, audio: 'connected', micOn: true });
 
     for (const name of ['Mute', 'React']) {
       const circle = button(name);
@@ -160,10 +160,10 @@ describe('RoomControlsComponent (presentational)', () => {
   });
 
   it('shows the microphone in Forest while it is on and neutral while it is off', async () => {
-    await render({ canSpeak: true, micOn: true });
+    await render({ canSpeak: true, audio: 'connected', micOn: true });
     expect(button('Mute').className).toContain('p-button-primary');
 
-    await render({ canSpeak: true, micOn: false });
+    await render({ canSpeak: true, audio: 'connected', micOn: false });
     expect(button('Unmute').className).toContain('p-button-secondary');
     expect(button('Unmute').className).toContain('p-button-outlined');
   });
@@ -231,7 +231,7 @@ describe('RoomControlsComponent (presentational)', () => {
   });
 
   it('keeps all the controls in one centered row, leaving last', async () => {
-    await render({ onStage: true, canSpeak: true });
+    await render({ onStage: true, canSpeak: true, audio: 'connected' });
 
     expect([...root().querySelectorAll('.p-toolbar-center button')].map(nameOf)).toEqual([
       'Unmute',
@@ -240,5 +240,55 @@ describe('RoomControlsComponent (presentational)', () => {
     ]);
     expect(root().querySelector('.p-toolbar-start button')).toBeNull();
     expect(root().querySelector('.p-toolbar-end button')).toBeNull();
+  });
+
+  describe('only what the person can do', () => {
+    const shown = () => [...root().querySelectorAll('.p-toolbar-center button')].map(nameOf);
+
+    it('gives the audience a hand to raise, a reaction and a way out: no microphone, no stepping down', async () => {
+      await render({ audio: 'connected' });
+
+      expect(shown()).toEqual(['Raise hand', 'React', 'Leave quietly']);
+    });
+
+    it('gives someone on the stage the microphone and a way down, and no hand to raise', async () => {
+      await render({ onStage: true, canSpeak: true, canStepDown: true, audio: 'connected' });
+
+      expect(shown()).toEqual(['Unmute', 'Step down to the audience', 'React', 'Leave quietly']);
+    });
+
+    it('gives the host the microphone but no way down: the host keeps the stage', async () => {
+      await render({ onStage: true, canSpeak: true, canStepDown: false, audio: 'connected' });
+
+      expect(shown()).toEqual(['Unmute', 'React', 'Leave quietly']);
+    });
+
+    it('steps down when asked to', async () => {
+      const stepped = vi.fn();
+      await render({ onStage: true, canSpeak: true, canStepDown: true, audio: 'connected' });
+      fixture.componentInstance.stepDown.subscribe(stepped);
+
+      click('Step down to the audience');
+
+      expect(stepped).toHaveBeenCalledOnce();
+    });
+
+    it.each(['idle', 'connecting', 'reconnecting', 'failed'] as const)(
+      'offers no microphone while the audio is %s, since there is nothing to speak into',
+      async (audio) => {
+        await render({ onStage: true, canSpeak: true, audio });
+
+        expect(names()).not.toContain('Mute');
+        expect(names()).not.toContain('Unmute');
+        expect(names()).toContain('React');
+        expect(names()).toContain('Leave quietly');
+      },
+    );
+
+    it('keeps the microphone when the browser refused it, so it can be tried again', async () => {
+      await render({ onStage: true, canSpeak: true, audio: 'connected', micRefused: true });
+
+      expect(names()).toContain('Unmute');
+    });
   });
 });

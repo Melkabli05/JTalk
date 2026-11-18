@@ -504,6 +504,24 @@ describe('RoomPageComponent (container)', () => {
       );
     });
 
+    it('offers no invitation when the stage is full, anywhere: not in the hands, not on the seat, not on the card', async () => {
+      server.room = { ...ROOM, maxStageSeats: 2 };
+      server.stage = { speakers: ['h-1', 'm-1'], handRaiseQueue: ['b-1'] };
+      await open(asHost);
+
+      expect(root().querySelector('app-raised-hands button')).toBeNull();
+      await openAudience();
+      const listener = root().querySelector<HTMLElement>('app-audience-grid .person')!;
+      listener.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+      await settle();
+      await new Promise((resolve) => setTimeout(resolve));
+      const items = [...document.querySelectorAll('.p-menu-item-link')].map((i) =>
+        i.textContent?.trim(),
+      );
+      expect(items).toContain('Remove from the room');
+      expect(items).not.toContain('Invite to the stage');
+    });
+
     it('invites someone to the stage, and shows them there when the server announces it', async () => {
       await open(asHost);
 
@@ -711,6 +729,26 @@ describe('RoomPageComponent (container)', () => {
       await settle();
       expect(link.last.microphone).toEqual([true, false]);
       expect(controlLabels()).toContain('Unmute');
+    });
+
+    it('lets a speaker who is not the host step down from the controls, and the host not', async () => {
+      server.session = speakerSession();
+      server.stage = { speakers: ['h-1', 'm-1'], handRaiseQueue: [] };
+      await open();
+      expect(controlLabels()).toContain('Step down to the audience');
+
+      press('Step down to the audience', root());
+      await settle();
+      expect(sent('POST', `${BASE}/stage/leave`)).toBe(true);
+    });
+
+    it('does not offer the host a way down from the controls: the host keeps the stage', async () => {
+      server.session = speakerSession();
+      server.stage = { speakers: ['h-1'], handRaiseQueue: [] };
+      await open({ me: 'h-1' });
+
+      expect(controlLabels()).toContain('Mute');
+      expect(controlLabels()).not.toContain('Step down to the audience');
     });
 
     it('lets a listener speak the moment the server gives them a seat', async () => {
