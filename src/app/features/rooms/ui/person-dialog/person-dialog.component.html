@@ -16,6 +16,18 @@
       @if (isMe()) {
         <span class="you">{{ 'You' | t }}</span>
       }
+      @if (card()) {
+        <button
+          pButton
+          type="button"
+          class="compact profile-link"
+          icon="pi pi-user"
+          [text]="true"
+          [rounded]="true"
+          [label]="'View profile' | t"
+          (click)="viewProfile.emit()"
+        ></button>
+      }
       @let closeLabel = 'Close' | t;
       <button
         pButton
@@ -44,8 +56,19 @@
       <div class="who">
         <h2 [id]="titleId">{{ person.name }}</h2>
         @if (card(); as shown) {
-          @if (shown.details.username) {
-            <p class="handle">&#64;{{ shown.details.username }}</p>
+          @if (shown.details.username || shown.details.joinedAt) {
+            <p class="handle">
+              @if (shown.details.username) {
+                <span>&#64;{{ shown.details.username }}</span>
+              }
+              @if (shown.details.joinedAt; as joined) {
+                <span>
+                  {{
+                    'Joined {date}' | t: { date: (joined | date: 'MMMM y' : undefined : locale()) }
+                  }}
+                </span>
+              }
+            </p>
           }
         }
         <p class="tags">
@@ -232,27 +255,5 @@
         ></button>
       }
     </div>
-
-    <footer class="foot">
-      @if (card()?.details?.joinedAt; as joined) {
-        <span class="joined">
-          {{ 'Joined {date}' | t: { date: (joined | date: 'MMMM y' : undefined : locale()) } }}
-        </span>
-      } @else {
-        <span></span>
-      }
-      @if (card()) {
-        <button
-          pButton
-          type="button"
-          class="compact"
-          icon="pi pi-user"
-          [text]="true"
-          [rounded]="true"
-          [label]="'View profile' | t"
-          (click)="viewProfile.emit()"
-        ></button>
-      }
-    </footer>
   }
 </p-dialog>

@@ -234,16 +234,33 @@ describe('PersonDialogComponent (presentational)', () => {
       expect(labels()).toContain('View profile');
     });
 
-    it('opens their full profile from the footer, which also says when they joined', async () => {
+    it('opens their full profile from the strip on top, next to the close button', async () => {
       const viewed = vi.fn();
       await render({ role: 'LISTENER', card: CARD });
       fixture.componentInstance.viewProfile.subscribe(viewed);
 
-      const foot = root().querySelector('.foot')!;
-      expect(foot.textContent).toContain('Joined October 2026');
+      expect([...strip().querySelectorAll('button')].map(nameOf)).toEqual([
+        'View profile',
+        'Close',
+      ]);
       press('View profile');
 
       expect(viewed).toHaveBeenCalledOnce();
+    });
+
+    it('says when they joined beside their handle at the top, and has no footer', async () => {
+      await render({ role: 'LISTENER', card: CARD });
+
+      expect(root().querySelector('.handle')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+        '@maya Joined October 2026',
+      );
+      expect(root().querySelector('.foot')).toBeNull();
+    });
+
+    it('offers no profile link before their profile is known', async () => {
+      await render({ role: 'LISTENER' });
+
+      expect(labels()).not.toContain('View profile');
     });
 
     it('is only a view for yourself: no follow, nothing to block', async () => {
