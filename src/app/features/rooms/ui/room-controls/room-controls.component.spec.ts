@@ -154,4 +154,28 @@ describe('RoomControlsComponent (presentational)', () => {
     expect(emitted).toEqual(['leave', 'raise']);
     expect(edited).toHaveBeenCalledOnce();
   });
+
+  it('labels the mic and the hand in words, and draws the hand as an icon', async () => {
+    await render({ canSpeak: true, micOn: true });
+
+    expect(button('Mute').textContent).toContain('Mute');
+    expect(button('Raise hand').textContent).toContain('Raise hand');
+    expect(button('Raise hand').querySelector('.pi-hand')).not.toBeNull();
+  });
+
+  it('keeps the leave button named when its label is hidden on a narrow dock', async () => {
+    await render({});
+
+    const leave = button('Leave quietly');
+    expect(leave.getAttribute('aria-label')).toBe('Leave quietly');
+    expect(leave.classList).toContain('leave-compact');
+  });
+
+  it('shows the waiting hint with the hand icon, politely', async () => {
+    await render({ handRaised: true });
+
+    const hint = root().querySelector('.hint');
+    expect(hint?.getAttribute('role')).toBe('status');
+    expect(hint?.querySelector('.pi-hand')?.getAttribute('aria-hidden')).toBe('true');
+  });
 });

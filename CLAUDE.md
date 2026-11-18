@@ -164,7 +164,7 @@ hardest to find). A muted microphone is a small badge on the portrait's corner, 
 The people. `Listeners N` and the list: a collapsed `p-panel` with a few faces on a phone, a plain heading and list where there is room. The host's raised hands are a card above it.
 The dock. A `Leave quietly` pill; in the middle the round icon buttons for the conversation (microphone for a speaker, the hand for a listener, a toggle with `aria-pressed`, both with
 a tooltip and an `aria-label`); the host's actions behind a `...` menu whose items the page builds (so they are translated). It says nothing while all is well and speaks only
-when audio is connecting, coming back, lost, or the microphone is refused. A crossed-out icon is `.pi-slashed` (the icon set has none). Not built yet: chat and reactions, a moderator
+when audio is connecting, coming back, lost, or the microphone is refused. Leave, the microphone and the hand are labeled pills in the toolbar's `start` slot (the label is the button's name; a toggle keeps one label and `aria-pressed`; the hand is `pi-hand`, a mask icon of our own in the preset like `.pi-slashed`, since the icon sets have none; never an emoji), the host's `...` is in `end`; in a dock narrower than 30rem the leave pill keeps only its icon (a container query on the `dock` container, `leave-compact`, in the button's `css` hook in the preset: Optimus has no responsive label), and its `aria-label` stays. Notes above the dock fade in. A crossed-out icon is `.pi-slashed` (the icon set has none). Not built yet: chat and reactions, a moderator
 bottom sheet, speaker invitations to accept or decline, per-speaker mute from other people, room privacy and share.
 
 ### The hallway (`room-list-page` and `room-card`)

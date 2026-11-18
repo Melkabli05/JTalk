@@ -243,9 +243,7 @@ describe('RoomPageComponent (container)', () => {
 
     expect(sent('POST', `${BASE}/stage/raise-hand`)).toBe(true);
     expect(
-      root()
-        .querySelector('app-room-controls [aria-label="Raise hand"]')
-        ?.getAttribute('aria-pressed'),
+      root().querySelector('app-room-controls button[aria-pressed]')?.getAttribute('aria-pressed'),
     ).toBe('true');
   });
 

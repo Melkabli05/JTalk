@@ -38,55 +38,50 @@ let nextId = 0;
         }}</p-message>
       } @else if (handRaised() && !onStage()) {
         <p class="hint" role="status">
+          <i class="pi pi-hand" aria-hidden="true"></i>
           {{ 'Waiting for the host to let you speak. Tap the hand again to cancel.' | t }}
         </p>
       }
     </div>
     <p-toolbar [ariaLabelledBy]="labelId" [attr.aria-busy]="busy()">
       <ng-template #start>
-        <button
-          pButton
-          type="button"
-          size="large"
-          icon="pi pi-sign-out"
-          severity="secondary"
-          [rounded]="true"
-          [outlined]="true"
-          [label]="'Leave quietly' | t"
-          (click)="leave.emit()"
-        ></button>
-      </ng-template>
-
-      <ng-template #center>
         <div class="group">
+          @let leaveLabel = 'Leave quietly' | t;
+          <button
+            pButton
+            type="button"
+            class="leave-compact"
+            size="large"
+            icon="pi pi-sign-out"
+            severity="secondary"
+            [rounded]="true"
+            [outlined]="true"
+            [label]="leaveLabel"
+            [attr.aria-label]="leaveLabel"
+            (click)="leave.emit()"
+          ></button>
           @if (canSpeak()) {
-            @let micLabel = micOn() ? ('Mute' | t) : ('Unmute' | t);
             <button
               pButton
               type="button"
-              class="round"
               [icon]="micOn() ? 'pi pi-microphone' : 'pi pi-microphone pi-slashed'"
+              [label]="micOn() ? ('Mute' | t) : ('Unmute' | t)"
               [severity]="micOn() ? 'primary' : 'secondary'"
               [rounded]="true"
-              [attr.aria-label]="micLabel"
-              [pTooltip]="micLabel"
               (click)="toggleMic.emit()"
             ></button>
           }
           @if (!onStage()) {
-            @let handLabel = 'Raise hand' | t;
             <button
               pButton
               type="button"
-              class="round"
-              icon="pi pi-megaphone"
+              icon="pi pi-hand"
+              [label]="'Raise hand' | t"
               [severity]="handRaised() ? 'primary' : 'secondary'"
               [rounded]="true"
               [outlined]="!handRaised()"
               [disabled]="busy()"
-              [attr.aria-label]="handLabel"
               [attr.aria-pressed]="handRaised()"
-              [pTooltip]="handLabel"
               (click)="handRaised() ? lowerHand.emit() : raiseHand.emit()"
             ></button>
           }
@@ -122,13 +117,14 @@ let nextId = 0;
           <button
             pButton
             type="button"
-            class="round"
+            size="large"
             icon="pi pi-ellipsis-h"
             severity="secondary"
             [rounded]="true"
             [text]="true"
             [attr.aria-label]="moreLabel"
             [pTooltip]="moreLabel"
+            tooltipPosition="top"
             (click)="menu.toggle($event)"
           ></button>
           <p-menu
