@@ -40,18 +40,19 @@ describe('StageSeatsComponent (presentational)', () => {
     expect(people[1].textContent).toContain('You');
   });
 
-  it('gives the host a menu on the seats it is given actions for, and no other', async () => {
+  it('gives the host a menu on the seats it is given actions for, with no button of its own', async () => {
     await render({ moderation: new Map([['s-2', [{ label: 'Mute' }]]]) });
+    const seat = () => root().querySelectorAll<HTMLElement>('app-moderation-menu .person')[1];
 
-    const items = [...root().querySelectorAll('li')];
-    expect(items.map((li) => li.querySelector('app-moderation-menu button') !== null)).toEqual([
-      false,
-      true,
-      false,
-    ]);
-    expect(root().querySelector('app-moderation-menu button')?.getAttribute('aria-label')).toBe(
-      'Maya Speaker: moderation',
-    );
+    expect(root().querySelectorAll('app-moderation-menu .person')).toHaveLength(2);
+    expect(root().querySelectorAll('button.person')).toHaveLength(2);
+    seat().dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    await fixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(
+      [...document.querySelectorAll('.p-menu-item-link')].map((link) => link.textContent?.trim()),
+    ).toEqual(['Mute']);
   });
 
   it('rings the people who are being heard, and no one else', async () => {

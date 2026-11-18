@@ -32,11 +32,23 @@ describe('AudienceGridComponent (presentational)', () => {
     ).toEqual(['Ada (you), Listener', 'Bob, Listener']);
   });
 
-  it('shows a menu only on the people the host has actions for', async () => {
+  it('gives the host a menu only on the people it has actions for', async () => {
     await render({ moderation: new Map([['b-2', [{ label: 'Remove from the room' }]]]) });
+    const bob = root().querySelectorAll<HTMLElement>('.person')[1];
 
-    const triggers = [...root().querySelectorAll('app-moderation-menu button')];
-    expect(triggers.map((t) => t.getAttribute('aria-label'))).toEqual(['Bob: moderation']);
+    root()
+      .querySelectorAll<HTMLElement>('.person')[0]
+      .dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    await fixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(document.querySelectorAll('.p-menu-item-link')).toHaveLength(0);
+
+    bob.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    await fixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(
+      [...document.querySelectorAll('.p-menu-item-link')].map((link) => link.textContent?.trim()),
+    ).toEqual(['Remove from the room']);
   });
 
   it('opens the person who was picked', async () => {

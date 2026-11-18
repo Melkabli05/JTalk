@@ -553,13 +553,21 @@ describe('RoomPageComponent (container)', () => {
     });
 
     describe('from a seat', () => {
-      const trigger = (within: string) =>
-        root().querySelector<HTMLButtonElement>(`${within} app-moderation-menu button`);
-      const pressSeatItem = async (within: string, label: string) => {
-        trigger(within)!.click();
+      const seats = (within: string) => [
+        ...root().querySelectorAll<HTMLElement>(`${within} app-moderation-menu .person`),
+      ];
+      // A right click opens a seat's menu at once; the hover and the long press have their own tests with the menu.
+      const openMenu = async (seat: HTMLElement) => {
+        seat.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
         await settle();
         await new Promise((resolve) => setTimeout(resolve));
-        [...document.querySelectorAll<HTMLElement>('.p-menu-item-link')]
+      };
+      const menuItems = () => [...document.querySelectorAll<HTMLElement>('.p-menu-item-link')];
+      const pressSeatItem = async (within: string, label: string) => {
+        // On the stage the host is the first seat and has no menu, so the speaker is the last; in the audience it is the first.
+        const people = seats(within);
+        await openMenu(within === 'app-stage-seats' ? people.at(-1)! : people[0]);
+        menuItems()
           .find((item) => item.textContent?.includes(label))!
           .click();
       };
@@ -568,8 +576,18 @@ describe('RoomPageComponent (container)', () => {
         server.stage = { speakers: ['h-1', 'b-1'], handRaiseQueue: [] };
         await open(asHost);
 
-        const triggers = [...root().querySelectorAll('app-stage-seats app-moderation-menu button')];
-        expect(triggers.map(nameOf)).toEqual(['b-1: moderation']);
+        const [hostSeat, bilal] = seats('app-stage-seats');
+        await openMenu(hostSeat);
+        expect(menuItems()).toHaveLength(0);
+
+        await openMenu(bilal);
+        expect(menuItems().map((item) => item.textContent?.trim())).toEqual([
+          'Mute',
+          'Move to the audience',
+          'Remove from the room',
+          'Block',
+        ]);
+        expect(root().querySelector('app-moderation-menu button:not(.person)')).toBeNull();
       });
 
       it('offers it to nobody when you are not the host', async () => {
@@ -577,7 +595,8 @@ describe('RoomPageComponent (container)', () => {
         await open();
         await openAudience();
 
-        expect(root().querySelector('app-moderation-menu')).toBeNull();
+        await openMenu(seats('app-audience-grid')[0]);
+        expect(menuItems()).toHaveLength(0);
       });
 
       it('mutes a speaker', async () => {
@@ -596,13 +615,9 @@ describe('RoomPageComponent (container)', () => {
         link.last.listener.microphoneMuted('b-1', true, false);
         await settle();
 
-        trigger('app-stage-seats')!.click();
-        await settle();
-        await new Promise((resolve) => setTimeout(resolve));
+        await openMenu(seats('app-stage-seats')[1]);
 
-        const items = [...document.querySelectorAll('.p-menu-item-link')].map((i) =>
-          i.textContent?.trim(),
-        );
+        const items = menuItems().map((i) => i.textContent?.trim());
         expect(items).toContain('Move to the audience');
         expect(items).not.toContain('Mute');
       });

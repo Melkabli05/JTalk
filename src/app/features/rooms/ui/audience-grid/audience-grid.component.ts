@@ -16,29 +16,29 @@ import type { FloatingReaction } from '../../models/reaction.model';
     <ul class="audience" [attr.aria-label]="'In the audience' | t">
       @for (person of people(); track person.member.id) {
         <li>
-          <button
-            type="button"
-            class="person"
-            aria-haspopup="dialog"
-            [attr.aria-label]="
-              person.me
-                ? ('{name} (you), {role}' | t: { name: person.member.name, role: person.role | t })
-                : ('{name}, {role}' | t: { name: person.member.name, role: person.role | t })
-            "
-            (click)="memberSelected.emit(person.member.id)"
-          >
-            <app-person-avatar [member]="person.member" [reaction]="person.reaction" />
-            <span class="name" aria-hidden="true">{{ person.member.name }}</span>
-            @if (person.me) {
-              <p-tag severity="info" aria-hidden="true" [value]="'You' | t" />
-            }
-            @if (person.reconnecting) {
-              <p-tag severity="secondary" icon="pi pi-sync" [value]="'Reconnecting' | t" />
-            }
-          </button>
-          @if (person.actions.length > 0) {
-            <app-moderation-menu [name]="person.member.name" [items]="person.actions" />
-          }
+          <app-moderation-menu [name]="person.member.name" [items]="person.actions">
+            <button
+              type="button"
+              class="person"
+              aria-haspopup="dialog"
+              [attr.aria-label]="
+                person.me
+                  ? ('{name} (you), {role}'
+                    | t: { name: person.member.name, role: person.role | t })
+                  : ('{name}, {role}' | t: { name: person.member.name, role: person.role | t })
+              "
+              (click)="memberSelected.emit(person.member.id)"
+            >
+              <app-person-avatar [member]="person.member" [reaction]="person.reaction" />
+              <span class="name" aria-hidden="true">{{ person.member.name }}</span>
+              @if (person.me) {
+                <p-tag severity="info" aria-hidden="true" [value]="'You' | t" />
+              }
+              @if (person.reconnecting) {
+                <p-tag severity="secondary" icon="pi pi-sync" [value]="'Reconnecting' | t" />
+              }
+            </button>
+          </app-moderation-menu>
         </li>
       } @empty {
         <li class="empty">{{ 'Nobody is listening yet.' | t }}</li>

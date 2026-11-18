@@ -7,61 +7,60 @@
 >
   @for (speaker of onStage(); track speaker.member.id) {
     <li animate.enter="tile-in">
-      <button
-        type="button"
-        class="tile person"
-        [class.speaking]="speaker.speaking"
-        aria-haspopup="dialog"
-        [attr.aria-describedby]="
-          speaker.speaking || speaker.muted ? `state-${speaker.member.id}` : null
-        "
-        [attr.aria-label]="
-          speaker.me
-            ? ('{name} (you), {role}' | t: { name: speaker.member.name, role: speaker.role | t })
-            : ('{name}, {role}' | t: { name: speaker.member.name, role: speaker.role | t })
-        "
-        (click)="memberSelected.emit(speaker.member.id)"
-      >
-        <span class="portrait">
-          <app-person-avatar
-            [size]="avatarSize()"
-            [member]="speaker.member"
-            [speaking]="speaker.speaking"
-            [reaction]="speaker.reaction"
-          />
-          @if (speaker.muted) {
-            <span class="mic-off" aria-hidden="true"
-              ><i class="pi pi-microphone pi-slashed"></i
-            ></span>
-          }
-        </span>
-        @if (speaker.speaking) {
-          <span class="cdk-visually-hidden" [id]="`state-${speaker.member.id}`">{{
-            'Speaking' | t
-          }}</span>
-        } @else if (speaker.muted) {
-          <span class="cdk-visually-hidden" [id]="`state-${speaker.member.id}`">{{
-            'Muted' | t
-          }}</span>
-        }
-        <span class="name" aria-hidden="true">{{ speaker.member.name }}</span>
-        @if (speaker.host || speaker.me) {
-          <span class="role" aria-hidden="true">
-            @if (speaker.host) {
-              <i class="pi pi-crown"></i>{{ 'Host' | t }}
-            }
-            @if (speaker.host && speaker.me) {
-              ·
-            }
-            @if (speaker.me) {
-              {{ 'You' | t }}
+      <app-moderation-menu [name]="speaker.member.name" [items]="speaker.actions">
+        <button
+          type="button"
+          class="tile person"
+          [class.speaking]="speaker.speaking"
+          aria-haspopup="dialog"
+          [attr.aria-describedby]="
+            speaker.speaking || speaker.muted ? `state-${speaker.member.id}` : null
+          "
+          [attr.aria-label]="
+            speaker.me
+              ? ('{name} (you), {role}' | t: { name: speaker.member.name, role: speaker.role | t })
+              : ('{name}, {role}' | t: { name: speaker.member.name, role: speaker.role | t })
+          "
+          (click)="memberSelected.emit(speaker.member.id)"
+        >
+          <span class="portrait">
+            <app-person-avatar
+              [size]="avatarSize()"
+              [member]="speaker.member"
+              [speaking]="speaker.speaking"
+              [reaction]="speaker.reaction"
+            />
+            @if (speaker.muted) {
+              <span class="mic-off" aria-hidden="true"
+                ><i class="pi pi-microphone pi-slashed"></i
+              ></span>
             }
           </span>
-        }
-      </button>
-      @if (speaker.actions.length > 0) {
-        <app-moderation-menu [name]="speaker.member.name" [items]="speaker.actions" />
-      }
+          @if (speaker.speaking) {
+            <span class="cdk-visually-hidden" [id]="`state-${speaker.member.id}`">{{
+              'Speaking' | t
+            }}</span>
+          } @else if (speaker.muted) {
+            <span class="cdk-visually-hidden" [id]="`state-${speaker.member.id}`">{{
+              'Muted' | t
+            }}</span>
+          }
+          <span class="name" aria-hidden="true">{{ speaker.member.name }}</span>
+          @if (speaker.host || speaker.me) {
+            <span class="role" aria-hidden="true">
+              @if (speaker.host) {
+                <i class="pi pi-crown"></i>{{ 'Host' | t }}
+              }
+              @if (speaker.host && speaker.me) {
+                ·
+              }
+              @if (speaker.me) {
+                {{ 'You' | t }}
+              }
+            </span>
+          }
+        </button>
+      </app-moderation-menu>
     </li>
   }
   @if (nextSeat(); as seat) {

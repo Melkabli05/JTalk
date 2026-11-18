@@ -23,7 +23,6 @@
 }
 
 li {
-  position: relative;
   display: flex;
   inline-size: var(--tile);
 
@@ -46,6 +45,9 @@ li {
   color: inherit;
   font: inherit;
   cursor: pointer;
+  // A long press opens the host's menu, so it must not select the name or show the browser's own callout.
+  user-select: none;
+  -webkit-touch-callout: none;
   transition:
     background-color var(--p-jtalk-motion-normal) ease,
     transform var(--p-jtalk-motion-fast) ease;
