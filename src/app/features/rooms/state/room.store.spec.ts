@@ -336,6 +336,24 @@ describe('RoomStore', () => {
       });
     });
 
+    it('changes who hosts the room when it is handed over, and keeps the host when it was only edited', async () => {
+      const store = await ready();
+      const host = store.hostId();
+
+      store.apply({ type: 'ROOM_UPDATED', title: 'Edited', topic: '', maxStageSeats: 4 });
+      expect(store.hostId()).toBe(host);
+
+      store.apply({
+        type: 'ROOM_UPDATED',
+        title: 'Edited',
+        topic: '',
+        maxStageSeats: 4,
+        hostId: 'b-1',
+      });
+      expect(store.hostId()).toBe('b-1');
+      expect(store.isHost()).toBe(store.meId() === 'b-1');
+    });
+
     it('marks a speaker as reconnecting, and back', async () => {
       const store = await ready();
 

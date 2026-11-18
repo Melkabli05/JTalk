@@ -6,6 +6,7 @@ import { AuthService } from '@auth0/auth0-angular';
 import {
   catchError,
   defer,
+  EMPTY,
   firstValueFrom,
   from,
   type Observable,
@@ -111,7 +112,18 @@ export class IdentityService {
    */
   deleteAccount(): Observable<void> {
     this.activeRoom.leave();
-    return this.api.deleteMe().pipe(switchMap(() => from(this.signOut())));
+    return this.api.deleteMe().pipe(
+      // Once the account is gone the person must not be left in the app, with a profile that no longer exists: if Auth0's sign-out fails,
+      // they are sent to the start, where signing in begins afresh.
+      switchMap(() =>
+        from(this.signOut()).pipe(
+          catchError(() => {
+            window.location.assign('/');
+            return EMPTY;
+          }),
+        ),
+      ),
+    );
   }
 
   async signOut(): Promise<void> {

@@ -49,6 +49,21 @@ describe('parseRoomEvent', () => {
     ).toMatchObject({ topic: '' });
   });
 
+  it('reads who hosts the room now when it was handed over, and leaves the host out when it was only edited', () => {
+    expect(
+      parseRoomEvent({
+        type: 'ROOM_UPDATED',
+        settings: { title: 'T', topic: '', maxStageSeats: 4, hostId: 'b-1' },
+      }),
+    ).toEqual({ type: 'ROOM_UPDATED', title: 'T', topic: '', maxStageSeats: 4, hostId: 'b-1' });
+    expect(
+      parseRoomEvent({
+        type: 'ROOM_UPDATED',
+        settings: { title: 'T', topic: '', maxStageSeats: 4, hostId: 7 },
+      }),
+    ).not.toHaveProperty('hostId');
+  });
+
   it('reads who reacted with what, and drops reactions it does not know', () => {
     expect(
       parseRoomEvent({

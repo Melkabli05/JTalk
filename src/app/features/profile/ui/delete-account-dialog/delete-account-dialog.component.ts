@@ -32,6 +32,12 @@ let nextId = 0;
             | t
         }}
       </p>
+      <p class="again">
+        {{
+          'A room you host goes to the person who has been on its stage the longest, or closes if nobody else is on it. The rooms you hosted are erased.'
+            | t
+        }}
+      </p>
       <p class="again">{{ 'You can sign up again any time, with a fresh profile.' | t }}</p>
 
       <label class="ask" [for]="fieldId">

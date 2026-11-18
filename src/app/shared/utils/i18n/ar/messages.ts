@@ -264,4 +264,6 @@ export const messages: Readonly<Record<string, string>> = {
     'يمكنك التسجيل مجددًا في أي وقت بملف شخصي جديد.',
   'Type {word} to confirm': 'اكتب {word} للتأكيد',
   'Could not delete your account. Please try again.': 'تعذّر حذف حسابك. حاول مرة أخرى.',
+  'A room you host goes to the person who has been on its stage the longest, or closes if nobody else is on it. The rooms you hosted are erased.':
+    'الغرفة التي تستضيفها تنتقل إلى من بقي على المنصّة أطول مدة، أو تُغلق إن لم يكن أحد غيرك عليها. وتُمحى الغرف التي استضفتها.',
 };

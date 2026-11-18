@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, of, throwError } from 'rxjs';
 import { ActiveRoomService } from '../rooms/active-room.service';
 import type { Person, ProfileDraft } from './identity.models';
 import { fakeAuth0 } from './auth-testing';
@@ -322,6 +322,20 @@ describe('IdentityService', () => {
       await deleted;
 
       expect(logout).toHaveBeenCalledOnce();
+    });
+
+    it('sends the person to the start when the account is gone but Auth0 could not sign them out, instead of leaving them in the app', async () => {
+      await known();
+      const assign = vi.fn();
+      vi.stubGlobal('location', { ...window.location, assign, origin: 'http://localhost' });
+      logout.mockImplementationOnce(() => throwError(() => new Error('offline')));
+
+      const deleted = firstValueFrom(identity.deleteAccount(), { defaultValue: 'done' });
+      await answer('DELETE', ME, null, 204);
+
+      expect(await deleted).toBe('done');
+      expect(assign).toHaveBeenCalledExactlyOnceWith('/');
+      vi.unstubAllGlobals();
     });
 
     it('does not sign out when the account could not be deleted, so the person can try again', async () => {

@@ -31,6 +31,8 @@ export type RoomUpdate =
       readonly title: string;
       readonly topic: string;
       readonly maxStageSeats: number;
+      /** Who hosts the room now; present when the room was handed over, absent when the host only edited it. */
+      readonly hostId?: string;
     }
   | { readonly type: 'REACTIONS'; readonly reactions: readonly ReactionBurst[] };
 

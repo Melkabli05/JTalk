@@ -166,6 +166,7 @@ export class RoomStore {
               title: update.title,
               topic: update.topic,
               maxStageSeats: update.maxStageSeats,
+              hostId: update.hostId ?? room.hostId,
             },
         );
         break;

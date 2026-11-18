@@ -58,7 +58,13 @@ export function parseRoomEvent(raw: unknown): RoomUpdate | undefined {
       return typeof settings?.['title'] === 'string' &&
         typeof topic === 'string' &&
         typeof settings['maxStageSeats'] === 'number'
-        ? { type, title: settings['title'], topic, maxStageSeats: settings['maxStageSeats'] }
+        ? {
+            type,
+            title: settings['title'],
+            topic,
+            maxStageSeats: settings['maxStageSeats'],
+            ...(typeof settings['hostId'] === 'string' ? { hostId: settings['hostId'] } : {}),
+          }
         : undefined;
     }
     case 'REACTIONS': {
