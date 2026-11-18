@@ -42,4 +42,17 @@ describe('FollowButtonComponent (presentational)', () => {
 
     expect(button().disabled).toBe(true);
   });
+
+  it('can be drawn compact, for a card, and stays regular elsewhere', async () => {
+    await render({});
+    expect(button().classList).not.toContain('compact');
+
+    fixture.componentRef.setInput('compact', true);
+    await fixture.whenStable();
+    expect(button().classList).toContain('compact');
+
+    fixture.componentRef.setInput('following', true);
+    await fixture.whenStable();
+    expect(button().classList).toContain('compact');
+  });
 });

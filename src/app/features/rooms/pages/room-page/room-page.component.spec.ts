@@ -67,6 +67,14 @@ describe('RoomPageComponent (container)', () => {
   const controlNames = () =>
     [...root().querySelectorAll('app-room-controls button')].map((b) => nameOf(b));
   const pressHostAction = (label: string) => press(label, root().querySelector('header')!);
+  const pressMenuItem = async (label: string) => {
+    press('More actions');
+    await settle();
+    await new Promise((resolve) => setTimeout(resolve));
+    [...document.querySelectorAll<HTMLElement>('.p-menu-item-link')]
+      .find((item) => item.textContent?.includes(label))!
+      .click();
+  };
   const pressExactlyLast = (label: string) =>
     buttons()
       .filter((b) => b.textContent?.trim() === label)
@@ -331,7 +339,7 @@ describe('RoomPageComponent (container)', () => {
       expect(page().textContent).toContain('Follows you');
       expect(page().textContent).toContain('1.3K');
       expect(buttons().map(nameOf)).toEqual(
-        expect.arrayContaining(['Follow back', 'View profile', 'Block']),
+        expect.arrayContaining(['Follow back', 'View profile', 'More actions']),
       );
     });
 
@@ -358,7 +366,7 @@ describe('RoomPageComponent (container)', () => {
     it('is blocked only after asking', async () => {
       await openBilal();
 
-      press('Block');
+      await pressMenuItem('Block');
       await settle(BILAL);
       expect(page().textContent).toContain('Blocking removes any follows');
       expect(sent('POST', '/api/v1/users/b-1/block')).toBe(false);
@@ -504,7 +512,7 @@ describe('RoomPageComponent (container)', () => {
         .click();
       await settle();
 
-      press('Remove from the room');
+      await pressMenuItem('Remove from the room');
       await settle();
       expect(page().textContent).toContain('will leave the room and cannot come back.');
       expect(sent('DELETE', `${BASE}/participants/b-1`)).toBe(false);

@@ -138,7 +138,12 @@ describe('PersonPageComponent (container)', () => {
   it('blocks only after asking, and says so afterwards', async () => {
     await open('u-2');
 
-    press('Block');
+    press('More actions');
+    await settle();
+    await new Promise((resolve) => setTimeout(resolve));
+    [...document.querySelectorAll<HTMLElement>('.p-menu-item-link')]
+      .find((item) => item.textContent?.includes('Block'))!
+      .click();
     await settle();
     expect(page().textContent).toContain('Blocking removes any follows');
     expect(sent.some((r) => r.url === `${BASE}/u-2/block`)).toBe(false);
@@ -160,7 +165,7 @@ describe('PersonPageComponent (container)', () => {
 
     expect(root().querySelector('h1')?.textContent).toBe('Mona');
     expect(buttons().map(nameOf)).not.toContain('Follow back');
-    expect(buttons().map(nameOf)).not.toContain('Block');
+    expect(buttons().map(nameOf)).not.toContain('More actions');
   });
 
   it('says so, with a way back, when the profile cannot be found', async () => {

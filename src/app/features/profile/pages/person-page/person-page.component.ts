@@ -1,8 +1,9 @@
-import { Component, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ConfirmationService, MessageService } from '@openng/optimus-ui/api';
+import { ConfirmationService, MessageService, type MenuItem } from '@openng/optimus-ui/api';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { ConfirmDialog } from '@openng/optimus-ui/confirmdialog';
+import { Menu } from '@openng/optimus-ui/menu';
 import { Message } from '@openng/optimus-ui/message';
 import { ProgressSpinner } from '@openng/optimus-ui/progressspinner';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
@@ -20,6 +21,7 @@ import { ProfileHeroComponent } from '../../ui/profile-hero/profile-hero.compone
     ButtonDirective,
     ConfirmDialog,
     FollowButtonComponent,
+    Menu,
     Message,
     ProfileAboutComponent,
     ProfileHeroComponent,
@@ -42,6 +44,15 @@ export default class PersonPageComponent {
   protected readonly locale = this.i18n.locale;
 
   readonly id = input.required<string>();
+
+  protected readonly moreActions = computed<MenuItem[]>(() => [
+    {
+      label: this.i18n.t('Block'),
+      icon: 'pi pi-ban',
+      linkClass: 'danger-item',
+      command: () => this.block(),
+    },
+  ]);
 
   constructor() {
     effect(() => {

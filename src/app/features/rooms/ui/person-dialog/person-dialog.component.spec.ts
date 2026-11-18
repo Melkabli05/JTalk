@@ -1,16 +1,33 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
-import { PersonDialogComponent } from './person-dialog.component';
 import type { Person } from '@core/auth/identity.models';
 import type { PersonCard } from '@core/people/person-card.model';
+import { PersonDialogComponent } from './person-dialog.component';
 
 const MAYA: Person = { id: 'm-1', name: 'Maya', nativeLanguage: 'es', learning: 'ja', avatar: '' };
+const CARD: PersonCard = {
+  details: {
+    ...MAYA,
+    username: 'maya',
+    bio: 'Coffee and Japanese',
+    countryCode: 'ES',
+    joinedAt: '2026-10-01T10:00:00Z',
+  },
+  social: { followers: 1250, following: 3, followedByMe: false, followsMe: true },
+  languages: { native: ['es'], learning: [{ code: 'ja', level: 'BEGINNER' }] },
+  match: { kind: 'teaches-you', theySpeak: 'es' },
+  isMe: false,
+};
 
 describe('PersonDialogComponent (presentational)', () => {
   let fixture: ComponentFixture<PersonDialogComponent>;
-  const text = () => (fixture.nativeElement as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
+  const root = () => fixture.nativeElement as HTMLElement;
+  const text = () => root().textContent?.replace(/\s+/g, ' ') ?? '';
   const nameOf = (b: Element) => b.getAttribute('aria-label') ?? b.textContent?.trim();
-  const labels = () =>
-    [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].map(nameOf);
+  const buttons = () => [...root().querySelectorAll('button')];
+  const labels = () => buttons().map(nameOf);
+  const button = (label: string) => buttons().find((b) => nameOf(b) === label)!;
+  const press = (label: string) => button(label).click();
+  const icon = (label: string) => button(label).querySelector('.p-button-icon')?.className ?? '';
 
   async function render(inputs: Record<string, unknown>) {
     fixture = TestBed.createComponent(PersonDialogComponent);
@@ -20,83 +37,133 @@ describe('PersonDialogComponent (presentational)', () => {
     await fixture.whenStable();
   }
 
-  it('tells who the person is: their role and the languages they speak and learn', async () => {
-    await render({ role: 'SPEAKER' });
+  async function openMenu() {
+    press('More actions');
+    await fixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve));
+  }
+  const menuItem = (label: string) =>
+    [...document.querySelectorAll<HTMLElement>('.p-menu-item-link')].find((item) =>
+      item.textContent?.includes(label),
+    )!;
 
-    expect(text()).toContain('Speaker');
-    expect(text()).toContain('Speaks');
-    expect(text()).toContain('Spanish');
-    expect(text()).toContain('Learning');
-    expect(text()).toContain('Japanese');
+  describe('who they are', () => {
+    it('has no title bar: the name is in the card, and it is what names the dialog', async () => {
+      await render({ role: 'SPEAKER' });
+
+      expect(root().querySelector('.p-dialog-header')).toBeNull();
+      const heading = root().querySelector('h2')!;
+      expect(heading.textContent).toBe('Maya');
+      expect(document.querySelector('[role="dialog"]')?.getAttribute('aria-labelledby')).toBe(
+        heading.id,
+      );
+    });
+
+    it('tells their role and the languages they speak and learn, until their profile is known', async () => {
+      await render({ role: 'SPEAKER' });
+
+      expect(text()).toContain('Speaker');
+      expect(text()).toContain('Speaks Spanish');
+      expect(text()).toContain('Learning Japanese');
+    });
+
+    it('says so when it is you', async () => {
+      await render({ role: 'HOST', isMe: true });
+
+      expect(text()).toContain('Host');
+      expect(text()).toContain('You');
+    });
+
+    it('closes with its own button', async () => {
+      await render({ role: 'LISTENER' });
+      const closed = vi.fn();
+      fixture.componentInstance.visible.subscribe(closed);
+
+      press('Close');
+
+      expect(closed).toHaveBeenCalledWith(false);
+    });
   });
 
-  it('says so when it is you', async () => {
-    await render({ role: 'HOST', isMe: true });
+  describe('what you can do without a profile', () => {
+    it('offers nothing to someone who may do nothing about them', async () => {
+      await render({ role: 'LISTENER' });
 
-    expect(text()).toContain('Host');
-    expect(text()).toContain('You');
-  });
+      expect(labels().filter((l) => l !== 'Close')).toEqual([]);
+    });
 
-  it('offers nothing to someone who may do nothing about them', async () => {
-    await render({ role: 'LISTENER' });
+    it('offers the host to invite a listener, or move a speaker down, in the same row', async () => {
+      await render({ role: 'LISTENER', canInvite: true });
+      expect(labels()).toContain('Invite to the stage');
+      expect(labels()).not.toContain('Move to the audience');
 
-    expect(labels().filter((l) => l && !l.includes('Close'))).toEqual([]);
-  });
+      await render({ role: 'SPEAKER', canDemote: true });
+      expect(labels()).toContain('Move to the audience');
+    });
 
-  it('offers the host the right actions for a listener', async () => {
-    await render({ role: 'LISTENER', canInvite: true, canRemove: true });
+    it('lets a speaker step down from their own seat', async () => {
+      const stepped = vi.fn();
+      await render({ role: 'SPEAKER', isMe: true, canStepDown: true });
+      fixture.componentInstance.stepDown.subscribe(stepped);
 
-    expect(labels()).toEqual(
-      expect.arrayContaining(['Invite to the stage', 'Remove from the room']),
-    );
-    expect(labels()).not.toContain('Move to the audience');
-  });
+      press('Step down to the audience');
 
-  it('emits the action that was chosen', async () => {
-    await render({ role: 'SPEAKER', canDemote: true, canRemove: true });
-    const emitted: string[] = [];
-    fixture.componentInstance.demote.subscribe(() => emitted.push('demote'));
-    fixture.componentInstance.remove.subscribe(() => emitted.push('remove'));
-    const click = (label: string) =>
-      [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')]
-        .find((b) => b.textContent?.includes(label))!
-        .click();
+      expect(stepped).toHaveBeenCalledOnce();
+    });
 
-    click('Move to the audience');
-    click('Remove from the room');
+    it('emits what the host chose', async () => {
+      const emitted: string[] = [];
+      await render({ role: 'LISTENER', canInvite: true });
+      fixture.componentInstance.invite.subscribe(() => emitted.push('invite'));
+      press('Invite to the stage');
 
-    expect(emitted).toEqual(['demote', 'remove']);
-  });
+      await render({ role: 'SPEAKER', canDemote: true });
+      fixture.componentInstance.demote.subscribe(() => emitted.push('demote'));
+      press('Move to the audience');
 
-  it('lets someone on stage step down themselves', async () => {
-    await render({ role: 'SPEAKER', isMe: true, canStepDown: true });
+      expect(emitted).toEqual(['invite', 'demote']);
+    });
 
-    expect(labels()).toContain('Step down to the audience');
+    it('keeps the less usual actions in a menu, and runs the one that is chosen', async () => {
+      const removed = vi.fn();
+      await render({
+        role: 'LISTENER',
+        actions: [{ label: 'Remove from the room', icon: 'pi pi-user-minus', command: removed }],
+      });
+      expect(labels()).not.toContain('Remove from the room');
+
+      await openMenu();
+      menuItem('Remove from the room').click();
+
+      expect(removed).toHaveBeenCalledOnce();
+    });
+
+    it('has no menu button when there is nothing in the menu', async () => {
+      await render({ role: 'LISTENER', canInvite: true });
+
+      expect(labels()).not.toContain('More actions');
+    });
+
+    it('colours the host actions Sand, and draws them with the right icons', async () => {
+      await render({ role: 'LISTENER', canInvite: true });
+      expect(button('Invite to the stage').className).toContain('p-button-warn');
+      expect(icon('Invite to the stage')).toContain('pi-microphone');
+
+      await render({ role: 'SPEAKER', canDemote: true });
+      expect(button('Move to the audience').className).toContain('p-button-warn');
+      expect(icon('Move to the audience')).toContain('pi-arrow-down');
+    });
+
+    it('draws its actions compact, so they take little room', async () => {
+      await render({ role: 'LISTENER', canInvite: true, actions: [{ label: 'Block' }] });
+
+      for (const label of ['Invite to the stage', 'More actions', 'Close']) {
+        expect(button(label).classList).toContain('compact');
+      }
+    });
   });
 
   describe('with their profile loaded', () => {
-    const CARD: PersonCard = {
-      details: {
-        ...MAYA,
-        username: 'maya',
-        bio: 'Coffee and Japanese',
-        countryCode: 'ES',
-        joinedAt: '2026-10-01T10:00:00Z',
-      },
-      social: { followers: 1250, following: 3, followedByMe: false, followsMe: true },
-      languages: { native: ['es'], learning: [{ code: 'ja', level: 'BEGINNER' }] },
-      match: { kind: 'teaches-you', theySpeak: 'es' },
-      isMe: false,
-    };
-    const press = (label: string) =>
-      [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')]
-        .find((b) => nameOf(b) === label)!
-        .click();
-    const button = (label: string) =>
-      [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].find(
-        (b) => nameOf(b) === label,
-      )!;
-
     it('tells who they are: handle, country, bio, how long they have been here, and what they speak and learn', async () => {
       await render({ role: 'LISTENER', card: CARD });
 
@@ -115,11 +182,16 @@ describe('PersonDialogComponent (presentational)', () => {
       expect(text()).toContain('Can help you practise');
     });
 
-    it('asks to follow back when they follow you, and follows with one press', async () => {
+    it('asks to follow back when they follow you, with one compact Forest button', async () => {
       const followed = vi.fn();
       await render({ role: 'LISTENER', card: CARD });
       fixture.componentInstance.follow.subscribe(followed);
 
+      expect(button('Follow back').classList).toContain('compact');
+      for (const other of ['secondary', 'warn', 'danger', 'outlined']) {
+        expect(button('Follow back').className).not.toContain(`p-button-${other}`);
+      }
+      expect(icon('Follow back')).toContain('pi-user-plus');
       press('Follow back');
 
       expect(followed).toHaveBeenCalledOnce();
@@ -127,8 +199,10 @@ describe('PersonDialogComponent (presentational)', () => {
 
     it('shows Following, and unfollows with the same press', async () => {
       const unfollowed = vi.fn();
-      const following = { ...CARD, social: { ...CARD.social!, followedByMe: true } };
-      await render({ role: 'LISTENER', card: following });
+      await render({
+        role: 'LISTENER',
+        card: { ...CARD, social: { ...CARD.social!, followedByMe: true } },
+      });
       fixture.componentInstance.unfollow.subscribe(unfollowed);
 
       press('Following');
@@ -144,100 +218,68 @@ describe('PersonDialogComponent (presentational)', () => {
       expect(labels()).toContain('View profile');
     });
 
-    it('opens their profile, and can block them', async () => {
-      const emitted: string[] = [];
+    it('opens their full profile from the end of the card', async () => {
+      const viewed = vi.fn();
       await render({ role: 'LISTENER', card: CARD });
-      fixture.componentInstance.viewProfile.subscribe(() => emitted.push('profile'));
-      fixture.componentInstance.block.subscribe(() => emitted.push('block'));
+      fixture.componentInstance.viewProfile.subscribe(viewed);
 
       press('View profile');
-      press('Block');
 
-      expect(emitted).toEqual(['profile', 'block']);
+      expect(viewed).toHaveBeenCalledOnce();
     });
 
-    it('is only a view for yourself: no follow, no block', async () => {
+    it('is only a view for yourself: no follow, and only the actions you were given', async () => {
       await render({ role: 'HOST', isMe: true, card: { ...CARD, isMe: true, match: undefined } });
 
       expect(labels()).not.toContain('Follow back');
-      expect(labels()).not.toContain('Block');
+      expect(labels()).not.toContain('More actions');
       expect(labels()).toContain('View profile');
     });
 
-    it('keeps the host actions apart from the social ones', async () => {
-      await render({ role: 'LISTENER', card: CARD, canInvite: true, canRemove: true });
+    it('keeps the actions above the details, in one row', async () => {
+      await render({
+        role: 'LISTENER',
+        card: CARD,
+        canInvite: true,
+        actions: [{ label: 'Block' }],
+      });
+      const actions = root().querySelector('.actions')!;
 
-      expect(labels()).toEqual(
-        expect.arrayContaining(['Follow back', 'Invite to the stage', 'Remove from the room']),
-      );
-    });
-
-    it('shows placeholders while their profile loads, and says when something failed', async () => {
-      await render({ role: 'LISTENER', loading: true });
-      expect((fixture.nativeElement as HTMLElement).querySelectorAll('p-skeleton')).toHaveLength(3);
-
-      fixture.componentRef.setInput('loading', false);
-      fixture.componentRef.setInput('error', 'Could not follow them. Please try again.');
-      await fixture.whenStable();
-      expect(text()).toContain('Could not follow them.');
-    });
-
-    it('keeps every action in one bar above the details, so none needs scrolling to', async () => {
-      await render({ role: 'LISTENER', card: CARD, canInvite: true, canRemove: true });
-      const root = fixture.nativeElement as HTMLElement;
-      const bar = root.querySelector('.toolbar')!;
-
-      expect([...bar.querySelectorAll('button')].map(nameOf)).toEqual([
+      expect([...actions.querySelectorAll('button')].map(nameOf)).toEqual([
         'Follow back',
-        'View profile',
-        'Block',
         'Invite to the stage',
-        'Remove from the room',
+        'More actions',
       ]);
       expect(
-        bar.compareDocumentPosition(root.querySelector('.about')!) &
+        actions.compareDocumentPosition(root().querySelector('.about')!) &
           Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
-      expect(root.querySelectorAll('.toolbar')).toHaveLength(1);
-    });
-
-    it('colors each action by what it means: Forest to follow, Sand for the host, terracotta to remove or block', async () => {
-      await render({ role: 'LISTENER', card: CARD, canInvite: true, canRemove: true });
-
-      for (const other of ['secondary', 'warn', 'danger', 'outlined']) {
-        expect(button('Follow back').className).not.toContain(`p-button-${other}`);
-      }
-      expect(button('Invite to the stage').className).toContain('p-button-warn');
-      expect(button('Remove from the room').className).toContain('p-button-danger');
-      expect(button('Block').className).toContain('p-button-danger');
-      expect(button('View profile').className).toContain('p-button-secondary');
-    });
-
-    it('draws each action with the icon that says what it does', async () => {
-      await render({ role: 'LISTENER', card: CARD, canInvite: true, canRemove: true });
-      const icon = (label: string) =>
-        button(label).querySelector('.p-button-icon')?.className ?? '';
-
-      expect(icon('Follow back')).toContain('pi-user-plus');
-      expect(icon('View profile')).toContain('pi-user');
-      expect(icon('Invite to the stage')).toContain('pi-microphone');
-      expect(icon('Remove from the room')).toContain('pi-user-minus');
-      expect(icon('Block')).toContain('pi-ban');
-    });
-
-    it('still offers the host their actions while the profile loads', async () => {
-      await render({ role: 'LISTENER', loading: true, canInvite: true, canRemove: true });
-
-      expect(labels()).toEqual(
-        expect.arrayContaining(['Invite to the stage', 'Remove from the room']),
-      );
-      expect(labels()).not.toContain('Block');
+      expect(root().querySelectorAll('.actions')).toHaveLength(1);
     });
 
     it('cannot be pressed while a request runs', async () => {
       await render({ role: 'LISTENER', card: CARD, busy: true });
 
       expect(button('Follow back').disabled).toBe(true);
+    });
+  });
+
+  describe('while it loads, and when it fails', () => {
+    it('shows placeholders while their profile loads, and still offers the host their actions', async () => {
+      await render({ role: 'LISTENER', loading: true, canInvite: true });
+
+      expect(root().querySelectorAll('p-skeleton')).toHaveLength(3);
+      expect(labels()).toContain('Invite to the stage');
+    });
+
+    it('says what went wrong', async () => {
+      await render({
+        role: 'LISTENER',
+        card: CARD,
+        error: 'Could not follow them. Please try again.',
+      });
+
+      expect(text()).toContain('Could not follow them.');
     });
   });
 });

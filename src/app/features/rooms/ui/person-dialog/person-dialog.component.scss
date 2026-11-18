@@ -1,59 +1,64 @@
-.who {
+.top {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 1rem;
+  padding-block-start: 1.25rem;
+
+  .who {
+    min-inline-size: 0;
+  }
+
+  .close {
+    align-self: flex-start;
+    margin-inline-start: auto;
+  }
 }
 
-.details {
+h2 {
+  margin: 0;
+  font-size: var(--p-jtalk-type-card);
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.meta {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.375rem;
-
-  p {
-    margin: 0;
-  }
-
-  .handle {
-    color: var(--p-text-muted-color);
-    font-size: var(--p-jtalk-type-secondary);
-  }
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.625rem;
+  margin: 0.25rem 0 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-secondary);
 }
 
-.toolbar {
+.actions {
   position: sticky;
   inset-block-start: 0;
   z-index: 1;
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-block-start: 1rem;
-  padding-block: 0.75rem;
-  border-block: 1px solid var(--p-content-border-color);
-  background: var(--p-dialog-background, var(--p-content-background));
-}
-
-.row {
-  display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
+  margin-block-start: 1rem;
+  padding-block: 0.625rem;
+  background: var(--p-dialog-background, var(--p-content-background));
 
-  .block {
+  .more {
     margin-inline-start: auto;
   }
 }
 
 .failure {
   display: block;
-  margin-block-start: 1rem;
+  margin-block-start: 0.5rem;
 }
 
 .about {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-block-start: 1.25rem;
+  margin-block-start: 0.75rem;
 
   p {
     margin: 0;
@@ -63,6 +68,14 @@
     overflow-wrap: anywhere;
     white-space: pre-line;
   }
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 
   .joined {
     color: var(--p-text-muted-color);

@@ -155,7 +155,7 @@
   [isMe]="selectedIsMe()"
   [canInvite]="canInvite()"
   [canDemote]="canDemote()"
-  [canRemove]="canRemove()"
+  [actions]="personActions()"
   [canStepDown]="canStepDown()"
   [card]="cards.card()"
   [loading]="cards.loading()"
@@ -165,11 +165,9 @@
   (visibleChange)="selectedId.set(null)"
   (follow)="cards.follow()"
   (unfollow)="cards.unfollow()"
-  (block)="block()"
   (viewProfile)="viewProfile()"
   (invite)="invite(selectedId() ?? '')"
   (demote)="demote(selectedId() ?? '')"
-  (remove)="remove(selectedId() ?? '')"
   (stepDown)="stepDown()"
 />
 

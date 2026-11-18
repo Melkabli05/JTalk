@@ -1,7 +1,9 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, input, model, output } from '@angular/core';
+import type { MenuItem } from '@openng/optimus-ui/api';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Dialog } from '@openng/optimus-ui/dialog';
+import { Menu } from '@openng/optimus-ui/menu';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { Tag } from '@openng/optimus-ui/tag';
@@ -18,6 +20,8 @@ import { PersonAvatarComponent } from '../person-avatar/person-avatar.component'
 import type { Person } from '@core/auth/identity.models';
 import type { PersonCard } from '@core/people/person-card.model';
 
+let nextId = 0;
+
 @Component({
   selector: 'app-person-dialog',
   imports: [
@@ -26,6 +30,7 @@ import type { PersonCard } from '@core/people/person-card.model';
     Dialog,
     FollowButtonComponent,
     LanguageLevelsComponent,
+    Menu,
     Message,
     PartnerMatchComponent,
     PersonAvatarComponent,
@@ -45,8 +50,8 @@ export class PersonDialogComponent {
   readonly isMe = input(false);
   readonly canInvite = input(false);
   readonly canDemote = input(false);
-  readonly canRemove = input(false);
   readonly canStepDown = input(false);
+  readonly actions = input<readonly MenuItem[]>([]);
   readonly card = input<PersonCard>();
   readonly loading = input(false);
   readonly busy = input(false);
@@ -55,19 +60,22 @@ export class PersonDialogComponent {
 
   readonly invite = output<void>();
   readonly demote = output<void>();
-  readonly remove = output<void>();
   readonly stepDown = output<void>();
   readonly follow = output<void>();
   readonly unfollow = output<void>();
-  readonly block = output<void>();
   readonly viewProfile = output<void>();
 
+  protected readonly titleId = `app-person-${nextId++}`;
   protected readonly native = computed(() => languageOf(this.member()?.nativeLanguage ?? ''));
   protected readonly learning = computed(() => languageOf(this.member()?.learning ?? ''));
-  protected readonly anything = computed(
-    () => this.canInvite() || this.canDemote() || this.canRemove() || this.canStepDown(),
+  protected readonly hasActions = computed(
+    () =>
+      this.card() !== undefined ||
+      this.canInvite() ||
+      this.canDemote() ||
+      this.canStepDown() ||
+      this.actions().length > 0,
   );
-  protected readonly hasActions = computed(() => this.card() !== undefined || this.anything());
   protected readonly origin = computed(() => {
     const code = this.card()?.details.countryCode ?? '';
     return code === '' ? null : { flag: flagOf(code), name: countryNameOf(code, this.locale()) };

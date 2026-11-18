@@ -14,7 +14,7 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
-import { ConfirmationService, MessageService } from '@openng/optimus-ui/api';
+import { ConfirmationService, MessageService, type MenuItem } from '@openng/optimus-ui/api';
 import { Badge } from '@openng/optimus-ui/badge';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
@@ -124,6 +124,35 @@ export default class RoomPageComponent {
     () => this.state.isHost() && this.selectedRole() === 'SPEAKER',
   );
   protected readonly canRemove = computed(() => this.state.isHost() && !this.selectedIsMe());
+  protected readonly personActions = computed<MenuItem[]>(() => {
+    const id = this.selectedId();
+    const card = this.cards.card();
+    if (id === null) {
+      return [];
+    }
+    return [
+      ...(this.canRemove()
+        ? [
+            {
+              label: this.i18n.t('Remove from the room'),
+              icon: 'pi pi-user-minus',
+              linkClass: 'danger-item',
+              command: () => this.remove(id),
+            },
+          ]
+        : []),
+      ...(card !== undefined && !card.isMe
+        ? [
+            {
+              label: this.i18n.t('Block'),
+              icon: 'pi pi-ban',
+              linkClass: 'danger-item',
+              command: () => this.block(),
+            },
+          ]
+        : []),
+    ];
+  });
   protected readonly canStepDown = computed(
     () => this.selectedIsMe() && this.selectedRole() === 'SPEAKER',
   );

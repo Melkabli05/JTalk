@@ -370,6 +370,22 @@ export const JtalkPreset = definePreset(Aura, {
         .p-button:not(:disabled):active {
           transform: scale(0.98);
         }
+        .p-button.compact {
+          position: relative;
+          min-height: 2.25rem;
+          padding-block: 0.375rem;
+          padding-inline: 0.875rem;
+          font-size: var(--p-jtalk-type-secondary);
+        }
+        .p-button.compact.p-button-icon-only {
+          inline-size: 2.25rem;
+          padding: 0;
+        }
+        .p-button.compact::after {
+          content: '';
+          position: absolute;
+          inset: -0.25rem;
+        }
         @container dock (max-width: 30rem) {
           .p-button.leave-compact {
             inline-size: 3.5rem;

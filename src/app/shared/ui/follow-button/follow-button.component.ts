@@ -11,6 +11,7 @@ import { TranslatePipe } from '@shared/pipes/translate.pipe';
         pButton
         type="button"
         icon="pi pi-check"
+        [class.compact]="compact()"
         severity="secondary"
         [rounded]="true"
         [outlined]="true"
@@ -23,6 +24,7 @@ import { TranslatePipe } from '@shared/pipes/translate.pipe';
         pButton
         type="button"
         icon="pi pi-user-plus"
+        [class.compact]="compact()"
         [rounded]="true"
         [disabled]="busy()"
         [label]="followsMe() ? ('Follow back' | t) : ('Follow' | t)"
@@ -35,6 +37,7 @@ export class FollowButtonComponent {
   readonly following = input(false);
   readonly followsMe = input(false);
   readonly busy = input(false);
+  readonly compact = input(false);
 
   readonly follow = output<void>();
   readonly unfollow = output<void>();

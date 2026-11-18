@@ -202,4 +202,6 @@ export const messages: Readonly<Record<string, string>> = {
   Advanced: 'متقدّم',
   Fluent: 'بطلاقة',
   Actions: 'الإجراءات',
+  'More actions': 'إجراءات أخرى',
+  Close: 'إغلاق',
 };
