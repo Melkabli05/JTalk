@@ -8,6 +8,7 @@ const library = vi.hoisted(() => {
     connectFailure: null as Error | null,
     canPlayback: true,
   };
+  const noise = { supported: true, processor: { name: 'noise-filter' } };
 
   class FakeRoom {
     readonly handlers = new Map<string, Handler>();
@@ -40,7 +41,7 @@ const library = vi.hoisted(() => {
       this.handlers.get(event)?.(...args);
     }
   }
-  return { state, FakeRoom };
+  return { state, noise, FakeRoom };
 });
 
 vi.mock('livekit-client', () => ({
@@ -49,6 +50,7 @@ vi.mock('livekit-client', () => ({
     TrackSubscribed: 'trackSubscribed',
     TrackUnsubscribed: 'trackUnsubscribed',
     ActiveSpeakersChanged: 'activeSpeakersChanged',
+    LocalTrackPublished: 'localTrackPublished',
     DataReceived: 'dataReceived',
     AudioPlaybackStatusChanged: 'audioPlaybackChanged',
     ParticipantPermissionsChanged: 'participantPermissionsChanged',
@@ -56,7 +58,15 @@ vi.mock('livekit-client', () => ({
     Reconnected: 'reconnected',
     Disconnected: 'disconnected',
   },
-  Track: { Kind: { Audio: 'audio' } },
+  Track: {
+    Kind: { Audio: 'audio' },
+    Source: { Microphone: 'microphone', ScreenShare: 'screen_share' },
+  },
+}));
+
+vi.mock('@livekit/krisp-noise-filter', () => ({
+  isKrispNoiseFilterSupported: () => library.noise.supported,
+  KrispNoiseFilter: () => library.noise.processor,
 }));
 
 describe('connectLiveKit', () => {
@@ -75,6 +85,7 @@ describe('connectLiveKit', () => {
   beforeEach(() => {
     library.state.rooms.length = 0;
     library.state.connectFailure = null;
+    library.noise.supported = true;
     library.state.canPlayback = true;
     Object.values(listener).forEach((fn) => fn.mockClear());
   });
@@ -143,6 +154,61 @@ describe('connectLiveKit', () => {
     room().emit('dataReceived', message(stageEvent), undefined, undefined, 'something-else');
 
     expect(listener.roomEvent).not.toHaveBeenCalled();
+  });
+
+  describe('noise filter', () => {
+    const publication = (source: string, setProcessor = vi.fn(() => Promise.resolve())) => ({
+      source,
+      audioTrack: { setProcessor },
+    });
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+
+    it('cleans up the microphone of the person who is speaking', async () => {
+      await connectLiveKit('wss://x', 't', listener);
+      const mic = publication('microphone');
+
+      room().emit('localTrackPublished', mic);
+
+      await vi.waitFor(() =>
+        expect(mic.audioTrack.setProcessor).toHaveBeenCalledExactlyOnceWith(
+          library.noise.processor,
+        ),
+      );
+    });
+
+    it('leaves any other published track alone', async () => {
+      await connectLiveKit('wss://x', 't', listener);
+      const screen = publication('screen_share');
+
+      room().emit('localTrackPublished', screen);
+      await settle();
+
+      expect(screen.audioTrack.setProcessor).not.toHaveBeenCalled();
+    });
+
+    it('keeps the plain microphone when the browser cannot run the filter', async () => {
+      library.noise.supported = false;
+      await connectLiveKit('wss://x', 't', listener);
+      const mic = publication('microphone');
+
+      room().emit('localTrackPublished', mic);
+      await settle();
+
+      expect(mic.audioTrack.setProcessor).not.toHaveBeenCalled();
+    });
+
+    it('keeps the plain microphone when the filter will not start', async () => {
+      await connectLiveKit('wss://x', 't', listener);
+      const mic = publication(
+        'microphone',
+        vi.fn(() => Promise.reject(new Error('no licence'))),
+      );
+
+      room().emit('localTrackPublished', mic);
+
+      await vi.waitFor(() => expect(mic.audioTrack.setProcessor).toHaveBeenCalledOnce());
+      await settle();
+    });
   });
 
   it('reports who is speaking by user id', async () => {

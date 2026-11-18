@@ -1,4 +1,5 @@
 import type { RealtimeConnection, RealtimeListener, RoomUpdate } from '../models/realtime.model';
+import { filterNoise } from './noise-filter';
 import { parseRoomEvent } from './parsers/room-event.parser';
 
 export const ROOM_EVENTS_TOPIC = 'room-events';
@@ -44,6 +45,12 @@ export async function connectLiveKit(
         if (event !== undefined) {
           listener.roomEvent(event);
         }
+      }
+    })
+    .on(RoomEvent.LocalTrackPublished, (publication) => {
+      const microphone = publication.audioTrack;
+      if (publication.source === Track.Source.Microphone && microphone !== undefined) {
+        void filterNoise(microphone);
       }
     })
     .on(RoomEvent.AudioPlaybackStatusChanged, (playing) => listener.soundBlocked(!playing))
