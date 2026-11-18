@@ -41,6 +41,7 @@ describe('RoomStore', () => {
     store: RoomStore,
     server: { stage?: object; people?: object[] } = {},
   ): Promise<void> {
+    store.sync();
     TestBed.tick();
     for (const request of http.match(() => true)) {
       const url = request.request.url;
@@ -54,7 +55,6 @@ describe('RoomStore', () => {
     }
     await Promise.resolve();
     TestBed.tick();
-    void store;
   }
 
   it('looks everyone in the room up in the user service: the host, the stage, the raised hands and the audience', async () => {
@@ -72,23 +72,132 @@ describe('RoomStore', () => {
     );
   });
 
-  it('asks the server for nothing until a room is shown', () => {
-    setup();
-    TestBed.tick();
-
-    http.expectNone(() => true);
-  });
-
-  it('fetches the room, the stage and who is present once a room is shown', () => {
+  it('asks the server for nothing until a room is shown, and not even then until the link to its events is up', () => {
     const store = setup();
+    TestBed.tick();
+    http.expectNone(() => true);
 
     store.show('r-1');
     TestBed.tick();
 
-    http.expectOne(BASE);
-    http.expectOne(`${BASE}/stage`);
-    http.expectOne(`${BASE}/participants`);
+    http.expectNone(() => true);
     expect(store.roomId()).toBe('r-1');
+    expect(store.ready()).toBe(false);
+  });
+
+  it('reads the room, the stage and who is present once, when synced for the first time', async () => {
+    const store = setup();
+    store.show('r-1');
+
+    store.sync();
+    TestBed.tick();
+    const room = http.expectOne(BASE);
+    const stage = http.expectOne(`${BASE}/stage`);
+    const people = http.expectOne(`${BASE}/participants`);
+    expect(store.ready()).toBe(false);
+
+    room.flush(ROOM);
+    stage.flush({ speakers: ['h-1'], handRaiseQueue: [] });
+    people.flush([]);
+    await Promise.resolve();
+    TestBed.tick();
+
+    expect(store.ready()).toBe(true);
+    http.verify();
+  });
+
+  describe('while the room is being read', () => {
+    function reading() {
+      const store = setup('m-1');
+      store.show('r-1');
+      store.sync();
+      TestBed.tick();
+      return {
+        store,
+        room: http.expectOne(BASE),
+        stage: http.expectOne(`${BASE}/stage`),
+        people: http.expectOne(`${BASE}/participants`),
+      };
+    }
+    async function answered(read: ReturnType<typeof reading>, stage: object, people: object[]) {
+      read.room.flush(ROOM);
+      read.stage.flush(stage);
+      read.people.flush(people);
+      await Promise.resolve();
+      TestBed.tick();
+    }
+
+    it('applies what arrived meanwhile again once the read is done, because the read may be older', async () => {
+      const read = reading();
+
+      read.store.apply({
+        type: 'HAND_RAISED',
+        at: 20,
+        stage: { speakers: ['h-1'], handRaiseQueue: ['c-1'] },
+      });
+      read.store.apply({
+        type: 'PRESENCE_CHANGED',
+        participantCount: 4,
+        joined: ['c-1'],
+        left: ['b-1'],
+      });
+      await answered(read, { speakers: ['h-1'], handRaiseQueue: [] }, [
+        { userId: 'b-1', status: 'ACTIVE' },
+      ]);
+
+      expect(read.store.queue()).toEqual(['c-1']);
+      expect(read.store.audience()).toEqual(['c-1']);
+      expect(read.store.room()?.participantCount).toBe(4);
+    });
+
+    it('does the same for a read after the first, and not for what came before it started', async () => {
+      const read = reading();
+      await answered(read, { speakers: ['h-1'], handRaiseQueue: [] }, []);
+      read.store.apply({
+        type: 'ROOM_UPDATED',
+        title: 'Before the read',
+        topic: '',
+        maxStageSeats: 4,
+      });
+
+      read.store.sync();
+      TestBed.tick();
+      read.store.apply({
+        type: 'ROOM_UPDATED',
+        title: 'During the read',
+        topic: '',
+        maxStageSeats: 4,
+      });
+      http.expectOne(BASE).flush({ ...ROOM, title: 'From the server' });
+      http.expectOne(`${BASE}/stage`).flush({ speakers: ['h-1'], handRaiseQueue: [] });
+      http.expectOne(`${BASE}/participants`).flush([]);
+      await Promise.resolve();
+      TestBed.tick();
+
+      // The read already has what came before it started; what came during it is applied on top.
+      expect(read.store.room()?.title).toBe('During the read');
+    });
+
+    it('says the read failed, unless the room is simply gone', async () => {
+      const failed = reading();
+      failed.room.flush(ROOM);
+      failed.stage.flush('no', { status: 500, statusText: 'Error' });
+      failed.people.flush([]);
+      await Promise.resolve();
+      TestBed.tick();
+      expect(failed.store.readFailed()).toBe(true);
+      expect(failed.store.ready()).toBe(false);
+
+      TestBed.resetTestingModule();
+      const gone = reading();
+      gone.room.flush('no', { status: 404, statusText: 'Not Found' });
+      gone.stage.flush('no', { status: 404, statusText: 'Not Found' });
+      gone.people.flush('no', { status: 404, statusText: 'Not Found' });
+      await Promise.resolve();
+      TestBed.tick();
+      expect(gone.store.readFailed()).toBe(false);
+      expect(gone.store.roomGone()).toBe(true);
+    });
   });
 
   it('knows who hosts, who speaks, who has a hand up, and what that makes this person', async () => {
@@ -214,6 +323,19 @@ describe('RoomStore', () => {
       expect(store.room()?.participantCount).toBe(3);
     });
 
+    it('changes the title, topic and seats when the host edits the room', async () => {
+      const store = await ready();
+
+      store.apply({ type: 'ROOM_UPDATED', title: 'New title', topic: 'Travel', maxStageSeats: 6 });
+
+      expect(store.room()).toMatchObject({
+        title: 'New title',
+        topic: 'Travel',
+        maxStageSeats: 6,
+        participantCount: 3,
+      });
+    });
+
     it('marks a speaker as reconnecting, and back', async () => {
       const store = await ready();
 
@@ -232,7 +354,6 @@ describe('RoomStore', () => {
         stage: { speakers: ['h-1', 'b-1'], handRaiseQueue: [] },
       });
 
-      store.reload();
       await load(store, { stage: { speakers: ['h-1'], handRaiseQueue: ['b-1'] } });
 
       expect(store.speakers()).toEqual(['h-1']);
@@ -251,12 +372,12 @@ describe('RoomStore', () => {
     expect(store.roomId()).toBe('r-2');
   });
 
-  it('fetches everything again on reload', async () => {
+  it('reads everything again when synced after the first time', async () => {
     const store = setup();
     store.show('r-1');
     await load(store);
 
-    store.reload();
+    store.sync();
     TestBed.tick();
 
     http.expectOne(BASE);

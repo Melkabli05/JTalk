@@ -26,6 +26,12 @@ export type RoomUpdate =
       readonly joined: readonly string[];
       readonly left: readonly string[];
     }
+  | {
+      readonly type: 'ROOM_UPDATED';
+      readonly title: string;
+      readonly topic: string;
+      readonly maxStageSeats: number;
+    }
   | { readonly type: 'REACTIONS'; readonly reactions: readonly ReactionBurst[] };
 
 export interface RealtimeConnection {

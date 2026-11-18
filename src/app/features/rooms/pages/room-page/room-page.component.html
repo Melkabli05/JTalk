@@ -7,7 +7,7 @@
     icon="pi pi-arrow-left"
     [label]="'Back to the rooms' | t"
   ></a>
-} @else if (state.joined() && state.room(); as current) {
+} @else if (state.joined() && state.ready() && state.room(); as current) {
   <div class="room">
     <header class="hero">
       <div class="top">

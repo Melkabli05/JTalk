@@ -247,14 +247,21 @@ describe('RoomPageComponent (container)', () => {
     expect(root().querySelector('app-raised-hands button')).toBeNull();
   });
 
-  it('raises a hand and refreshes the room', async () => {
+  it('raises a hand, and shows it when the server announces it, without asking again', async () => {
     await open();
-    server.stage = { speakers: ['h-1'], handRaiseQueue: ['b-1', 'm-1'] };
+    requests.length = 0;
 
     press('Raise hand', root());
     await settle();
+    link.last.listener.roomEvent({
+      type: 'HAND_RAISED',
+      at: Date.now(),
+      stage: { speakers: ['h-1'], handRaiseQueue: ['b-1', 'm-1'] },
+    });
+    await settle();
 
     expect(sent('POST', `${BASE}/stage/raise-hand`)).toBe(true);
+    expect(sent('GET', `${BASE}/stage`)).toBe(false);
     expect(
       root().querySelector('app-room-controls button[aria-pressed]')?.getAttribute('aria-pressed'),
     ).toBe('true');
@@ -377,11 +384,16 @@ describe('RoomPageComponent (container)', () => {
     });
   });
 
-  it('takes a free seat', async () => {
+  it('takes a free seat, and shows it when the server announces it', async () => {
     await open();
-    server.stage = { speakers: ['h-1', 'm-1'], handRaiseQueue: ['b-1'] };
 
     root().querySelector<HTMLButtonElement>('app-stage-seats .seat')!.click();
+    await settle();
+    link.last.listener.roomEvent({
+      type: 'STAGE_UPDATED',
+      at: Date.now(),
+      stage: { speakers: ['h-1', 'm-1'], handRaiseQueue: ['b-1'] },
+    });
     await settle();
 
     expect(sent('POST', `${BASE}/stage/join`)).toBe(true);
@@ -419,16 +431,29 @@ describe('RoomPageComponent (container)', () => {
     expect(TestBed.inject(Router).url).toBe('/');
   });
 
-  it('checks the room now and then in case it missed something', async () => {
+  it('does not ask for the room again once it has it: the server announces what changes', async () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     await open();
     requests.length = 0;
 
-    vi.advanceTimersByTime(30_000);
+    vi.advanceTimersByTime(10 * 60_000);
     await settle();
 
-    expect(sent('GET', `${BASE}/stage`)).toBe(true);
-    expect(sent('GET', `${BASE}/participants`)).toBe(true);
+    expect(requests).toEqual([]);
+  });
+
+  it('shows what the host changed about the room, when the server announces it', async () => {
+    await open();
+
+    link.last.listener.roomEvent({
+      type: 'ROOM_UPDATED',
+      title: 'A new title',
+      topic: 'A new topic',
+      maxStageSeats: 4,
+    });
+    await settle();
+
+    expect(root().textContent).toContain('A new title');
   });
 
   it('tells screen readers who raised a hand or took a seat, once, politely', async () => {
@@ -493,11 +518,16 @@ describe('RoomPageComponent (container)', () => {
       );
     });
 
-    it('invites someone to the stage', async () => {
+    it('invites someone to the stage, and shows them there when the server announces it', async () => {
       await open(asHost);
-      server.stage = { speakers: ['h-1', 'b-1'], handRaiseQueue: [] };
 
       root().querySelector<HTMLButtonElement>('app-raised-hands button')!.click();
+      await settle();
+      link.last.listener.roomEvent({
+        type: 'STAGE_UPDATED',
+        at: Date.now(),
+        stage: { speakers: ['h-1', 'b-1'], handRaiseQueue: [] },
+      });
       await settle();
 
       expect(sent('POST', `${BASE}/stage/promote/b-1`)).toBe(true);

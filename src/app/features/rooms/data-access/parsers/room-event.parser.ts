@@ -52,6 +52,15 @@ export function parseRoomEvent(raw: unknown): RoomUpdate | undefined {
           }
         : undefined;
     }
+    case 'ROOM_UPDATED': {
+      const settings = asRecord(event?.['settings']);
+      const topic = settings?.['topic'] ?? '';
+      return typeof settings?.['title'] === 'string' &&
+        typeof topic === 'string' &&
+        typeof settings['maxStageSeats'] === 'number'
+        ? { type, title: settings['title'], topic, maxStageSeats: settings['maxStageSeats'] }
+        : undefined;
+    }
     case 'REACTIONS': {
       const reactions = readReactions(event?.['reactions']);
       return reactions.length > 0 ? { type, reactions } : undefined;

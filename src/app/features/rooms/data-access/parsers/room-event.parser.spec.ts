@@ -34,6 +34,21 @@ describe('parseRoomEvent', () => {
     ).toEqual({ type: 'PRESENCE_CHANGED', participantCount: 4, joined: ['a'], left: [] });
   });
 
+  it('reads what the host changed about the room, with no topic as an empty one', () => {
+    expect(
+      parseRoomEvent({
+        type: 'ROOM_UPDATED',
+        settings: { title: 'New', topic: 'Travel', maxStageSeats: 6 },
+      }),
+    ).toEqual({ type: 'ROOM_UPDATED', title: 'New', topic: 'Travel', maxStageSeats: 6 });
+    expect(
+      parseRoomEvent({
+        type: 'ROOM_UPDATED',
+        settings: { title: 'New', topic: null, maxStageSeats: 6 },
+      }),
+    ).toMatchObject({ topic: '' });
+  });
+
   it('reads who reacted with what, and drops reactions it does not know', () => {
     expect(
       parseRoomEvent({
@@ -69,6 +84,11 @@ describe('parseRoomEvent', () => {
       { type: 'HAND_RAISED', stage: { speakers: [], handRaiseQueue: [] } },
     ],
     ['a reconnect without a user', { type: 'SPEAKER_RECONNECTED' }],
+    ['a room change without its settings', { type: 'ROOM_UPDATED' }],
+    [
+      'a room change with a bad seat count',
+      { type: 'ROOM_UPDATED', settings: { title: 'T', topic: '', maxStageSeats: 'x' } },
+    ],
     [
       'a presence change with a bad count',
       { type: 'PRESENCE_CHANGED', presence: { participantCount: 'x', joined: [], left: [] } },

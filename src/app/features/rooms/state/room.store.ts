@@ -1,4 +1,4 @@
-import { computed, effect, inject, linkedSignal, Service, signal } from '@angular/core';
+import { computed, effect, inject, linkedSignal, Service, signal, untracked } from '@angular/core';
 import { IdentityService } from '@core/auth/identity.service';
 import { httpStatus } from '@shared/utils/http-status';
 import { loadedValue } from '@shared/utils/resource-value';
@@ -20,13 +20,17 @@ export class RoomStore {
 
   private readonly id = signal('');
   private readonly hasJoined = signal(false);
+  // The room is read from the server once the link to its live events is up, so nothing that happens after it is missed; from then on the
+  // events keep it current, and it is read again only when the link comes back after a break.
+  private readonly reading = signal(false);
+  private readonly readId = computed(() => (this.reading() ? this.id() : ''));
 
   readonly roomId = this.id.asReadonly();
   readonly joined = this.hasJoined.asReadonly();
 
-  private readonly roomResource = this.rooms.roomResource(this.roomId);
-  private readonly stageResource = this.stages.stageResource(this.roomId);
-  private readonly peopleResource = this.participants.participantsResource(this.roomId);
+  private readonly roomResource = this.rooms.roomResource(this.readId);
+  private readonly stageResource = this.stages.stageResource(this.readId);
+  private readonly peopleResource = this.participants.participantsResource(this.readId);
 
   private readonly roomState = linkedSignal(loadedValue(this.roomResource));
   private readonly stageState = linkedSignal(loadedValue(this.stageResource));
@@ -36,11 +40,41 @@ export class RoomStore {
 
   readonly room = this.roomState.asReadonly();
   readonly stage = this.stageState.asReadonly();
+  /** The room, the stage and who is here have all been read. */
+  readonly ready = computed(
+    () =>
+      this.roomState() !== undefined &&
+      this.stageState() !== undefined &&
+      this.peopleState() !== undefined,
+  );
   readonly floating = this.floatingState.asReadonly();
   readonly reactionsByPerson = computed(
     () => new Map(this.floating().map((reaction) => [reaction.userId, reaction])),
   );
   readonly roomGone = computed(() => httpStatus(this.roomResource.error()) === 404);
+  /** Reading the room failed for a reason that trying again can fix (a room that is gone is not one). */
+  readonly readFailed = computed(() =>
+    [this.roomResource, this.stageResource, this.peopleResource].some((resource) => {
+      const error: unknown = resource.error();
+      return error !== undefined && httpStatus(error) !== 404;
+    }),
+  );
+  private readonly loadingRoom = computed(
+    () =>
+      this.roomResource.isLoading() ||
+      this.stageResource.isLoading() ||
+      this.peopleResource.isLoading(),
+  );
+  // What arrives while the room is being read may be older or newer than what the read returns, and the read would overwrite it. So it is
+  // applied when it arrives, and again, in order, once the read is done: applying an event twice changes nothing.
+  private missed: RoomUpdate[] = [];
+  private readonly replay = effect(() => {
+    if (!this.loadingRoom() && this.missed.length > 0) {
+      const events = this.missed;
+      this.missed = [];
+      untracked(() => events.forEach((update) => this.change(update)));
+    }
+  });
 
   readonly members = this.identity.directory;
 
@@ -79,6 +113,7 @@ export class RoomStore {
 
   show(id: string): void {
     this.hasJoined.set(false);
+    this.reading.set(false);
     this.stageStamp = 0;
     this.floatingState.set([]);
     this.id.set(id);
@@ -89,6 +124,13 @@ export class RoomStore {
   }
 
   apply(update: RoomUpdate): void {
+    if (this.loadingRoom()) {
+      this.missed.push(update);
+    }
+    this.change(update);
+  }
+
+  private change(update: RoomUpdate): void {
     switch (update.type) {
       case 'STAGE_UPDATED':
       case 'HAND_RAISED':
@@ -116,6 +158,17 @@ export class RoomStore {
           ),
         );
         break;
+      case 'ROOM_UPDATED':
+        this.roomState.update(
+          (room) =>
+            room && {
+              ...room,
+              title: update.title,
+              topic: update.topic,
+              maxStageSeats: update.maxStageSeats,
+            },
+        );
+        break;
       case 'PRESENCE_CHANGED':
         this.peopleState.update((people) => people && arrivals(people, update.joined, update.left));
         this.roomState.update(
@@ -133,7 +186,12 @@ export class RoomStore {
     this.floatingState.update((current) => current.filter((reaction) => !ids.has(reaction.id)));
   }
 
-  reload(): void {
+  /** Reads the room, the stage and who is here: the first time this starts it, after that it reads them again. */
+  sync(): void {
+    if (!this.reading()) {
+      this.reading.set(true);
+      return;
+    }
     this.roomResource.reload();
     this.stageResource.reload();
     this.peopleResource.reload();

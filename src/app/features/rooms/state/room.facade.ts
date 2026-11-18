@@ -4,7 +4,6 @@ import { filter, Subject, switchMap, tap, timer, type Observable } from 'rxjs';
 import { httpStatus } from '@shared/utils/http-status';
 import { msg } from '@shared/utils/i18n/msg';
 import { saveRequest } from '@shared/utils/save-request';
-import { visibleInterval } from '@shared/utils/visible-interval';
 import { ParticipantsApiService } from '../data-access/participants-api.service';
 import { RealtimeService } from '../data-access/realtime.service';
 import { ReactionsApiService } from '../data-access/reactions-api.service';
@@ -14,8 +13,8 @@ import type { Reaction, ReactionBurst } from '../models/reaction.model';
 import type { RoomEdit } from '../models/room.model';
 import { RoomStore } from './room.store';
 
-const RESYNC_MS = 30_000;
 const RECOVER_MS = 3000;
+const READ_RETRY_MS = 3000;
 const RECOVER_TRIES = 3;
 const REACTION_SHOWN_MS = 2400;
 const REACTION_COOLDOWN_MS = 500;
@@ -49,15 +48,27 @@ export class RoomFacade {
       }
     });
     const audioStatus = toObservable(this.audio.status);
+    // The room is read once the link to its events is up (or has failed before it ever was, so the page still shows), and again each time
+    // the link comes back after a break: that is when events may have been missed. Otherwise the events keep it current.
     audioStatus
       .pipe(
-        filter((status) => status === 'connected'),
+        filter((status) => status === 'connected' || (status === 'failed' && !this.state.ready())),
         takeUntilDestroyed(),
       )
-      .subscribe(() => {
-        this.recoveries = 0;
-        this.state.reload();
+      .subscribe((status) => {
+        if (status === 'connected') {
+          this.recoveries = 0;
+        }
+        this.state.sync();
       });
+    // A read that failed is tried again, since nothing else would: the events only keep a room current once it has been read.
+    toObservable(this.state.readFailed)
+      .pipe(
+        filter(Boolean),
+        switchMap(() => timer(READ_RETRY_MS)),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.state.sync());
     audioStatus
       .pipe(
         filter(
@@ -69,9 +80,6 @@ export class RoomFacade {
         takeUntilDestroyed(),
       )
       .subscribe(() => this.reconnectAudio());
-    visibleInterval(RESYNC_MS)
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => this.resync());
     this.audio.roomEvents
       .pipe(takeUntilDestroyed())
       .subscribe((update) =>
@@ -182,8 +190,8 @@ export class RoomFacade {
 
   edit(change: RoomEdit, done: () => void): void {
     this.saving.run(this.rooms.update(this.state.roomId(), change), {
-      next: () => {
-        this.state.reload();
+      next: ({ title, topic, maxStageSeats }) => {
+        this.state.apply({ type: 'ROOM_UPDATED', title, topic, maxStageSeats });
         done();
       },
       failure: msg('Could not save the room. Please try again.'),
@@ -205,12 +213,6 @@ export class RoomFacade {
       .subscribe(() => this.state.settle(new Set(shown.map((reaction) => reaction.id))));
   }
 
-  private resync(): void {
-    if (this.state.joined()) {
-      this.state.reload();
-    }
-  }
-
   private exitIfPushedOut(error: unknown): void {
     if (httpStatus(error) === 403) {
       this.exit('removed');
@@ -221,10 +223,7 @@ export class RoomFacade {
 
   private run(request: Observable<void>, failure: string, after?: () => void): void {
     this.action.run(request, {
-      next: () => {
-        after?.();
-        this.state.reload();
-      },
+      next: () => after?.(),
       failure,
     });
   }

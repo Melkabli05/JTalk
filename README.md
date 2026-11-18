@@ -268,10 +268,11 @@ transferred; the Auth0 SDK (about 58 kB of it) is the one thing that has to load
 LiveKit (129 kB) loads when a room is joined and the Krisp noise filter (a 6 MB WebAssembly chunk, 1.4 MB transferred) only when a speaker's microphone
 is published, so listeners never download it.
 
-- The hallway does not poll: `GET /api/v1/voice-rooms/feed` is a server-sent events stream that sends the open rooms first and every change after
+- Nothing polls. The hallway is one server-sent events stream: `GET /api/v1/voice-rooms/feed` sends the open rooms first and every change after
   (`shared/utils/server-sent-events`, through `HttpClient` so the Auth0 interceptor adds the token, which the browser's `EventSource` cannot). The
-  store is an `rxResource` over it, so a failure shows through `error()` and Try again is `reload()`. A joined room's re-sync (30 s) is background
-  refreshing and uses `shared/utils/visible-interval`, not `interval`: it pauses while the tab is hidden and refreshes at once when it is shown again.
+  store is an `rxResource` over it, so a failure shows through `error()` and Try again is `reload()`. A room reads its metadata, stage and
+  participants once, when the link to its live events is up (so nothing after is missed), and again only when that link comes back after a break;
+  stage changes, who comes and goes, reactions and the host's edits arrive as events, and actions do not refetch.
 - Hashed assets are cached `immutable` (see Deploying).
 
 ## Quality gates

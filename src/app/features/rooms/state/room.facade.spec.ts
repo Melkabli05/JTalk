@@ -54,7 +54,7 @@ describe('RoomFacade', () => {
       method === 'POST' && url.endsWith('/participants/join')
         ? SESSION
         : method === 'PATCH'
-          ? ROOM
+          ? { ...ROOM, title: 'New' }
           : method === 'GET' && url === BASE
             ? ROOM
             : method === 'GET' && url.endsWith('/stage')
@@ -141,29 +141,73 @@ describe('RoomFacade', () => {
     expect(facade.joining.error()).toBe('Could not join the room. Please try again.');
   });
 
-  it('re-reads the room now and then, once joined, in case it missed something', async () => {
+  it('reads the room, the stage and who is here once, when its audio link is up, and never on a timer', async () => {
     withFakeTimers();
     await enter();
-    sent.length = 0;
-
-    vi.advanceTimersByTime(30_000);
-    await settle();
 
     expect(count('GET', BASE)).toBe(1);
     expect(count('GET', `${BASE}/stage`)).toBe(1);
     expect(count('GET', `${BASE}/participants`)).toBe(1);
-  });
 
-  it('does not re-read the room before it has joined', async () => {
-    withFakeTimers();
-    failing[`POST ${BASE}/participants/join`] = 500;
-    await enter();
     sent.length = 0;
-
-    vi.advanceTimersByTime(30_000);
+    vi.advanceTimersByTime(10 * 60_000);
     await settle();
 
+    expect(sent).toEqual([]);
+  });
+
+  it('still shows the room when its audio never connects', async () => {
+    withFakeTimers();
+    link.connectFailure = new Error('unreachable');
+
+    await enter();
+
+    expect(facade.audio.status()).toBe('failed');
+    expect(count('GET', BASE)).toBe(1);
+    expect(facade.state.ready()).toBe(true);
+  });
+
+  it('tries again, after a pause, when reading the room fails, until it has it', async () => {
+    withFakeTimers();
+    failing[`GET ${BASE}/stage`] = 500;
+    await enter();
+    expect(facade.state.ready()).toBe(false);
+    expect(count('GET', `${BASE}/stage`)).toBe(1);
+
+    vi.advanceTimersByTime(2999);
+    await settle();
+    expect(count('GET', `${BASE}/stage`)).toBe(1);
+
+    delete failing[`GET ${BASE}/stage`];
+    vi.advanceTimersByTime(1);
+    await settle();
+
+    expect(count('GET', `${BASE}/stage`)).toBe(2);
+    expect(facade.state.ready()).toBe(true);
+    sent.length = 0;
+    vi.advanceTimersByTime(60_000);
+    await settle();
+    expect(sent).toEqual([]);
+  });
+
+  it('does not keep trying for a room that is gone: it leaves', async () => {
+    withFakeTimers();
+    failing[`GET ${BASE}`] = 404;
+    await enter();
+
+    expect(exits).toEqual(['ended']);
+    sent.length = 0;
+    vi.advanceTimersByTime(60_000);
+    await settle();
+    expect(sent).toEqual([]);
+  });
+
+  it('does not read the room when it cannot join', async () => {
+    failing[`POST ${BASE}/participants/join`] = 500;
+    await enter();
+
     expect(count('GET', BASE)).toBe(0);
+    expect(facade.state.ready()).toBe(false);
   });
 
   it('joins again to get its audio back when the link is lost, and gives up after a few tries', async () => {
@@ -224,12 +268,13 @@ describe('RoomFacade', () => {
       expect(count('POST', `${BASE}/participants/leave`)).toBe(0);
     });
 
-    it('reports "ended" when the room is gone, found by reading it or by joining again after the link dropped', async () => {
+    it('reports "ended" when the room is gone, found by reading it when the link comes back or by joining again after it dropped', async () => {
       withFakeTimers();
       await enter();
       failing[`GET ${BASE}`] = 404;
 
-      vi.advanceTimersByTime(30_000);
+      link.last.listener.linkChanged(false);
+      link.last.listener.linkChanged(true);
       await settle();
 
       expect(exits).toEqual(['ended']);
@@ -268,17 +313,19 @@ describe('RoomFacade', () => {
       ['invites someone', () => facade.invite('b-1'), 'POST', `${BASE}/stage/promote/b-1`],
       ['moves a speaker down', () => facade.demote('b-1'), 'POST', `${BASE}/stage/demote/b-1`],
       ['removes someone', () => facade.remove('b-1'), 'DELETE', `${BASE}/participants/b-1`],
-    ])('%s, and refreshes the room', async (_name, act, method, url) => {
-      await enter();
-      sent.length = 0;
+    ])(
+      '%s, and leaves showing the result to the event the server sends',
+      async (_name, act, method, url) => {
+        await enter();
+        sent.length = 0;
 
-      act();
-      await settle();
+        act();
+        await settle();
 
-      expect(count(method, url)).toBe(1);
-      expect(count('GET', `${BASE}/stage`)).toBe(1);
-      expect(facade.action.error()).toBeNull();
-    });
+        expect(sent.map((r) => `${r.method} ${r.url}`)).toEqual([`${method} ${url}`]);
+        expect(facade.action.error()).toBeNull();
+      },
+    );
 
     it('says what went wrong, and keeps the room, when a request fails', async () => {
       await enter();
@@ -292,7 +339,7 @@ describe('RoomFacade', () => {
       expect(exits).toEqual([]);
     });
 
-    it('saves an edit of the room, refreshes it, and then tells the page', async () => {
+    it('saves an edit of the room, shows the room as saved, and then tells the page', async () => {
       await enter();
       const done = vi.fn();
 
@@ -304,6 +351,8 @@ describe('RoomFacade', () => {
         topic: 't',
         maxStageSeats: 5,
       });
+      expect(facade.state.room()).toMatchObject({ title: 'New', participantCount: 1 });
+      expect(sent.filter((r) => r.method === 'GET' && r.url === BASE)).toHaveLength(1); // the first read, not one more
       expect(done).toHaveBeenCalledOnce();
     });
 
