@@ -27,3 +27,26 @@ export function avatarPath(id: string): string {
 export function avatarIdOf(path: string | null | undefined): string {
   return AVATARS.find((avatar) => path === `/${avatar.url}`)?.id ?? '';
 }
+
+/** The three tones a person without a picture is drawn in (Forest, Sand, Coral): the same person always gets the same one. */
+const PALETTE = [
+  { background: 'var(--p-jtalk-tone-green)', color: '#fff' },
+  { background: 'var(--p-jtalk-tone-gold)', color: '#252525' },
+  { background: 'var(--p-jtalk-tone-coral)', color: '#fff' },
+] as const;
+
+function seedHash(seed: string): number {
+  return [...seed].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) % 997, 7);
+}
+
+export function blockColors(seed: string): { background: string; color: string } {
+  return PALETTE[seedHash(seed) % PALETTE.length] ?? PALETTE[0];
+}
+
+export function avatarColors(id: string): {
+  '--p-avatar-background': string;
+  '--p-avatar-color': string;
+} {
+  const { background, color } = blockColors(id);
+  return { '--p-avatar-background': background, '--p-avatar-color': color };
+}

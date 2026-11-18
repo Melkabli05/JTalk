@@ -1,4 +1,11 @@
-import { AVATARS, avatarIdOf, avatarOrDefault, avatarPath, avatarUrl } from './avatars';
+import {
+  avatarColors,
+  AVATARS,
+  avatarIdOf,
+  avatarOrDefault,
+  avatarPath,
+  avatarUrl,
+} from './avatars';
 
 describe('avatars', () => {
   it('offers ten distinct pictures, numbered from 01', () => {
@@ -38,5 +45,16 @@ describe('avatar paths', () => {
     expect(avatarIdOf('https://cdn.example.com/a.png')).toBe('');
     expect(avatarIdOf(null)).toBe('');
     expect(avatarIdOf('/avatars/other.svg')).toBe('');
+  });
+
+  it('gives the same person the same color every time, always one of the three primaries', () => {
+    expect(avatarColors('u-42')).toEqual(avatarColors('u-42'));
+    const backgrounds = new Set(
+      ['u-1', 'u-2', 'u-3', 'u-4', 'u-5', 'u-6'].map(
+        (id) => avatarColors(id)['--p-avatar-background'],
+      ),
+    );
+    expect([...backgrounds].every((value) => /tone-(green|gold|coral)/.test(value))).toBe(true);
+    expect(backgrounds.size).toBeGreaterThan(1);
   });
 });

@@ -6,7 +6,7 @@ import type { Person } from '@core/auth/identity.models';
 import type { PersonDetails } from '@core/people/person-card.model';
 import { InitialsPipe } from '@shared/pipes/initials.pipe';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import { avatarUrl } from '@shared/utils/avatars';
+import { avatarColors, avatarUrl } from '@shared/utils/avatars';
 import { languageOf } from '@shared/utils/languages';
 import { countryNameOf, flagOf } from '@shared/utils/people';
 
@@ -23,6 +23,7 @@ export class ProfileHeroComponent {
   readonly locale = input('en');
 
   protected readonly picture = computed(() => avatarUrl(this.person().avatar));
+  protected readonly colors = computed(() => avatarColors(this.person().id));
   protected readonly native = computed(() => languageOf(this.person().nativeLanguage));
   protected readonly learning = computed(() => languageOf(this.person().learning));
   protected readonly origin = computed(() => {

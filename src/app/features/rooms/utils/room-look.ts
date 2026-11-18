@@ -1,6 +1,6 @@
 import { type Language, languageOf } from '@shared/utils/languages';
 import type { Room } from '../models/room.model';
-import { blockColors } from './members';
+import { blockColors } from '@shared/utils/avatars';
 
 export function roomLook(room: Pick<Room, 'targetLanguage' | 'nativeLanguage'> | undefined): {
   target: Language;

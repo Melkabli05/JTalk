@@ -378,6 +378,16 @@ export const JtalkPreset = definePreset(Aura, {
         }
       `,
     },
+    tabs: {
+      // Tabs sit on the open canvas: no panel box, a hairline under the list, and the same 44px targets as every control.
+      tablist: { background: 'transparent' },
+      tabpanel: { background: 'transparent', padding: '1rem 0 0' },
+      css: () => `
+        .p-tab {
+          min-height: 2.75rem;
+        }
+      `,
+    },
     accordion: {
       // A quiet disclosure, not a boxed panel: a line of text with a chevron, open to reveal what is behind it.
       panel: { borderWidth: '0', borderColor: 'transparent' },

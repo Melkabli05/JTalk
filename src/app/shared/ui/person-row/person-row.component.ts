@@ -2,7 +2,7 @@ import { Component, computed, input, output } from '@angular/core';
 import { Avatar } from '@openng/optimus-ui/avatar';
 import { InitialsPipe } from '@shared/pipes/initials.pipe';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import { avatarUrl } from '@shared/utils/avatars';
+import { avatarColors, avatarUrl } from '@shared/utils/avatars';
 import { languageOf } from '@shared/utils/languages';
 import { countryNameOf, flagOf, PersonSummary } from '@shared/utils/people';
 
@@ -20,6 +20,7 @@ import { countryNameOf, flagOf, PersonSummary } from '@shared/utils/people';
           size="large"
           aria-hidden="true"
           [label]="person().name | initials"
+          [style]="colors()"
         />
       }
       <span class="text">
@@ -52,6 +53,7 @@ export class PersonRowComponent {
   readonly opened = output<string>();
 
   protected readonly picture = computed(() => avatarUrl(this.person().avatar));
+  protected readonly colors = computed(() => avatarColors(this.person().id));
   protected readonly native = computed(() => languageOf(this.person().nativeLanguage));
   protected readonly origin = computed(() => {
     const code = this.person().countryCode ?? '';
