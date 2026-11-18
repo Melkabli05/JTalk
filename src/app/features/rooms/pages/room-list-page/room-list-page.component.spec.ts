@@ -5,7 +5,7 @@ import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import RoomListPageComponent from './room-list-page.component';
 import { fakeIdentity } from '@core/auth/auth-testing';
-import { openFeed, ROOMS_URL } from '../../data-access/room-feed-testing';
+import { failUntilGivenUp, openFeed } from '../../data-access/room-feed-testing';
 
 @Component({ selector: 'app-stub', template: '' })
 class Stub {}
@@ -59,8 +59,7 @@ describe('RoomListPageComponent (container)', () => {
   const withRooms =
     (...rooms: object[]) =>
     () => {
-      openFeed(http).say({ type: 'READY' });
-      http.expectOne(ROOMS_URL).flush({ content: rooms });
+      openFeed(http).say({ type: 'SNAPSHOT', rooms });
     };
 
   it('shows a card for each open room', async () => {
@@ -83,8 +82,7 @@ describe('RoomListPageComponent (container)', () => {
     expect(root().querySelectorAll('.rooms li')).toHaveLength(3);
     expect(root().querySelectorAll('.rooms p-card')).toHaveLength(3);
     expect(root().querySelector('[role="status"]')?.textContent).toContain('Finding open rooms');
-    openFeed(http).say({ type: 'READY' });
-    http.expectOne(ROOMS_URL).flush({ content: [] });
+    openFeed(http).say({ type: 'SNAPSHOT', rooms: [] });
     await fixture.whenStable();
   });
 
@@ -116,7 +114,8 @@ describe('RoomListPageComponent (container)', () => {
   });
 
   it('lets the person try again when the rooms could not be loaded', async () => {
-    await render(() => openFeed(http).fail());
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    await render(() => failUntilGivenUp(http));
 
     [...root().querySelectorAll<HTMLButtonElement>('button')]
       .find((b) => b.textContent?.includes('Try again'))!
@@ -129,10 +128,8 @@ describe('RoomListPageComponent (container)', () => {
   });
 
   it('says so when the rooms cannot be loaded', async () => {
-    await render(() => {
-      openFeed(http).say({ type: 'READY' });
-      http.expectOne(ROOMS_URL).flush('no', { status: 500, statusText: 'Server Error' });
-    });
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    await render(() => failUntilGivenUp(http));
 
     expect(root().textContent).toContain('Could not load the rooms.');
   });
@@ -141,8 +138,7 @@ describe('RoomListPageComponent (container)', () => {
     let feed!: ReturnType<typeof openFeed>;
     await render(() => {
       feed = openFeed(http);
-      feed.say({ type: 'READY' });
-      http.expectOne(ROOMS_URL).flush({ content: [roomDto('r-1', 'Spanish', 'es')] });
+      feed.say({ type: 'SNAPSHOT', rooms: [roomDto('r-1', 'Spanish', 'es')] });
     });
 
     feed.say({ type: 'ROOM_OPENED', room: roomDto('r-2', 'French', 'fr') });

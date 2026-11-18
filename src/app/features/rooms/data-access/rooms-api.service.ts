@@ -1,28 +1,24 @@
 import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
-import { concatMap, map, type Observable } from 'rxjs';
+import { concatMap, map, type Observable, repeat, retry, timer } from 'rxjs';
 import { API_BASE_URL } from '@core/http/api-base-url.token';
 import { serverSentJson } from '@shared/utils/server-sent-events';
 import type { RoomFeedEvent } from '../models/room-feed.model';
 import type { Room, RoomDraft, RoomEdit, RoomSession } from '../models/room.model';
 import { parseRoomFeedEvent } from './parsers/room-feed.parser';
-import { parseRoom, parseRooms, parseSession } from './parsers/room.parser';
+import { parseRoom, parseSession } from './parsers/room.parser';
 
-const PAGE_SIZE = 100;
+const RETRIES = 5;
+const RETRY_FIRST_MS = 1000;
 
 @Service()
 export class RoomsApiService {
   private readonly http = inject(HttpClient);
   private readonly url = `${inject(API_BASE_URL)}/v1/voice-rooms`;
 
-  /** The open rooms, once. After this, {@link feed} says what changes. */
-  rooms(): Observable<Room[]> {
-    return this.http.get<unknown>(`${this.url}?size=${PAGE_SIZE}`).pipe(map(parseRooms));
-  }
-
   /**
-   * What happens to the open rooms, as it happens: a `READY` first, then rooms opened, changed and closed and their numbers. It stays
-   * open until unsubscribed; it completes or errors when the connection drops.
+   * The open rooms and everything that happens to them: the list first, then rooms opened, changed and closed and their numbers. A
+   * connection that ends is reopened (and starts from a fresh list); one that fails is retried with a growing pause, then gives up.
    */
   feed(): Observable<RoomFeedEvent> {
     return serverSentJson(this.http, `${this.url}/feed`).pipe(
@@ -30,6 +26,12 @@ export class RoomsApiService {
         const event = parseRoomFeedEvent(raw);
         return event === undefined ? [] : [event];
       }),
+      retry({
+        count: RETRIES,
+        delay: (_error, attempt) => timer(RETRY_FIRST_MS * 2 ** (attempt - 1)),
+        resetOnSuccess: true,
+      }),
+      repeat({ delay: RETRY_FIRST_MS }),
     );
   }
 

@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ApplicationRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { openFeed, ROOMS_URL } from './room-feed-testing';
+import { FEED_URL, openFeed } from './room-feed-testing';
 import { RoomsApiService } from './rooms-api.service';
 
 const room = {
@@ -33,38 +33,66 @@ describe('RoomsApiService', () => {
   });
   afterEach(() => http.verify());
 
-  it('loads the open rooms as app models', () => {
-    let rooms: string[] = [];
+  describe('the feed', () => {
+    afterEach(() => vi.useRealTimers());
 
-    api.rooms().subscribe((list) => (rooms = list.map((r) => r.title)));
-    http.expectOne(ROOMS_URL).flush({ content: [room] });
+    it('streams the open rooms and what happens to them, and skips what it does not know', () => {
+      const heard: string[] = [];
 
-    expect(rooms).toEqual(['Spanish']);
-  });
+      const subscription = api.feed().subscribe((event) => heard.push(event.type));
+      openFeed(http).say(
+        { type: 'SNAPSHOT', rooms: [room] },
+        { type: 'SOMETHING_NEW' },
+        { type: 'ROOM_OPENED', room: { ...room, id: 'r-2' } },
+        { type: 'ROOM_CLOSED', roomId: 'r-1' },
+      );
 
-  it('turns a response of the wrong shape into an error instead of bad data', () => {
-    const failed = vi.fn();
+      expect(heard).toEqual(['SNAPSHOT', 'ROOM_OPENED', 'ROOM_CLOSED']);
+      subscription.unsubscribe();
+    });
 
-    api.rooms().subscribe({ error: failed });
-    http.expectOne(ROOMS_URL).flush({ content: [{ ...room, hostId: 5 }] });
+    it('reopens a connection the server ended, and the list starts again', () => {
+      vi.useFakeTimers();
+      const heard: string[] = [];
+      const subscription = api.feed().subscribe((event) => heard.push(event.type));
+      const first = openFeed(http);
+      first.say({ type: 'SNAPSHOT', rooms: [] });
+      first.end();
 
-    expect(failed).toHaveBeenCalledOnce();
-  });
+      vi.advanceTimersByTime(1000);
+      openFeed(http).say({ type: 'SNAPSHOT', rooms: [room] });
 
-  it('streams what happens to the rooms, and skips what it does not know', () => {
-    const heard: string[] = [];
+      expect(heard).toEqual(['SNAPSHOT', 'SNAPSHOT']);
+      subscription.unsubscribe();
+    });
 
-    const subscription = api.feed().subscribe((event) => heard.push(event.type));
-    const feed = openFeed(http);
-    feed.say(
-      { type: 'READY' },
-      { type: 'SOMETHING_NEW' },
-      { type: 'ROOM_OPENED', room },
-      { type: 'ROOM_CLOSED', roomId: 'r-1' },
-    );
+    it('retries a connection that fails, with a growing pause, and then gives up', () => {
+      vi.useFakeTimers();
+      const failed = vi.fn();
+      api.feed().subscribe({ error: failed });
 
-    expect(heard).toEqual(['READY', 'ROOM_OPENED', 'ROOM_CLOSED']);
-    subscription.unsubscribe();
+      openFeed(http).fail();
+      vi.advanceTimersByTime(999);
+      http.expectNone(FEED_URL);
+      vi.advanceTimersByTime(1);
+      openFeed(http).fail();
+      vi.advanceTimersByTime(1999);
+      http.expectNone(FEED_URL);
+      vi.advanceTimersByTime(1);
+      openFeed(http).fail();
+      expect(failed).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(4000);
+      openFeed(http).fail();
+      vi.advanceTimersByTime(8000);
+      openFeed(http).fail();
+      vi.advanceTimersByTime(16_000);
+      openFeed(http).fail();
+
+      expect(failed).toHaveBeenCalledOnce();
+      vi.advanceTimersByTime(60_000);
+      http.expectNone(FEED_URL);
+    });
   });
 
   it('refetches one room when the id changes', async () => {

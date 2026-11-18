@@ -14,8 +14,17 @@ const room = {
 };
 
 describe('room feed parser', () => {
-  it('reads READY', () => {
-    expect(parseRoomFeedEvent({ type: 'READY' })).toEqual({ type: 'READY' });
+  it('reads the open rooms', () => {
+    expect(
+      parseRoomFeedEvent({ type: 'SNAPSHOT', rooms: [room, { ...room, id: 'r-2' }] }),
+    ).toMatchObject({
+      type: 'SNAPSHOT',
+      rooms: [{ id: 'r-1', topic: '' }, { id: 'r-2' }],
+    });
+    expect(parseRoomFeedEvent({ type: 'SNAPSHOT', rooms: [] })).toEqual({
+      type: 'SNAPSHOT',
+      rooms: [],
+    });
   });
 
   it('reads a room that opened or changed', () => {
@@ -53,6 +62,10 @@ describe('room feed parser', () => {
 
   it('skips messages of a kind it does not know, and ones of the wrong shape', () => {
     expect(parseRoomFeedEvent({ type: 'SOMETHING_NEW' })).toBeUndefined();
+    expect(parseRoomFeedEvent({ type: 'SNAPSHOT' })).toBeUndefined();
+    expect(
+      parseRoomFeedEvent({ type: 'SNAPSHOT', rooms: [room, { ...room, id: 7 }] }),
+    ).toBeUndefined();
     expect(
       parseRoomFeedEvent({ type: 'ROOM_OPENED', room: { ...room, hostId: 5 } }),
     ).toBeUndefined();

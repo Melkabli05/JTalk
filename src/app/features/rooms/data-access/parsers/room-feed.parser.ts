@@ -6,8 +6,10 @@ import { readRoom } from './room.parser';
 export function parseRoomFeedEvent(raw: unknown): RoomFeedEvent | undefined {
   const event = asRecord(raw);
   switch (event?.['type']) {
-    case 'READY':
-      return { type: 'READY' };
+    case 'SNAPSHOT': {
+      const rooms = Array.isArray(event['rooms']) ? event['rooms'].map(readRoom) : undefined;
+      return rooms?.every((room) => room !== undefined) ? { type: 'SNAPSHOT', rooms } : undefined;
+    }
     case 'ROOM_OPENED':
     case 'ROOM_UPDATED': {
       const room = readRoom(event['room']);

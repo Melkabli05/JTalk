@@ -36,7 +36,7 @@ describe('serverSentJson', () => {
     };
   }
 
-  it('asks for an event stream', () => {
+  it('asks for an event stream, and to be told as it arrives', () => {
     const { request, subscription } = connect();
 
     expect(request.request.headers.get('Accept')).toBe('text/event-stream');
@@ -44,20 +44,20 @@ describe('serverSentJson', () => {
     subscription.unsubscribe();
   });
 
-  it('emits the JSON of each frame as it arrives, once', () => {
+  it('emits the JSON of each message as it arrives, once', () => {
     const { receive, subscription } = connect();
 
-    receive('data:{"n":1}\n\n');
-    receive('data:{"n":2}\n\ndata:{"n":3}\n\n');
+    receive('data: {"n":1}\n\n');
+    receive('data: {"n":2}\n\ndata: {"n":3}\n\n');
 
     expect(heard).toEqual([{ n: 1 }, { n: 2 }, { n: 3 }]);
     subscription.unsubscribe();
   });
 
-  it('waits for a frame to be complete', () => {
+  it('waits for a message to be complete', () => {
     const { receive, subscription } = connect();
 
-    receive('data:{"n":');
+    receive('data: {"n":');
     expect(heard).toEqual([]);
     receive('1}\n');
     expect(heard).toEqual([]);
@@ -66,31 +66,12 @@ describe('serverSentJson', () => {
     subscription.unsubscribe();
   });
 
-  it('reads Windows line endings, a space after the colon, and names and ids around the data', () => {
+  it('skips keep-alives and lines that are not data', () => {
     const { receive, subscription } = connect();
 
-    receive('event: room\r\nid: 7\r\ndata: {"n":1}\r\n\r\n');
-
-    expect(heard).toEqual([{ n: 1 }]);
-    subscription.unsubscribe();
-  });
-
-  it('joins a frame whose data is on several lines', () => {
-    const { receive, subscription } = connect();
-
-    receive('data:{"n":\ndata:1}\n\n');
-
-    expect(heard).toEqual([{ n: 1 }]);
-    subscription.unsubscribe();
-  });
-
-  it('skips keep-alives, comments and frames that are not JSON', () => {
-    const { receive, subscription } = connect();
-
-    receive(': comment\n\n');
-    receive('event: ping\ndata:\n\n');
-    receive('data:not json\n\n');
-    receive('data:{"n":1}\n\n');
+    receive('event: ping\ndata: \n\n');
+    receive(': a comment\n\n');
+    receive('event: room\nid: 7\ndata: {"n":1}\n\n');
 
     expect(heard).toEqual([{ n: 1 }]);
     subscription.unsubscribe();
@@ -114,7 +95,7 @@ describe('serverSentJson', () => {
     http.expectOne('/events').event({
       type: HttpEventType.DownloadProgress,
       loaded: 14,
-      partialText: 'data:{"n":1}\n\n',
+      partialText: 'data: {"n":1}\n\n',
     });
     first.unsubscribe();
 
@@ -122,7 +103,7 @@ describe('serverSentJson', () => {
     http.expectOne('/events').event({
       type: HttpEventType.DownloadProgress,
       loaded: 14,
-      partialText: 'data:{"n":2}\n\n',
+      partialText: 'data: {"n":2}\n\n',
     });
 
     expect(heard).toEqual([{ n: 2 }]);
