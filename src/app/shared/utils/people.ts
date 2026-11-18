@@ -1,5 +1,16 @@
 import { msg } from '@shared/utils/i18n/msg';
 
+/** Someone as a row in a list: enough to recognise them and open their profile. */
+export interface PersonSummary {
+  readonly id: string;
+  readonly name: string;
+  readonly username: string;
+  readonly nativeLanguage: string;
+  readonly learning: string;
+  readonly avatar: string;
+  readonly countryCode?: string;
+}
+
 export type Proficiency = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'FLUENT';
 
 export const PROFICIENCIES: readonly Proficiency[] = [

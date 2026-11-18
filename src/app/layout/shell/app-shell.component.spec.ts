@@ -149,7 +149,7 @@ describe('AppShellComponent (container)', () => {
     const links = [...root().querySelectorAll('nav [role="menuitem"] a')].map((a) =>
       a.textContent?.trim(),
     );
-    expect(links).toEqual(['الغرف']);
+    expect(links).toEqual(['الغرف', 'الأشخاص']);
     expect(root().querySelector('a.skip-link')?.textContent).toContain('تخطَّ');
 
     localeOption('English')!.click();
@@ -167,8 +167,8 @@ describe('AppShellComponent (container)', () => {
       ),
     ];
 
-    expect(links.map((a) => a.textContent?.trim())).toEqual(['Rooms']);
-    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/']);
+    expect(links.map((a) => a.textContent?.trim())).toEqual(['Rooms', 'People']);
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/', '/people']);
   });
 
   it('lets a page ask for the full width of the content area (route data `wide`)', async () => {

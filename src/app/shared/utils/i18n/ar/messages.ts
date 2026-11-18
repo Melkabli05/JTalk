@@ -207,4 +207,39 @@ export const messages: Readonly<Record<string, string>> = {
   Actions: 'الإجراءات',
   'More actions': 'إجراءات أخرى',
   Close: 'إغلاق',
+  People: 'الأشخاص',
+  'Find people to practise with, and keep up with the ones you know.':
+    'ابحث عن أشخاص لتتدرّب معهم، وتابع من تعرفهم.',
+  Discover: 'اكتشف',
+  Search: 'بحث',
+  Blocked: 'المحظورون',
+  'People who speak what you are learning and are learning what you speak.':
+    'أشخاص يتحدّثون ما تتعلّمه ويتعلّمون ما تتحدّثه.',
+  'No partners yet': 'لا شركاء بعد',
+  'Add the languages you speak and learn to your profile and partners show up here.':
+    'أضِف اللغات التي تتحدّثها وتتعلّمها إلى ملفّك الشخصي وسيظهر الشركاء هنا.',
+  'Search by name or handle': 'ابحث بالاسم أو المعرّف',
+  'People found: {count}': 'عدد من وُجدوا: {count}',
+  'No one found': 'لم يُعثر على أحد',
+  'Search for people': 'ابحث عن أشخاص',
+  'Try another spelling, or a part of their name or handle.':
+    'جرّب تهجئة أخرى، أو جزءًا من الاسم أو المعرّف.',
+  'Type at least two letters of a name or a handle.': 'اكتب حرفين على الأقل من اسم أو معرّف.',
+  'You are not following anyone yet': 'لا تتابع أحدًا بعد',
+  'Follow people you enjoy talking to and they will be here.':
+    'تابع من تستمتع بالحديث معهم وسيظهرون هنا.',
+  'No followers yet': 'لا متابعين بعد',
+  'When someone follows you, you will see them here.': 'عندما يتابعك شخص ما ستراه هنا.',
+  'People you block cannot find you in search or suggestions, and you cannot find them.':
+    'لا يستطيع من تحظرهم العثور عليك في البحث أو الاقتراحات، ولا تستطيع العثور عليهم.',
+  'You have not blocked anyone': 'لم تحظر أحدًا',
+  'Someone you block from their profile or from a room will be listed here.':
+    'من تحظره من ملفّه الشخصي أو من غرفة سيظهر هنا.',
+  Unblock: 'إلغاء الحظر',
+  '{name} is unblocked.': 'أُلغي حظر {name}.',
+  'Could not unblock them. Please try again.': 'تعذّر إلغاء الحظر. حاول مرة أخرى.',
+  'Could not load more people.': 'تعذّر تحميل المزيد من الأشخاص.',
+  'Could not load people.': 'تعذّر تحميل الأشخاص.',
+  'Show more': 'عرض المزيد',
+  'Finding people': 'جارٍ البحث عن أشخاص',
 };

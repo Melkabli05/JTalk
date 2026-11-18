@@ -1,0 +1,200 @@
+<header class="head">
+  <h1>{{ 'People' | t }}</h1>
+  <p class="lead">{{ 'Find people to practise with, and keep up with the ones you know.' | t }}</p>
+</header>
+
+@if (directory.action.error(); as failure) {
+  <p-message class="failure" severity="error">{{ failure | t }}</p-message>
+}
+
+<p-tabs [value]="section()" [scrollable]="true" (valueChange)="section.set($any($event))">
+  <p-tablist>
+    <p-tab value="discover">
+      <i class="pi pi-compass" aria-hidden="true"></i>
+      {{ 'Discover' | t }}
+    </p-tab>
+    <p-tab value="search">
+      <i class="pi pi-search" aria-hidden="true"></i>
+      {{ 'Search' | t }}
+    </p-tab>
+    <p-tab value="following">
+      <i class="pi pi-user-plus" aria-hidden="true"></i>
+      {{ 'Following' | t }}
+    </p-tab>
+    <p-tab value="followers">
+      <i class="pi pi-users" aria-hidden="true"></i>
+      {{ 'Followers' | t }}
+    </p-tab>
+    <p-tab value="blocked">
+      <i class="pi pi-ban" aria-hidden="true"></i>
+      {{ 'Blocked' | t }}
+    </p-tab>
+  </p-tablist>
+
+  <p-tabpanels>
+    <p-tabpanel value="discover" [lazy]="true">
+      <ng-template #content>
+        <p class="hint">
+          {{ 'People who speak what you are learning and are learning what you speak.' | t }}
+        </p>
+        <app-people-list
+          icon="pi pi-compass"
+          [title]="empty.partners.title"
+          [text]="empty.partners.text"
+          [people]="directory.partners.items()"
+          [loading]="directory.partners.loading()"
+          [failed]="directory.partners.failed()"
+          [hasMore]="directory.partners.hasMore()"
+          [locale]="locale()"
+          (opened)="open($event)"
+          (more)="
+            directory.partners.items().length > 0
+              ? directory.partners.more()
+              : directory.partners.reload()
+          "
+        >
+          <ng-template let-person>
+            <app-follow-button
+              [compact]="true"
+              [following]="directory.isFollowing(person.id, false)"
+              [busy]="directory.isBusy(person.id)"
+              (follow)="directory.follow(person.id)"
+              (unfollow)="directory.unfollow(person.id)"
+            />
+          </ng-template>
+        </app-people-list>
+      </ng-template>
+    </p-tabpanel>
+
+    <p-tabpanel value="search" [lazy]="true">
+      <ng-template #content>
+        <p-iconfield class="search">
+          <p-inputicon class="pi pi-search" />
+          <input
+            pInputText
+            type="search"
+            autocomplete="off"
+            maxlength="50"
+            [value]="directory.term()"
+            [attr.aria-label]="'Search by name or handle' | t"
+            [placeholder]="'Search by name or handle' | t"
+            (input)="typed($event)"
+          />
+        </p-iconfield>
+        <p class="cdk-visually-hidden" role="status">
+          @if (directory.searching() && !directory.searchLoading()) {
+            {{ 'People found: {count}' | t: { count: directory.results().length } }}
+          }
+        </p>
+        <app-people-list
+          icon="pi pi-search"
+          [title]="(directory.searching() ? empty.nobody : empty.typing).title"
+          [text]="(directory.searching() ? empty.nobody : empty.typing).text"
+          [people]="directory.results()"
+          [loading]="directory.searchLoading()"
+          [failed]="directory.searchFailed()"
+          [locale]="locale()"
+          (opened)="open($event)"
+        >
+          <ng-template let-person>
+            <app-follow-button
+              [compact]="true"
+              [following]="directory.isFollowing(person.id, false)"
+              [busy]="directory.isBusy(person.id)"
+              (follow)="directory.follow(person.id)"
+              (unfollow)="directory.unfollow(person.id)"
+            />
+          </ng-template>
+        </app-people-list>
+      </ng-template>
+    </p-tabpanel>
+
+    <p-tabpanel value="following" [lazy]="true">
+      <ng-template #content>
+        <app-people-list
+          icon="pi pi-user-plus"
+          [title]="empty.following.title"
+          [text]="empty.following.text"
+          [people]="directory.following.items()"
+          [loading]="directory.following.loading()"
+          [failed]="directory.following.failed()"
+          [hasMore]="directory.following.hasMore()"
+          [locale]="locale()"
+          (opened)="open($event)"
+          (more)="
+            directory.following.items().length > 0
+              ? directory.following.more()
+              : directory.following.reload()
+          "
+        >
+          <ng-template let-person>
+            <app-follow-button
+              [compact]="true"
+              [following]="directory.isFollowing(person.id, true)"
+              [busy]="directory.isBusy(person.id)"
+              (follow)="directory.follow(person.id)"
+              (unfollow)="directory.unfollow(person.id)"
+            />
+          </ng-template>
+        </app-people-list>
+      </ng-template>
+    </p-tabpanel>
+
+    <p-tabpanel value="followers" [lazy]="true">
+      <ng-template #content>
+        <app-people-list
+          icon="pi pi-users"
+          [title]="empty.followers.title"
+          [text]="empty.followers.text"
+          [people]="directory.followers.items()"
+          [loading]="directory.followers.loading()"
+          [failed]="directory.followers.failed()"
+          [hasMore]="directory.followers.hasMore()"
+          [locale]="locale()"
+          (opened)="open($event)"
+          (more)="
+            directory.followers.items().length > 0
+              ? directory.followers.more()
+              : directory.followers.reload()
+          "
+        />
+      </ng-template>
+    </p-tabpanel>
+
+    <p-tabpanel value="blocked" [lazy]="true">
+      <ng-template #content>
+        <p class="hint">
+          {{
+            'People you block cannot find you in search or suggestions, and you cannot find them.'
+              | t
+          }}
+        </p>
+        <app-people-list
+          icon="pi pi-ban"
+          [title]="empty.blocked.title"
+          [text]="empty.blocked.text"
+          [people]="directory.blocked.items()"
+          [loading]="directory.blocked.loading()"
+          [failed]="directory.blocked.failed()"
+          [locale]="locale()"
+          (opened)="open($event)"
+          (more)="directory.blocked.reload()"
+        >
+          <ng-template let-person>
+            <button
+              pButton
+              type="button"
+              class="compact"
+              severity="secondary"
+              [rounded]="true"
+              [outlined]="true"
+              [disabled]="directory.isBusy(person.id)"
+              [label]="'Unblock' | t"
+              (click)="unblock(person)"
+            ></button>
+          </ng-template>
+        </app-people-list>
+      </ng-template>
+    </p-tabpanel>
+  </p-tabpanels>
+</p-tabs>

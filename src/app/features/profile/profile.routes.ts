@@ -11,6 +11,12 @@ export const PROFILE_ROUTES: Routes = [
 
 export const PEOPLE_ROUTES: Routes = [
   {
+    path: '',
+    pathMatch: 'full',
+    title: msg('People'),
+    loadComponent: () => import('./pages/people-page/people-page.component'),
+  },
+  {
     path: ':id',
     title: msg('Profile'),
     loadComponent: () => import('./pages/person-page/person-page.component'),

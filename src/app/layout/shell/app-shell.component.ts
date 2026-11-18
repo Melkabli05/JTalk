@@ -41,6 +41,11 @@ const NAV_ITEMS: MenuItem[] = [
     routerLink: '/',
     routerLinkActiveOptions: { exact: true },
   },
+  {
+    label: msg('People'),
+    icon: 'pi pi-users',
+    routerLink: '/people',
+  },
 ];
 
 function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wide: boolean } {
