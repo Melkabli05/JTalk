@@ -39,8 +39,8 @@ describe('ReactionStreamComponent (presentational)', () => {
     });
 
     expect(items().map((item) => item.textContent?.trim())).toEqual(['Mona', 'You']);
-    expect(items()[0]?.querySelector('i')?.className).toContain('pi-heart-fill');
-    expect(items()[1]?.querySelector('i')?.className).toContain('pi-sparkles');
+    expect(items()[0]?.querySelector('.p-chip-icon')?.className).toContain('pi-heart-fill');
+    expect(items()[1]?.querySelector('.p-chip-icon')?.className).toContain('pi-sparkles');
   });
 
   it('is decoration: hidden from screen readers, and each person keeps to one lane', async () => {

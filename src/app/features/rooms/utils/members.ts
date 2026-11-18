@@ -12,9 +12,12 @@ const PALETTE = [
   { background: 'var(--p-jtalk-tone-coral)', color: '#fff' },
 ] as const;
 
+export function seedHash(seed: string): number {
+  return [...seed].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) % 997, 7);
+}
+
 export function blockColors(seed: string): { background: string; color: string } {
-  const hash = [...seed].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) % 997, 7);
-  return PALETTE[hash % PALETTE.length] ?? PALETTE[0];
+  return PALETTE[seedHash(seed) % PALETTE.length] ?? PALETTE[0];
 }
 
 export function avatarColors(id: string): {
