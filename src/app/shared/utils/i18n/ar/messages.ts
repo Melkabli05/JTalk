@@ -125,6 +125,10 @@ export const messages: Readonly<Record<string, string>> = {
   'Dark theme': 'المظهر الداكن',
   'Right-to-left': 'من اليمين إلى اليسار',
   'Edit profile': 'تعديل الملف الشخصي',
+  'Your name and picture are what people see in the rooms.':
+    'اسمك وصورتك هما ما يراه الناس في الغرف.',
+  'Profile saved.': 'تم حفظ الملف الشخصي.',
+  'Could not save your profile. Please try again.': 'تعذّر حفظ ملفك الشخصي. حاول مرة أخرى.',
   'Your name': 'اسمك',
   'I speak': 'أتحدّث',
   'I am learning': 'أتعلّم',

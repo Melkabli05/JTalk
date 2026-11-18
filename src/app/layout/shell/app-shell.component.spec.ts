@@ -30,10 +30,6 @@ class StubComponent {}
 describe('AppShellComponent (container)', () => {
   let fixture: ComponentFixture<AppShellComponent>;
   const root = () => fixture.nativeElement as HTMLElement;
-  const button = (name: string) =>
-    [...root().querySelectorAll('button')].find(
-      (b) => b.textContent?.includes(name) || b.getAttribute('aria-label')?.includes(name),
-    );
 
   const settings = () => document.querySelector<HTMLElement>('.settings');
   async function openAccount() {
@@ -111,16 +107,6 @@ describe('AppShellComponent (container)', () => {
     await render();
     await openAccount();
     expect(settingsButton('Sign out')).toBeDefined();
-  });
-
-  it('explains the icon-only account button in a tooltip when the pointer rests on it', async () => {
-    await render();
-
-    button('Profile and settings')!.dispatchEvent(new MouseEvent('mouseenter'));
-
-    await vi.waitFor(() =>
-      expect(document.querySelector('.p-tooltip')?.textContent).toContain('Profile and settings'),
-    );
   });
 
   it('switches the color scheme from the dark theme switch', async () => {
@@ -335,7 +321,9 @@ describe('AppShellComponent profile gate', () => {
   beforeEach(() => {
     localStorage.clear();
     localStorage.setItem('jtalk:locale', 'en');
-    TestBed.configureTestingModule({ providers: [...httpStack(logout), provideRouter([])] });
+    TestBed.configureTestingModule({
+      providers: [...httpStack(logout), provideRouter([{ path: 'profile', children: [] }])],
+    });
   });
 
   /**
@@ -449,19 +437,21 @@ describe('AppShellComponent profile gate', () => {
     expect(logout).toHaveBeenCalledTimes(1);
   });
 
-  it('opens the profile for editing from the account popover, and can close it again', async () => {
+  it('names the person on the account button, for those with room for it', async () => {
+    await render(profile({ displayName: 'Mona Hassan' }));
+
+    expect(root().querySelector('header .account .account-name')?.textContent).toBe('Mona');
+  });
+
+  it('links to the profile page from the account popover, and closes the popover', async () => {
     await render(profile());
 
     await openAccount();
-    settingsButton('Edit profile')!.click();
-    await settle();
-    expect(page().textContent).toContain('Your profile');
-    expect(page().querySelector('app-profile-form input')?.getAttribute('id')).toBeTruthy();
+    const link = settings()!.querySelector<HTMLAnchorElement>('a[href="/profile"]')!;
+    expect(link.textContent).toContain('Your profile');
 
-    [...page().querySelectorAll<HTMLButtonElement>('app-profile-form button')]
-      .find((b) => b.textContent?.includes('Cancel'))!
-      .click();
+    link.click();
     await settle();
-    expect(page().querySelector('app-profile-form')).toBeNull();
+    await vi.waitFor(() => expect(settings()).toBeNull());
   });
 });

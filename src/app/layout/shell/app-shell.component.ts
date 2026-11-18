@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   ActivatedRouteSnapshot,
@@ -25,6 +25,7 @@ import { BrandMarkComponent } from '@shared/ui/brand-mark/brand-mark.component';
 import { LocaleService } from '@core/config/locale.service';
 import { FormsModule } from '@angular/forms';
 import { Avatar } from '@openng/optimus-ui/avatar';
+import { InitialsPipe } from '@shared/pipes/initials.pipe';
 import { LocaleSwitchComponent } from '@shared/ui/locale-switch/locale-switch.component';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -32,7 +33,6 @@ import { msg } from '@shared/utils/i18n/msg';
 import { languageOf } from '@shared/utils/languages';
 import { Popover } from '@openng/optimus-ui/popover';
 import { ToggleSwitch } from '@openng/optimus-ui/toggleswitch';
-import { Tooltip } from '@openng/optimus-ui/tooltip';
 
 const NAV_ITEMS: MenuItem[] = [
   {
@@ -66,10 +66,10 @@ function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wid
   imports: [
     Avatar,
     FormsModule,
+    InitialsPipe,
     Popover,
     ProfileDialogComponent,
     ToggleSwitch,
-    Tooltip,
     TranslatePipe,
     RouterOutlet,
     RouterLink,
@@ -94,14 +94,13 @@ export class AppShellComponent {
   private readonly i18n = inject(I18n);
   protected readonly appName = APP_NAME;
   protected readonly myPicture = computed(() => avatarUrl(this.identity.profile()?.avatar));
-  protected readonly editingProfile = signal(false);
+  protected readonly firstName = computed(
+    () => this.identity.profile()?.name.trim().split(/\s+/)[0] ?? '',
+  );
   protected readonly myLanguages = computed(() => {
     const me = this.identity.profile();
     return me ? `${languageOf(me.nativeLanguage).flag} → ${languageOf(me.learning).flag}` : '';
   });
-  protected readonly profileOpen = computed(
-    () => this.identity.needsProfile() || this.editingProfile(),
-  );
   protected readonly navItems = computed(() => this.translated(NAV_ITEMS));
 
   protected readonly navigating = computed(() => !!this.router.currentNavigation());
@@ -123,7 +122,6 @@ export class AppShellComponent {
 
   protected async saveProfile(draft: ProfileDraft): Promise<void> {
     await this.identity.saveProfile(draft);
-    this.editingProfile.set(false);
   }
 
   protected signOut(): Promise<void> {

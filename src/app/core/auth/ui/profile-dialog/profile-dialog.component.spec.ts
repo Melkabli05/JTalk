@@ -1,8 +1,5 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
-import type { Person } from '../../identity.models';
 import { ProfileDialogComponent } from './profile-dialog.component';
-
-const MONA: Person = { id: 'm-1', name: 'Mona', nativeLanguage: 'ar', learning: 'en', avatar: '' };
 
 describe('ProfileDialogComponent (presentational)', () => {
   let fixture: ComponentFixture<ProfileDialogComponent>;
@@ -24,15 +21,6 @@ describe('ProfileDialogComponent (presentational)', () => {
     expect(text()).toContain('Create your profile');
     expect(text()).toContain('Pick a name and a face.');
     expect(closeButton()).toBeNull();
-  });
-
-  it('shows an existing profile for editing, without the welcome, and can be closed', async () => {
-    await render({ visible: true, profile: MONA, cancellable: true });
-
-    expect(text()).not.toContain('Pick a name and a face.');
-
-    expect(text()).toContain('Your profile');
-    expect(closeButton()).not.toBeNull();
   });
 
   it('passes on what the person saved', async () => {

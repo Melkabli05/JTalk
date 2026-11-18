@@ -184,13 +184,13 @@ Read the component's page before using it (`https://optimus.openng.org/llms/comp
 ### The banner and the profile popup
 
 Banner (`layout/shell`, the `<header>` landmark): the brand, the navigation and one account button, on one row at every width (the menubar never collapses, `breakpoint="0px"`,
-because a hamburger over a single link hides more than it saves). The account button (the person's picture, or a user icon) opens a `p-popover` with who you are and an Edit profile
-button, then the few preferences nobody needs on every screen: language (`app-locale-switch`), dark theme and right-to-left (`p-toggleswitch`, each with its own `ariaLabel`), and Sign out
+because a hamburger over a single link hides more than it saves). The account button (the person's picture, or a user icon, with their first name from tablet width up) opens a `p-popover` with who you are and a link to the profile page (`/profile`), then the few preferences nobody needs on every screen: language (`app-locale-switch`), dark theme and right-to-left (`p-toggleswitch`, each with its own `ariaLabel`), and Sign out
 when signed in. Add a preference there, not as another icon in the bar. (Source: general guidance to keep a top bar lean and move rarely used settings behind the account, from
 mobile-navigation write-ups; none addressed this placement directly.)
-Profile popup (`profile-dialog` and `profile-form`): creating and editing are one form. Creating opens with one human line ("Pick a name and a face. People in the rooms will see them.");
-editing has no welcome, since the person is already in. No preview card: the picture ringed and checked in the picker is the preview, and a second copy of the name and languages only
-repeated the form (and was unreadable in dark mode, a light card holding light text). Fields in order: name, picture, what you speak, what you are learning.
+Profile: a newcomer is asked for a profile in `profile-dialog` (not dismissable, shown before any page); everyone else manages theirs on the `/profile` page
+(`features/profile`): a hero (`profile-hero`: a brand-tinted band, the picture resting on its edge, the name, and the two languages as tags) above one card holding `profile-form`,
+the same form the dialog uses. Saving shows a toast, success or failure. No preview card: the hero is the preview once saved. Fields in order: name, picture, what you speak,
+what you are learning.
 
 ### Not looking generated
 

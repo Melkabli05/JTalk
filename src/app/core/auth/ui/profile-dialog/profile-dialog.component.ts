@@ -1,35 +1,28 @@
-import { Component, input, model, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { Dialog } from '@openng/optimus-ui/dialog';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import type { Person, ProfileDraft } from '../../identity.models';
+import type { ProfileDraft } from '../../identity.models';
 import { ProfileFormComponent } from '../profile-form/profile-form.component';
 
+/** Asks a newcomer for a name and a picture before the app can be used; it cannot be dismissed. Editing happens on the profile page. */
 @Component({
   selector: 'app-profile-dialog',
   imports: [Dialog, ProfileFormComponent, TranslatePipe],
   template: `
     <p-dialog
       [modal]="true"
-      [closable]="cancellable()"
-      [closeOnEscape]="cancellable()"
+      [closable]="false"
+      [closeOnEscape]="false"
       [dismissableMask]="false"
       [style]="{ width: '34rem', maxWidth: '95vw', maxHeight: '96vh' }"
-      [header]="profile() ? ('Your profile' | t) : ('Create your profile' | t)"
+      [header]="'Create your profile' | t"
       [visible]="visible()"
-      (visibleChange)="visible.set($event)"
     >
       @if (visible()) {
-        @if (!profile()) {
-          <p class="intro">
-            {{ 'Pick a name and a face. People in the rooms will see them.' | t }}
-          </p>
-        }
-        <app-profile-form
-          [profile]="profile()"
-          [cancellable]="cancellable()"
-          (saved)="saved.emit($event)"
-          (cancelled)="visible.set(false)"
-        />
+        <p class="intro">
+          {{ 'Pick a name and a face. People in the rooms will see them.' | t }}
+        </p>
+        <app-profile-form (saved)="saved.emit($event)" />
       }
     </p-dialog>
   `,
@@ -41,9 +34,7 @@ import { ProfileFormComponent } from '../profile-form/profile-form.component';
   `,
 })
 export class ProfileDialogComponent {
-  readonly visible = model(false);
-  readonly profile = input<Person>();
-  readonly cancellable = input(false);
+  readonly visible = input(false);
 
   readonly saved = output<ProfileDraft>();
 }

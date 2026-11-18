@@ -20,16 +20,6 @@
   </div>
 
   <div class="actions">
-    @if (cancellable()) {
-      <button
-        pButton
-        type="button"
-        severity="secondary"
-        [text]="true"
-        [label]="'Cancel' | t"
-        (click)="cancelled.emit()"
-      ></button>
-    }
     <button
       pButton
       type="submit"

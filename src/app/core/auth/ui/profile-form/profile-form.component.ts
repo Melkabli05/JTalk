@@ -37,10 +37,8 @@ interface ProfileFormModel {
 })
 export class ProfileFormComponent {
   readonly profile = input<Person>();
-  readonly cancellable = input(false);
 
   readonly saved = output<ProfileDraft>();
-  readonly cancelled = output<void>();
 
   protected readonly languages: readonly SelectOption<string>[] = LANGUAGES.map((language) => ({
     value: language.code,

@@ -9,6 +9,10 @@ export const routes: Routes = [
       loadChildren: () => import('./features/rooms/rooms').then((m) => m.ROOMS_ROUTES),
     },
     {
+      path: 'profile',
+      loadChildren: () => import('./features/profile/profile').then((m) => m.PROFILE_ROUTES),
+    },
+    {
       path: '**',
       title: msg('Page not found'),
       loadComponent: () =>

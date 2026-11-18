@@ -112,21 +112,11 @@ describe('ProfileFormComponent (presentational)', () => {
   });
 
   it('edits an existing profile: it starts from it and says Save', async () => {
-    await render({ profile: MONA, cancellable: true });
+    await render({ profile: MONA });
 
     expect(field('Your name').value).toBe('Mona');
     expect(choices()[0]).toContain('French');
     expect(choices()[1]).toContain('German');
-    expect(buttons()).toEqual(['Cancel', 'Save']);
-  });
-
-  it('can be cancelled only when it may be', async () => {
-    await render({ profile: MONA, cancellable: true });
-    const cancelled = vi.fn();
-    fixture.componentInstance.cancelled.subscribe(cancelled);
-
-    [...root().querySelectorAll('button')].find((b) => b.textContent?.includes('Cancel'))!.click();
-
-    expect(cancelled).toHaveBeenCalledOnce();
+    expect(buttons()).toEqual(['Save']);
   });
 });

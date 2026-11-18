@@ -1,0 +1,33 @@
+<section class="hero" aria-labelledby="profile-name">
+  <div class="cover" aria-hidden="true"></div>
+  <div class="body">
+    @if (picture(); as image) {
+      <p-avatar class="picture" shape="circle" size="xlarge" aria-hidden="true" [image]="image" />
+    } @else {
+      <p-avatar
+        class="picture"
+        shape="circle"
+        size="xlarge"
+        aria-hidden="true"
+        [label]="person().name | initials"
+      />
+    }
+    <h1 id="profile-name">{{ person().name }}</h1>
+    <ul class="languages">
+      <li>
+        <p-tag severity="secondary" [rounded]="true">
+          <span aria-hidden="true">{{ native().flag }}</span>
+          {{ 'Speaks {language}' | t: { language: native().name | t } }}
+        </p-tag>
+      </li>
+      @if (person().learning) {
+        <li>
+          <p-tag severity="secondary" [rounded]="true">
+            <span aria-hidden="true">{{ learning().flag }}</span>
+            {{ 'Learning {language}' | t: { language: learning().name | t } }}
+          </p-tag>
+        </li>
+      }
+    </ul>
+  </div>
+</section>

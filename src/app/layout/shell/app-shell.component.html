@@ -27,8 +27,6 @@
           [rounded]="true"
           [text]="true"
           [attr.aria-label]="'Profile and settings' | t"
-          [pTooltip]="'Profile and settings' | t"
-          tooltipPosition="bottom"
           (click)="account.toggle($event)"
         >
           @if (myPicture(); as picture) {
@@ -36,6 +34,10 @@
           } @else {
             <i class="pi pi-user" aria-hidden="true"></i>
           }
+          @if (firstName()) {
+            <span class="account-name" aria-hidden="true">{{ firstName() }}</span>
+          }
+          <i class="pi pi-angle-down chevron" aria-hidden="true"></i>
         </button>
         <p-popover #account appendTo="body" [ariaLabel]="'Profile and settings' | t">
           <div class="settings">
@@ -43,20 +45,28 @@
               <div class="me">
                 @if (myPicture(); as picture) {
                   <p-avatar shape="circle" size="large" aria-hidden="true" [image]="picture" />
+                } @else {
+                  <p-avatar
+                    shape="circle"
+                    size="large"
+                    aria-hidden="true"
+                    [label]="me.name | initials"
+                  />
                 }
                 <div class="who">
                   <strong>{{ me.name }}</strong>
                   <span class="muted">{{ myLanguages() }}</span>
                 </div>
-                <button
+                <a
                   pButton
-                  type="button"
+                  routerLink="/profile"
+                  class="to-profile"
                   size="small"
                   severity="secondary"
                   [outlined]="true"
-                  [label]="'Edit profile' | t"
-                  (click)="account.hide(); editingProfile.set(true)"
-                ></button>
+                  [label]="'Your profile' | t"
+                  (click)="account.hide()"
+                ></a>
               </div>
             }
             <div class="row">
@@ -108,12 +118,6 @@
   }
 </main>
 
-@defer (when profileOpen()) {
-  <app-profile-dialog
-    [visible]="profileOpen()"
-    [profile]="identity.profile() ?? undefined"
-    [cancellable]="!identity.needsProfile()"
-    (saved)="saveProfile($event)"
-    (visibleChange)="editingProfile.set(false)"
-  />
+@defer (when identity.needsProfile()) {
+  <app-profile-dialog [visible]="identity.needsProfile()" (saved)="saveProfile($event)" />
 }

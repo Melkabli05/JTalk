@@ -1,0 +1,13 @@
+@if (identity.profile(); as me) {
+  <app-profile-hero [person]="me" />
+
+  <p-card class="editor">
+    <h2>{{ 'Edit profile' | t }}</h2>
+    <p class="lead">{{ 'Your name and picture are what people see in the rooms.' | t }}</p>
+    <app-profile-form [profile]="me" (saved)="save($event)" />
+  </p-card>
+} @else {
+  <div class="loading">
+    <p-progress-spinner [ariaLabel]="'Loading page' | t" />
+  </div>
+}
