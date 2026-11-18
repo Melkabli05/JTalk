@@ -155,7 +155,7 @@ export const messages: Readonly<Record<string, string>> = {
   'Reconnect audio': 'إعادة الاتصال بالصوت',
   'Connecting audio…': 'جارٍ الاتصال بالصوت…',
   'Audio is not available.': 'الصوت غير متاح.',
-  'We could not use your microphone. Allow it in your browser, then press Unmute.':
+  'Your microphone is blocked. Allow it in your browser, then press Unmute.':
     'تعذّر استخدام الميكروفون. اسمح به في المتصفح ثم اضغط «إلغاء الكتم».',
   'Your microphone is on.': 'الميكروفون يعمل.',
   'Your microphone is off.': 'الميكروفون متوقف.',

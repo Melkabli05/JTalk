@@ -153,7 +153,7 @@ export default class RoomPageComponent {
           this.toast.add({
             severity: 'warn',
             summary: this.i18n.t(
-              'We could not use your microphone. Allow it in your browser, then press Unmute.',
+              'Your microphone is blocked. Allow it in your browser, then press Unmute.',
             ),
           }),
         );

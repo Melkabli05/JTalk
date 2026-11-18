@@ -48,7 +48,7 @@ let nextId = 0;
       }
       @if (micRefused()) {
         <p-message severity="warn" size="small" icon="pi pi-exclamation-triangle">{{
-          'We could not use your microphone. Allow it in your browser, then press Unmute.' | t
+          'Your microphone is blocked. Allow it in your browser, then press Unmute.' | t
         }}</p-message>
       }
       @if (soundBlocked()) {

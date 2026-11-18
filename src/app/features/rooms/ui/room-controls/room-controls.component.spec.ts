@@ -50,7 +50,7 @@ describe('RoomControlsComponent (presentational)', () => {
 
     const alerts = [...root().querySelectorAll('[role="alert"]')].map((el) => el.textContent);
     expect(alerts[0]).toContain('Audio is not available.');
-    expect(alerts[1]).toContain('We could not use your microphone.');
+    expect(alerts[1]).toContain('Your microphone is blocked.');
   });
 
   it('lets someone who may speak mute and unmute, with a button that names what it does', async () => {

@@ -582,7 +582,7 @@ describe('RoomPageComponent (container)', () => {
 
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
-          summary: 'We could not use your microphone. Allow it in your browser, then press Unmute.',
+          summary: 'Your microphone is blocked. Allow it in your browser, then press Unmute.',
         }),
       );
       expect(controlLabels()).toContain('Unmute');
