@@ -27,7 +27,7 @@ import { PersonCardService } from '@core/people/person-card.service';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 import { msg } from '@shared/utils/i18n/msg';
 import type { RoomRole, RoomEdit, Stage } from '../../models/room.model';
-import { provideRoom, RoomFacade, type RoomExit } from '../../state/room.facade';
+import { RoomFacade } from '../../state/room.facade';
 import { AudienceSectionComponent } from '../../ui/audience-section/audience-section.component';
 import { PersonDialogComponent } from '../../ui/person-dialog/person-dialog.component';
 import { RaisedHandsComponent } from '../../ui/raised-hands/raised-hands.component';
@@ -36,12 +36,6 @@ import { RoomFormDialogComponent } from '../../ui/room-form-dialog/room-form-dia
 import { StageSeatsComponent } from '../../ui/stage-seats/stage-seats.component';
 import { memberOf } from '../../utils/members';
 import { roomLook } from '../../utils/room-look';
-
-const EXIT_MESSAGES: Readonly<Record<RoomExit, string | null>> = {
-  removed: msg('The host removed you from this room.'),
-  ended: msg('This room has ended.'),
-  closed: null,
-};
 
 @Component({
   selector: 'app-room-page',
@@ -62,7 +56,7 @@ const EXIT_MESSAGES: Readonly<Record<RoomExit, string | null>> = {
     Tooltip,
     TranslatePipe,
   ],
-  providers: [ConfirmationService, PersonCardService, provideRoom()],
+  providers: [ConfirmationService, PersonCardService],
   templateUrl: './room-page.component.html',
   styleUrl: './room-page.component.scss',
 })
@@ -190,7 +184,7 @@ export default class RoomPageComponent {
         );
       }
     });
-    this.facade.exited.pipe(takeUntilDestroyed()).subscribe((reason) => this.leaveBecause(reason));
+    this.facade.exited.pipe(takeUntilDestroyed()).subscribe(() => this.leaveBecause());
   }
 
   protected leave(): void {
@@ -332,11 +326,8 @@ export default class RoomPageComponent {
     });
   }
 
-  private leaveBecause(reason: RoomExit): void {
-    const summary = EXIT_MESSAGES[reason];
-    if (summary) {
-      this.toast.add({ severity: 'warn', summary: this.i18n.t(summary) });
-    }
+  /** Pushed out while looking at the room: back to the hallway. (The person is told why by the facade, wherever they are.) */
+  private leaveBecause(): void {
     void this.router.navigate(['/']);
   }
 

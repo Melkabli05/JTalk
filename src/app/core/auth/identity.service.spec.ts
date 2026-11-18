@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { ActiveRoomService } from '../rooms/active-room.service';
 import { fakeAuth0 } from './auth-testing';
 import { IdentityService } from './identity.service';
 
@@ -305,5 +306,16 @@ describe('IdentityService', () => {
     await identity.signOut();
 
     expect(logout).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves the room it is in before signing out, so nobody is left on a stage with no one at the controls', async () => {
+    setup();
+    const leave = vi.fn();
+    TestBed.inject(ActiveRoomService).onLeave(leave);
+
+    await identity.signOut();
+
+    expect(leave).toHaveBeenCalledOnce();
+    expect(leave.mock.invocationCallOrder[0]).toBeLessThan(logout.mock.invocationCallOrder[0] ?? 0);
   });
 });

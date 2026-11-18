@@ -12,6 +12,7 @@ import { REALTIME_CONNECTOR } from '../../data-access/realtime-connector.token';
 import { FakeRealtimeLink } from '../../utils/realtime-link.fake';
 import RoomPageComponent from './room-page.component';
 import { fakeIdentity } from '@core/auth/auth-testing';
+import { ActiveRoomService } from '@core/rooms/active-room.service';
 
 @Component({ selector: 'app-stub', template: '' })
 class Stub {}
@@ -820,12 +821,31 @@ describe('RoomPageComponent (container)', () => {
       expect(link.last.disconnected).toBe(true);
     });
 
-    it('hangs up when the page goes away', async () => {
+    it('stays in the room, with its audio, when the page goes away for another route', async () => {
       await open();
+      const sentBefore = requests.length;
 
       fixture.destroy();
 
-      expect(link.last.disconnected).toBe(true);
+      expect(link.last.disconnected).toBe(false);
+      expect(requests.slice(sentBefore).some((r) => r.url.endsWith('/participants/leave'))).toBe(
+        false,
+      );
+      expect(TestBed.inject(ActiveRoomService).room()).toEqual(
+        expect.objectContaining({ id: 'r-1' }),
+      );
+    });
+
+    it('is the same room, with nothing joined again, when the page comes back to it', async () => {
+      await open();
+      fixture.destroy();
+      requests.length = 0;
+
+      await open();
+
+      expect(requests.some((r) => r.url.endsWith('/participants/join'))).toBe(false);
+      expect(link.connections).toHaveLength(1);
+      expect(page().textContent).toContain('Spanish for beginners');
     });
   });
 });

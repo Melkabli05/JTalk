@@ -1,7 +1,10 @@
-import { DestroyRef, effect, inject, Service, untracked, type Provider } from '@angular/core';
+import { DestroyRef, effect, inject, Service, untracked } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { filter, Subject, switchMap, tap, timer, type Observable } from 'rxjs';
+import { MessageService } from '@openng/optimus-ui/api';
+import { ActiveRoomService } from '@core/rooms/active-room.service';
 import { httpStatus } from '@shared/utils/http-status';
+import { I18n } from '@shared/utils/i18n/i18n.service';
 import { msg } from '@shared/utils/i18n/msg';
 import { saveRequest } from '@shared/utils/save-request';
 import { ParticipantsApiService } from '../data-access/participants-api.service';
@@ -21,6 +24,17 @@ const REACTION_COOLDOWN_MS = 500;
 
 export type RoomExit = 'removed' | 'ended' | 'closed';
 
+/** What the person is told when they are pushed out of the room, wherever in the app they are at that moment. */
+const EXIT_MESSAGES: Readonly<Record<RoomExit, string | null>> = {
+  removed: msg('The host removed you from this room.'),
+  ended: msg('This room has ended.'),
+  closed: null,
+};
+
+/**
+ * The room the person is in. It belongs to the app, not to the room page: leaving the page for another route does not leave the room, the
+ * audio keeps playing and the header shows a way back. Only leaving, being removed, or the room ending ends it.
+ */
 @Service()
 export class RoomFacade {
   private readonly rooms = inject(RoomsApiService);
@@ -28,6 +42,9 @@ export class RoomFacade {
   private readonly stages = inject(StageApiService);
   private readonly reactions = inject(ReactionsApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly active = inject(ActiveRoomService);
+  private readonly toast = inject(MessageService);
+  private readonly i18n = inject(I18n);
   readonly state = inject(RoomStore);
   readonly audio = inject(RealtimeService);
   private readonly pushedOut = new Subject<RoomExit>();
@@ -42,6 +59,12 @@ export class RoomFacade {
   readonly exited = this.pushedOut.asObservable();
 
   constructor() {
+    this.active.onLeave(() => this.leave());
+    effect(() => {
+      const room = this.state.room();
+      const joined = this.state.joined();
+      this.active.set(joined && room ? { id: this.state.roomId(), title: room.title } : null);
+    });
     effect(() => {
       if (this.state.roomGone()) {
         untracked(() => this.exit('ended'));
@@ -90,7 +113,14 @@ export class RoomFacade {
     inject(DestroyRef).onDestroy(() => this.leave());
   }
 
+  /** Opens a room. Coming back to the room already joined changes nothing; asking for another one leaves the first. */
   enter(id: string): void {
+    if (this.state.roomId() === id && (this.state.joined() || this.joining.submitting())) {
+      return;
+    }
+    if (this.state.joined()) {
+      this.leave();
+    }
     this.left = false;
     this.state.show(id);
     this.joining.run(this.participants.join(id), {
@@ -112,6 +142,7 @@ export class RoomFacade {
     if (this.state.joined() && !this.left) {
       this.left = true;
       this.participants.leave(this.state.roomId()).subscribe({ error: () => undefined });
+      this.state.markJoined(false);
     }
   }
 
@@ -235,10 +266,10 @@ export class RoomFacade {
     this.left = true;
     this.state.markJoined(false);
     void this.audio.disconnect();
+    const summary = EXIT_MESSAGES[reason];
+    if (summary) {
+      this.toast.add({ severity: 'warn', summary: this.i18n.t(summary) });
+    }
     this.pushedOut.next(reason);
   }
-}
-
-export function provideRoom(): Provider[] {
-  return [RoomStore, RealtimeService, RoomFacade];
 }

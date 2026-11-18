@@ -5,10 +5,12 @@ import {
   type TestRequest,
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { MessageService } from '@openng/optimus-ui/api';
 import { fakeIdentity } from '@core/auth/auth-testing';
+import { ActiveRoomService } from '@core/rooms/active-room.service';
 import { REALTIME_CONNECTOR } from '../data-access/realtime-connector.token';
 import { FakeRealtimeLink } from '../utils/realtime-link.fake';
-import { provideRoom, RoomFacade, type RoomExit } from './room.facade';
+import { RoomFacade, type RoomExit } from './room.facade';
 
 const BASE = '/api/v1/voice-rooms/r-1';
 const ROOM = {
@@ -39,6 +41,7 @@ describe('RoomFacade', () => {
   let sent: { method: string; url: string; body: unknown }[];
   let failing: Record<string, number>;
   let exits: RoomExit[];
+  const toast = { add: vi.fn() };
 
   const count = (method: string, url: string) =>
     sent.filter((r) => r.method === method && r.url === url).length;
@@ -88,6 +91,7 @@ describe('RoomFacade', () => {
     TestBed.resetTestingModule();
     link = new FakeRealtimeLink();
     exits = [];
+    toast.add.mockClear();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -95,7 +99,7 @@ describe('RoomFacade', () => {
         fakeIdentity({ id: 'm-1', name: 'Me', nativeLanguage: 'ar', learning: 'es', avatar: '' })
           .provider,
         { provide: REALTIME_CONNECTOR, useValue: link.connector },
-        provideRoom(),
+        { provide: MessageService, useValue: toast },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -263,6 +267,9 @@ describe('RoomFacade', () => {
       await settle();
 
       expect(exits).toEqual(['removed']);
+      expect(toast.add).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ summary: 'The host removed you from this room.' }),
+      );
       expect(facade.state.joined()).toBe(false);
       expect(facade.audio.status()).toBe('idle');
       expect(count('POST', `${BASE}/participants/leave`)).toBe(0);
@@ -278,6 +285,9 @@ describe('RoomFacade', () => {
       await settle();
 
       expect(exits).toEqual(['ended']);
+      expect(toast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ summary: 'This room has ended.' }),
+      );
 
       build();
       await enter();
@@ -299,8 +309,73 @@ describe('RoomFacade', () => {
 
       expect(count('DELETE', BASE)).toBe(1);
       expect(exits).toEqual(['closed']);
+      expect(toast.add).not.toHaveBeenCalled();
       expect(link.last.disconnected).toBe(true);
       expect(count('POST', `${BASE}/participants/leave`)).toBe(0);
+    });
+  });
+
+  describe('staying in the room while the person is elsewhere', () => {
+    it('tells the rest of the app which room it is, and that there is none once it is left', async () => {
+      const active = TestBed.inject(ActiveRoomService);
+      expect(active.room()).toBeNull();
+
+      await enter();
+      expect(active.room()).toEqual({ id: 'r-1', title: 'Spanish' });
+
+      facade.leave();
+      await settle();
+      expect(active.room()).toBeNull();
+    });
+
+    it('is not left by asking for the same room again, as when the person comes back to it', async () => {
+      await enter();
+      sent.length = 0;
+
+      facade.enter('r-1');
+      await settle();
+
+      expect(count('POST', `${BASE}/participants/join`)).toBe(0);
+      expect(count('POST', `${BASE}/participants/leave`)).toBe(0);
+      expect(facade.state.joined()).toBe(true);
+      expect(link.last.disconnected).toBe(false);
+    });
+
+    it('leaves the first room when another one is entered', async () => {
+      await enter();
+      sent.length = 0;
+
+      facade.enter('r-2');
+      await settle();
+
+      expect(count('POST', `${BASE}/participants/leave`)).toBe(1);
+      expect(link.connections[0]?.disconnected).toBe(true);
+      expect(facade.state.roomId()).toBe('r-2');
+    });
+
+    it('leaves when the rest of the app asks, as when the person signs out', async () => {
+      const active = TestBed.inject(ActiveRoomService);
+      await enter();
+      sent.length = 0;
+
+      active.leave();
+      await settle();
+
+      expect(count('POST', `${BASE}/participants/leave`)).toBe(1);
+      expect(link.last.disconnected).toBe(true);
+      expect(active.room()).toBeNull();
+    });
+
+    it('can be joined again after it was left', async () => {
+      await enter();
+      facade.leave();
+      await settle();
+      sent.length = 0;
+
+      await enter();
+
+      expect(count('POST', `${BASE}/participants/join`)).toBe(1);
+      expect(facade.state.joined()).toBe(true);
     });
   });
 

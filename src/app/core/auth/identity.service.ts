@@ -1,3 +1,4 @@
+import { ActiveRoomService } from '../rooms/active-room.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { computed, inject, Service, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -38,6 +39,7 @@ function usernameFor(name: string): string {
 @Service()
 export class IdentityService {
   private readonly auth = inject(AuthService);
+  private readonly activeRoom = inject(ActiveRoomService);
   private readonly api = inject(UsersApiService);
 
   readonly signedIn = toSignal(this.auth.isAuthenticated$, { initialValue: false });
@@ -101,6 +103,7 @@ export class IdentityService {
   }
 
   async signOut(): Promise<void> {
+    this.activeRoom.leave();
     await firstValueFrom(this.auth.logout({ logoutParams: { returnTo: window.location.origin } }));
   }
 

@@ -1,3 +1,4 @@
+import { ActiveRoomService } from '@core/rooms/active-room.service';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -192,6 +193,71 @@ describe('AppShellComponent (container)', () => {
     await TestBed.inject(Router).navigateByUrl('/narrow');
     await fixture.whenStable();
     expect(main().classList.contains('wide')).toBe(false);
+  });
+
+  describe('the room the person is still in', () => {
+    const badge = () => root().querySelector<HTMLAnchorElement>('a.live-room');
+
+    async function renderWithRoutes() {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          ...sdk(),
+          provideRouter([
+            { path: 'section', children: [] },
+            { path: 'rooms/:id', children: [] },
+          ]),
+        ],
+      });
+      await render();
+      return TestBed.inject(Router);
+    }
+
+    it('offers a way back to it from any other page, and not on its own page', async () => {
+      const router = await renderWithRoutes();
+      const active = TestBed.inject(ActiveRoomService);
+      expect(badge()).toBeNull();
+
+      active.set({ id: 'r-1', title: 'Spanish coffee' });
+      await router.navigateByUrl('/section');
+      await fixture.whenStable();
+      expect(badge()?.textContent).toContain('Spanish coffee');
+      expect(badge()?.getAttribute('href')).toBe('/rooms/r-1');
+      expect(badge()?.getAttribute('aria-label')).toBe('Back to the room: Spanish coffee');
+
+      await router.navigateByUrl('/rooms/r-1');
+      await fixture.whenStable();
+      expect(badge()).toBeNull();
+
+      await router.navigateByUrl('/section');
+      await fixture.whenStable();
+      expect(badge()).not.toBeNull();
+    });
+
+    it('is gone once the room is left', async () => {
+      const router = await renderWithRoutes();
+      const active = TestBed.inject(ActiveRoomService);
+      active.set({ id: 'r-1', title: 'Spanish coffee' });
+      await router.navigateByUrl('/section');
+      await fixture.whenStable();
+      expect(badge()).not.toBeNull();
+
+      active.set(null);
+      await fixture.whenStable();
+
+      expect(badge()).toBeNull();
+    });
+
+    it('is a link in the page, before the account button, that a keyboard reaches', async () => {
+      const router = await renderWithRoutes();
+      TestBed.inject(ActiveRoomService).set({ id: 'r-1', title: 'Spanish coffee' });
+      await router.navigateByUrl('/section');
+      await fixture.whenStable();
+
+      const end = root().querySelector('.p-menubar-end')!;
+      expect([...end.querySelectorAll('a, button')][0]).toBe(badge());
+      expect(badge()?.tabIndex).toBeGreaterThanOrEqual(0);
+    });
   });
 
   it('has a skip link and a focusable main landmark', async () => {

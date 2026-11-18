@@ -18,6 +18,24 @@
         </a>
       </ng-template>
       <ng-template #end>
+        @if (liveRoom(); as live) {
+          @let back = 'Back to the room: {title}' | t: { title: live.title };
+          <a
+            pButton
+            class="live-room"
+            size="small"
+            severity="primary"
+            [rounded]="true"
+            [outlined]="true"
+            [routerLink]="['/rooms', live.id]"
+            [attr.aria-label]="back"
+            [pTooltip]="back"
+            tooltipPosition="bottom"
+          >
+            <span class="live-dot" aria-hidden="true"></span>
+            <span class="live-title">{{ live.title }}</span>
+          </a>
+        }
         <button
           pButton
           type="button"
