@@ -1,8 +1,16 @@
 import { Routes } from '@angular/router';
 import { msg } from '@shared/utils/i18n/msg';
+import { signedOutGuard } from '@core/auth/signed-out.guard';
 import { layoutRoutes } from './layout/layout.routes';
 
 export const routes: Routes = [
+  // The front address is the home page for someone who is not signed in, and the rooms hallway (below) for someone who is.
+  {
+    path: '',
+    pathMatch: 'full',
+    canMatch: [signedOutGuard],
+    loadChildren: () => import('./features/home/home').then((m) => m.HOME_ROUTES),
+  },
   ...layoutRoutes([
     {
       path: '',

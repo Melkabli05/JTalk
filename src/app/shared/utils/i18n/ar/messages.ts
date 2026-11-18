@@ -266,4 +266,12 @@ export const messages: Readonly<Record<string, string>> = {
   'Could not delete your account. Please try again.': 'تعذّر حذف حسابك. حاول مرة أخرى.',
   'A room you host goes to the person who has been on its stage the longest, or closes if nobody else is on it. The rooms you hosted are erased.':
     'الغرفة التي تستضيفها تنتقل إلى من بقي على المنصّة أطول مدة، أو تُغلق إن لم يكن أحد غيرك عليها. وتُمحى الغرف التي استضفتها.',
+  'Practise a language by talking': 'تدرّب على لغة بالحديث',
+  'Sign in': 'تسجيل الدخول',
+  'Get started': 'ابدأ الآن',
+  'I already have an account': 'لدي حساب بالفعل',
+  'Audio only. No camera, no pressure.': 'صوت فقط. بلا كاميرا وبلا ضغط.',
+  'Learn a language by talking.': 'تعلّم لغة بالحديث.',
+  'Live audio rooms with people who speak it. Listen first, take the stage when you are ready.':
+    'غرف صوتية مباشرة مع من يتحدّثونها. استمع أولًا، واعتلِ المنصّة حين تكون مستعدًا.',
 };

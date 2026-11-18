@@ -126,6 +126,13 @@ export class IdentityService {
     );
   }
 
+  /** Sends the person to Auth0 to sign in, or to create an account: they come back to this app, signed in. */
+  signIn(mode: 'login' | 'signup' = 'login'): Observable<void> {
+    return this.auth.loginWithRedirect(
+      mode === 'signup' ? { authorizationParams: { screen_hint: 'signup' } } : undefined,
+    );
+  }
+
   async signOut(): Promise<void> {
     this.activeRoom.leave();
     await firstValueFrom(this.auth.logout({ logoutParams: { returnTo: window.location.origin } }));

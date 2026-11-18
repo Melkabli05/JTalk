@@ -44,11 +44,35 @@ describe('routes', () => {
     expect(navigation(harness)).not.toBeNull();
   });
 
-  it('sends someone who is not signed in to Auth0 to sign in, and shows them nothing meanwhile', async () => {
+  it('shows the home page, not a sign-in screen, to someone who is not signed in', async () => {
     const loginWithRedirect = vi.fn(() => of(undefined));
     setup({ signedIn: false, loginWithRedirect });
 
     const harness = await RouterTestingHarness.create('/');
+    await harness.fixture.whenStable();
+
+    expect(text(harness)).toContain('Learn a language by talking.');
+    expect(
+      loginWithRedirect,
+      'nobody is sent anywhere until they choose to',
+    ).not.toHaveBeenCalled();
+    expect(navigation(harness)).toBeNull();
+  });
+
+  it('never shows the home page to someone who is signed in', async () => {
+    setup();
+    const harness = await RouterTestingHarness.create('/');
+    answerRoomList();
+    await harness.fixture.whenStable();
+
+    expect(text(harness)).not.toContain('Learn a language by talking.');
+  });
+
+  it('sends someone who is not signed in to Auth0 when they ask for a page that needs an account, and shows them nothing meanwhile', async () => {
+    const loginWithRedirect = vi.fn(() => of(undefined));
+    setup({ signedIn: false, loginWithRedirect });
+
+    const harness = await RouterTestingHarness.create('/people');
     await harness.fixture.whenStable();
 
     expect(loginWithRedirect).toHaveBeenCalledTimes(1);

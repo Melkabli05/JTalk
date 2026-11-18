@@ -1,0 +1,68 @@
+<a class="skip-link" href="#main-content">{{ 'Skip to main content' | t }}</a>
+
+<header class="top">
+  <a class="brand" href="/">
+    <app-brand-mark />
+    {{ appName | t }}
+  </a>
+  <div class="tools">
+    <app-locale-switch [locale]="locales.locale()" (localeChange)="locales.switchTo($event)" />
+    <button
+      pButton
+      type="button"
+      severity="secondary"
+      [outlined]="true"
+      [rounded]="true"
+      [label]="'Sign in' | t"
+      (click)="signIn('login')"
+    ></button>
+  </div>
+</header>
+
+<main id="main-content" tabindex="-1">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="copy">
+      <p class="greetings" aria-hidden="true">
+        @for (greeting of greetings; track greeting.lang) {
+          <span [lang]="greeting.lang" [style.--turn]="$index">{{ greeting.text }}</span>
+        }
+      </p>
+      <h1 id="hero-title">{{ 'Learn a language by talking.' | t }}</h1>
+      <p class="lead">
+        {{
+          'Live audio rooms with people who speak it. Listen first, take the stage when you are ready.'
+            | t
+        }}
+      </p>
+      <div class="cta">
+        <button
+          pButton
+          type="button"
+          size="large"
+          icon="pi pi-arrow-right"
+          iconPos="right"
+          [rounded]="true"
+          [label]="'Get started' | t"
+          (click)="signIn('signup')"
+        ></button>
+        <button
+          pButton
+          type="button"
+          size="large"
+          severity="secondary"
+          [text]="true"
+          [rounded]="true"
+          [label]="'I already have an account' | t"
+          (click)="signIn('login')"
+        ></button>
+      </div>
+      <p class="note">{{ 'Audio only. No camera, no pressure.' | t }}</p>
+    </div>
+
+    <div class="voice" aria-hidden="true">
+      <span class="bar forest"></span>
+      <span class="bar sand"></span>
+      <span class="bar ink"></span>
+    </div>
+  </section>
+</main>

@@ -1,0 +1,215 @@
+// One screen. Big type, one thing that moves (the greetings taking turns, and the three bars of the mark breathing like a voice), and the
+// way in. The display size is the one place the type scale is stepped over on purpose: it is a poster, not a page.
+:host {
+  --display: clamp(2.75rem, 8.5vw, 7.5rem);
+
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+}
+
+.skip-link {
+  position: absolute;
+  inset-block-start: 0.5rem;
+  inset-inline-start: 0.5rem;
+  z-index: 10;
+  padding: 0.5rem 1rem;
+  background: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
+  transform: translateY(-200%);
+
+  &:focus-visible {
+    transform: none;
+  }
+}
+
+.top,
+.hero {
+  inline-size: min(100%, 90rem);
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 3rem);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1rem;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: inherit;
+  font-size: var(--p-jtalk-type-section);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+main {
+  display: flex;
+  flex: 1;
+  outline: none;
+}
+
+.hero {
+  display: grid;
+  flex: 1;
+  align-items: center;
+  gap: 2rem;
+  padding-block: 1.5rem 3rem;
+
+  @media (min-width: 56rem) {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 3rem;
+    padding-block-end: 4rem;
+  }
+}
+
+// The greetings sit in one line of fixed height and take turns: each is shown for a sixth of the cycle.
+.greetings {
+  position: relative;
+  block-size: 1.75rem;
+  margin: 0 0 1rem;
+  color: var(--p-jtalk-brand);
+  font-size: var(--p-jtalk-type-section);
+  font-weight: 650;
+
+  span {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    opacity: 0;
+    white-space: nowrap;
+
+    &:first-child {
+      opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      // Hidden until its turn (no backwards fill), then shown for a sixth of the cycle.
+      animation: turn 12s infinite forwards;
+      animation-delay: calc(var(--turn) * 2s);
+
+      &:first-child {
+        opacity: 0;
+      }
+    }
+  }
+}
+
+@keyframes turn {
+  0%,
+  16.67% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  20%,
+  100% {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+h1 {
+  margin: 0;
+  font-size: var(--display);
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.lead {
+  max-inline-size: 30rem;
+  margin: 1.75rem 0 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-card);
+  line-height: 1.55;
+}
+
+.cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-block-start: 2rem;
+}
+
+.note {
+  margin: 1rem 0 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-secondary);
+}
+
+// The three bars of the mark, grown to the size of the screen and moved like a voice: Forest, Sand and ink, as in the mark itself.
+.voice {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(0.75rem, 2.5vw, 1.75rem);
+  block-size: clamp(9rem, 38vh, 28rem);
+  min-block-size: 0;
+
+  @media (min-width: 56rem) {
+    block-size: min(62vh, 34rem);
+    justify-content: flex-end;
+  }
+}
+
+.bar {
+  display: block;
+  inline-size: clamp(2.5rem, 8vw, 6.5rem);
+  border-radius: 9999px;
+
+  // Heights, not a scale: stretching a bar would stretch its round ends into ovals.
+  &.forest {
+    background: var(--p-jtalk-brand);
+    block-size: 62%;
+  }
+
+  &.sand {
+    background: var(--p-jtalk-moderator);
+    block-size: 100%;
+  }
+
+  &.ink {
+    background: var(--p-text-color);
+    block-size: 40%;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: breathe 3.2s ease-in-out infinite alternate;
+
+    &.forest {
+      animation-duration: 2.7s;
+    }
+
+    &.sand {
+      animation-duration: 3.6s;
+      animation-delay: -1.1s;
+    }
+
+    &.ink {
+      animation-duration: 2.3s;
+      animation-delay: -0.6s;
+    }
+  }
+}
+
+@keyframes breathe {
+  from {
+    block-size: 30%;
+  }
+  to {
+    block-size: 100%;
+  }
+}
