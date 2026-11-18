@@ -65,14 +65,7 @@ describe('RoomPageComponent (container)', () => {
       .click();
   const controlNames = () =>
     [...root().querySelectorAll('app-room-controls button')].map((b) => nameOf(b));
-  const pressHostAction = async (label: string) => {
-    press('More actions', root().querySelector('app-room-controls')!);
-    await settle();
-    await new Promise((resolve) => setTimeout(resolve));
-    [...document.querySelectorAll<HTMLElement>('.p-menu-item-link')]
-      .find((item) => item.textContent?.includes(label))!
-      .click();
-  };
+  const pressHostAction = (label: string) => press(label, root().querySelector('header')!);
   const pressExactlyLast = (label: string) =>
     buttons()
       .filter((b) => b.textContent?.trim() === label)
@@ -230,7 +223,7 @@ describe('RoomPageComponent (container)', () => {
     await open();
 
     expect(controlNames()).toContain('Raise hand');
-    expect(controlNames()).not.toContain('More actions');
+    expect(root().querySelector('header .host-tools')).toBeNull();
     expect(root().querySelector('app-raised-hands button')).toBeNull();
   });
 
@@ -256,7 +249,7 @@ describe('RoomPageComponent (container)', () => {
     });
     await settle();
 
-    expect(root().querySelector('app-person-avatar .reaction .pi-heart-fill')).not.toBeNull();
+    expect(root().querySelector('app-person-avatar img.reaction[src$="heart.svg"]')).not.toBeNull();
   });
 
   it('sends the reaction a person picks', async () => {
@@ -378,10 +371,12 @@ describe('RoomPageComponent (container)', () => {
   describe('as the host', () => {
     const asHost = { me: 'h-1' };
 
-    it('offers the room controls, and an Invite for each raised hand', async () => {
+    it('puts Edit the room and End the room in the header, and an Invite for each raised hand', async () => {
       await open(asHost);
 
-      expect(controlNames()).toContain('More actions');
+      const tools = [...root().querySelectorAll('header .host-tools button')].map(nameOf);
+      expect(tools).toEqual(['Edit the room', 'End the room']);
+      expect(controlNames()).not.toContain('More actions');
       expect(root().querySelector('app-raised-hands button')?.getAttribute('aria-label')).toBe(
         'Invite b-1 to the stage',
       );
@@ -419,7 +414,7 @@ describe('RoomPageComponent (container)', () => {
     it('ends the room only after asking, and goes back to the hallway', async () => {
       await open(asHost);
 
-      await pressHostAction('End the room');
+      pressHostAction('End the room');
       await settle();
       expect(page().textContent).toContain('The room closes for everyone in it.');
       expect(sent('DELETE', BASE)).toBe(false);
@@ -434,7 +429,7 @@ describe('RoomPageComponent (container)', () => {
     it('edits the room', async () => {
       await open(asHost);
 
-      await pressHostAction('Edit the room');
+      pressHostAction('Edit the room');
       await settle();
       const title = page().querySelector<HTMLInputElement>('app-room-form input')!;
       expect(title.value).toBe('Spanish for beginners');

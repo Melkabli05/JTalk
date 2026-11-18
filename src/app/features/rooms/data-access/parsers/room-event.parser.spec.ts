@@ -43,6 +43,7 @@ describe('parseRoomEvent', () => {
           { userId: 'm-1', reaction: 'FIREWORKS' },
           { reaction: 'SMILE' },
           { userId: 'm-1', reaction: 'SPARKLES' },
+          { userId: 'b-1', reaction: 'CLAP' },
         ],
       }),
     ).toEqual({
@@ -50,6 +51,7 @@ describe('parseRoomEvent', () => {
       reactions: [
         { userId: 'b-1', reaction: 'HEART' },
         { userId: 'm-1', reaction: 'SPARKLES' },
+        { userId: 'b-1', reaction: 'CLAP' },
       ],
     });
   });

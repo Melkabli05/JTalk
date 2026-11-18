@@ -28,6 +28,32 @@
           <span aria-hidden="true">·</span>
           <span>{{ '{count} in the room' | t: { count: current.participantCount } }}</span>
         </p>
+        @if (state.isHost()) {
+          <div class="host-tools" role="group" [attr.aria-label]="'Host controls' | t">
+            <button
+              pButton
+              type="button"
+              size="small"
+              icon="pi pi-pencil"
+              severity="warn"
+              [rounded]="true"
+              [text]="true"
+              [label]="'Edit the room' | t"
+              (click)="editing.set(true)"
+            ></button>
+            <button
+              pButton
+              type="button"
+              size="small"
+              icon="pi pi-stop-circle"
+              severity="danger"
+              [rounded]="true"
+              [text]="true"
+              [label]="'End the room' | t"
+              (click)="end()"
+            ></button>
+          </div>
+        }
       </div>
       <h1 #heading tabindex="-1">{{ current.title }}</h1>
       @if (current.topic) {
@@ -95,7 +121,6 @@
         <p-message class="failure" severity="error">{{ failure | t }}</p-message>
       }
       <app-room-controls
-        [actions]="hostActions()"
         [onStage]="state.onStage()"
         [handRaised]="state.handRaised()"
         [busy]="facade.action.submitting()"

@@ -66,6 +66,6 @@ describe('AudienceGridComponent (presentational)', () => {
 
     const [ada, bob] = [...root().querySelectorAll('li')];
     expect(ada?.querySelector('.reaction')).toBeNull();
-    expect(bob?.querySelector('.reaction .pi-sparkles')).not.toBeNull();
+    expect(bob?.querySelector('img.reaction[src$="sparkles.svg"]')).not.toBeNull();
   });
 });

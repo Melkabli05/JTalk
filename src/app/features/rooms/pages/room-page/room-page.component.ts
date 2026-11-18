@@ -14,7 +14,7 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
-import { ConfirmationService, MessageService, type MenuItem } from '@openng/optimus-ui/api';
+import { ConfirmationService, MessageService } from '@openng/optimus-ui/api';
 import { Badge } from '@openng/optimus-ui/badge';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
@@ -85,23 +85,6 @@ export default class RoomPageComponent {
     { initialValue: false },
   );
   protected readonly look = computed(() => roomLook(this.state.room()));
-  protected readonly hostActions = computed<MenuItem[]>(() =>
-    this.state.isHost()
-      ? [
-          {
-            label: this.i18n.t('Edit the room'),
-            icon: 'pi pi-pencil',
-            command: () => this.editing.set(true),
-          },
-          {
-            label: this.i18n.t('End the room'),
-            icon: 'pi pi-stop-circle',
-            linkClass: 'danger-item',
-            command: () => this.end(),
-          },
-        ]
-      : [],
-  );
   protected readonly host = computed(() => memberOf(this.state.members(), this.state.hostId()));
   protected readonly mutedIds = computed(() => {
     const me = this.state.meId();

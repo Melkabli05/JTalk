@@ -1,9 +1,10 @@
 import { msg } from '@shared/utils/i18n/msg';
 import type { Reaction } from '../models/reaction.model';
 
-export const REACTION_LOOKS: Readonly<Record<Reaction, { icon: string; label: string }>> = {
-  HEART: { icon: 'pi pi-heart-fill', label: msg('Heart') },
-  THUMBS_UP: { icon: 'pi pi-thumbs-up-fill', label: msg('Thumbs up') },
-  SMILE: { icon: 'pi pi-face-smile', label: msg('Smile') },
-  SPARKLES: { icon: 'pi pi-sparkles', label: msg('Sparkles') },
+export const REACTION_LOOKS: Readonly<Record<Reaction, { image: string; label: string }>> = {
+  HEART: { image: 'icons/reactions/heart.svg', label: msg('Heart') },
+  CLAP: { image: 'icons/reactions/clap.svg', label: msg('Clap') },
+  THUMBS_UP: { image: 'icons/reactions/thumbs-up.svg', label: msg('Thumbs up') },
+  SMILE: { image: 'icons/reactions/smile.svg', label: msg('Smile') },
+  SPARKLES: { image: 'icons/reactions/sparkles.svg', label: msg('Sparkles') },
 };

@@ -59,17 +59,20 @@ describe('PersonAvatarComponent (presentational)', () => {
     await fixture.whenStable();
     const root = fixture.nativeElement as HTMLElement;
 
-    expect(root.querySelector('.reaction .pi-heart-fill')).not.toBeNull();
+    expect(root.querySelector('img.reaction[src$="heart.svg"]')).not.toBeNull();
     expect(root.querySelector('.reaction')?.getAttribute('aria-hidden')).toBe('true');
+    expect(root.querySelectorAll('.ripple')).toHaveLength(1);
+    expect(root.querySelector('.ripple')?.getAttribute('aria-hidden')).toBe('true');
     const first = root.querySelector('.reaction');
 
     fixture.componentRef.setInput('reaction', { id: 2, userId: 'a-1', reaction: 'SMILE' });
     await fixture.whenStable();
-    expect(root.querySelector('.reaction .pi-face-smile')).not.toBeNull();
+    expect(root.querySelector('img.reaction[src$="smile.svg"]')).not.toBeNull();
     expect(root.querySelector('.reaction')).not.toBe(first);
 
     fixture.componentRef.setInput('reaction', null);
     await fixture.whenStable();
     expect(root.querySelector('.reaction')).toBeNull();
+    expect(root.querySelector('.ripple')).toBeNull();
   });
 });

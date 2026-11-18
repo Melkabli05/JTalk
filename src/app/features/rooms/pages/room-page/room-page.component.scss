@@ -63,9 +63,17 @@
 
 .top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.25rem 0.5rem;
   margin-inline-start: -0.5rem;
+}
+
+.host-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-inline-start: auto;
 }
 
 .live {

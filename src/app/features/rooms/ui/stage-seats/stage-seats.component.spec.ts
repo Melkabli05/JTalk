@@ -114,6 +114,6 @@ describe('StageSeatsComponent (presentational)', () => {
 
     const tiles = [...root().querySelectorAll('li')];
     expect(tiles[0]?.querySelector('.reaction')).toBeNull();
-    expect(tiles[1]?.querySelector('.reaction .pi-thumbs-up-fill')).not.toBeNull();
+    expect(tiles[1]?.querySelector('img.reaction[src$="thumbs-up.svg"]')).not.toBeNull();
   });
 });

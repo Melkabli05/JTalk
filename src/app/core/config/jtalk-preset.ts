@@ -449,7 +449,7 @@ export const JtalkPreset = definePreset(Aura, {
       inline-size: 1em;
       block-size: 1em;
       background: currentColor;
-      mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M18 11V6a2 2 0 0 0-4 0%22/%3E%3Cpath d=%22M14 10V4a2 2 0 0 0-4 0v2%22/%3E%3Cpath d=%22M10 10.5V6a2 2 0 0 0-4 0v8%22/%3E%3Cpath d=%22M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15%22/%3E%3C/svg%3E") center / contain no-repeat;
+      mask: url('/icons/hand.svg') center / contain no-repeat;
     }
 
     .pi-slashed {

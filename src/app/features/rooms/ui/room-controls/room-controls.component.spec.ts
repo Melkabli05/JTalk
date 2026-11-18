@@ -117,26 +117,14 @@ describe('RoomControlsComponent (presentational)', () => {
     expect(names()).toEqual(['React', 'Leave quietly']);
   });
 
-  it('gives only the host a menu of the room actions', async () => {
-    await render({ onStage: true });
-    expect(names()).not.toContain('More actions');
-
-    fixture.componentRef.setInput('actions', [{ label: 'Edit the room' }]);
-    await fixture.whenStable();
-    expect(names()).toEqual(['React', 'More actions', 'Leave quietly']);
-  });
-
   it('disables the hand while a request is running', async () => {
     await render({ busy: true });
 
     expect(button('Raise hand').disabled).toBe(true);
   });
 
-  it('emits what was pressed, and runs the host actions the page gave it from their menu', async () => {
-    const edited = vi.fn();
-    await render({
-      actions: [{ label: 'Edit the room', command: edited }],
-    });
+  it('emits what was pressed', async () => {
+    await render({});
     const emitted: string[] = [];
     const c = fixture.componentInstance;
     c.leave.subscribe(() => emitted.push('leave'));
@@ -144,15 +132,8 @@ describe('RoomControlsComponent (presentational)', () => {
 
     click('Leave quietly');
     click('Raise hand');
-    click('More actions');
-    await fixture.whenStable();
-    await new Promise((resolve) => setTimeout(resolve));
-    [...document.querySelectorAll<HTMLElement>('.p-menu-item-link')]
-      .find((item) => item.textContent?.includes('Edit the room'))!
-      .click();
 
     expect(emitted).toEqual(['leave', 'raise']);
-    expect(edited).toHaveBeenCalledOnce();
   });
 
   it('labels the mic and the hand in words, and draws the hand as an icon', async () => {
@@ -190,7 +171,7 @@ describe('RoomControlsComponent (presentational)', () => {
     await new Promise((resolve) => setTimeout(resolve));
 
     const choices = [...document.querySelectorAll<HTMLButtonElement>('.p-popover button')];
-    expect(choices.map(nameOf)).toEqual(['Heart', 'Thumbs up', 'Smile', 'Sparkles']);
+    expect(choices.map(nameOf)).toEqual(['Heart', 'Clap', 'Thumbs up', 'Smile', 'Sparkles']);
     choices.find((choice) => nameOf(choice) === 'Smile')!.click();
 
     expect(reacted).toHaveBeenCalledExactlyOnceWith('SMILE');
@@ -211,11 +192,11 @@ describe('RoomControlsComponent (presentational)', () => {
   });
 
   it('keeps the controls together and leaving apart, last in the capsule', async () => {
-    await render({ onStage: true, canSpeak: true, actions: [{ label: 'Edit the room' }] });
+    await render({ onStage: true, canSpeak: true });
 
     const slot = (name: string) =>
       [...root().querySelectorAll(`.p-toolbar-${name} button`)].map(nameOf);
-    expect(slot('start')).toEqual(['Unmute', 'React', 'More actions']);
+    expect(slot('start')).toEqual(['Unmute', 'React']);
     expect(slot('end')).toEqual(['Leave quietly']);
   });
 });

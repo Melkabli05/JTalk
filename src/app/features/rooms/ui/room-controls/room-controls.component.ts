@@ -1,7 +1,6 @@
+import { NgOptimizedImage } from '@angular/common';
 import { Component, input, output } from '@angular/core';
-import type { MenuItem } from '@openng/optimus-ui/api';
 import { ButtonDirective } from '@openng/optimus-ui/button';
-import { Menu } from '@openng/optimus-ui/menu';
 import { Message } from '@openng/optimus-ui/message';
 import { Popover } from '@openng/optimus-ui/popover';
 import { Toolbar } from '@openng/optimus-ui/toolbar';
@@ -15,7 +14,7 @@ let nextId = 0;
 
 @Component({
   selector: 'app-room-controls',
-  imports: [ButtonDirective, Menu, Message, Popover, Toolbar, Tooltip, TranslatePipe],
+  imports: [ButtonDirective, Message, NgOptimizedImage, Popover, Toolbar, Tooltip, TranslatePipe],
   template: `
     <span class="cdk-visually-hidden" [id]="labelId">{{ 'Room controls' | t }}</span>
     <div class="notes">
@@ -127,40 +126,19 @@ let nextId = 0;
                 pButton
                 type="button"
                 size="large"
+                class="reaction-choice"
                 [text]="true"
                 [rounded]="true"
-                [icon]="item.icon"
                 [attr.aria-label]="label"
                 [pTooltip]="label"
                 tooltipPosition="top"
                 (click)="react.emit(item.reaction)"
-              ></button>
+              >
+                <img [ngSrc]="item.image" width="28" height="28" alt="" />
+              </button>
             }
           </div>
         </p-popover>
-        @if (actions().length > 0) {
-          @let moreLabel = 'More actions' | t;
-          <button
-            pButton
-            type="button"
-            size="large"
-            icon="pi pi-ellipsis-h"
-            severity="secondary"
-            [rounded]="true"
-            [text]="true"
-            [attr.aria-label]="moreLabel"
-            [pTooltip]="moreLabel"
-            tooltipPosition="top"
-            (click)="menu.toggle($event)"
-          ></button>
-          <p-menu
-            #menu
-            appendTo="body"
-            [popup]="true"
-            [ariaLabel]="moreLabel"
-            [model]="[...actions()]"
-          />
-        }
       </ng-template>
 
       <ng-template #end>
@@ -173,6 +151,7 @@ let nextId = 0;
           icon="pi pi-sign-out"
           severity="secondary"
           [rounded]="true"
+          [outlined]="true"
           [label]="leaveLabel"
           [attr.aria-label]="leaveLabel"
           (click)="leave.emit()"
@@ -183,7 +162,6 @@ let nextId = 0;
   styleUrl: './room-controls.component.scss',
 })
 export class RoomControlsComponent {
-  readonly actions = input<readonly MenuItem[]>([]);
   readonly onStage = input(false);
   readonly handRaised = input(false);
   readonly busy = input(false);

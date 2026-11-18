@@ -91,6 +91,6 @@ describe('AudienceSectionComponent (presentational)', () => {
     await fixture.whenStable();
 
     expect(root().querySelectorAll('app-person-avatar')).toHaveLength(5);
-    expect(root().querySelector('.reaction .pi-heart-fill')).not.toBeNull();
+    expect(root().querySelector('img.reaction[src$="heart.svg"]')).not.toBeNull();
   });
 });
