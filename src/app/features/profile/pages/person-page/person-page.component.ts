@@ -5,6 +5,7 @@ import { ButtonDirective } from '@openng/optimus-ui/button';
 import { ConfirmDialog } from '@openng/optimus-ui/confirmdialog';
 import { Message } from '@openng/optimus-ui/message';
 import { ProgressSpinner } from '@openng/optimus-ui/progressspinner';
+import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { PersonCardService } from '@core/people/person-card.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { FollowButtonComponent } from '@shared/ui/follow-button/follow-button.component';
@@ -25,6 +26,7 @@ import { ProfileHeroComponent } from '../../ui/profile-hero/profile-hero.compone
     ProgressSpinner,
     RouterLink,
     SocialStatsComponent,
+    Tooltip,
     TranslatePipe,
   ],
   providers: [ConfirmationService, PersonCardService],

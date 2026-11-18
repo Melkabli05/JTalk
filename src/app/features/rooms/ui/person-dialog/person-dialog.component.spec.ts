@@ -8,10 +8,9 @@ const MAYA: Person = { id: 'm-1', name: 'Maya', nativeLanguage: 'es', learning: 
 describe('PersonDialogComponent (presentational)', () => {
   let fixture: ComponentFixture<PersonDialogComponent>;
   const text = () => (fixture.nativeElement as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
+  const nameOf = (b: Element) => b.getAttribute('aria-label') ?? b.textContent?.trim();
   const labels = () =>
-    [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].map((b) =>
-      b.textContent?.trim(),
-    );
+    [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].map(nameOf);
 
   async function render(inputs: Record<string, unknown>) {
     fixture = TestBed.createComponent(PersonDialogComponent);
@@ -91,8 +90,12 @@ describe('PersonDialogComponent (presentational)', () => {
     };
     const press = (label: string) =>
       [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')]
-        .find((b) => b.textContent?.trim() === label)!
+        .find((b) => nameOf(b) === label)!
         .click();
+    const button = (label: string) =>
+      [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].find(
+        (b) => nameOf(b) === label,
+      )!;
 
     it('tells who they are: handle, country, bio, how long they have been here, and what they speak and learn', async () => {
       await render({ role: 'LISTENER', card: CARD });
@@ -179,13 +182,62 @@ describe('PersonDialogComponent (presentational)', () => {
       expect(text()).toContain('Could not follow them.');
     });
 
+    it('keeps every action in one bar above the details, so none needs scrolling to', async () => {
+      await render({ role: 'LISTENER', card: CARD, canInvite: true, canRemove: true });
+      const root = fixture.nativeElement as HTMLElement;
+      const bar = root.querySelector('.toolbar')!;
+
+      expect([...bar.querySelectorAll('button')].map(nameOf)).toEqual([
+        'Follow back',
+        'View profile',
+        'Block',
+        'Invite to the stage',
+        'Remove from the room',
+      ]);
+      expect(
+        bar.compareDocumentPosition(root.querySelector('.about')!) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(root.querySelectorAll('.toolbar')).toHaveLength(1);
+    });
+
+    it('colors each action by what it means: Forest to follow, Sand for the host, terracotta to remove or block', async () => {
+      await render({ role: 'LISTENER', card: CARD, canInvite: true, canRemove: true });
+
+      for (const other of ['secondary', 'warn', 'danger', 'outlined']) {
+        expect(button('Follow back').className).not.toContain(`p-button-${other}`);
+      }
+      expect(button('Invite to the stage').className).toContain('p-button-warn');
+      expect(button('Remove from the room').className).toContain('p-button-danger');
+      expect(button('Block').className).toContain('p-button-danger');
+      expect(button('View profile').className).toContain('p-button-secondary');
+    });
+
+    it('draws each action with the icon that says what it does', async () => {
+      await render({ role: 'LISTENER', card: CARD, canInvite: true, canRemove: true });
+      const icon = (label: string) =>
+        button(label).querySelector('.p-button-icon')?.className ?? '';
+
+      expect(icon('Follow back')).toContain('pi-user-plus');
+      expect(icon('View profile')).toContain('pi-user');
+      expect(icon('Invite to the stage')).toContain('pi-microphone');
+      expect(icon('Remove from the room')).toContain('pi-user-minus');
+      expect(icon('Block')).toContain('pi-ban');
+    });
+
+    it('still offers the host their actions while the profile loads', async () => {
+      await render({ role: 'LISTENER', loading: true, canInvite: true, canRemove: true });
+
+      expect(labels()).toEqual(
+        expect.arrayContaining(['Invite to the stage', 'Remove from the room']),
+      );
+      expect(labels()).not.toContain('Block');
+    });
+
     it('cannot be pressed while a request runs', async () => {
       await render({ role: 'LISTENER', card: CARD, busy: true });
 
-      const follow = [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].find(
-        (b) => b.textContent?.trim() === 'Follow back',
-      );
-      expect(follow?.disabled).toBe(true);
+      expect(button('Follow back').disabled).toBe(true);
     });
   });
 });

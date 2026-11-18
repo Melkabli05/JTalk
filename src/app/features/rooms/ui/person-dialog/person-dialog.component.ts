@@ -5,6 +5,7 @@ import { Dialog } from '@openng/optimus-ui/dialog';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { Tag } from '@openng/optimus-ui/tag';
+import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { FollowButtonComponent } from '@shared/ui/follow-button/follow-button.component';
 import { LanguageLevelsComponent } from '@shared/ui/language-levels/language-levels.component';
@@ -31,6 +32,7 @@ import type { PersonCard } from '@core/people/person-card.model';
     Skeleton,
     SocialStatsComponent,
     Tag,
+    Tooltip,
     TranslatePipe,
   ],
   templateUrl: './person-dialog.component.html',
@@ -65,6 +67,7 @@ export class PersonDialogComponent {
   protected readonly anything = computed(
     () => this.canInvite() || this.canDemote() || this.canRemove() || this.canStepDown(),
   );
+  protected readonly hasActions = computed(() => this.card() !== undefined || this.anything());
   protected readonly origin = computed(() => {
     const code = this.card()?.details.countryCode ?? '';
     return code === '' ? null : { flag: flagOf(code), name: countryNameOf(code, this.locale()) };

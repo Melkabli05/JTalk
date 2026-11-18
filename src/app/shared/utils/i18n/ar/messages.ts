@@ -201,4 +201,5 @@ export const messages: Readonly<Record<string, string>> = {
   Intermediate: 'متوسط',
   Advanced: 'متقدّم',
   Fluent: 'بطلاقة',
+  Actions: 'الإجراءات',
 };

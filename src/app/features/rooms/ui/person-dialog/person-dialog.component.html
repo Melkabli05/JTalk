@@ -1,7 +1,7 @@
 <p-dialog
   [modal]="true"
   [dismissableMask]="true"
-  [style]="{ width: '28rem', maxWidth: '95vw' }"
+  [style]="{ width: '33rem', maxWidth: '95vw' }"
   [header]="member()?.name ?? ''"
   [visible]="visible()"
   (visibleChange)="visible.set($event)"
@@ -56,28 +56,106 @@
       </div>
     </div>
 
-    @if (card(); as shown) {
-      <div class="social">
-        @if (!shown.isMe && shown.social; as stats) {
-          <app-follow-button
-            [following]="stats.followedByMe"
-            [followsMe]="stats.followsMe"
-            [busy]="busy()"
-            (follow)="follow.emit()"
-            (unfollow)="unfollow.emit()"
-          />
+    @if (hasActions()) {
+      <div class="toolbar" role="group" [attr.aria-label]="'Actions' | t">
+        @if (card(); as shown) {
+          <div class="row">
+            @if (!shown.isMe && shown.social; as stats) {
+              <app-follow-button
+                [following]="stats.followedByMe"
+                [followsMe]="stats.followsMe"
+                [busy]="busy()"
+                (follow)="follow.emit()"
+                (unfollow)="unfollow.emit()"
+              />
+            }
+            <button
+              pButton
+              type="button"
+              icon="pi pi-user"
+              severity="secondary"
+              [rounded]="true"
+              [outlined]="true"
+              [label]="'View profile' | t"
+              (click)="viewProfile.emit()"
+            ></button>
+            @if (!shown.isMe) {
+              @let blockLabel = 'Block' | t;
+              <button
+                pButton
+                type="button"
+                class="block"
+                icon="pi pi-ban"
+                severity="danger"
+                [rounded]="true"
+                [text]="true"
+                [attr.aria-label]="blockLabel"
+                [pTooltip]="blockLabel"
+                tooltipPosition="bottom"
+                (click)="block.emit()"
+              ></button>
+            }
+          </div>
         }
-        <button
-          pButton
-          type="button"
-          icon="pi pi-user"
-          severity="secondary"
-          [rounded]="true"
-          [outlined]="true"
-          [label]="'View profile' | t"
-          (click)="viewProfile.emit()"
-        ></button>
+        @if (anything()) {
+          <div class="row">
+            @if (canInvite()) {
+              <button
+                pButton
+                type="button"
+                icon="pi pi-microphone"
+                severity="warn"
+                [rounded]="true"
+                [label]="'Invite to the stage' | t"
+                (click)="invite.emit()"
+              ></button>
+            }
+            @if (canStepDown()) {
+              <button
+                pButton
+                type="button"
+                icon="pi pi-arrow-down"
+                severity="secondary"
+                [rounded]="true"
+                [outlined]="true"
+                [label]="'Step down to the audience' | t"
+                (click)="stepDown.emit()"
+              ></button>
+            }
+            @if (canDemote()) {
+              <button
+                pButton
+                type="button"
+                icon="pi pi-arrow-down"
+                severity="warn"
+                [rounded]="true"
+                [outlined]="true"
+                [label]="'Move to the audience' | t"
+                (click)="demote.emit()"
+              ></button>
+            }
+            @if (canRemove()) {
+              <button
+                pButton
+                type="button"
+                icon="pi pi-user-minus"
+                severity="danger"
+                [rounded]="true"
+                [outlined]="true"
+                [label]="'Remove from the room' | t"
+                (click)="remove.emit()"
+              ></button>
+            }
+          </div>
+        }
       </div>
+    }
+
+    @if (error(); as failure) {
+      <p-message class="failure" severity="error" size="small">{{ failure | t }}</p-message>
+    }
+
+    @if (card(); as shown) {
       <div class="about">
         @if (shown.details.bio) {
           <p class="bio">{{ shown.details.bio }}</p>
@@ -109,72 +187,6 @@
         <p-skeleton width="60%" height="1rem" />
         <p-skeleton width="75%" height="1rem" />
       </div>
-    }
-
-    @if (error(); as failure) {
-      <p-message class="failure" severity="error" size="small">{{ failure | t }}</p-message>
-    }
-
-    @if (anything()) {
-      <div class="actions">
-        @if (canInvite()) {
-          <button
-            pButton
-            type="button"
-            icon="pi pi-microphone"
-            [label]="'Invite to the stage' | t"
-            (click)="invite.emit()"
-          ></button>
-        }
-        @if (canStepDown()) {
-          <button
-            pButton
-            type="button"
-            icon="pi pi-arrow-down"
-            severity="secondary"
-            [label]="'Step down to the audience' | t"
-            (click)="stepDown.emit()"
-          ></button>
-        }
-        @if (canDemote()) {
-          <button
-            pButton
-            type="button"
-            icon="pi pi-arrow-down"
-            severity="secondary"
-            [label]="'Move to the audience' | t"
-            (click)="demote.emit()"
-          ></button>
-        }
-        @if (canRemove()) {
-          <button
-            pButton
-            type="button"
-            icon="pi pi-times"
-            severity="danger"
-            [outlined]="true"
-            [label]="'Remove from the room' | t"
-            (click)="remove.emit()"
-          ></button>
-        }
-      </div>
-    }
-
-    @if (card(); as shown) {
-      @if (!shown.isMe) {
-        <div class="quiet">
-          <button
-            pButton
-            type="button"
-            icon="pi pi-ban"
-            severity="danger"
-            size="small"
-            [text]="true"
-            [label]="'Block' | t"
-            (click)="block.emit()"
-          ></button>
-        </div>
-      }
     }
   }
 </p-dialog>

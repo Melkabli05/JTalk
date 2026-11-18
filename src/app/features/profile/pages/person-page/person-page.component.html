@@ -1,14 +1,29 @@
 @if (cards.card(); as card) {
   <app-profile-hero [person]="card.details" [details]="card.details" [locale]="locale()">
     <div actions>
-      @if (!card.isMe && card.social; as stats) {
-        <app-follow-button
-          [following]="stats.followedByMe"
-          [followsMe]="stats.followsMe"
-          [busy]="cards.action.submitting()"
-          (follow)="cards.follow()"
-          (unfollow)="cards.unfollow()"
-        />
+      @if (!card.isMe) {
+        @if (card.social; as stats) {
+          <app-follow-button
+            [following]="stats.followedByMe"
+            [followsMe]="stats.followsMe"
+            [busy]="cards.action.submitting()"
+            (follow)="cards.follow()"
+            (unfollow)="cards.unfollow()"
+          />
+        }
+        @let blockLabel = 'Block' | t;
+        <button
+          pButton
+          type="button"
+          icon="pi pi-ban"
+          severity="danger"
+          [rounded]="true"
+          [text]="true"
+          [attr.aria-label]="blockLabel"
+          [pTooltip]="blockLabel"
+          tooltipPosition="bottom"
+          (click)="block()"
+        ></button>
       }
     </div>
     <div stats>
@@ -28,21 +43,6 @@
   }
 
   <app-profile-about [card]="card" />
-
-  @if (!card.isMe) {
-    <div class="quiet">
-      <button
-        pButton
-        type="button"
-        icon="pi pi-ban"
-        severity="danger"
-        size="small"
-        [text]="true"
-        [label]="'Block' | t"
-        (click)="block()"
-      ></button>
-    </div>
-  }
 } @else if (cards.failed()) {
   <p-message severity="error" icon="pi pi-exclamation-triangle">
     <span class="message">
