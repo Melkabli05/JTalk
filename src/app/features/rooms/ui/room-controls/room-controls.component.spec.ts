@@ -171,7 +171,18 @@ describe('RoomControlsComponent (presentational)', () => {
     await new Promise((resolve) => setTimeout(resolve));
 
     const choices = [...document.querySelectorAll<HTMLButtonElement>('.p-popover button')];
-    expect(choices.map(nameOf)).toEqual(['Heart', 'Clap', 'Thumbs up', 'Smile', 'Sparkles']);
+    expect(choices.map(nameOf)).toEqual([
+      'Heart',
+      'Clap',
+      'Thumbs up',
+      'Smile',
+      'Sparkles',
+      'Fire',
+      'Party',
+      'Laugh',
+      'Wow',
+      'Thanks',
+    ]);
     choices.find((choice) => nameOf(choice) === 'Smile')!.click();
 
     expect(reacted).toHaveBeenCalledExactlyOnceWith('SMILE');

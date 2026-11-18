@@ -1,4 +1,15 @@
-export const REACTIONS = ['HEART', 'CLAP', 'THUMBS_UP', 'SMILE', 'SPARKLES'] as const;
+export const REACTIONS = [
+  'HEART',
+  'CLAP',
+  'THUMBS_UP',
+  'SMILE',
+  'SPARKLES',
+  'FIRE',
+  'PARTY',
+  'LAUGH',
+  'WOW',
+  'THANKS',
+] as const;
 
 export type Reaction = (typeof REACTIONS)[number];
 
