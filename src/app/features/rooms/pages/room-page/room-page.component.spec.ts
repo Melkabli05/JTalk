@@ -247,6 +247,32 @@ describe('RoomPageComponent (container)', () => {
     ).toBe('true');
   });
 
+  it('shows a reaction the server announces, over the stage', async () => {
+    await open();
+
+    link.last.listener.roomEvent({
+      type: 'REACTIONS',
+      reactions: [{ userId: 'b-1', reaction: 'HEART' }],
+    });
+    await settle();
+
+    expect(root().querySelector('app-reaction-stream li .pi-heart-fill')).not.toBeNull();
+  });
+
+  it('sends the reaction a person picks', async () => {
+    await open();
+
+    press('React', root().querySelector('app-room-controls')!);
+    await settle();
+    await new Promise((resolve) => setTimeout(resolve));
+    [...document.querySelectorAll<HTMLButtonElement>('.p-popover button')]
+      .find((choice) => nameOf(choice) === 'Sparkles')!
+      .click();
+    await settle();
+
+    expect(body('POST', `${BASE}/reactions`)).toEqual({ reaction: 'SPARKLES' });
+  });
+
   it('takes a free seat', async () => {
     await open();
     server.stage = { speakers: ['h-1', 'm-1'], handRaiseQueue: ['b-1'] };

@@ -5,8 +5,11 @@ import { loadedValue } from '@shared/utils/resource-value';
 import { ParticipantsApiService } from '../data-access/participants-api.service';
 import { RoomsApiService } from '../data-access/rooms-api.service';
 import { StageApiService } from '../data-access/stage-api.service';
+import type { FloatingReaction } from '../models/reaction.model';
 import type { RoomUpdate } from '../models/realtime.model';
 import type { Participant } from '../models/room.model';
+
+const MAX_FLOATING = 40;
 
 @Service()
 export class RoomStore {
@@ -29,9 +32,11 @@ export class RoomStore {
   private readonly stageState = linkedSignal(loadedValue(this.stageResource));
   private readonly peopleState = linkedSignal(loadedValue(this.peopleResource));
   private stageStamp = 0;
+  private readonly floatingState = signal<readonly FloatingReaction[]>([]);
 
   readonly room = this.roomState.asReadonly();
   readonly stage = this.stageState.asReadonly();
+  readonly floating = this.floatingState.asReadonly();
   readonly roomGone = computed(() => httpStatus(this.roomResource.error()) === 404);
 
   readonly members = this.identity.directory;
@@ -62,6 +67,7 @@ export class RoomStore {
   show(id: string): void {
     this.hasJoined.set(false);
     this.stageStamp = 0;
+    this.floatingState.set([]);
     this.id.set(id);
   }
 
@@ -104,6 +110,14 @@ export class RoomStore {
         );
         break;
     }
+  }
+
+  float(reactions: readonly FloatingReaction[]): void {
+    this.floatingState.update((current) => [...current, ...reactions].slice(-MAX_FLOATING));
+  }
+
+  settle(ids: ReadonlySet<number>): void {
+    this.floatingState.update((current) => current.filter((reaction) => !ids.has(reaction.id)));
   }
 
   reload(): void {

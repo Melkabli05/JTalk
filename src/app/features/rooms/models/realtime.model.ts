@@ -1,3 +1,4 @@
+import type { ReactionBurst } from './reaction.model';
 import type { Stage } from './room.model';
 
 export type AudioStatus = 'idle' | 'connecting' | 'reconnecting' | 'connected' | 'failed';
@@ -23,7 +24,8 @@ export type RoomUpdate =
       readonly participantCount: number;
       readonly joined: readonly string[];
       readonly left: readonly string[];
-    };
+    }
+  | { readonly type: 'REACTIONS'; readonly reactions: readonly ReactionBurst[] };
 
 export interface RealtimeConnection {
   readonly setMicrophone: (on: boolean) => Promise<void>;

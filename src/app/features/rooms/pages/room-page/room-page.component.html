@@ -59,6 +59,11 @@
         (memberSelected)="selectedId.set($event)"
         (seatTaken)="facade.takeSeat()"
       />
+      <app-reaction-stream
+        [reactions]="state.floating()"
+        [members]="state.members()"
+        [meId]="state.meId()"
+      />
     </section>
 
     <div class="side">
@@ -108,6 +113,7 @@
         (leave)="leave()"
         (raiseHand)="facade.raiseHand()"
         (lowerHand)="facade.lowerHand()"
+        (react)="facade.react($event)"
       />
     </div>
   </div>

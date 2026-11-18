@@ -34,8 +34,30 @@ describe('parseRoomEvent', () => {
     ).toEqual({ type: 'PRESENCE_CHANGED', participantCount: 4, joined: ['a'], left: [] });
   });
 
+  it('reads who reacted with what, and drops reactions it does not know', () => {
+    expect(
+      parseRoomEvent({
+        type: 'REACTIONS',
+        reactions: [
+          { userId: 'b-1', reaction: 'HEART' },
+          { userId: 'm-1', reaction: 'FIREWORKS' },
+          { reaction: 'SMILE' },
+          { userId: 'm-1', reaction: 'SPARKLES' },
+        ],
+      }),
+    ).toEqual({
+      type: 'REACTIONS',
+      reactions: [
+        { userId: 'b-1', reaction: 'HEART' },
+        { userId: 'm-1', reaction: 'SPARKLES' },
+      ],
+    });
+  });
+
   it.each([
     ['not an object', 'nope'],
+    ['reactions without any reaction', { type: 'REACTIONS', reactions: [] }],
+    ['reactions that are not a list', { type: 'REACTIONS', reactions: 'HEART' }],
     ['an unknown type', { type: 'SOMETHING_NEW' }],
     ['a stage change without a stage', { type: 'HAND_RAISED', timestamp: at }],
     [

@@ -22,7 +22,7 @@ describe('RoomControlsComponent (presentational)', () => {
   it('lets a listener leave or raise a hand', async () => {
     await render({});
 
-    expect(names()).toEqual(['Leave quietly', 'Raise hand']);
+    expect(names()).toEqual(['Leave quietly', 'Raise hand', 'React']);
   });
 
   it('says nothing while all is well, and before there is any audio', async () => {
@@ -58,13 +58,13 @@ describe('RoomControlsComponent (presentational)', () => {
     await render({ canSpeak: true, onStage: true, micOn: true });
     fixture.componentInstance.toggleMic.subscribe(toggled);
 
-    expect(names()).toEqual(['Leave quietly', 'Mute']);
+    expect(names()).toEqual(['Leave quietly', 'Mute', 'React']);
     click('Mute');
     expect(toggled).toHaveBeenCalledOnce();
 
     fixture.componentRef.setInput('micOn', false);
     await fixture.whenStable();
-    expect(names()).toEqual(['Leave quietly', 'Unmute']);
+    expect(names()).toEqual(['Leave quietly', 'Unmute', 'React']);
   });
 
   it('asks for a tap to turn the sound on only while the browser blocks it', async () => {
@@ -114,7 +114,7 @@ describe('RoomControlsComponent (presentational)', () => {
   it('has no hand to raise for someone already on stage', async () => {
     await render({ onStage: true });
 
-    expect(names()).toEqual(['Leave quietly']);
+    expect(names()).toEqual(['Leave quietly', 'React']);
   });
 
   it('gives only the host a menu of the room actions', async () => {
@@ -123,7 +123,7 @@ describe('RoomControlsComponent (presentational)', () => {
 
     fixture.componentRef.setInput('actions', [{ label: 'Edit the room' }]);
     await fixture.whenStable();
-    expect(names()).toEqual(['Leave quietly', 'More actions']);
+    expect(names()).toEqual(['Leave quietly', 'React', 'More actions']);
   });
 
   it('disables the hand while a request is running', async () => {
@@ -177,5 +177,22 @@ describe('RoomControlsComponent (presentational)', () => {
     const hint = root().querySelector('.hint');
     expect(hint?.getAttribute('role')).toBe('status');
     expect(hint?.querySelector('.pi-hand')?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('lets anyone open a picker of reactions and sends the one they choose', async () => {
+    const reacted = vi.fn();
+    await render({});
+    fixture.componentInstance.react.subscribe(reacted);
+
+    expect(names()).toContain('React');
+    click('React');
+    await fixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    const choices = [...document.querySelectorAll<HTMLButtonElement>('.p-popover button')];
+    expect(choices.map(nameOf)).toEqual(['Heart', 'Thumbs up', 'Smile', 'Sparkles']);
+    choices.find((choice) => nameOf(choice) === 'Smile')!.click();
+
+    expect(reacted).toHaveBeenCalledExactlyOnceWith('SMILE');
   });
 });

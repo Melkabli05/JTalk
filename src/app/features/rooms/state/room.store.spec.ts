@@ -245,4 +245,19 @@ describe('RoomStore', () => {
     http.expectOne(`${BASE}/stage`);
     http.expectOne(`${BASE}/participants`);
   });
+
+  it('keeps reactions on screen until they are settled, and no more than 40 at once', () => {
+    const store = setup();
+    const reaction = (id: number) => ({ id, userId: 'b-1', reaction: 'HEART' as const });
+
+    store.float([reaction(1), reaction(2)]);
+    expect(store.floating().map((r) => r.id)).toEqual([1, 2]);
+
+    store.settle(new Set([1]));
+    expect(store.floating().map((r) => r.id)).toEqual([2]);
+
+    store.float(Array.from({ length: 50 }, (_, index) => reaction(100 + index)));
+    expect(store.floating()).toHaveLength(40);
+    expect(store.floating().at(-1)?.id).toBe(149);
+  });
 });

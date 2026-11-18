@@ -29,6 +29,7 @@
 }
 
 .stage {
+  position: relative;
   grid-area: stage;
   align-self: start;
   min-inline-size: 0;

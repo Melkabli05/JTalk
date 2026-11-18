@@ -6,14 +6,18 @@ import { msg } from '@shared/utils/i18n/msg';
 import { saveRequest } from '@shared/utils/save-request';
 import { ParticipantsApiService } from '../data-access/participants-api.service';
 import { RealtimeService } from '../data-access/realtime.service';
+import { ReactionsApiService } from '../data-access/reactions-api.service';
 import { RoomsApiService } from '../data-access/rooms-api.service';
 import { StageApiService } from '../data-access/stage-api.service';
+import type { Reaction, ReactionBurst } from '../models/reaction.model';
 import type { RoomEdit } from '../models/room.model';
 import { RoomStore } from './room.store';
 
 const RESYNC_MS = 30_000;
 const RECOVER_MS = 3000;
 const RECOVER_TRIES = 3;
+const REACTION_SHOWN_MS = 2400;
+const REACTION_COOLDOWN_MS = 500;
 
 export type RoomExit = 'removed' | 'ended' | 'closed';
 
@@ -22,11 +26,15 @@ export class RoomFacade {
   private readonly rooms = inject(RoomsApiService);
   private readonly participants = inject(ParticipantsApiService);
   private readonly stages = inject(StageApiService);
+  private readonly reactions = inject(ReactionsApiService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly state = inject(RoomStore);
   readonly audio = inject(RealtimeService);
   private readonly pushedOut = new Subject<RoomExit>();
   private left = false;
   private recoveries = 0;
+  private reactionId = 0;
+  private lastReactionAt = 0;
 
   readonly joining = saveRequest();
   readonly action = saveRequest();
@@ -65,7 +73,11 @@ export class RoomFacade {
       .subscribe(() => this.resync());
     this.audio.roomEvents
       .pipe(takeUntilDestroyed())
-      .subscribe((update) => this.state.apply(update));
+      .subscribe((update) =>
+        update.type === 'REACTIONS'
+          ? this.showReactions(update.reactions)
+          : this.state.apply(update),
+      );
     inject(DestroyRef).onDestroy(() => this.leave());
   }
 
@@ -92,6 +104,15 @@ export class RoomFacade {
       this.left = true;
       this.participants.leave(this.state.roomId()).subscribe({ error: () => undefined });
     }
+  }
+
+  react(reaction: Reaction): void {
+    const now = Date.now();
+    if (!this.state.joined() || now - this.lastReactionAt < REACTION_COOLDOWN_MS) {
+      return;
+    }
+    this.lastReactionAt = now;
+    this.reactions.react(this.state.roomId(), reaction).subscribe({ error: () => undefined });
   }
 
   raiseHand(): void {
@@ -166,6 +187,14 @@ export class RoomFacade {
       next: (session) => void this.audio.connect(session),
       error: (error: unknown) => this.exitIfPushedOut(error),
     });
+  }
+
+  private showReactions(bursts: readonly ReactionBurst[]): void {
+    const shown = bursts.map((burst) => ({ ...burst, id: ++this.reactionId }));
+    this.state.float(shown);
+    timer(REACTION_SHOWN_MS)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.state.settle(new Set(shown.map((reaction) => reaction.id))));
   }
 
   private resync(): void {

@@ -419,4 +419,65 @@ describe('RoomFacade', () => {
       expect(facade.state.joined()).toBe(true);
     });
   });
+
+  describe('reactions', () => {
+    it('shows what the server announces and takes it away after a moment', async () => {
+      withFakeTimers();
+      await enter();
+
+      link.last.listener.roomEvent({
+        type: 'REACTIONS',
+        reactions: [
+          { userId: 'b-1', reaction: 'HEART' },
+          { userId: 'm-1', reaction: 'SMILE' },
+        ],
+      });
+      expect(facade.state.floating().map((r) => r.reaction)).toEqual(['HEART', 'SMILE']);
+
+      vi.advanceTimersByTime(2400);
+      expect(facade.state.floating()).toEqual([]);
+    });
+
+    it('sends a reaction to the room, and waits for the server to announce it before showing it', async () => {
+      await enter();
+
+      facade.react('HEART');
+      await settle();
+
+      expect(sent.find((r) => r.url === `${BASE}/reactions`)?.body).toEqual({ reaction: 'HEART' });
+      expect(facade.state.floating()).toEqual([]);
+    });
+
+    it('does not send a second reaction within half a second, and does again after that', async () => {
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+      build();
+      await enter();
+
+      facade.react('HEART');
+      facade.react('SMILE');
+      await settle();
+      expect(count('POST', `${BASE}/reactions`)).toBe(1);
+
+      vi.advanceTimersByTime(600);
+      facade.react('SMILE');
+      await settle();
+      expect(count('POST', `${BASE}/reactions`)).toBe(2);
+    });
+
+    it('stays quiet when the server says to slow down', async () => {
+      await enter();
+      failing[`POST ${BASE}/reactions`] = 429;
+
+      facade.react('HEART');
+      await settle();
+
+      expect(facade.action.error()).toBeNull();
+    });
+
+    it('sends nothing before the person has joined the room', () => {
+      facade.react('HEART');
+
+      expect(count('POST', `${BASE}/reactions`)).toBe(0);
+    });
+  });
 });

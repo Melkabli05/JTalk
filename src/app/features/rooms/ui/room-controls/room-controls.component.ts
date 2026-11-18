@@ -3,16 +3,19 @@ import type { MenuItem } from '@openng/optimus-ui/api';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Menu } from '@openng/optimus-ui/menu';
 import { Message } from '@openng/optimus-ui/message';
+import { Popover } from '@openng/optimus-ui/popover';
 import { Toolbar } from '@openng/optimus-ui/toolbar';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
+import { REACTIONS, type Reaction } from '../../models/reaction.model';
 import type { AudioStatus } from '../../models/realtime.model';
+import { REACTION_LOOKS } from '../../utils/reactions';
 
 let nextId = 0;
 
 @Component({
   selector: 'app-room-controls',
-  imports: [ButtonDirective, Menu, Message, Toolbar, Tooltip, TranslatePipe],
+  imports: [ButtonDirective, Menu, Message, Popover, Toolbar, Tooltip, TranslatePipe],
   template: `
     <span class="cdk-visually-hidden" [id]="labelId">{{ 'Room controls' | t }}</span>
     <div class="notes">
@@ -85,6 +88,39 @@ let nextId = 0;
               (click)="handRaised() ? lowerHand.emit() : raiseHand.emit()"
             ></button>
           }
+          @let reactLabel = 'React' | t;
+          <button
+            pButton
+            type="button"
+            size="large"
+            icon="pi pi-face-smile"
+            severity="secondary"
+            [rounded]="true"
+            [outlined]="true"
+            [attr.aria-label]="reactLabel"
+            [pTooltip]="reactLabel"
+            tooltipPosition="top"
+            (click)="picker.toggle($event)"
+          ></button>
+          <p-popover #picker appendTo="body" [ariaLabel]="'Send a reaction' | t">
+            <div class="reactions">
+              @for (item of looks; track item.reaction) {
+                @let label = item.label | t;
+                <button
+                  pButton
+                  type="button"
+                  size="large"
+                  [text]="true"
+                  [rounded]="true"
+                  [icon]="item.icon"
+                  [attr.aria-label]="label"
+                  [pTooltip]="label"
+                  tooltipPosition="top"
+                  (click)="react.emit(item.reaction)"
+                ></button>
+              }
+            </div>
+          </p-popover>
           @if (soundBlocked()) {
             <button
               pButton
@@ -157,6 +193,11 @@ export class RoomControlsComponent {
   readonly toggleMic = output<void>();
   readonly enableSound = output<void>();
   readonly retryAudio = output<void>();
+  readonly react = output<Reaction>();
 
+  protected readonly looks = REACTIONS.map((reaction) => ({
+    reaction,
+    ...REACTION_LOOKS[reaction],
+  }));
   protected readonly labelId = `app-room-controls-${nextId++}`;
 }
