@@ -1,9 +1,10 @@
 import { DestroyRef, effect, inject, Service, untracked, type Provider } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { filter, interval, Subject, switchMap, tap, timer, type Observable } from 'rxjs';
+import { filter, Subject, switchMap, tap, timer, type Observable } from 'rxjs';
 import { httpStatus } from '@shared/utils/http-status';
 import { msg } from '@shared/utils/i18n/msg';
 import { saveRequest } from '@shared/utils/save-request';
+import { visibleInterval } from '@shared/utils/visible-interval';
 import { ParticipantsApiService } from '../data-access/participants-api.service';
 import { RealtimeService } from '../data-access/realtime.service';
 import { ReactionsApiService } from '../data-access/reactions-api.service';
@@ -68,7 +69,7 @@ export class RoomFacade {
         takeUntilDestroyed(),
       )
       .subscribe(() => this.reconnectAudio());
-    interval(RESYNC_MS)
+    visibleInterval(RESYNC_MS)
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.resync());
     this.audio.roomEvents

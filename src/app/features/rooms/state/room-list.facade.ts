@@ -1,8 +1,8 @@
 import { inject, Service, type Provider } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval } from 'rxjs';
 import { msg } from '@shared/utils/i18n/msg';
 import { saveRequest } from '@shared/utils/save-request';
+import { visibleInterval } from '@shared/utils/visible-interval';
 import { RoomsApiService } from '../data-access/rooms-api.service';
 import type { RoomDraft } from '../models/room.model';
 import { RoomListStore } from './room-list.store';
@@ -17,7 +17,7 @@ export class RoomListFacade {
   readonly opening = saveRequest();
 
   constructor() {
-    interval(REFRESH_MS)
+    visibleInterval(REFRESH_MS)
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.state.reload());
   }

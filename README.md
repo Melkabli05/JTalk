@@ -253,11 +253,24 @@ The app is a static build (`pnpm build`, output `dist/Jtalk/browser`), and `verc
 - `/api/*` is **proxied** to the backend on Render (`https://live-communication-service.onrender.com`). The browser only ever calls the
   app's own domain, so there is no CORS and `environment.ts` can keep `apiUrl: '/api'`. Change the backend's address in `vercel.json`, nowhere else.
 - Every other path falls back to `index.html`, so deep links such as `/rooms/<id>` load (real files are still served first).
+- Every built `.js`, `.css` and font file has a content hash in its name, so it is served `immutable` for a year: a returning visitor downloads nothing
+  that did not change (Vercel's default revalidates every file on every visit). Pictures and brand files, whose names do not change, cache for a day.
 - Proxied answers are never cached on the CDN (`x-vercel-enable-rewrite-caching: 0`): rooms and the stage change every few seconds.
 
 The backend on Render sleeps when idle on the free plan, so the first request after a quiet period can be slow or fail; the app refreshes every few
 seconds and recovers by itself. While the backend runs in its open testing mode (`MICRONAUT_SECURITY_ENABLED=false`) the production build uses the dev
 identity (`devIdentity: true` in `environment.ts`); turn that off when a user service issues tokens.
+
+## Performance
+
+Measured on the production build (`ng build --stats-json`, bytes per package from `dist/Jtalk/browser-stats.json`): the initial download is about 243 kB
+transferred; the Auth0 SDK (about 58 kB of it) is the one thing that has to load before the first screen. Everything heavy is already on demand:
+LiveKit (129 kB) loads when a room is joined and the Krisp noise filter (a 6 MB WebAssembly chunk, 1.4 MB transferred) only when a speaker's microphone
+is published, so listeners never download it.
+
+- Background refreshing uses `shared/utils/visible-interval`, not `interval`: the room list (5 s) and a joined room's re-sync (30 s) pause while the
+  tab is hidden and refresh at once when it is shown again, so an open background tab costs the servers nothing.
+- Hashed assets are cached `immutable` (see Deploying).
 
 ## Quality gates
 
