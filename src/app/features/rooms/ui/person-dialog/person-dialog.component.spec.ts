@@ -116,21 +116,21 @@ describe('PersonDialogComponent (presentational)', () => {
     });
   });
 
-  describe('what the host can do, as tiles', () => {
-    const tiles = () => [...root().querySelectorAll('.tiles button')].map(nameOf);
+  describe('what can be done about them, as circles', () => {
+    const circles = () => [...root().querySelectorAll('.actions button')].map(nameOf);
 
     it('offers nothing to someone who may do nothing about them', async () => {
       await render({ role: 'LISTENER' });
 
-      expect(root().querySelector('.tiles')).toBeNull();
+      expect(root().querySelector('.actions')).toBeNull();
     });
 
     it('offers to invite a listener, or move a speaker down or mute them', async () => {
       await render({ role: 'LISTENER', canInvite: true });
-      expect(tiles()).toEqual(['Invite to the stage']);
+      expect(circles()).toEqual(['Invite to the stage']);
 
       await render({ role: 'SPEAKER', canDemote: true, canMute: true });
-      expect(tiles()).toEqual(['Mute', 'Move to the audience']);
+      expect(circles()).toEqual(['Mute', 'Move to the audience']);
     });
 
     it('lets a speaker step down from their own seat', async () => {
@@ -164,18 +164,44 @@ describe('PersonDialogComponent (presentational)', () => {
       expect(button('Muted').disabled).toBe(true);
     });
 
-    it('draws each as a button of the system, the picture above its name: Sand for the host powers, neutral for the rest', async () => {
-      await render({ role: 'SPEAKER', canMute: true, canDemote: true, canInvite: true });
+    it('draws each as a round icon button of the system with its name under it: Sand for the host powers, neutral for the rest, terracotta for removing', async () => {
+      await render({
+        role: 'SPEAKER',
+        canMute: true,
+        canDemote: true,
+        canInvite: true,
+        canRemove: true,
+      });
 
-      const invite = button('Invite to the stage');
-      expect(invite.className).toContain('p-button-warn');
-      expect(invite.className).toContain('p-button-outlined');
-      expect(invite.querySelector('.p-button-icon')?.className).toContain('p-button-icon-top');
-      expect(invite.querySelector('.p-button-icon')?.className).toContain('pi-microphone');
-      expect(invite.textContent?.trim()).toBe('To the stage');
-      expect(button('Mute').className).toContain('p-button-warn');
-      expect(button('Move to the audience').className).toContain('p-button-secondary');
-      expect(button('Move to the audience').className).not.toContain('p-button-warn');
+      for (const [label, severity] of [
+        ['Mute', 'warn'],
+        ['Invite to the stage', 'warn'],
+        ['Move to the audience', 'secondary'],
+        ['Remove from the room', 'danger'],
+      ] as const) {
+        const circle = button(label);
+        expect(circle.className).toContain(`p-button-${severity}`);
+        expect(circle.className).toContain('p-button-rounded');
+        expect(circle.className).toContain('p-button-icon-only');
+        expect(circle.textContent?.trim()).toBe('');
+      }
+      expect(button('Invite to the stage').querySelector('.p-button-icon')?.className).toContain(
+        'pi-microphone',
+      );
+      const captions = [...root().querySelectorAll('.action .caption')].map((c) => c.textContent);
+      expect(captions).toEqual(['Mute mic', 'To the stage', 'To the audience', 'Remove']);
+      expect(root().querySelector('.caption')?.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('puts removing in the same row, and asks nothing until it is pressed', async () => {
+      const removed = vi.fn();
+      await render({ role: 'LISTENER', canRemove: true });
+      fixture.componentInstance.remove.subscribe(removed);
+      expect(circles()).toEqual(['Remove from the room']);
+
+      press('Remove from the room');
+
+      expect(removed).toHaveBeenCalledOnce();
     });
   });
 
@@ -284,7 +310,7 @@ describe('PersonDialogComponent (presentational)', () => {
     it('keeps the follow button and the tiles above the details', async () => {
       await render({ role: 'LISTENER', card: CARD, canInvite: true });
       const follow = root().querySelector('.follow')!;
-      const tiles = root().querySelector('.tiles')!;
+      const tiles = root().querySelector('.actions')!;
       const facts = root().querySelector('.facts')!;
 
       const before = (a: Element, b: Element) =>
@@ -321,16 +347,10 @@ describe('PersonDialogComponent (presentational)', () => {
       expect(blocked).toHaveBeenCalledOnce();
     });
 
-    it('is called moderation and safety for the host, who can also remove them from the room', async () => {
-      const removed = vi.fn();
+    it('is called moderation and safety for the host', async () => {
       await render({ role: 'LISTENER', card: CARD, canBlock: true, canRemove: true });
-      fixture.componentInstance.remove.subscribe(removed);
 
       expect(header().textContent).toContain('Moderation and safety');
-      expect(button('Remove from the room').className).toContain('p-button-danger');
-      press('Remove from the room');
-
-      expect(removed).toHaveBeenCalledOnce();
     });
 
     it('has neither when there is nothing to do about them', async () => {

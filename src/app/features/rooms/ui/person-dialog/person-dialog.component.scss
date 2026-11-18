@@ -141,18 +141,27 @@ h2 {
   }
 }
 
-// What the host can do. Each is a button of the system (icon above its name, `iconPos="top"`), Sand for the host's own powers and
-// neutral for the rest; only the height is ours, for the two lines.
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
-  gap: 0.5rem;
+// What can be done about them, as circles with the picture of the action and its name under it: Sand for the host's powers, neutral for
+// the rest, terracotta for removing. The circles are ordinary icon buttons of the system; only their caption is ours.
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.25rem;
 }
 
-.tile {
+.action {
+  display: flex;
   flex-direction: column;
-  min-block-size: 4.5rem;
+  align-items: center;
+  gap: 0.25rem;
+  min-inline-size: 4rem;
+}
+
+.caption {
+  color: var(--p-text-muted-color);
   font-size: var(--p-jtalk-type-secondary);
+  font-weight: 500;
+  text-align: center;
 }
 
 .failure {
@@ -205,8 +214,4 @@ h2 {
 .row-action {
   justify-content: flex-start;
   inline-size: 100%;
-}
-
-.remove {
-  align-self: center;
 }

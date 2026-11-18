@@ -95,64 +95,100 @@
         }
       }
 
-      @if (canMute() || canDemote() || canInvite() || canStepDown()) {
-        <div class="tiles" role="group" [attr.aria-label]="'Actions' | t">
+      @if (canMute() || canDemote() || canInvite() || canStepDown() || canRemove()) {
+        <div class="actions" role="group" [attr.aria-label]="'Actions' | t">
           @if (canMute()) {
-            <button
-              pButton
-              type="button"
-              class="tile"
-              icon="pi pi-microphone pi-slashed"
-              iconPos="top"
-              severity="warn"
-              [outlined]="true"
-              [disabled]="muted()"
-              [attr.aria-label]="muted() ? ('Muted' | t) : ('Mute' | t)"
-              [label]="muted() ? ('Muted' | t) : ('Mute mic' | t)"
-              (click)="mute.emit()"
-            ></button>
+            @let muteLabel = muted() ? ('Muted' | t) : ('Mute' | t);
+            <div class="action">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-microphone pi-slashed"
+                size="large"
+                severity="warn"
+                [rounded]="true"
+                [outlined]="true"
+                [disabled]="muted()"
+                [attr.aria-label]="muteLabel"
+                [pTooltip]="muteLabel"
+                (click)="mute.emit()"
+              ></button>
+              <span class="caption" aria-hidden="true">{{
+                muted() ? ('Muted' | t) : ('Mute mic' | t)
+              }}</span>
+            </div>
           }
           @if (canInvite()) {
-            <button
-              pButton
-              type="button"
-              class="tile"
-              icon="pi pi-microphone"
-              iconPos="top"
-              severity="warn"
-              [outlined]="true"
-              [attr.aria-label]="'Invite to the stage' | t"
-              [label]="'To the stage' | t"
-              (click)="invite.emit()"
-            ></button>
+            @let inviteLabel = 'Invite to the stage' | t;
+            <div class="action">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-microphone"
+                size="large"
+                severity="warn"
+                [rounded]="true"
+                [outlined]="true"
+                [attr.aria-label]="inviteLabel"
+                [pTooltip]="inviteLabel"
+                (click)="invite.emit()"
+              ></button>
+              <span class="caption" aria-hidden="true">{{ 'To the stage' | t }}</span>
+            </div>
           }
           @if (canDemote()) {
-            <button
-              pButton
-              type="button"
-              class="tile"
-              icon="pi pi-arrow-down"
-              iconPos="top"
-              severity="secondary"
-              [outlined]="true"
-              [attr.aria-label]="'Move to the audience' | t"
-              [label]="'To the audience' | t"
-              (click)="demote.emit()"
-            ></button>
+            @let demoteLabel = 'Move to the audience' | t;
+            <div class="action">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-arrow-down"
+                size="large"
+                severity="secondary"
+                [rounded]="true"
+                [outlined]="true"
+                [attr.aria-label]="demoteLabel"
+                [pTooltip]="demoteLabel"
+                (click)="demote.emit()"
+              ></button>
+              <span class="caption" aria-hidden="true">{{ 'To the audience' | t }}</span>
+            </div>
           }
           @if (canStepDown()) {
-            <button
-              pButton
-              type="button"
-              class="tile"
-              icon="pi pi-arrow-down"
-              iconPos="top"
-              severity="secondary"
-              [outlined]="true"
-              [attr.aria-label]="'Step down to the audience' | t"
-              [label]="'Step down' | t"
-              (click)="stepDown.emit()"
-            ></button>
+            @let stepLabel = 'Step down to the audience' | t;
+            <div class="action">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-arrow-down"
+                size="large"
+                severity="secondary"
+                [rounded]="true"
+                [outlined]="true"
+                [attr.aria-label]="stepLabel"
+                [pTooltip]="stepLabel"
+                (click)="stepDown.emit()"
+              ></button>
+              <span class="caption" aria-hidden="true">{{ 'Step down' | t }}</span>
+            </div>
+          }
+          @if (canRemove()) {
+            @let removeLabel = 'Remove from the room' | t;
+            <div class="action">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-user-minus"
+                size="large"
+                severity="danger"
+                [rounded]="true"
+                [outlined]="true"
+                [attr.aria-label]="removeLabel"
+                [pTooltip]="removeLabel"
+                (click)="remove.emit()"
+              ></button>
+              <span class="caption" aria-hidden="true">{{ 'Remove' | t }}</span>
+            </div>
           }
         </div>
       }
@@ -240,19 +276,6 @@
             </p-accordion-content>
           </p-accordion-panel>
         </p-accordion>
-      }
-
-      @if (canRemove()) {
-        <button
-          pButton
-          type="button"
-          class="remove"
-          icon="pi pi-user-minus"
-          severity="danger"
-          [text]="true"
-          [label]="'Remove from the room' | t"
-          (click)="remove.emit()"
-        ></button>
       }
     </div>
   }
