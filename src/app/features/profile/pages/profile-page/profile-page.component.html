@@ -31,6 +31,31 @@
       (saved)="save($event)"
     />
   </p-card>
+
+  <p-card class="danger">
+    <h2>{{ 'Delete your account' | t }}</h2>
+    <p class="lead">
+      {{ 'Remove your profile and everything that goes with it. This cannot be undone.' | t }}
+    </p>
+    <button
+      pButton
+      type="button"
+      severity="danger"
+      icon="pi pi-trash"
+      [outlined]="true"
+      [rounded]="true"
+      [label]="'Delete my account' | t"
+      (click)="confirmingDelete.set(true)"
+    ></button>
+  </p-card>
+
+  <app-delete-account-dialog
+    [(visible)]="confirmingDelete"
+    [word]="cards.card()?.details?.username || me.name"
+    [busy]="deleting.submitting()"
+    [error]="deleting.error()"
+    (confirmed)="deleteAccount()"
+  />
 } @else {
   <div class="loading">
     <p-progress-spinner [ariaLabel]="'Loading page' | t" />

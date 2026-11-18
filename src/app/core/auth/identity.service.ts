@@ -3,7 +3,16 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { computed, inject, Service, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '@auth0/auth0-angular';
-import { catchError, defer, firstValueFrom, type Observable, tap, throwError } from 'rxjs';
+import {
+  catchError,
+  defer,
+  firstValueFrom,
+  from,
+  type Observable,
+  switchMap,
+  tap,
+  throwError,
+} from 'rxjs';
 import { avatarPath } from '@shared/utils/avatars';
 import { httpStatus } from '@shared/utils/http-status';
 import { loadedValue } from '@shared/utils/resource-value';
@@ -94,6 +103,15 @@ export class IdentityService {
     return (
       current === undefined ? this.createProfile(draft) : this.changeProfile(draft, current)
     ).pipe(tap((saved) => this.meResource.set(saved)));
+  }
+
+  /**
+   * Deletes the person's account for good, then signs them out. Their room is left first. The sign-in itself (Auth0) is not deleted, so
+   * they can sign up again with a fresh profile.
+   */
+  deleteAccount(): Observable<void> {
+    this.activeRoom.leave();
+    return this.api.deleteMe().pipe(switchMap(() => from(this.signOut())));
   }
 
   async signOut(): Promise<void> {

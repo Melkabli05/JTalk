@@ -199,6 +199,8 @@ Read the component's page before using it (`https://optimus.openng.org/llms/comp
 - **Tooltip** is advisory only: an icon-only button always also has an `aria-label`.
   Dead code goes: the skeleton's stage marker and the theme hooks that only served it are gone; `copy-button`, `number-field`, `download-file`, `speech-input` and `unsaved-changes` were unused and are removed.
 
+**Deleting the account** (`/profile`, last card, `.danger`: terracotta heading, an outlined danger `Delete my account`). It opens `app-delete-account-dialog` (presentational): what is deleted in plain words (profile, languages, who you follow and who follows you, your blocks), that it cannot be undone, that you can sign up again with a fresh profile, and a field to **type your handle** (their name if it is not known; capitals and spaces ignored); the danger button stays disabled until it matches, and the dialog cannot be closed while the request runs. The page calls `IdentityService.deleteAccount()`: it leaves the room, `DELETE /api/v1/users/me`, then signs out (Auth0 logout back to the app); on failure it stays signed in and says so in the dialog. The user service cascades the profile, languages, follows and blocks and corrects other people's counts; **the Auth0 identity is not deleted** (that needs the Management API), so signing in again starts a fresh profile.
+
 ### The banner and the profile popup
 
 Banner (`layout/shell`, the `<header>` landmark): the brand, the navigation and one account button, on one row at every width (the menubar never collapses, `breakpoint="0px"`,

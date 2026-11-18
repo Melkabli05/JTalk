@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { ActiveRoomService } from '../rooms/active-room.service';
 import type { Person, ProfileDraft } from './identity.models';
 import { fakeAuth0 } from './auth-testing';
@@ -307,6 +307,33 @@ describe('IdentityService', () => {
     await identity.signOut();
 
     expect(logout).toHaveBeenCalledTimes(1);
+  });
+
+  describe('deleting the account', () => {
+    it('deletes it on the user service, then signs out, and leaves the room first', async () => {
+      await known();
+      const leave = vi.fn();
+      TestBed.inject(ActiveRoomService).onLeave(leave);
+      logout.mockClear();
+
+      const deleted = firstValueFrom(identity.deleteAccount());
+      expect(leave, 'left before anything is deleted').toHaveBeenCalled();
+      await answer('DELETE', ME, null, 204);
+      await deleted;
+
+      expect(logout).toHaveBeenCalledOnce();
+    });
+
+    it('does not sign out when the account could not be deleted, so the person can try again', async () => {
+      await known();
+      logout.mockClear();
+
+      const failed = firstValueFrom(identity.deleteAccount()).catch(() => 'failed');
+      await answer('DELETE', ME, {}, 500);
+
+      expect(await failed).toBe('failed');
+      expect(logout).not.toHaveBeenCalled();
+    });
   });
 
   it('leaves the room it is in before signing out, so nobody is left on a stage with no one at the controls', async () => {

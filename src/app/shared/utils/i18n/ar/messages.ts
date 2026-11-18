@@ -254,4 +254,14 @@ export const messages: Readonly<Record<string, string>> = {
   'Back to the room: {title}': 'العودة إلى الغرفة: {title}',
   Edit: 'تعديل',
   End: 'إنهاء',
+  'Delete your account': 'حذف حسابك',
+  'Remove your profile and everything that goes with it. This cannot be undone.':
+    'احذف ملفّك الشخصي وكل ما يتبعه. لا يمكن التراجع عن ذلك.',
+  'Delete my account': 'حذف حسابي',
+  'This permanently deletes your profile, your languages, who you follow and who follows you, and the people you blocked. It cannot be undone.':
+    'يحذف هذا ملفّك الشخصي ولغاتك ومن تتابعهم ومن يتابعونك ومن حظرتهم نهائيًا. لا يمكن التراجع عن ذلك.',
+  'You can sign up again any time, with a fresh profile.':
+    'يمكنك التسجيل مجددًا في أي وقت بملف شخصي جديد.',
+  'Type {word} to confirm': 'اكتب {word} للتأكيد',
+  'Could not delete your account. Please try again.': 'تعذّر حذف حسابك. حاول مرة أخرى.',
 };

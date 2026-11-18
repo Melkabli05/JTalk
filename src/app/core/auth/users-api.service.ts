@@ -43,6 +43,11 @@ export class UsersApiService {
     return this.http.patch<unknown>(`${this.url}/me`, change).pipe(map(parsePerson));
   }
 
+  /** Deletes the caller's account: the profile, their languages, their follows and blocks. */
+  deleteMe(): Observable<void> {
+    return this.http.delete<void>(`${this.url}/me`);
+  }
+
   /** Names and pictures for many people in one call: a whole room. */
   people(ids: readonly string[]): Observable<Person[]> {
     return this.http.post<unknown>(`${this.url}/batch`, { ids }).pipe(map(parsePeople));
