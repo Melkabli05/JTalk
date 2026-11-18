@@ -3,13 +3,34 @@
   [dismissableMask]="true"
   [showHeader]="false"
   [ariaLabelledBy]="titleId"
-  [style]="{ width: '30rem', maxWidth: '95vw' }"
+  styleClass="person-card"
   [visible]="visible()"
   (visibleChange)="visible.set($event)"
 >
   @if (member(); as person) {
+    <div class="cover">
+      @let closeLabel = 'Close' | t;
+      <button
+        pButton
+        type="button"
+        class="compact close"
+        icon="pi pi-times"
+        severity="secondary"
+        [rounded]="true"
+        [text]="true"
+        [attr.aria-label]="closeLabel"
+        [pTooltip]="closeLabel"
+        tooltipPosition="left"
+        (click)="visible.set(false)"
+      ></button>
+    </div>
     <div class="top">
-      <app-person-avatar size="xlarge" [member]="person" />
+      <span class="portrait">
+        <app-person-avatar size="xlarge" [member]="person" />
+        @if (origin(); as place) {
+          <span class="flag" aria-hidden="true">{{ place.flag }}</span>
+        }
+      </span>
       <div class="who">
         <h2 [id]="titleId">{{ person.name }}</h2>
         <p class="meta">
@@ -58,20 +79,6 @@
           }
         </p>
       </div>
-      @let closeLabel = 'Close' | t;
-      <button
-        pButton
-        type="button"
-        class="compact close"
-        icon="pi pi-times"
-        severity="secondary"
-        [rounded]="true"
-        [text]="true"
-        [attr.aria-label]="closeLabel"
-        [pTooltip]="closeLabel"
-        tooltipPosition="left"
-        (click)="visible.set(false)"
-      ></button>
     </div>
 
     @if (hasActions()) {

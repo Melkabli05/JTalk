@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { Card } from '@openng/optimus-ui/card';
 import type { PersonCard } from '@core/people/person-card.model';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -9,22 +9,33 @@ import { PartnerMatchComponent } from '@shared/ui/partner-match/partner-match.co
   selector: 'app-profile-about',
   imports: [Card, LanguageLevelsComponent, PartnerMatchComponent, TranslatePipe],
   template: `
-    <p-card>
-      <h2>{{ 'About' | t }}</h2>
-      @if (card().details.bio) {
-        <p class="bio">{{ card().details.bio }}</p>
-      } @else if (card().isMe) {
-        <p class="empty">{{ 'Add a short bio so people know what you like to talk about.' | t }}</p>
-      }
-      <app-partner-match [match]="card().match" />
-      @if (card().languages; as languages) {
+    @if (hasAbout()) {
+      <p-card class="about">
+        <h2>{{ 'About' | t }}</h2>
+        @if (card().details.bio) {
+          <p class="bio">{{ card().details.bio }}</p>
+        } @else if (card().isMe) {
+          <p class="empty">
+            {{ 'Add a short bio so people know what you like to talk about.' | t }}
+          </p>
+        }
+        <app-partner-match [match]="card().match" />
+      </p-card>
+    }
+    @if (card().languages; as languages) {
+      <p-card class="languages">
+        <h2>{{ 'Languages' | t }}</h2>
         <app-language-levels [native]="languages.native" [learning]="languages.learning" />
-      }
-    </p-card>
+      </p-card>
+    }
   `,
   styles: `
+    // About and Languages sit side by side when there is room, so each is read at a glance; one column on a phone.
     :host {
-      display: block;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+      align-items: start;
+      gap: 1.5rem;
     }
 
     h2 {
@@ -33,7 +44,7 @@ import { PartnerMatchComponent } from '@shared/ui/partner-match/partner-match.co
     }
 
     p {
-      margin: 0 0 1rem;
+      margin: 0;
     }
 
     .bio {
@@ -46,7 +57,8 @@ import { PartnerMatchComponent } from '@shared/ui/partner-match/partner-match.co
     }
 
     app-partner-match {
-      margin-block-end: 1.25rem;
+      display: block;
+      margin-block-start: 1rem;
     }
 
     app-partner-match:empty {
@@ -56,4 +68,8 @@ import { PartnerMatchComponent } from '@shared/ui/partner-match/partner-match.co
 })
 export class ProfileAboutComponent {
   readonly card = input.required<PersonCard>();
+
+  protected readonly hasAbout = computed(
+    () => this.card().details.bio !== '' || this.card().isMe || this.card().match !== undefined,
+  );
 }

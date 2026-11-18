@@ -34,6 +34,10 @@ describe('ProfileAboutComponent (presentational)', () => {
     await render(CARD);
 
     expect(root().querySelector('.bio')?.textContent).toBe('Hola! I love tea.');
+    expect([...root().querySelectorAll('h2')].map((h) => h.textContent)).toEqual([
+      'About',
+      'Languages',
+    ]);
     expect(root().textContent).toContain('Language exchange match');
     expect(root().textContent).toContain('Intermediate');
   });
@@ -45,5 +49,11 @@ describe('ProfileAboutComponent (presentational)', () => {
 
     await render({ ...CARD, details: { ...CARD.details, bio: '' }, isMe: true, match: undefined });
     expect(root().querySelector('.empty')?.textContent).toContain('Add a short bio');
+  });
+
+  it('has no About card for someone with nothing to say and no match, only their languages', async () => {
+    await render({ ...CARD, details: { ...CARD.details, bio: '' }, match: undefined });
+
+    expect([...root().querySelectorAll('h2')].map((h) => h.textContent)).toEqual(['Languages']);
   });
 });

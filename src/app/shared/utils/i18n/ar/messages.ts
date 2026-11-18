@@ -8,6 +8,7 @@ export const messages: Readonly<Record<string, string>> = {
   'The page you are looking for does not exist.': 'الصفحة التي تبحث عنها غير موجودة.',
   'Back to home': 'العودة إلى الرئيسية',
   Language: 'اللغة',
+  Languages: 'اللغات',
   Jtalk: 'Jtalk',
   Rooms: 'الغرف',
   'Start a room': 'ابدأ غرفة',

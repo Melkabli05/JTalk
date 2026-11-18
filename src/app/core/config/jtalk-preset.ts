@@ -349,6 +349,36 @@ export const JtalkPreset = definePreset(Aura, {
       header: { background: 'transparent', padding: '0.25rem 0.5rem' },
       content: { padding: '0' },
     },
+    dialog: {
+      // A person's card is built edge to edge (a cover band across the top), so it keeps no padding of its own. On a phone it is a
+      // sheet that rises from the bottom edge, the way people expect a profile to open there.
+      css: () => `
+        .p-dialog.person-card {
+          inline-size: min(30rem, 95vw);
+        }
+        .p-dialog.person-card .p-dialog-content {
+          padding: 0 0 1.25rem;
+        }
+        @media (max-width: 40rem) {
+          .p-dialog-mask:has(.p-dialog.person-card) {
+            /* the dialog sets its own alignment inline, which only !important beats */
+            align-items: flex-end !important;
+            padding: 0;
+          }
+          .p-dialog.person-card {
+            inline-size: 100%;
+            max-inline-size: 100%;
+            max-block-size: 88dvh;
+            margin: 0;
+            border-end-start-radius: 0;
+            border-end-end-radius: 0;
+          }
+          .p-dialog.person-card .p-dialog-content {
+            padding-block-end: max(1.25rem, env(safe-area-inset-bottom));
+          }
+        }
+      `,
+    },
     toast: { root: { borderRadius: radius.card } },
     message: { root: { borderRadius: radius.card } },
     button: {

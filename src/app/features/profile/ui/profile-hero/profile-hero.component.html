@@ -2,17 +2,28 @@
   <div class="cover" aria-hidden="true"></div>
   <div class="body">
     <div class="head">
-      @if (picture(); as image) {
-        <p-avatar class="picture" shape="circle" size="xlarge" aria-hidden="true" [image]="image" />
-      } @else {
-        <p-avatar
-          class="picture"
-          shape="circle"
-          size="xlarge"
-          aria-hidden="true"
-          [label]="person().name | initials"
-        />
-      }
+      <span class="portrait">
+        @if (picture(); as image) {
+          <p-avatar
+            class="picture"
+            shape="circle"
+            size="xlarge"
+            aria-hidden="true"
+            [image]="image"
+          />
+        } @else {
+          <p-avatar
+            class="picture"
+            shape="circle"
+            size="xlarge"
+            aria-hidden="true"
+            [label]="person().name | initials"
+          />
+        }
+        @if (origin(); as place) {
+          <span class="flag" aria-hidden="true">{{ place.flag }}</span>
+        }
+      </span>
       <div class="actions"><ng-content select="[actions]" /></div>
     </div>
     <h1 id="profile-name">{{ person().name }}</h1>

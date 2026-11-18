@@ -67,6 +67,23 @@ describe('PersonDialogComponent (presentational)', () => {
       expect(text()).toContain('Learning Japanese');
     });
 
+    it('puts their country on the corner of the picture once their profile is known, and not before', async () => {
+      await render({ role: 'SPEAKER' });
+      expect(root().querySelector('.portrait .flag')).toBeNull();
+
+      await render({ role: 'SPEAKER', card: CARD });
+      expect(root().querySelector('.portrait .flag')?.textContent).toBe('🇪🇸');
+      expect(root().querySelector('.portrait .flag')?.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('rests the picture on a cover band that holds the close button', async () => {
+      await render({ role: 'SPEAKER' });
+
+      const cover = root().querySelector('.cover')!;
+      expect(cover.querySelector('button')?.getAttribute('aria-label')).toBe('Close');
+      expect(root().querySelector('[role="dialog"]')?.classList.contains('person-card')).toBe(true);
+    });
+
     it('says so when it is you', async () => {
       await render({ role: 'HOST', isMe: true });
 

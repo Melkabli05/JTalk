@@ -46,14 +46,34 @@
   margin-block-start: -3.25rem;
 }
 
+.portrait {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px var(--p-content-background);
+}
+
 .picture {
   --p-avatar-xl-width: 6.5rem;
   --p-avatar-xl-height: 6.5rem;
   --p-avatar-xl-font-size: 2.25rem;
-  z-index: 1 !important;
+}
 
+// The country, as a badge on the picture's corner, so it is seen before anything is read.
+.flag {
+  position: absolute;
+  inset-block-end: 0.125rem;
+  inset-inline-end: -0.125rem;
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
   border-radius: 50%;
-  box-shadow: 0 0 0 4px var(--p-content-background);
+  background: var(--p-content-background);
+  box-shadow: 0 0 0 3px var(--p-content-background);
+  font-size: 1.25rem;
+  line-height: 1;
 }
 
 .actions {
