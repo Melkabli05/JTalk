@@ -123,6 +123,7 @@ export const messages: Readonly<Record<string, string>> = {
   'More actions': 'إجراءات أخرى',
   'Raise hand': 'رفع اليد',
   React: 'تفاعل',
+  'Sound is off in this browser.': 'الصوت متوقف في هذا المتصفح.',
   'Send a reaction': 'إرسال تفاعل',
   Heart: 'قلب',
   'Thumbs up': 'إعجاب',

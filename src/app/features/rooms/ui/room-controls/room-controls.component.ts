@@ -31,15 +31,44 @@ let nextId = 0;
         }}</p-message>
       }
       @if (audio() === 'failed') {
-        <p-message severity="error" size="small" icon="pi pi-exclamation-triangle">{{
-          'Audio is not available.' | t
-        }}</p-message>
+        <p-message severity="error" size="small" icon="pi pi-exclamation-triangle">
+          <span class="message">
+            {{ 'Audio is not available.' | t }}
+            <button
+              pButton
+              type="button"
+              size="small"
+              icon="pi pi-refresh"
+              severity="danger"
+              [text]="true"
+              [label]="'Reconnect audio' | t"
+              (click)="retryAudio.emit()"
+            ></button>
+          </span>
+        </p-message>
       }
       @if (micRefused()) {
         <p-message severity="warn" size="small" icon="pi pi-exclamation-triangle">{{
           'We could not use your microphone. Allow it in your browser, then press Unmute.' | t
         }}</p-message>
-      } @else if (handRaised() && !onStage()) {
+      }
+      @if (soundBlocked()) {
+        <p-message severity="info" size="small" icon="pi pi-volume-off">
+          <span class="message">
+            {{ 'Sound is off in this browser.' | t }}
+            <button
+              pButton
+              type="button"
+              size="small"
+              icon="pi pi-volume-up"
+              [text]="true"
+              [label]="'Turn on sound' | t"
+              (click)="enableSound.emit()"
+            ></button>
+          </span>
+        </p-message>
+      }
+      @if (handRaised() && !onStage() && !micRefused()) {
         <p class="hint" role="status">
           <i class="pi pi-hand" aria-hidden="true"></i>
           {{ 'Waiting for the host to let you speak. Tap the hand again to cancel.' | t }}
@@ -48,106 +77,67 @@ let nextId = 0;
     </div>
     <p-toolbar [ariaLabelledBy]="labelId" [attr.aria-busy]="busy()">
       <ng-template #start>
-        <div class="group">
-          @let leaveLabel = 'Leave quietly' | t;
+        @if (canSpeak()) {
           <button
             pButton
             type="button"
-            class="leave-compact"
+            class="main"
             size="large"
-            icon="pi pi-sign-out"
-            severity="secondary"
+            [icon]="micOn() ? 'pi pi-microphone' : 'pi pi-microphone pi-slashed'"
+            [label]="micOn() ? ('Mute' | t) : ('Unmute' | t)"
+            [severity]="micOn() ? 'primary' : 'secondary'"
             [rounded]="true"
-            [outlined]="true"
-            [label]="leaveLabel"
-            [attr.aria-label]="leaveLabel"
-            (click)="leave.emit()"
+            (click)="toggleMic.emit()"
           ></button>
-          @if (canSpeak()) {
-            <button
-              pButton
-              type="button"
-              [icon]="micOn() ? 'pi pi-microphone' : 'pi pi-microphone pi-slashed'"
-              [label]="micOn() ? ('Mute' | t) : ('Unmute' | t)"
-              [severity]="micOn() ? 'primary' : 'secondary'"
-              [rounded]="true"
-              (click)="toggleMic.emit()"
-            ></button>
-          }
-          @if (!onStage()) {
-            <button
-              pButton
-              type="button"
-              icon="pi pi-hand"
-              [label]="'Raise hand' | t"
-              [severity]="handRaised() ? 'primary' : 'secondary'"
-              [rounded]="true"
-              [outlined]="!handRaised()"
-              [disabled]="busy()"
-              [attr.aria-pressed]="handRaised()"
-              (click)="handRaised() ? lowerHand.emit() : raiseHand.emit()"
-            ></button>
-          }
-          @let reactLabel = 'React' | t;
+        }
+        @if (!onStage()) {
           <button
             pButton
             type="button"
+            class="main"
             size="large"
-            icon="pi pi-face-smile"
-            severity="secondary"
+            icon="pi pi-hand"
+            [label]="'Raise hand' | t"
+            [severity]="handRaised() ? 'primary' : 'secondary'"
             [rounded]="true"
-            [outlined]="true"
-            [attr.aria-label]="reactLabel"
-            [pTooltip]="reactLabel"
-            tooltipPosition="top"
-            (click)="picker.toggle($event)"
+            [disabled]="busy()"
+            [attr.aria-pressed]="handRaised()"
+            (click)="handRaised() ? lowerHand.emit() : raiseHand.emit()"
           ></button>
-          <p-popover #picker appendTo="body" [ariaLabel]="'Send a reaction' | t">
-            <div class="reactions">
-              @for (item of looks; track item.reaction) {
-                @let label = item.label | t;
-                <button
-                  pButton
-                  type="button"
-                  size="large"
-                  [text]="true"
-                  [rounded]="true"
-                  [icon]="item.icon"
-                  [attr.aria-label]="label"
-                  [pTooltip]="label"
-                  tooltipPosition="top"
-                  (click)="react.emit(item.reaction)"
-                ></button>
-              }
-            </div>
-          </p-popover>
-          @if (soundBlocked()) {
-            <button
-              pButton
-              type="button"
-              size="large"
-              icon="pi pi-volume-up"
-              [rounded]="true"
-              [label]="'Turn on sound' | t"
-              (click)="enableSound.emit()"
-            ></button>
-          }
-          @if (audio() === 'failed') {
-            <button
-              pButton
-              type="button"
-              size="large"
-              icon="pi pi-refresh"
-              severity="secondary"
-              [rounded]="true"
-              [label]="'Reconnect audio' | t"
-              (click)="retryAudio.emit()"
-            ></button>
-          }
-        </div>
-      </ng-template>
-
-      <ng-template #end>
+        }
+        @let reactLabel = 'React' | t;
+        <button
+          pButton
+          type="button"
+          size="large"
+          icon="pi pi-face-smile"
+          severity="secondary"
+          [rounded]="true"
+          [text]="true"
+          [attr.aria-label]="reactLabel"
+          [pTooltip]="reactLabel"
+          tooltipPosition="top"
+          (click)="picker.toggle($event)"
+        ></button>
+        <p-popover #picker appendTo="body" [ariaLabel]="'Send a reaction' | t">
+          <div class="reactions">
+            @for (item of looks; track item.reaction) {
+              @let label = item.label | t;
+              <button
+                pButton
+                type="button"
+                size="large"
+                [text]="true"
+                [rounded]="true"
+                [icon]="item.icon"
+                [attr.aria-label]="label"
+                [pTooltip]="label"
+                tooltipPosition="top"
+                (click)="react.emit(item.reaction)"
+              ></button>
+            }
+          </div>
+        </p-popover>
         @if (actions().length > 0) {
           @let moreLabel = 'More actions' | t;
           <button
@@ -171,6 +161,22 @@ let nextId = 0;
             [model]="[...actions()]"
           />
         }
+      </ng-template>
+
+      <ng-template #end>
+        @let leaveLabel = 'Leave quietly' | t;
+        <button
+          pButton
+          type="button"
+          class="leave leave-compact"
+          size="large"
+          icon="pi pi-sign-out"
+          severity="secondary"
+          [rounded]="true"
+          [label]="leaveLabel"
+          [attr.aria-label]="leaveLabel"
+          (click)="leave.emit()"
+        ></button>
       </ng-template>
     </p-toolbar>
   `,

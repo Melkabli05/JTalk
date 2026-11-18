@@ -22,7 +22,7 @@ describe('RoomControlsComponent (presentational)', () => {
   it('lets a listener leave or raise a hand', async () => {
     await render({});
 
-    expect(names()).toEqual(['Leave quietly', 'Raise hand', 'React']);
+    expect(names()).toEqual(['Raise hand', 'React', 'Leave quietly']);
   });
 
   it('says nothing while all is well, and before there is any audio', async () => {
@@ -58,13 +58,13 @@ describe('RoomControlsComponent (presentational)', () => {
     await render({ canSpeak: true, onStage: true, micOn: true });
     fixture.componentInstance.toggleMic.subscribe(toggled);
 
-    expect(names()).toEqual(['Leave quietly', 'Mute', 'React']);
+    expect(names()).toEqual(['Mute', 'React', 'Leave quietly']);
     click('Mute');
     expect(toggled).toHaveBeenCalledOnce();
 
     fixture.componentRef.setInput('micOn', false);
     await fixture.whenStable();
-    expect(names()).toEqual(['Leave quietly', 'Unmute', 'React']);
+    expect(names()).toEqual(['Unmute', 'React', 'Leave quietly']);
   });
 
   it('asks for a tap to turn the sound on only while the browser blocks it', async () => {
@@ -114,7 +114,7 @@ describe('RoomControlsComponent (presentational)', () => {
   it('has no hand to raise for someone already on stage', async () => {
     await render({ onStage: true });
 
-    expect(names()).toEqual(['Leave quietly', 'React']);
+    expect(names()).toEqual(['React', 'Leave quietly']);
   });
 
   it('gives only the host a menu of the room actions', async () => {
@@ -123,7 +123,7 @@ describe('RoomControlsComponent (presentational)', () => {
 
     fixture.componentRef.setInput('actions', [{ label: 'Edit the room' }]);
     await fixture.whenStable();
-    expect(names()).toEqual(['Leave quietly', 'React', 'More actions']);
+    expect(names()).toEqual(['React', 'More actions', 'Leave quietly']);
   });
 
   it('disables the hand while a request is running', async () => {
@@ -194,5 +194,28 @@ describe('RoomControlsComponent (presentational)', () => {
     choices.find((choice) => nameOf(choice) === 'Smile')!.click();
 
     expect(reacted).toHaveBeenCalledExactlyOnceWith('SMILE');
+  });
+
+  it('puts the way out of a problem inside the message that reports it, not in the dock', async () => {
+    await render({ audio: 'failed', soundBlocked: true });
+
+    const messages = [...root().querySelectorAll('p-message')];
+    expect(messages.map((m) => m.textContent)).toEqual([
+      expect.stringContaining('Audio is not available.'),
+      expect.stringContaining('Sound is off in this browser.'),
+    ]);
+    expect(messages[0]?.querySelector('button')?.textContent).toContain('Reconnect audio');
+    expect(messages[1]?.querySelector('button')?.textContent).toContain('Turn on sound');
+    expect(root().querySelector('p-toolbar')?.textContent).not.toContain('Turn on sound');
+    expect(root().querySelector('p-toolbar')?.textContent).not.toContain('Reconnect audio');
+  });
+
+  it('keeps the controls together and leaving apart, last in the capsule', async () => {
+    await render({ onStage: true, canSpeak: true, actions: [{ label: 'Edit the room' }] });
+
+    const slot = (name: string) =>
+      [...root().querySelectorAll(`.p-toolbar-${name} button`)].map(nameOf);
+    expect(slot('start')).toEqual(['Unmute', 'React', 'More actions']);
+    expect(slot('end')).toEqual(['Leave quietly']);
   });
 });
