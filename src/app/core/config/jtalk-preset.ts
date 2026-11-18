@@ -350,14 +350,14 @@ export const JtalkPreset = definePreset(Aura, {
       content: { padding: '0' },
     },
     dialog: {
-      // A person's card is built edge to edge (a cover band across the top), so it keeps no padding of its own. On a phone it is a
+      // A person's card is built edge to edge (a footer strip across the bottom), so it keeps no padding of its own. On a phone it is a
       // sheet that rises from the bottom edge, the way people expect a profile to open there.
       css: () => `
         .p-dialog.person-card {
           inline-size: min(30rem, 95vw);
         }
         .p-dialog.person-card .p-dialog-content {
-          padding: 0 0 1.25rem;
+          padding: 0;
         }
         @media (max-width: 40rem) {
           .p-dialog-mask:has(.p-dialog.person-card) {
@@ -373,11 +373,21 @@ export const JtalkPreset = definePreset(Aura, {
             border-end-start-radius: 0;
             border-end-end-radius: 0;
           }
-          .p-dialog.person-card .p-dialog-content {
-            padding-block-end: max(1.25rem, env(safe-area-inset-bottom));
-          }
         }
       `,
+    },
+    accordion: {
+      // A quiet disclosure, not a boxed panel: a line of text with a chevron, open to reveal what is behind it.
+      panel: { borderWidth: '0', borderColor: 'transparent' },
+      header: {
+        background: 'transparent',
+        hoverBackground: 'transparent',
+        activeBackground: 'transparent',
+        activeHoverBackground: 'transparent',
+        padding: '0.5rem 0',
+        borderRadius: '0',
+      },
+      content: { background: 'transparent', padding: '0 0 0.5rem' },
     },
     toast: { root: { borderRadius: radius.card } },
     message: { root: { borderRadius: radius.card } },

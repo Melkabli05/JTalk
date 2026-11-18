@@ -27,7 +27,7 @@ describe('PersonDialogComponent (presentational)', () => {
   const labels = () => buttons().map(nameOf);
   const button = (label: string) => buttons().find((b) => nameOf(b) === label)!;
   const press = (label: string) => button(label).click();
-  const icon = (label: string) => button(label).querySelector('.p-button-icon')?.className ?? '';
+  const icon = (label: string) => button(label).querySelector('.p-button-icon, i')?.className ?? '';
 
   async function render(inputs: Record<string, unknown>) {
     fixture = TestBed.createComponent(PersonDialogComponent);
@@ -37,15 +37,7 @@ describe('PersonDialogComponent (presentational)', () => {
     await fixture.whenStable();
   }
 
-  async function openMenu() {
-    press('More actions');
-    await fixture.whenStable();
-    await new Promise((resolve) => setTimeout(resolve));
-  }
-  const menuItem = (label: string) =>
-    [...document.querySelectorAll<HTMLElement>('.p-menu-item-link')].find((item) =>
-      item.textContent?.includes(label),
-    )!;
+  const strip = () => root().querySelector('.strip')!;
 
   describe('who they are', () => {
     it('has no title bar: the name is in the card, and it is what names the dialog', async () => {
@@ -57,38 +49,55 @@ describe('PersonDialogComponent (presentational)', () => {
       expect(document.querySelector('[role="dialog"]')?.getAttribute('aria-labelledby')).toBe(
         heading.id,
       );
+      expect(root().querySelector('[role="dialog"]')?.classList.contains('person-card')).toBe(true);
     });
 
-    it('tells their role and the languages they speak and learn, until their profile is known', async () => {
+    it('says in a strip on top where they are, with the close button at its end', async () => {
+      await render({ role: 'SPEAKER' });
+      expect(strip().querySelector('.pass')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+        'Speaker · On stage',
+      );
+      expect(strip().querySelector('button')?.getAttribute('aria-label')).toBe('Close');
+
+      await render({ role: 'LISTENER' });
+      expect(strip().querySelector('.pass')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+        'Listener · In the audience',
+      );
+    });
+
+    it('tells what their microphone is doing, for someone on the stage only', async () => {
+      await render({ role: 'SPEAKER' });
+      expect(root().querySelector('.tags p-tag')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+        'Speaker · On mic',
+      );
+      expect(root().querySelector('.portrait .mic')).not.toBeNull();
+      expect(root().querySelector('.portrait .mic.off')).toBeNull();
+
+      await render({ role: 'SPEAKER', speaking: true });
+      expect(root().querySelector('.tags p-tag')?.textContent).toContain('Speaking');
+      expect(strip().querySelector('.dot')?.classList.contains('live')).toBe(true);
+
+      await render({ role: 'SPEAKER', muted: true });
+      expect(root().querySelector('.tags p-tag')?.textContent).toContain('Muted');
+      expect(root().querySelector('.portrait .mic.off')).not.toBeNull();
+
+      await render({ role: 'LISTENER' });
+      expect(root().querySelector('.portrait .mic')).toBeNull();
+      expect(root().querySelector('.tags p-tag')?.textContent).not.toContain('·');
+    });
+
+    it('tells the languages they speak and learn, until their profile is known', async () => {
       await render({ role: 'SPEAKER' });
 
-      expect(text()).toContain('Speaker');
       expect(text()).toContain('Speaks Spanish');
       expect(text()).toContain('Learning Japanese');
-    });
-
-    it('puts their country on the corner of the picture once their profile is known, and not before', async () => {
-      await render({ role: 'SPEAKER' });
-      expect(root().querySelector('.portrait .flag')).toBeNull();
-
-      await render({ role: 'SPEAKER', card: CARD });
-      expect(root().querySelector('.portrait .flag')?.textContent).toBe('🇪🇸');
-      expect(root().querySelector('.portrait .flag')?.getAttribute('aria-hidden')).toBe('true');
-    });
-
-    it('rests the picture on a cover band that holds the close button', async () => {
-      await render({ role: 'SPEAKER' });
-
-      const cover = root().querySelector('.cover')!;
-      expect(cover.querySelector('button')?.getAttribute('aria-label')).toBe('Close');
-      expect(root().querySelector('[role="dialog"]')?.classList.contains('person-card')).toBe(true);
     });
 
     it('says so when it is you', async () => {
       await render({ role: 'HOST', isMe: true });
 
+      expect(strip().textContent).toContain('You');
       expect(text()).toContain('Host');
-      expect(text()).toContain('You');
     });
 
     it('closes with its own button', async () => {
@@ -102,20 +111,21 @@ describe('PersonDialogComponent (presentational)', () => {
     });
   });
 
-  describe('what you can do without a profile', () => {
+  describe('what the host can do, as tiles', () => {
+    const tiles = () => [...root().querySelectorAll('.tiles button')].map(nameOf);
+
     it('offers nothing to someone who may do nothing about them', async () => {
       await render({ role: 'LISTENER' });
 
-      expect(labels().filter((l) => l !== 'Close')).toEqual([]);
+      expect(root().querySelector('.tiles')).toBeNull();
     });
 
-    it('offers the host to invite a listener, or move a speaker down, in the same row', async () => {
+    it('offers to invite a listener, or move a speaker down or mute them', async () => {
       await render({ role: 'LISTENER', canInvite: true });
-      expect(labels()).toContain('Invite to the stage');
-      expect(labels()).not.toContain('Move to the audience');
+      expect(tiles()).toEqual(['Invite to the stage']);
 
-      await render({ role: 'SPEAKER', canDemote: true });
-      expect(labels()).toContain('Move to the audience');
+      await render({ role: 'SPEAKER', canDemote: true, canMute: true });
+      expect(tiles()).toEqual(['Mute', 'Move to the audience']);
     });
 
     it('lets a speaker step down from their own seat', async () => {
@@ -134,63 +144,52 @@ describe('PersonDialogComponent (presentational)', () => {
       fixture.componentInstance.invite.subscribe(() => emitted.push('invite'));
       press('Invite to the stage');
 
-      await render({ role: 'SPEAKER', canDemote: true });
+      await render({ role: 'SPEAKER', canDemote: true, canMute: true });
       fixture.componentInstance.demote.subscribe(() => emitted.push('demote'));
+      fixture.componentInstance.mute.subscribe(() => emitted.push('mute'));
       press('Move to the audience');
+      press('Mute');
 
-      expect(emitted).toEqual(['invite', 'demote']);
+      expect(emitted).toEqual(['invite', 'demote', 'mute']);
     });
 
-    it('keeps the less usual actions in a menu, and runs the one that is chosen', async () => {
-      const removed = vi.fn();
-      await render({
-        role: 'LISTENER',
-        actions: [{ label: 'Remove from the room', icon: 'pi pi-user-minus', command: removed }],
-      });
-      expect(labels()).not.toContain('Remove from the room');
+    it('shows a muted speaker as muted, and cannot mute them again', async () => {
+      await render({ role: 'SPEAKER', canMute: true, muted: true });
 
-      await openMenu();
-      menuItem('Remove from the room').click();
-
-      expect(removed).toHaveBeenCalledOnce();
+      expect(button('Muted').disabled).toBe(true);
     });
 
-    it('has no menu button when there is nothing in the menu', async () => {
+    it('puts the picture of the action above its name, and the host powers in Sand', async () => {
       await render({ role: 'LISTENER', canInvite: true });
 
-      expect(labels()).not.toContain('More actions');
-    });
-
-    it('colours the host actions Sand, and draws them with the right icons', async () => {
-      await render({ role: 'LISTENER', canInvite: true });
-      expect(button('Invite to the stage').className).toContain('p-button-warn');
-      expect(icon('Invite to the stage')).toContain('pi-microphone');
-
-      await render({ role: 'SPEAKER', canDemote: true });
-      expect(button('Move to the audience').className).toContain('p-button-warn');
-      expect(icon('Move to the audience')).toContain('pi-arrow-down');
-    });
-
-    it('draws its actions compact, so they take little room', async () => {
-      await render({ role: 'LISTENER', canInvite: true, actions: [{ label: 'Block' }] });
-
-      for (const label of ['Invite to the stage', 'More actions', 'Close']) {
-        expect(button(label).classList).toContain('compact');
-      }
+      const tile = button('Invite to the stage');
+      expect(tile.classList).toContain('host');
+      expect(tile.querySelector('i')?.className).toContain('pi-microphone');
+      expect(tile.textContent?.trim()).toBe('To the stage');
     });
   });
 
   describe('with their profile loaded', () => {
-    it('tells who they are: handle, country, bio, how long they have been here, and what they speak and learn', async () => {
+    it('tells who they are: handle, country, bio, when they joined, and what they speak and learn in one line', async () => {
       await render({ role: 'LISTENER', card: CARD });
 
       expect(text()).toContain('@maya');
       expect(text()).toContain('Spain');
       expect(text()).toContain('Coffee and Japanese');
       expect(text()).toContain('Joined October 2026');
-      expect(text()).toContain('Beginner');
       expect(text()).toContain('1.3K');
       expect(text()).toContain('Follows you');
+      expect(root().querySelector('.languages')?.textContent?.replace(/\s+/g, ' ')).toContain(
+        'Spanish (Native) 🇯🇵 Japanese (Beginner)',
+      );
+    });
+
+    it('keeps the numbers and the languages together in one box', async () => {
+      await render({ role: 'LISTENER', card: CARD });
+      const facts = root().querySelector('.facts')!;
+
+      expect(facts.querySelector('app-social-stats')).not.toBeNull();
+      expect(facts.querySelector('.languages')).not.toBeNull();
     });
 
     it('says how they could help you practise', async () => {
@@ -199,12 +198,12 @@ describe('PersonDialogComponent (presentational)', () => {
       expect(text()).toContain('Can help you practise');
     });
 
-    it('asks to follow back when they follow you, with one compact Forest button', async () => {
+    it('asks to follow back when they follow you, with one full-width Forest button', async () => {
       const followed = vi.fn();
       await render({ role: 'LISTENER', card: CARD });
       fixture.componentInstance.follow.subscribe(followed);
 
-      expect(button('Follow back').classList).toContain('compact');
+      expect(root().querySelector('app-follow-button')?.classList).toContain('block');
       for (const other of ['secondary', 'warn', 'danger', 'outlined']) {
         expect(button('Follow back').className).not.toContain(`p-button-${other}`);
       }
@@ -235,49 +234,83 @@ describe('PersonDialogComponent (presentational)', () => {
       expect(labels()).toContain('View profile');
     });
 
-    it('opens their full profile from the end of the card', async () => {
+    it('opens their full profile from the footer, which also says when they joined', async () => {
       const viewed = vi.fn();
       await render({ role: 'LISTENER', card: CARD });
       fixture.componentInstance.viewProfile.subscribe(viewed);
 
+      const foot = root().querySelector('.foot')!;
+      expect(foot.textContent).toContain('Joined October 2026');
       press('View profile');
 
       expect(viewed).toHaveBeenCalledOnce();
     });
 
-    it('is only a view for yourself: no follow, and only the actions you were given', async () => {
+    it('is only a view for yourself: no follow, nothing to block', async () => {
       await render({ role: 'HOST', isMe: true, card: { ...CARD, isMe: true, match: undefined } });
 
       expect(labels()).not.toContain('Follow back');
-      expect(labels()).not.toContain('More actions');
+      expect(root().querySelector('.safety')).toBeNull();
       expect(labels()).toContain('View profile');
     });
 
-    it('keeps the actions above the details, in one row', async () => {
-      await render({
-        role: 'LISTENER',
-        card: CARD,
-        canInvite: true,
-        actions: [{ label: 'Block' }],
-      });
-      const actions = root().querySelector('.actions')!;
+    it('keeps the follow button and the tiles above the details', async () => {
+      await render({ role: 'LISTENER', card: CARD, canInvite: true });
+      const follow = root().querySelector('.follow')!;
+      const tiles = root().querySelector('.tiles')!;
+      const facts = root().querySelector('.facts')!;
 
-      expect([...actions.querySelectorAll('button')].map(nameOf)).toEqual([
-        'Follow back',
-        'Invite to the stage',
-        'More actions',
-      ]);
-      expect(
-        actions.compareDocumentPosition(root().querySelector('.about')!) &
-          Node.DOCUMENT_POSITION_FOLLOWING,
-      ).toBeTruthy();
-      expect(root().querySelectorAll('.actions')).toHaveLength(1);
+      const before = (a: Element, b: Element) =>
+        Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+      expect(before(follow, tiles)).toBe(true);
+      expect(before(tiles, facts)).toBe(true);
     });
 
     it('cannot be pressed while a request runs', async () => {
       await render({ role: 'LISTENER', card: CARD, busy: true });
 
       expect(button('Follow back').disabled).toBe(true);
+    });
+  });
+
+  describe('safety', () => {
+    const header = () => root().querySelector<HTMLElement>('.safety .p-accordionheader')!;
+    const open = async () => {
+      header().click();
+      await fixture.whenStable();
+    };
+
+    it('keeps blocking in a section that is closed until it is opened, and asks nothing until it is pressed', async () => {
+      const blocked = vi.fn();
+      await render({ role: 'LISTENER', card: CARD, canBlock: true });
+      fixture.componentInstance.block.subscribe(blocked);
+      expect(header().textContent).toContain('Safety');
+      expect(header().getAttribute('aria-expanded')).toBe('false');
+
+      await open();
+      expect(header().getAttribute('aria-expanded')).toBe('true');
+      press('Block');
+
+      expect(blocked).toHaveBeenCalledOnce();
+    });
+
+    it('is called moderation and safety for the host, who can also remove them from the room', async () => {
+      const removed = vi.fn();
+      await render({ role: 'LISTENER', card: CARD, canBlock: true, canRemove: true });
+      fixture.componentInstance.remove.subscribe(removed);
+
+      expect(header().textContent).toContain('Moderation and safety');
+      expect(button('Remove from the room').className).toContain('p-button-danger');
+      press('Remove from the room');
+
+      expect(removed).toHaveBeenCalledOnce();
+    });
+
+    it('has neither when there is nothing to do about them', async () => {
+      await render({ role: 'LISTENER', card: CARD });
+
+      expect(root().querySelector('.safety')).toBeNull();
+      expect(labels()).not.toContain('Remove from the room');
     });
   });
 

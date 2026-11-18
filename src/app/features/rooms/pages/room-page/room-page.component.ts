@@ -134,35 +134,20 @@ export default class RoomPageComponent {
     );
     return new Map(others.map((id) => [id, this.moderationFor(id)]));
   });
-  protected readonly personActions = computed<MenuItem[]>(() => {
+  protected readonly selectedSpeaking = computed(() =>
+    this.facade.audio.speaking().includes(this.selectedId() ?? ''),
+  );
+  protected readonly selectedMuted = computed(() =>
+    this.mutedIds().includes(this.selectedId() ?? ''),
+  );
+  protected readonly selectedCanMute = computed(() => {
     const id = this.selectedId();
+    return id !== null && this.canMute(id);
+  });
+  /** Blocking is for anyone but yourself, once their profile has said who they are. */
+  protected readonly selectedCanBlock = computed(() => {
     const card = this.cards.card();
-    if (id === null) {
-      return [];
-    }
-    return [
-      ...(this.canMute(id) ? [this.muteItem(id)] : []),
-      ...(this.canRemove()
-        ? [
-            {
-              label: this.i18n.t('Remove from the room'),
-              icon: 'pi pi-user-minus',
-              linkClass: 'danger-item',
-              command: () => this.remove(id),
-            },
-          ]
-        : []),
-      ...(card !== undefined && !card.isMe
-        ? [
-            {
-              label: this.i18n.t('Block'),
-              icon: 'pi pi-ban',
-              linkClass: 'danger-item',
-              command: () => this.block(),
-            },
-          ]
-        : []),
-    ];
+    return card !== undefined && !card.isMe;
   });
   protected readonly canStepDown = computed(
     () => this.selectedIsMe() && this.selectedRole() === 'SPEAKER',

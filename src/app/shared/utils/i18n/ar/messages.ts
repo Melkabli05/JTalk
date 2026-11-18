@@ -242,4 +242,13 @@ export const messages: Readonly<Record<string, string>> = {
   'Could not load people.': 'تعذّر تحميل الأشخاص.',
   'Show more': 'عرض المزيد',
   'Finding people': 'جارٍ البحث عن أشخاص',
+  'Mute mic': 'كتم الميكروفون',
+  'To the stage': 'إلى المنصّة',
+  'To the audience': 'إلى الحضور',
+  'Step down': 'النزول',
+  Native: 'لغة أم',
+  'About them': 'عنهم',
+  'Moderation and safety': 'الإشراف والأمان',
+  Safety: 'الأمان',
+  'On mic': 'الميكروفون مفتوح',
 };

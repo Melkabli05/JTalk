@@ -67,13 +67,11 @@ describe('RoomPageComponent (container)', () => {
   const controlNames = () =>
     [...root().querySelectorAll('app-room-controls button')].map((b) => nameOf(b));
   const pressHostAction = (label: string) => press(label, root().querySelector('header')!);
-  const pressMenuItem = async (label: string) => {
-    press('More actions');
+  // Blocking is in the card's safety section, closed until it is opened.
+  const pressSafety = async (label: string) => {
+    page().querySelector<HTMLElement>('.safety .p-accordionheader')!.click();
     await settle();
-    await new Promise((resolve) => setTimeout(resolve));
-    [...document.querySelectorAll<HTMLElement>('.p-menu-item-link')]
-      .find((item) => item.textContent?.includes(label))!
-      .click();
+    press(label);
   };
   const pressExactlyLast = (label: string) =>
     buttons()
@@ -346,7 +344,7 @@ describe('RoomPageComponent (container)', () => {
       expect(page().textContent).toContain('Follows you');
       expect(page().textContent).toContain('1.3K');
       expect(buttons().map(nameOf)).toEqual(
-        expect.arrayContaining(['Follow back', 'View profile', 'More actions']),
+        expect.arrayContaining(['Follow back', 'View profile']),
       );
     });
 
@@ -373,7 +371,7 @@ describe('RoomPageComponent (container)', () => {
     it('is blocked only after asking', async () => {
       await openBilal();
 
-      await pressMenuItem('Block');
+      await pressSafety('Block');
       await settle(BILAL);
       expect(page().textContent).toContain('Blocking removes any follows');
       expect(sent('POST', '/api/v1/users/b-1/block')).toBe(false);
@@ -512,7 +510,6 @@ describe('RoomPageComponent (container)', () => {
 
       const tools = [...root().querySelectorAll('header .host-tools button')].map(nameOf);
       expect(tools).toEqual(['Edit the room', 'End the room']);
-      expect(controlNames()).not.toContain('More actions');
       expect(root().querySelector('app-raised-hands button')?.getAttribute('aria-label')).toBe(
         'Invite b-1 to the stage',
       );
@@ -542,7 +539,7 @@ describe('RoomPageComponent (container)', () => {
         .click();
       await settle();
 
-      await pressMenuItem('Remove from the room');
+      press('Remove from the room');
       await settle();
       expect(page().textContent).toContain('will leave the room and cannot come back.');
       expect(sent('DELETE', `${BASE}/participants/b-1`)).toBe(false);

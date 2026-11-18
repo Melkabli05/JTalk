@@ -4,6 +4,8 @@ import { TranslatePipe } from '@shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-follow-button',
+  host: { '[class.block]': 'block()' },
+  styles: ':host(.block) { display: block; } :host(.block) button { inline-size: 100%; }',
   imports: [ButtonDirective, TranslatePipe],
   template: `
     @if (following()) {
@@ -34,6 +36,8 @@ import { TranslatePipe } from '@shared/pipes/translate.pipe';
   `,
 })
 export class FollowButtonComponent {
+  /** Fills the width it is given, as the main action of a card. */
+  readonly block = input(false);
   readonly following = input(false);
   readonly followsMe = input(false);
   readonly busy = input(false);

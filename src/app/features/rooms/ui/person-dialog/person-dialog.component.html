@@ -1,14 +1,21 @@
 <p-dialog
+  styleClass="person-card"
   [modal]="true"
   [dismissableMask]="true"
   [showHeader]="false"
   [ariaLabelledBy]="titleId"
-  styleClass="person-card"
   [visible]="visible()"
   (visibleChange)="visible.set($event)"
 >
   @if (member(); as person) {
-    <div class="cover">
+    <header class="strip">
+      <p class="pass">
+        <span class="dot" [class.live]="speaking()" aria-hidden="true"></span>
+        {{ roleName() | t }} · {{ placeName() | t }}
+      </p>
+      @if (isMe()) {
+        <span class="you">{{ 'You' | t }}</span>
+      }
       @let closeLabel = 'Close' | t;
       <button
         pButton
@@ -23,191 +30,229 @@
         tooltipPosition="left"
         (click)="visible.set(false)"
       ></button>
-    </div>
+    </header>
+
     <div class="top">
       <span class="portrait">
-        <app-person-avatar size="xlarge" [member]="person" />
-        @if (origin(); as place) {
-          <span class="flag" aria-hidden="true">{{ place.flag }}</span>
+        <app-person-avatar size="xlarge" [member]="person" [speaking]="speaking()" />
+        @if (onStage()) {
+          <span class="mic" [class.off]="muted()" aria-hidden="true">
+            <i [class]="muted() ? 'pi pi-microphone pi-slashed' : 'pi pi-microphone'"></i>
+          </span>
         }
       </span>
       <div class="who">
         <h2 [id]="titleId">{{ person.name }}</h2>
-        <p class="meta">
-          <p-tag
-            class="role"
-            [severity]="role() === 'HOST' ? 'warn' : role() === 'SPEAKER' ? 'success' : 'secondary'"
-          >
-            @switch (role()) {
-              @case ('HOST') {
-                {{ 'Host' | t }}
-              }
-              @case ('SPEAKER') {
-                {{ 'Speaker' | t }}
-              }
-              @default {
-                {{ 'Listener' | t }}
-              }
-            }
-            @if (isMe()) {
-              · {{ 'You' | t }}
+        @if (card(); as shown) {
+          @if (shown.details.username) {
+            <p class="handle">&#64;{{ shown.details.username }}</p>
+          }
+        }
+        <p class="tags">
+          <p-tag [severity]="role() === 'HOST' ? 'warn' : onStage() ? 'success' : 'secondary'">
+            {{ roleName() | t }}
+            @if (stateName(); as state) {
+              · {{ state | t }}
             }
           </p-tag>
-          @if (card(); as shown) {
-            @if (shown.details.username) {
-              <span class="handle">&#64;{{ shown.details.username }}</span>
-            }
-            @if (origin(); as place) {
-              <span>
-                <span aria-hidden="true">{{ place.flag }}</span>
-                {{ place.name }}
-              </span>
-            }
-          } @else {
-            @if (person.nativeLanguage) {
-              <span>
-                <span aria-hidden="true">{{ native().flag }}</span>
-                {{ 'Speaks {language}' | t: { language: native().name | t } }}
-              </span>
-            }
-            @if (person.learning) {
-              <span>
-                <span aria-hidden="true">{{ learning().flag }}</span>
-                {{ 'Learning {language}' | t: { language: learning().name | t } }}
-              </span>
-            }
+          @if (origin(); as place) {
+            <span class="place">
+              <span aria-hidden="true">{{ place.flag }}</span>
+              {{ place.name }}
+            </span>
           }
         </p>
       </div>
     </div>
 
-    @if (hasActions()) {
-      <div class="actions" role="group" [attr.aria-label]="'Actions' | t">
-        @if (card(); as shown) {
-          @if (!shown.isMe && shown.social; as stats) {
-            <app-follow-button
-              [compact]="true"
-              [following]="stats.followedByMe"
-              [followsMe]="stats.followsMe"
-              [busy]="busy()"
-              (follow)="follow.emit()"
-              (unfollow)="unfollow.emit()"
-            />
-          }
-        }
-        @if (canInvite()) {
-          <button
-            pButton
-            type="button"
-            class="compact"
-            icon="pi pi-microphone"
-            severity="warn"
-            [rounded]="true"
-            [label]="'Invite to the stage' | t"
-            (click)="invite.emit()"
-          ></button>
-        }
-        @if (canDemote()) {
-          <button
-            pButton
-            type="button"
-            class="compact"
-            icon="pi pi-arrow-down"
-            severity="warn"
-            [rounded]="true"
-            [outlined]="true"
-            [label]="'Move to the audience' | t"
-            (click)="demote.emit()"
-          ></button>
-        }
-        @if (canStepDown()) {
-          <button
-            pButton
-            type="button"
-            class="compact"
-            icon="pi pi-arrow-down"
-            severity="secondary"
-            [rounded]="true"
-            [outlined]="true"
-            [label]="'Step down to the audience' | t"
-            (click)="stepDown.emit()"
-          ></button>
-        }
-        @if (actions().length > 0) {
-          @let moreLabel = 'More actions' | t;
-          <button
-            pButton
-            type="button"
-            class="compact more"
-            icon="pi pi-ellipsis-h"
-            severity="secondary"
-            [rounded]="true"
-            [text]="true"
-            [attr.aria-label]="moreLabel"
-            [pTooltip]="moreLabel"
-            tooltipPosition="top"
-            (click)="menu.toggle($event)"
-          ></button>
-          <p-menu
-            #menu
-            appendTo="body"
-            [popup]="true"
-            [ariaLabel]="moreLabel"
-            [model]="[...actions()]"
+    <div class="body">
+      @if (card(); as shown) {
+        @if (!shown.isMe && shown.social; as stats) {
+          <app-follow-button
+            class="follow"
+            [block]="true"
+            [following]="stats.followedByMe"
+            [followsMe]="stats.followsMe"
+            [busy]="busy()"
+            (follow)="follow.emit()"
+            (unfollow)="unfollow.emit()"
           />
         }
-      </div>
-    }
+      }
 
-    @if (error(); as failure) {
-      <p-message class="failure" severity="error" size="small">{{ failure | t }}</p-message>
-    }
+      @if (canMute() || canDemote() || canInvite() || canStepDown()) {
+        <div class="tiles" role="group" [attr.aria-label]="'Actions' | t">
+          @if (canMute()) {
+            <button
+              pButton
+              type="button"
+              class="tile host"
+              [disabled]="muted()"
+              [attr.aria-label]="muted() ? ('Muted' | t) : ('Mute' | t)"
+              (click)="mute.emit()"
+            >
+              <i class="pi pi-microphone pi-slashed" aria-hidden="true"></i>
+              <span>{{ muted() ? ('Muted' | t) : ('Mute mic' | t) }}</span>
+            </button>
+          }
+          @if (canInvite()) {
+            <button
+              pButton
+              type="button"
+              class="tile host"
+              [attr.aria-label]="'Invite to the stage' | t"
+              (click)="invite.emit()"
+            >
+              <i class="pi pi-microphone" aria-hidden="true"></i>
+              <span>{{ 'To the stage' | t }}</span>
+            </button>
+          }
+          @if (canDemote()) {
+            <button
+              pButton
+              type="button"
+              class="tile"
+              [attr.aria-label]="'Move to the audience' | t"
+              (click)="demote.emit()"
+            >
+              <i class="pi pi-arrow-down" aria-hidden="true"></i>
+              <span>{{ 'To the audience' | t }}</span>
+            </button>
+          }
+          @if (canStepDown()) {
+            <button
+              pButton
+              type="button"
+              class="tile"
+              [attr.aria-label]="'Step down to the audience' | t"
+              (click)="stepDown.emit()"
+            >
+              <i class="pi pi-arrow-down" aria-hidden="true"></i>
+              <span>{{ 'Step down' | t }}</span>
+            </button>
+          }
+        </div>
+      }
 
-    @if (card(); as shown) {
-      <div class="about">
+      @if (error(); as failure) {
+        <p-message class="failure" severity="error" size="small">{{ failure | t }}</p-message>
+      }
+
+      @if (card(); as shown) {
+        <section class="facts" [attr.aria-label]="'About them' | t">
+          @if (shown.social; as stats) {
+            <app-social-stats
+              [followers]="stats.followers"
+              [following]="stats.following"
+              [followsMe]="stats.followsMe && !shown.isMe"
+              [locale]="locale()"
+            />
+          }
+          @if (languageLine().length > 0) {
+            <p class="languages">
+              <i class="pi pi-language" aria-hidden="true"></i>
+              @for (entry of languageLine(); track entry.code) {
+                <span>
+                  <span aria-hidden="true">{{ entry.flag }}</span>
+                  {{ entry.name | t }}
+                  @if (entry.level; as level) {
+                    ({{ level | t }})
+                  }
+                </span>
+              }
+            </p>
+          }
+        </section>
+        <app-partner-match [match]="shown.match" />
         @if (shown.details.bio) {
           <p class="bio">{{ shown.details.bio }}</p>
         }
-        <app-partner-match [match]="shown.match" />
-        @if (shown.social; as stats) {
-          <app-social-stats
-            [followers]="stats.followers"
-            [following]="stats.following"
-            [followsMe]="stats.followsMe"
-            [locale]="locale()"
-          />
-        }
-        @if (shown.languages; as languages) {
-          <app-language-levels [native]="languages.native" [learning]="languages.learning" />
-        }
-        <div class="foot">
-          @if (shown.details.joinedAt) {
-            <p class="joined">
-              {{
-                'Joined {date}'
-                  | t: { date: (shown.details.joinedAt | date: 'MMMM y' : undefined : locale()) }
-              }}
-            </p>
-          }
-          <button
-            pButton
-            type="button"
-            class="compact"
-            icon="pi pi-user"
-            severity="secondary"
-            [rounded]="true"
-            [text]="true"
-            [label]="'View profile' | t"
-            (click)="viewProfile.emit()"
-          ></button>
+      } @else if (loading()) {
+        <div class="placeholders" role="status" [attr.aria-label]="'Finding their profile' | t">
+          <p-skeleton width="100%" height="4rem" borderRadius="14px" />
+          <p-skeleton width="90%" height="1rem" />
+          <p-skeleton width="60%" height="1rem" />
         </div>
-      </div>
-    } @else if (loading()) {
-      <div class="about" role="status" [attr.aria-label]="'Finding their profile' | t">
-        <p-skeleton width="90%" height="1rem" />
-        <p-skeleton width="60%" height="1rem" />
-        <p-skeleton width="75%" height="1rem" />
-      </div>
-    }
+      } @else {
+        <p class="languages plain">
+          @if (person.nativeLanguage) {
+            <span>
+              <span aria-hidden="true">{{ native().flag }}</span>
+              {{ 'Speaks {language}' | t: { language: native().name | t } }}
+            </span>
+          }
+          @if (person.learning) {
+            <span>
+              <span aria-hidden="true">{{ learning().flag }}</span>
+              {{ 'Learning {language}' | t: { language: learning().name | t } }}
+            </span>
+          }
+        </p>
+      }
+
+      @if (canBlock()) {
+        <p-accordion class="safety" [value]="null">
+          <p-accordion-panel value="safety">
+            <p-accordion-header>
+              <span class="safety-title">
+                <i class="pi pi-shield" aria-hidden="true"></i>
+                @if (canRemove()) {
+                  {{ 'Moderation and safety' | t }}
+                } @else {
+                  {{ 'Safety' | t }}
+                }
+              </span>
+            </p-accordion-header>
+            <p-accordion-content>
+              <button
+                pButton
+                type="button"
+                class="row-action"
+                icon="pi pi-ban"
+                severity="danger"
+                [text]="true"
+                [label]="'Block' | t"
+                (click)="block.emit()"
+              ></button>
+            </p-accordion-content>
+          </p-accordion-panel>
+        </p-accordion>
+      }
+
+      @if (canRemove()) {
+        <button
+          pButton
+          type="button"
+          class="remove"
+          icon="pi pi-user-minus"
+          severity="danger"
+          [text]="true"
+          [label]="'Remove from the room' | t"
+          (click)="remove.emit()"
+        ></button>
+      }
+    </div>
+
+    <footer class="foot">
+      @if (card()?.details?.joinedAt; as joined) {
+        <span class="joined">
+          {{ 'Joined {date}' | t: { date: (joined | date: 'MMMM y' : undefined : locale()) } }}
+        </span>
+      } @else {
+        <span></span>
+      }
+      @if (card()) {
+        <button
+          pButton
+          type="button"
+          class="compact"
+          icon="pi pi-user"
+          [text]="true"
+          [rounded]="true"
+          [label]="'View profile' | t"
+          (click)="viewProfile.emit()"
+        ></button>
+      }
+    </footer>
   }
 </p-dialog>
