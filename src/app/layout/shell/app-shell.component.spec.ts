@@ -116,22 +116,23 @@ describe('AppShellComponent (container)', () => {
     });
   });
 
-  describe('the bar across the top, on a phone', () => {
+  describe('the tabs along the bottom, on a phone', () => {
     const label = (name: string) =>
-      [...root().querySelectorAll<HTMLElement>('nav.top .p-menubar-item-label')].find(
+      [...root().querySelectorAll<HTMLElement>('nav.tabs .p-menubar-item-label')].find(
         (l) => l.textContent?.trim() === name,
       );
     const rootLabels = () =>
       [
-        ...root().querySelectorAll('nav.top .p-menubar-root-list > li > .p-menubar-item-content'),
+        ...root().querySelectorAll('nav.tabs .p-menubar-root-list > li > .p-menubar-item-content'),
       ].map((c) => c.querySelector('.p-menubar-item-label')?.textContent?.trim());
 
-    it('has the pages and one More menu, with the profile, the dark theme and Sign out inside it', async () => {
+    it('has the brand across the top, and the pages and one More menu along the bottom, with the profile, the dark theme and Sign out inside it', async () => {
       await render();
 
+      expect(root().querySelector('header.brandbar a.brand')?.textContent?.trim()).toBe('Jtalk');
       expect(rootLabels()).toEqual(['Rooms', 'People', 'More']);
       expect(
-        [...root().querySelectorAll('nav.top .p-menubar-submenu .p-menubar-item-label')].map((l) =>
+        [...root().querySelectorAll('nav.tabs .p-menubar-submenu .p-menubar-item-label')].map((l) =>
           l.textContent?.trim(),
         ),
       ).toEqual(['Profile', 'Dark theme', 'Sign out']);
@@ -196,7 +197,7 @@ describe('AppShellComponent (container)', () => {
     const card = () => root().querySelector<HTMLElement>('app-sidebar .go-live')!;
     const back = () => card().querySelector<HTMLButtonElement>('button')!;
     const onThePhone = () =>
-      [...root().querySelectorAll<HTMLAnchorElement>('nav.top [role="menuitem"] a')].find((a) =>
+      [...root().querySelectorAll<HTMLAnchorElement>('nav.tabs [role="menuitem"] a')].find((a) =>
         a.textContent?.includes('Back to the room'),
       );
 
@@ -279,15 +280,17 @@ describe('AppShellComponent (container)', () => {
       const router = await renderWithRoutes();
       await router.navigateByUrl('/section');
       await fixture.whenStable();
-      expect(root().querySelector('nav.top')).not.toBeNull();
+      expect(root().querySelector('nav.tabs')).not.toBeNull();
 
       await router.navigateByUrl('/rooms/r-1');
       await fixture.whenStable();
-      expect(root().querySelector('nav.top')).toBeNull();
+      expect(root().querySelector('nav.tabs')).toBeNull();
+      expect(root().querySelector('header.brandbar')).toBeNull();
+      expect(root().querySelector('main')?.classList.contains('with-tabs')).toBe(false);
 
       await router.navigateByUrl('/section');
       await fixture.whenStable();
-      expect(root().querySelector('nav.top')).not.toBeNull();
+      expect(root().querySelector('nav.tabs')).not.toBeNull();
     });
 
     it('is gone once the room is left', async () => {

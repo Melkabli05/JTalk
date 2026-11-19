@@ -243,74 +243,73 @@ export const JtalkPreset = definePreset(Aura, {
       `,
     },
     menubar: {
+      // The bar along the bottom of a phone: each destination an icon over its name, the current one in Forest, and More opening upward.
       root: {
         background: 'transparent',
         borderColor: 'transparent',
         borderRadius: '0',
-        padding: '0.5rem 1rem',
+        padding: '0.25rem 0.5rem',
       },
-      item: { padding: '0.5rem', gap: '0.375rem' },
+      item: { padding: '0.375rem 0', gap: '0.125rem' },
       css: ({ dt }) => `
         .p-menubar {
-          flex-wrap: wrap;
-          row-gap: 0.5rem;
+          position: relative;
         }
-        .p-menubar-item-link {
-          min-height: 2.75rem;
+        .p-menubar-root-list {
+          flex: 1;
+          gap: 0.25rem;
+        }
+        .p-menubar-root-list > .p-menubar-item {
+          flex: 1;
+        }
+        .p-menubar-root-list > .p-menubar-item > .p-menubar-item-content {
+          block-size: 100%;
+        }
+        .p-menubar-root-list > .p-menubar-item > .p-menubar-item-content > .p-menubar-item-link {
+          flex-direction: column;
+          justify-content: center;
+          min-height: 3.5rem;
+          color: ${dt('text.muted.color')};
+          font-size: ${dt('jtalk.type.metadata')};
+          font-weight: 600;
+        }
+        .p-menubar-root-list > .p-menubar-item > .p-menubar-item-content .p-menubar-item-icon {
+          color: inherit;
+          font-size: 1.375rem;
+        }
+        .p-menubar-root-list > .p-menubar-item > .p-menubar-item-content .p-menubar-submenu-icon {
+          display: none;
         }
         .p-menubar-item-link-active {
           background: color-mix(in srgb, ${dt('primary.color')} 14%, transparent);
+          color: ${dt('primary.color')};
+          font-weight: 700;
+        }
+        .p-menubar-item-link.live-item {
+          color: ${dt('primary.color')};
+        }
+        .p-menubar-submenu {
+          inset-block-start: auto;
+          inset-block-end: 100%;
+          inset-inline-start: auto;
+          inset-inline-end: 0;
+          min-inline-size: 12rem;
+          margin-block-end: 0.5rem;
+        }
+        .p-menubar-submenu .p-menubar-item-link {
+          flex-direction: row;
+          justify-content: flex-start;
+          min-height: 2.75rem;
+          font-size: ${dt('jtalk.type.body')};
+          font-weight: 500;
+        }
+        .p-menubar-submenu .p-menubar-item-link {
+          gap: 0.75rem;
+          padding-inline: 1rem;
+        }
+        .p-menubar-submenu .p-menubar-item-icon {
           color: ${dt('text.color')};
-          font-weight: 650;
-        }
-        .p-menubar-item-link-active .p-menubar-item-icon {
-          color: ${dt('primary.color')};
-        }
-        .p-menubar-item-link.live-item,
-        .p-menubar-item-link.live-item .p-menubar-item-icon {
-          color: ${dt('primary.color')};
-          font-weight: 650;
-        }
-        @media (max-width: 40rem) {
-          .p-menubar {
-            flex-wrap: nowrap;
-            padding-block: 0.25rem;
-          }
-          .p-menubar-root-list {
-            flex: 1;
-            justify-content: flex-end;
-            gap: 0.25rem;
-          }
-          .p-menubar-item-link {
-            justify-content: center;
-            min-width: 2.75rem;
-          }
-          .p-menubar-item-icon {
-            color: ${dt('text.color')};
-            font-size: 1.25rem;
-          }
-          .p-menubar-root-list > .p-menubar-item > .p-menubar-item-content .p-menubar-item-label {
-            position: absolute;
-            inline-size: 1px;
-            block-size: 1px;
-            overflow: hidden;
-            clip-path: inset(50%);
-            white-space: nowrap;
-          }
-          .p-menubar-submenu .p-menubar-item-icon {
-            font-size: 1rem;
-          }
-          .p-menubar-submenu .p-menubar-item-link {
-            justify-content: flex-start;
-          }
-          .p-menubar-root-list > .p-menubar-item > .p-menubar-item-content .p-menubar-submenu-icon {
-            display: none;
-          }
-          .p-menubar-root-list > .p-menubar-item:last-child > .p-menubar-submenu {
-            inset-inline-start: auto;
-            inset-inline-end: 0;
-            min-inline-size: 12rem;
-          }
+          font-size: 1.125rem;
         }
         .p-menubar-item-link.danger-item,
         .p-menubar-item-link.danger-item .p-menubar-item-icon {
@@ -388,7 +387,8 @@ export const JtalkPreset = definePreset(Aura, {
       `,
     },
     menu: {
-      // The sidebar's navigation (a menu that is not a popup) sits on the canvas: no box, the page you are on a tonal pill with a Forest icon.
+      // The sidebar's navigation (a menu that is not a popup) sits on the rail: roomy rows, the page you are on a tonal pill with a Forest
+      // icon and heavier text.
       item: { borderRadius: radius.control },
       css: ({ dt }) => `
         .p-menu:not(.p-menu-overlay) {
@@ -396,12 +396,27 @@ export const JtalkPreset = definePreset(Aura, {
           border-color: transparent;
           box-shadow: none;
         }
+        .p-menu:not(.p-menu-overlay) .p-menu-list {
+          gap: 0.25rem;
+          padding: 0;
+        }
         .p-menu:not(.p-menu-overlay) .p-menu-item-link {
           min-height: 2.75rem;
+          padding-inline: 0.875rem;
+          gap: 0.75rem;
+          font-size: ${dt('jtalk.type.body')};
+          font-weight: 550;
+        }
+        .p-menu:not(.p-menu-overlay) .p-menu-item-icon {
+          color: ${dt('text.color')};
+          font-size: 1.25rem;
+        }
+        .p-menu:not(.p-menu-overlay) .p-menu-item-link:hover {
+          background: ${dt('content.hover.background')};
         }
         .p-menu:not(.p-menu-overlay) .p-menu-item-link-active {
           background: color-mix(in srgb, ${dt('primary.color')} 14%, transparent);
-          font-weight: 650;
+          font-weight: 700;
         }
         .p-menu:not(.p-menu-overlay) .p-menu-item-link-active .p-menu-item-icon {
           color: ${dt('primary.color')};

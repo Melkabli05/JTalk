@@ -38,8 +38,8 @@
   z-index: 20;
 }
 
-// The sidebar is the library's own menu, with the Go live card and the account below it; under 64rem a menubar across the top takes its
-// place. Only the layout is ours.
+// The sidebar is the library's own menu, with the Go live card and the account below it. Under 64rem it is replaced by a slim bar with the
+// brand across the top and the tabs at the bottom, where a thumb reaches. Only the layout is ours.
 .rail {
   grid-area: rail;
 }
@@ -54,17 +54,42 @@
   text-decoration: none;
 
   app-brand-mark {
-    font-size: 1rem;
+    font-size: 1.125rem;
   }
 }
 
-.top {
+.rail .brand {
+  padding: 0.25rem 0.75rem 1rem;
+}
+
+.brandbar {
   grid-area: rail;
   position: sticky;
   inset-block-start: 0;
   z-index: 5;
+  padding: 0.75rem t.$gutter;
   border-block-end: 1px solid var(--p-content-border-color);
   background: var(--p-content-background);
+
+  @media (min-width: 64rem) {
+    display: none;
+  }
+}
+
+.tabs {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 5;
+  padding-block-end: env(safe-area-inset-bottom);
+  border-block-start: 1px solid var(--p-content-border-color);
+  background: var(--p-content-background);
+
+  p-menubar {
+    display: block;
+    max-inline-size: 32rem;
+    margin-inline: auto;
+  }
 
   @media (min-width: 64rem) {
     display: none;
@@ -95,5 +120,14 @@
   &.wide {
     max-inline-size: none;
     margin-inline: 0;
+  }
+
+  // Room for the tabs along the bottom of the screen.
+  &.with-tabs {
+    padding-block-end: calc(5rem + env(safe-area-inset-bottom));
+
+    @media (min-width: 64rem) {
+      padding-block-end: 2rem;
+    }
   }
 }

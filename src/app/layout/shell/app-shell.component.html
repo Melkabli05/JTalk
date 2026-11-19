@@ -27,14 +27,21 @@
 </app-sidebar>
 
 @if (!onRoomAddress()) {
-  <nav class="top" aria-label="Primary" appAriaCurrent>
-    <p-menubar breakpoint="0px" [model]="topItems()" ariaLabel="Primary">
-      <ng-template #start><ng-container [ngTemplateOutlet]="brand" /></ng-template>
-    </p-menubar>
+  <header class="brandbar">
+    <ng-container [ngTemplateOutlet]="brand" />
+  </header>
+  <nav class="tabs" aria-label="Primary" appAriaCurrent>
+    <p-menubar breakpoint="0px" [model]="topItems()" ariaLabel="Primary" />
   </nav>
 }
 
-<main id="main-content" class="main" [class.wide]="wide()" tabindex="-1">
+<main
+  id="main-content"
+  class="main"
+  [class.wide]="wide()"
+  [class.with-tabs]="!onRoomAddress()"
+  tabindex="-1"
+>
   @if (breadcrumbs().length > 0) {
     <p-breadcrumb
       class="breadcrumb"
