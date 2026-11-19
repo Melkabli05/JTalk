@@ -1,5 +1,5 @@
 import { LiveAnnouncer } from '@angular/cdk/a11y';
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
   Component,
@@ -51,6 +51,7 @@ import { roomLook } from '../../utils/room-look';
     ConfirmDialog,
     Drawer,
     Menu,
+    NgTemplateOutlet,
     Message,
     PersonDialogComponent,
     RaisedHandsComponent,

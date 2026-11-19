@@ -1,10 +1,11 @@
-<label [for]="inputId">{{ label() }}</label>
+<label [for]="inputId" [class.cdk-visually-hidden]="labelHidden()">{{ label() }}</label>
 <textarea
   #control
   pTextarea
   dir="auto"
   [id]="inputId"
   [rows]="rows()"
+  [attr.placeholder]="placeholder() || null"
   [attr.maxlength]="maxLength() ?? null"
   [value]="value()"
   [disabled]="disabled()"

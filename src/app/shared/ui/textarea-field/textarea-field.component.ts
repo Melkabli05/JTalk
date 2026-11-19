@@ -8,9 +8,13 @@ import { FieldErrorsComponent } from '../field-errors/field-errors.component';
   imports: [FieldErrorsComponent, Textarea],
   templateUrl: './textarea-field.component.html',
   styleUrl: './textarea-field.component.scss',
+  host: { '[class.pill]': 'pill()' },
 })
 export class TextareaFieldComponent extends FieldControlDirective<string> {
   readonly rows = input(3);
+  readonly labelHidden = input(false);
+  readonly pill = input(false);
+  readonly placeholder = input('');
   readonly maxLength = input<number>();
 
   readonly value = model('');

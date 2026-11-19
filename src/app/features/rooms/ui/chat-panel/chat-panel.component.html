@@ -1,4 +1,24 @@
-<section class="chat" aria-label="Chat">
+<section class="chat" [class.inline]="compact()" aria-label="Live discussion">
+  @if (compact()) {
+    <header class="head">
+      <span class="dot" aria-hidden="true"></span>
+      <h2>Live Discussion</h2>
+      <span class="count">{{ comments().length }} messages</span>
+      <button
+        pButton
+        type="button"
+        class="expand"
+        size="small"
+        icon="pi pi-window-maximize"
+        severity="secondary"
+        [rounded]="true"
+        [outlined]="true"
+        label="Expand"
+        (click)="expand.emit()"
+      ></button>
+    </header>
+  }
+
   @if (topic(); as pinnedTopic) {
     <div class="topic">
       <i class="pi pi-bookmark" aria-hidden="true"></i>
@@ -26,7 +46,7 @@
     </div>
   }
 
-  @if (isHost()) {
+  @if (isHost() && !compact()) {
     <form class="pin" [formRoot]="topicForm">
       <app-text-field label="Pin a topic" [formField]="topicForm.text" />
       <button
@@ -69,7 +89,7 @@
         aria-live="polite"
         (scroll)="scrolled()"
       >
-        @for (comment of comments(); track comment.id) {
+        @for (comment of shown(); track comment.id) {
           <li class="message-item">
             <app-person-avatar size="normal" [member]="personOf(comment.authorId)" />
             <div class="body">
@@ -78,39 +98,43 @@
                 @if (muteIds().has(comment.authorId)) {
                   <span class="tag">Muted</span>
                 }
+                <time class="when" [attr.datetime]="comment.createdAt">{{
+                  timeAgo(comment.createdAt, now())
+                }}</time>
               </p>
-              @if (quoted(comment); as original) {
-                <p class="quote">
-                  <i class="pi pi-reply" aria-hidden="true"></i>
-                  {{ nameOf(original.authorId) }}: {{ original.content }}
-                </p>
-              }
-              @if (comment.type === 'CORRECTION' && comment.correctedContent) {
-                <div class="correction">
-                  <p class="wrong">
-                    <span class="cdk-visually-hidden">Said: </span>{{ comment.content }}
+              <div class="bubble">
+                @if (quoted(comment); as original) {
+                  <p class="quote">
+                    <i class="pi pi-reply" aria-hidden="true"></i>
+                    {{ nameOf(original.authorId) }}: {{ original.content }}
                   </p>
-                  <p class="right">
-                    <span class="cdk-visually-hidden">Should be: </span
-                    >{{ comment.correctedContent }}
-                  </p>
-                </div>
-              } @else {
-                <p class="text">{{ comment.content }}</p>
-              }
+                }
+                @if (comment.type === 'CORRECTION' && comment.correctedContent) {
+                  <div class="correction">
+                    <p class="wrong">
+                      <span class="cdk-visually-hidden">Said: </span>{{ comment.content }}
+                    </p>
+                    <p class="right">
+                      <span class="cdk-visually-hidden">Should be: </span
+                      >{{ comment.correctedContent }}
+                    </p>
+                  </div>
+                } @else {
+                  <p class="text">{{ comment.content }}</p>
+                }
+              </div>
               <div class="actions">
                 @let replyLabel = `Reply to ${nameOf(comment.authorId)}`;
                 <button
                   pButton
                   type="button"
-                  class="compact"
+                  class="reply"
+                  size="small"
                   icon="pi pi-reply"
-                  severity="secondary"
+                  label="Reply"
                   [text]="true"
                   [rounded]="true"
                   [attr.aria-label]="replyLabel"
-                  [pTooltip]="replyLabel"
-                  tooltipPosition="top"
                   (click)="reply(comment)"
                 ></button>
                 @if (isHost() && comment.authorId !== meId()) {
@@ -170,7 +194,7 @@
           <li class="empty">No messages yet. Say hello, or suggest a correction.</li>
         }
       </ul>
-      @if (!stuck()) {
+      @if (!stuck() && !compact()) {
         <button
           pButton
           type="button"
@@ -217,39 +241,45 @@
           ></button>
         </p>
       }
-      <app-textarea-field
-        [label]="composer().correcting ? 'What was said' : 'Message'"
-        [rows]="2"
-        [formField]="composerForm.content"
-      />
-      @if (composer().correcting) {
+      <div class="write">
         <app-textarea-field
-          label="How it should be"
-          [rows]="2"
-          [formField]="composerForm.corrected"
+          [label]="composer().correcting ? 'What was said' : 'Message'"
+          [labelHidden]="!composer().correcting"
+          [pill]="!composer().correcting"
+          placeholder="Say something in the room…"
+          [rows]="1"
+          [formField]="composerForm.content"
         />
-      }
-      <div class="send">
-        <button
-          pButton
-          type="button"
-          severity="secondary"
-          [outlined]="!composer().correcting"
-          [rounded]="true"
-          icon="pi pi-pencil"
-          label="Correct"
-          [attr.aria-pressed]="composer().correcting"
-          (click)="toggleCorrecting()"
-        ></button>
         <button
           pButton
           type="submit"
+          class="send"
+          icon="pi pi-arrow-up"
           [rounded]="true"
-          icon="pi pi-send"
           [disabled]="submitting()"
-          label="Send"
+          aria-label="Send"
         ></button>
       </div>
+      @if (composer().correcting) {
+        <app-textarea-field
+          label="How it should be"
+          [rows]="1"
+          [formField]="composerForm.corrected"
+        />
+      }
+      <button
+        pButton
+        type="button"
+        class="correct"
+        size="small"
+        severity="secondary"
+        icon="pi pi-pencil"
+        label="Correct"
+        [text]="!composer().correcting"
+        [rounded]="true"
+        [attr.aria-pressed]="composer().correcting"
+        (click)="toggleCorrecting()"
+      ></button>
     </form>
   }
 </section>

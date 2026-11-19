@@ -250,3 +250,7 @@ toasts, skeletons, avatars as before. Theming goes through preset tokens (`toolb
 hand-raised list (a numbered list of person + action), the `.pi-slashed` crossed-out microphone (the icon set has none), the brand mark and voice bubbles (decorative), and the
 stage's scroll past eight speakers (native overflow, which keyboards and screen readers already handle; `p-scrollpanel` draws its own bars). A `#end` template reference shadows a
 component output named `end`, so the dock's output is `endRoom`.
+
+### The discussion
+
+The room page ends with **Live Discussion** (`app-chat-panel` with `compact`): a paper card with the last three messages, how many there are, `Expand`, and the composer, the same on a phone and on a desktop. `Expand` (and the dock's chat button) opens the whole thread in the right-hand drawer, the same panel at full length with the host's `Pin a topic`; only one of the two is on screen at a time (the page's `discussion` template is drawn inline until the drawer opens). A message is the author's picture, name and `timeAgo` (`shared/utils/time-ago.ts`, ticking every 30 s), then a tinted bubble (text, or a correction as the struck-through phrase over the right one; a reply quotes its original), then a `Reply` text button and, for the host, delete and mute. The composer is a pill (`app-textarea-field` with `pill`, `labelHidden` and `placeholder`) with a round send button and a `Correct` toggle. Reactions on messages are not built: the service has none.

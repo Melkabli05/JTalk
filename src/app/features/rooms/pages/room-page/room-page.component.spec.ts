@@ -273,9 +273,10 @@ describe('RoomPageComponent (container)', () => {
     const headings = [...root().querySelectorAll('h2')].map((h) =>
       h.textContent?.replace(/\s+/g, ' ').trim(),
     );
-    expect(headings).toHaveLength(2);
+    expect(headings).toHaveLength(3);
     expect(headings[0]).toBe('On stage 1/4');
     expect(headings[1]).toContain('Audience');
+    expect(headings[2]).toBe('Live Discussion');
     expect(root().querySelectorAll('section[aria-labelledby]')).toHaveLength(2);
     expect(root().querySelectorAll('p-card[aria-labelledby]')).toHaveLength(0);
   });
@@ -306,6 +307,19 @@ describe('RoomPageComponent (container)', () => {
     expect(
       root().querySelector('app-room-controls button[aria-pressed]')?.getAttribute('aria-pressed'),
     ).toBe('true');
+  });
+
+  it('shows the discussion on the page, and Expand moves it into the drawer, never both', async () => {
+    await open();
+
+    expect(root().querySelectorAll('app-chat-panel')).toHaveLength(1);
+    expect(root().querySelector('app-chat-panel section.inline')).not.toBeNull();
+
+    press('Expand', root().querySelector('app-chat-panel')!);
+    await settle();
+
+    expect(document.body.querySelectorAll('app-chat-panel')).toHaveLength(1);
+    expect(document.body.querySelector('app-chat-panel section.inline')).toBeNull();
   });
 
   it('opens the chat from the dock, and a comment the person sends appears once the server has kept it', async () => {

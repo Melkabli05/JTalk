@@ -18,6 +18,7 @@ import type { Person } from '@core/auth/identity.models';
 import { TextFieldComponent } from '@shared/ui/text-field/text-field.component';
 import { TextareaFieldComponent } from '@shared/ui/textarea-field/textarea-field.component';
 import { formSubmission } from '@shared/utils/form-submission';
+import { timeAgo } from '@shared/utils/time-ago';
 import {
   COMMENT_MAX_LENGTH,
   TOPIC_MAX_LENGTH,
@@ -38,6 +39,8 @@ interface TopicModel {
 }
 
 const NEAR_BOTTOM_PX = 48;
+const COMPACT_MESSAGES = 3;
+const CLOCK_MS = 30_000;
 
 @Component({
   selector: 'app-chat-panel',
@@ -68,6 +71,7 @@ export class ChatPanelComponent {
   readonly submitting = input(false);
   readonly error = input<string | null>(null);
   readonly moderating = input(false);
+  readonly compact = input(false);
 
   readonly submitted = output<CommentDraft>();
   readonly deleted = output<string>();
@@ -76,6 +80,7 @@ export class ChatPanelComponent {
   readonly pinned = output<string>();
   readonly unpinned = output<void>();
   readonly retry = output<void>();
+  readonly expand = output<void>();
 
   protected readonly log = viewChild<ElementRef<HTMLElement>>('log');
   protected readonly stuck = signal(true);
@@ -91,6 +96,11 @@ export class ChatPanelComponent {
     () => new Map(this.comments().map((comment) => [comment.id, comment])),
   );
   protected readonly muteIds = computed(() => new Set(this.mutedUsers()));
+  protected readonly shown = computed(() =>
+    this.compact() ? this.comments().slice(-COMPACT_MESSAGES) : this.comments(),
+  );
+  protected readonly now = signal(Date.now());
+  protected readonly timeAgo = timeAgo;
 
   protected readonly composerForm = form(
     this.composer,
@@ -147,6 +157,10 @@ export class ChatPanelComponent {
         this.replyingTo.set(null);
       }
       this.wasSubmitting = submitting;
+    });
+    effect((onCleanup) => {
+      const tick = setInterval(() => this.now.set(Date.now()), CLOCK_MS);
+      onCleanup(() => clearInterval(tick));
     });
     afterRenderEffect(() => {
       this.comments();

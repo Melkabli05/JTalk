@@ -74,6 +74,48 @@ describe('ChatPanelComponent (presentational)', () => {
     expect(item.querySelector('b')).toBeNull();
   });
 
+  it('says how long ago each message was written', async () => {
+    const written = new Date(Date.now() - 5 * 60_000).toISOString();
+    await render({ comments: [comment('c-1', 'b-1', 'Hola', { createdAt: written })] });
+
+    expect(root().querySelector('time')?.textContent?.trim()).toBe('5m ago');
+    expect(root().querySelector('time')?.getAttribute('datetime')).toBe(written);
+  });
+
+  describe('beside the stage', () => {
+    const many = ['a', 'b', 'c', 'd', 'e'].map((id) => comment(id, 'b-1', `Message ${id}`));
+
+    it('shows the last three messages, how many there are, and a way to open them all', async () => {
+      const expanded: unknown[] = [];
+      await render({ compact: true, comments: many });
+      fixture.componentInstance.expand.subscribe((event) => expanded.push(event));
+
+      expect([...root().querySelectorAll('.message-item .text')].map((e) => e.textContent)).toEqual(
+        ['Message c', 'Message d', 'Message e'],
+      );
+      expect(root().querySelector('h2')?.textContent).toBe('Live Discussion');
+      expect(root().querySelector('.head .count')?.textContent).toContain('5 messages');
+
+      button('Expand')!.click();
+      expect(expanded).toHaveLength(1);
+    });
+
+    it('can still be written in and replied to, but leaves pinning a topic to the full view', async () => {
+      await render({ compact: true, comments: many, isHost: true });
+
+      expect(root().querySelector('form.composer')).not.toBeNull();
+      expect(button('Reply to Bilal')).toBeDefined();
+      expect(root().querySelector('form.pin')).toBeNull();
+    });
+
+    it('is the whole thread, with no header, in the full view', async () => {
+      await render({ comments: many });
+
+      expect(root().querySelectorAll('.message-item')).toHaveLength(5);
+      expect(root().querySelector('.head')).toBeNull();
+    });
+  });
+
   it('is a log, so a screen reader hears new messages politely', async () => {
     await render();
 

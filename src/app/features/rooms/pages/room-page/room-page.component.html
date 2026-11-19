@@ -153,6 +153,10 @@
       (memberSelected)="selectedId.set($event)"
     />
 
+    @if (!chatOpen()) {
+      <ng-container [ngTemplateOutlet]="discussion" [ngTemplateOutletContext]="{ inline: true }" />
+    }
+
     <div class="dock">
       @if (facade.action.error(); as failure) {
         <p-message class="failure" severity="error">{{ failure }}</p-message>
@@ -226,16 +230,10 @@
   (edited)="edit($event)"
 />
 
-<p-drawer
-  header="Chat"
-  position="right"
-  styleClass="chat-drawer"
-  [visible]="chatOpen()"
-  [modal]="false"
-  [dismissible]="false"
-  (visibleChange)="toggleChat($event)"
->
+<ng-template #discussion let-inline="inline">
   <app-chat-panel
+    [compact]="inline"
+    (expand)="toggleChat(true)"
     [comments]="chat.comments()"
     [topic]="chat.topic()"
     [ready]="chat.ready()"
@@ -256,6 +254,18 @@
     (unpinned)="facade.clearTopic()"
     (retry)="chat.reload()"
   />
+</ng-template>
+
+<p-drawer
+  header="Live Discussion"
+  position="right"
+  styleClass="chat-drawer"
+  [visible]="chatOpen()"
+  [modal]="false"
+  [dismissible]="false"
+  (visibleChange)="toggleChat($event)"
+>
+  <ng-container [ngTemplateOutlet]="discussion" [ngTemplateOutletContext]="{ inline: false }" />
 </p-drawer>
 
 <p-confirmdialog />
