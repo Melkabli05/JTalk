@@ -6,8 +6,29 @@ app-hallway-greeting {
   margin-block-end: 2rem;
 }
 
+.filter {
+  display: block;
+  margin-block-end: 1.5rem;
+  overflow-x: auto;
+}
+
+.group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+  margin-block-end: 1rem;
+}
+
+.counts {
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 .group h2 {
-  margin: 0 0 1rem;
+  margin: 0;
   font-size: var(--p-jtalk-type-section);
   font-weight: 700;
 }

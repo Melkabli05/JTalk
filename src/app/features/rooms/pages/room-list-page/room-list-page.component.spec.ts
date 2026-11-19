@@ -100,38 +100,35 @@ describe('RoomListPageComponent (container)', () => {
     expect(status()).toBe('Rooms shown: 1');
   });
 
-  it('greets the person by first name, at the hour of the day', async () => {
+  it('greets the person by first name, at their own time of day', async () => {
     await render(withRooms(roomDto('r-1', 'Spanish', 'es')));
 
     expect(root().querySelector('h1')?.textContent?.trim()).toMatch(
-      /^Good (morning|afternoon|evening), Mona$/,
+      /^(Good (morning|afternoon|evening)|Hello), Mona$/,
     );
   });
 
-  it('says how many rooms are open and how many people are in them, as the filter narrows', async () => {
+  it('says how many rooms are open and how many people are in them, above the list, as the filter narrows', async () => {
     const busy = (id: string, language: string, count: number) => ({
       ...roomDto(id, id, language),
       participantCount: count,
     });
     await render(withRooms(busy('a', 'es', 4), busy('b', 'es', 6), busy('c', 'fr', 5)));
-    const stats = () =>
-      [...root().querySelectorAll('.stats p-tag')].map((t) =>
-        t.textContent?.replace(/\s+/g, ' ').trim(),
-      );
-    expect(stats()).toEqual(['Rooms open: 3', 'People in rooms: 15']);
+    const counts = () => root().querySelector('.counts')?.textContent?.replace(/\s+/g, ' ').trim();
+    expect(counts()).toBe('Rooms open: 3 · People in rooms: 15');
 
     [...root().querySelectorAll<HTMLElement>('app-language-filter [role="button"]')]
       .find((o) => o.textContent?.includes('French'))!
       .click();
     await fixture.whenStable();
 
-    expect(stats()).toEqual(['Rooms open: 1', 'People in rooms: 5']);
+    expect(counts()).toBe('Rooms open: 1 · People in rooms: 5');
   });
 
   it('shows no counts when there are no rooms', async () => {
     await render(withRooms());
 
-    expect(root().querySelector('.stats')).toBeNull();
+    expect(root().querySelector('.counts')).toBeNull();
   });
 
   it('lists every open room under one heading, Active rooms', async () => {
@@ -165,12 +162,12 @@ describe('RoomListPageComponent (container)', () => {
     expect(root().querySelector('app-room-card h2')?.textContent?.trim()).toBe('Spanish');
   });
 
-  it('points to the one Start a room button instead of repeating it in the empty state', async () => {
+  it('points to the one start button, in the language the person learns, instead of repeating it in the empty state', async () => {
     await render(withRooms());
 
     expect(root().querySelector('.empty button')).toBeNull();
     expect(root().querySelector('app-hallway-greeting button.start')?.textContent).toContain(
-      'Start a room',
+      'Start a Spanish room',
     );
   });
 
@@ -241,7 +238,7 @@ describe('RoomListPageComponent (container)', () => {
   describe('starting a room', () => {
     async function openDialog() {
       await render(withRooms());
-      press('Start a room');
+      press('Start a Spanish room');
       await fixture.whenStable();
     }
     const field = (label: string) =>

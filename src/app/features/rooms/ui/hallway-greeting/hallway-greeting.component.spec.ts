@@ -2,124 +2,117 @@ import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import type { Room } from '../../models/room.model';
 import { HallwayGreetingComponent } from './hallway-greeting.component';
 
-const room = (id: string, over: Partial<Room> = {}): Room => ({
+const room = (id: string, targetLanguage = 'es'): Room => ({
   id,
   title: id,
   topic: '',
   hostId: 'h',
-  targetLanguage: 'es',
+  targetLanguage,
   nativeLanguage: 'en',
   maxStageSeats: 6,
   speakers: ['h'],
   participantCount: 4,
   handRaiseCount: 0,
-  ...over,
 });
 
 describe('HallwayGreetingComponent (presentational)', () => {
   let fixture: ComponentFixture<HallwayGreetingComponent>;
   const root = () => fixture.nativeElement as HTMLElement;
-  const suggestions = () =>
-    [...root().querySelectorAll('.suggestions button')].map((b) =>
-      b.textContent?.replace(/\s+/g, ' ').trim(),
-    );
+  const lead = () => root().querySelector('.lead')?.textContent?.replace(/\s+/g, ' ').trim();
+  const startButton = () => root().querySelector<HTMLButtonElement>('button.start')!;
 
-  async function render(inputs: Record<string, unknown>) {
+  async function render(inputs: Record<string, unknown> = {}) {
     fixture = TestBed.createComponent(HallwayGreetingComponent);
     fixture.componentRef.setInput('rooms', []);
+    fixture.componentRef.setInput('hour', 9);
     for (const [name, value] of Object.entries(inputs)) {
       fixture.componentRef.setInput(name, value);
     }
     await fixture.whenStable();
   }
 
-  it('greets by name at the hour of the day, and without one until the name is known', async () => {
+  it('greets by name, and without one until the name is known', async () => {
     await render({ name: 'Mona' });
-    expect(root().querySelector('h1')?.textContent?.trim()).toMatch(
-      /^Good (morning|afternoon|evening), Mona$/,
-    );
+    expect(root().querySelector('h1')?.textContent?.trim()).toBe('Good morning, Mona');
 
     fixture.componentRef.setInput('name', '');
     await fixture.whenStable();
-    expect(root().querySelector('h1')?.textContent?.trim()).toMatch(
-      /^Good (morning|afternoon|evening)$/,
-    );
+    expect(root().querySelector('h1')?.textContent?.trim()).toBe('Good morning');
+  });
+
+  it("follows the person's time of day, and changes when the hour does", async () => {
+    const greeting = () => root().querySelector('h1')?.textContent?.trim();
+    await render({ name: 'Mona', hour: 7 });
+    expect(greeting()).toBe('Good morning, Mona');
+
+    for (const [hour, expected] of [
+      [13, 'Good afternoon, Mona'],
+      [19, 'Good evening, Mona'],
+      [23, 'Hello, Mona'],
+      [3, 'Hello, Mona'],
+      [5, 'Good morning, Mona'],
+    ] as const) {
+      fixture.componentRef.setInput('hour', hour);
+      await fixture.whenStable();
+      expect(greeting(), `at ${hour}:00`).toBe(expected);
+    }
   });
 
   it('is a region named by its greeting', async () => {
-    await render({});
+    await render();
 
     expect(root().querySelector('p-card')?.getAttribute('aria-labelledby')).toBe('greeting');
     expect(root().querySelector('#greeting')).not.toBeNull();
   });
 
-  it('counts the rooms and the people in them, and says nothing of either when there are none', async () => {
-    await render({ rooms: [room('a'), room('b', { participantCount: 6 })] });
-    const stats = () =>
-      [...root().querySelectorAll('.stats p-tag')].map((t) =>
-        t.textContent?.replace(/\s+/g, ' ').trim(),
-      );
-    expect(stats()).toEqual(['Rooms open: 2', 'People in rooms: 10']);
+  it('has an illustration at its side that says nothing a screen reader needs', async () => {
+    await render();
+    const image = root().querySelector('img')!;
 
-    fixture.componentRef.setInput('rooms', []);
-    await fixture.whenStable();
-    expect(root().querySelector('.stats')).toBeNull();
+    expect(image.getAttribute('src')).toContain('illustrations/conversation.svg');
+    expect(image.getAttribute('alt')).toBe('');
   });
 
-  it('suggests rooms worked out from what the person speaks and learns, in a labelled group', async () => {
+  it('says how many open rooms are practising what the person learns', async () => {
     await render({
-      rooms: [
-        room('Coffee in Spanish'),
-        room('Tokyo talk', { targetLanguage: 'ja', participantCount: 30 }),
-      ],
-      me: { nativeLanguage: 'en', learning: 'es' },
+      rooms: [room('a'), room('b', 'fr'), room('c')],
+      me: { learning: 'es' },
     });
 
-    expect(root().querySelector('.suggestions')?.getAttribute('aria-label')).toBe(
-      'Suggested for you',
-    );
-    expect(suggestions()).toEqual(['For you: Coffee in Spanish', 'Busiest now: Tokyo talk']);
+    expect(lead()).toBe('Rooms practising Spanish: 2');
+    expect(startButton().textContent).toContain('Start a room');
+    expect(startButton().classList.contains('always')).toBe(false);
   });
 
-  it('suggests starting a room in the language they learn when nobody is practising it', async () => {
-    await render({ rooms: [], me: { nativeLanguage: 'en', learning: 'es' } });
+  it('says they could be the first, and offers to start one in that language, when nobody practises it', async () => {
+    await render({ rooms: [room('a', 'fr')], me: { learning: 'ja' } });
 
-    expect(suggestions()).toEqual(['Start a Spanish room']);
+    expect(lead()).toBe('Nobody is practising Japanese yet. Be the first.');
+    expect(startButton().textContent).toContain('Start a Japanese room');
+    expect(startButton().classList.contains('always')).toBe(true);
   });
 
-  it('asks to join the room that was chosen, and to start when starting was', async () => {
-    await render({
-      rooms: [room('Coffee in Spanish')],
-      me: { nativeLanguage: 'en', learning: 'ja' },
-    });
-    const joined = vi.fn();
-    const started = vi.fn();
-    fixture.componentInstance.join.subscribe(joined);
-    fixture.componentInstance.start.subscribe(started);
-    const buttons = () => [...root().querySelectorAll<HTMLButtonElement>('.suggestions button')];
+  it('follows the rooms as they come and go', async () => {
+    await render({ rooms: [], me: { learning: 'es' } });
+    expect(lead()).toContain('Be the first');
 
-    buttons()[0]?.click();
-    expect(joined).toHaveBeenCalledWith(expect.objectContaining({ id: 'Coffee in Spanish' }));
-
-    buttons()[1]?.click();
-    expect(started).toHaveBeenCalledOnce();
-  });
-
-  it('offers the language filter only when there is a choice, and shows the chosen one', async () => {
-    await render({ languages: ['es'] });
-    expect(root().querySelector('app-language-filter')).toBeNull();
-
-    fixture.componentRef.setInput('languages', ['es', 'fr']);
+    fixture.componentRef.setInput('rooms', [room('a')]);
     await fixture.whenStable();
-    expect(root().querySelector('app-language-filter')).not.toBeNull();
+    expect(lead()).toBe('Rooms practising Spanish: 1');
   });
 
-  it('carries a Start a room button for phones', async () => {
-    await render({});
+  it('keeps to the plain line until it is known what the person learns', async () => {
+    await render({ rooms: [room('a')], me: null });
+
+    expect(lead()).toBe('Join a conversation to practise a language.');
+  });
+
+  it('asks to start a room', async () => {
+    await render();
     const started = vi.fn();
     fixture.componentInstance.start.subscribe(started);
 
-    root().querySelector<HTMLButtonElement>('button.start')!.click();
+    startButton().click();
 
     expect(started).toHaveBeenCalledOnce();
   });

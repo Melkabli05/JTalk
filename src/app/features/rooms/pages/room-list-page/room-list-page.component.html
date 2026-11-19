@@ -3,20 +3,33 @@
     [name]="firstName()"
     [rooms]="state.shown()"
     [me]="me()"
-    [languages]="state.languages()"
-    [(filter)]="state.filter"
-    (join)="open($event)"
+    [hour]="clock.hour()"
     (start)="starting.set(true)"
   />
 
   @if (state.rooms()) {
+    @if (state.languages().length > 1) {
+      <app-language-filter
+        class="filter"
+        [languages]="state.languages()"
+        [(selected)]="state.filter"
+      />
+    }
+
     <p class="cdk-visually-hidden" role="status">
       {{ 'Rooms shown: {count}' | t: { count: state.shown().length } }}
     </p>
 
     @if (state.shown().length > 0) {
       <section class="group" aria-labelledby="active-heading">
-        <h2 id="active-heading">{{ 'Active rooms' | t }}</h2>
+        <div class="group-head">
+          <h2 id="active-heading">{{ 'Active rooms' | t }}</h2>
+          <p class="counts">
+            {{ 'Rooms open: {count}' | t: { count: state.shown().length } }}
+            <span aria-hidden="true">·</span>
+            {{ 'People in rooms: {count}' | t: { count: people() } }}
+          </p>
+        </div>
         <ul class="rooms">
           @for (room of state.shown(); track room.id) {
             <li

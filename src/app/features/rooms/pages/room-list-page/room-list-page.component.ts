@@ -5,11 +5,13 @@ import { Card } from '@openng/optimus-ui/card';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { RoomStartService } from '@core/rooms/room-start.service';
+import { ClockService } from '@core/time/clock.service';
 import { I18n } from '@shared/utils/i18n/i18n.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import type { Room, RoomDraft } from '../../models/room.model';
 import { provideRoomList, RoomListFacade } from '../../state/room-list.facade';
 import { HallwayGreetingComponent } from '../../ui/hallway-greeting/hallway-greeting.component';
+import { LanguageFilterComponent } from '../../ui/language-filter/language-filter.component';
 import { RoomCardComponent } from '../../ui/room-card/room-card.component';
 import { RoomFormDialogComponent } from '../../ui/room-form-dialog/room-form-dialog.component';
 
@@ -19,6 +21,7 @@ import { RoomFormDialogComponent } from '../../ui/room-form-dialog/room-form-dia
     ButtonDirective,
     Card,
     HallwayGreetingComponent,
+    LanguageFilterComponent,
     Message,
     Skeleton,
     RoomCardComponent,
@@ -33,10 +36,16 @@ export default class RoomListPageComponent {
   private readonly router = inject(Router);
   private readonly i18n = inject(I18n);
   private readonly roomStart = inject(RoomStartService);
+  protected readonly clock = inject(ClockService);
   protected readonly facade = inject(RoomListFacade);
 
   protected readonly state = this.facade.state;
   protected readonly starting = signal(false);
+
+  /** Everyone in the rooms shown. */
+  protected readonly people = computed(() =>
+    this.state.shown().reduce((sum, room) => sum + room.participantCount, 0),
+  );
 
   protected readonly me = computed(() => this.state.members().get(this.state.meId() ?? '') ?? null);
   protected readonly firstName = computed(() => this.me()?.name.trim().split(/\s+/)[0] ?? '');
