@@ -3,8 +3,19 @@
 // What moves: the shapes and the lines of the heading arriving, three blurred lights drifting behind, the shapes leaning towards the
 // pointer, and the greetings taking turns (the decoration is `app-poster-backdrop`); all of it stands still under `prefers-reduced-motion`. The display size is a poster size,
 // well past the app's type scale. Built mobile first in spirit: the phone layout has its own rules at the end, not just smaller numbers.
+// The heading is set in Pixelify Sans (SIL Open Font License), served from our own `public/fonts`, so nothing is fetched from another site.
+// It carries Latin letters only; Arabic and the rest fall back to the app's fonts.
+@font-face {
+  font-family: 'Pixelify Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/pixelify-sans-latin-wght-normal.woff2') format('woff2-variations');
+}
+
 :host {
-  --display: clamp(2rem, 7.4vw, 6.75rem);
+  --display: clamp(1.9rem, 6.6vw, 6rem);
+  --pixel: 'Pixelify Sans', 'Manrope Variable', 'Noto Sans Arabic Variable', system-ui, sans-serif;
   --ink: #151916;
   --paper: #f7f5ef;
   --forest: #477a5d;
@@ -145,10 +156,11 @@ h1 {
   flex-direction: column;
   align-items: flex-start;
   margin: 0;
+  font-family: var(--pixel);
   font-size: var(--display);
-  font-weight: 750;
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.01em;
 }
 
 .line {
