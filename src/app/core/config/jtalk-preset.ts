@@ -266,6 +266,38 @@ export const JtalkPreset = definePreset(Aura, {
         .p-menubar-item-link-active .p-menubar-item-icon {
           color: ${dt('primary.color')};
         }
+        .p-menubar-item-link.live-item,
+        .p-menubar-item-link.live-item .p-menubar-item-icon {
+          color: ${dt('primary.color')};
+          font-weight: 650;
+        }
+        @media (max-width: 40rem) {
+          .p-menubar {
+            flex-wrap: nowrap;
+            padding-block: 0.25rem;
+          }
+          .p-menubar-root-list {
+            flex: 1;
+            justify-content: flex-end;
+            gap: 0.25rem;
+          }
+          .p-menubar-item-link {
+            justify-content: center;
+            min-width: 2.75rem;
+          }
+          .p-menubar-item-icon {
+            color: ${dt('text.color')};
+            font-size: 1.25rem;
+          }
+          .p-menubar-item-label {
+            position: absolute;
+            inline-size: 1px;
+            block-size: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+          }
+        }
       `,
     },
     progressbar: { root: { height: '0.25rem' } },

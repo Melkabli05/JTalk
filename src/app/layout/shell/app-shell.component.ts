@@ -114,22 +114,30 @@ export class AppShellComponent {
     return me ? `${languageOf(me.nativeLanguage).flag} → ${languageOf(me.learning).flag}` : '';
   });
   protected readonly navItems = computed(() => this.translated(NAV_ITEMS));
-  // Across the top (a phone) the words are enough, with no icons, so four fit on one row; there is no account card there, so the
-  // settings are one more item.
+  // Across the top (a phone) the pages are icons, with their names kept for screen readers; there is no account card there, so the
+  // settings are one more item, and the way back to a room you are in stands out in Forest.
   protected readonly topItems = computed(() => {
     const live = this.liveRoom();
     return [
       ...(live
-        ? this.translated([{ label: msg('Back to the room'), routerLink: ['/rooms', live.id] }])
+        ? this.translated([
+            {
+              label: msg('Back to the room'),
+              icon: 'pi pi-headphones',
+              linkClass: 'live-item',
+              routerLink: ['/rooms', live.id],
+            },
+          ])
         : []),
       ...this.navItems(),
       ...this.translated([
         {
           label: msg('Settings'),
+          icon: 'pi pi-cog',
           command: ({ originalEvent }) => this.settings().toggle(originalEvent),
         },
       ]),
-    ].map((item) => ({ ...item, icon: undefined }));
+    ];
   });
   private readonly settings = viewChild.required(Popover);
 
