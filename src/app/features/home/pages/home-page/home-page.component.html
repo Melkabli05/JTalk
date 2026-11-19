@@ -1,11 +1,6 @@
 <a class="skip-link" href="#main-content">{{ 'Skip to main content' | t }}</a>
 
-<!-- Soft light behind everything: three blurred lights (Forest, Sand, Coral) drifting slowly. Decoration. -->
-<div class="glow" aria-hidden="true">
-  <span class="orb forest"></span>
-  <span class="orb sand"></span>
-  <span class="orb coral"></span>
-</div>
+<app-poster-backdrop />
 
 <header class="top">
   <a class="brand" href="/">
@@ -30,12 +25,6 @@
 
 <main id="main-content" tabindex="-1">
   <section class="hero" aria-labelledby="hero-title">
-    <div class="grid" aria-hidden="true"></div>
-    <div class="block one" aria-hidden="true"></div>
-    <div class="block two" aria-hidden="true"></div>
-    <span class="badge mic" aria-hidden="true"><i class="pi pi-microphone"></i></span>
-    <span class="badge hand" aria-hidden="true"><i class="pi pi-hand"></i></span>
-
     <div class="center">
       <p class="tag">#{{ 'Live audio' | t }}</p>
       <h1 id="hero-title">

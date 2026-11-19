@@ -6,6 +6,7 @@ import { LocaleService } from '@core/config/locale.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { BrandMarkComponent } from '@shared/ui/brand-mark/brand-mark.component';
 import { LocaleSwitchComponent } from '@shared/ui/locale-switch/locale-switch.component';
+import { PosterBackdropComponent } from '../../ui/poster-backdrop/poster-backdrop.component';
 
 /** "Hello" in the languages people practise here, each in its own: they take turns along the bottom. They are the point, not copy. */
 const GREETINGS = [
@@ -23,7 +24,13 @@ const GREETINGS = [
  */
 @Component({
   selector: 'app-home-page',
-  imports: [BrandMarkComponent, ButtonDirective, LocaleSwitchComponent, TranslatePipe],
+  imports: [
+    BrandMarkComponent,
+    ButtonDirective,
+    LocaleSwitchComponent,
+    PosterBackdropComponent,
+    TranslatePipe,
+  ],
   // Always the night theme, so the controls from the component library (the language switch, Sign in) are drawn for a dark page.
   host: {
     class: 'app-dark',

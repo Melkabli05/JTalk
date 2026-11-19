@@ -1,7 +1,7 @@
 // A poster with a look of its own in layout and effect (the owner's call: gradients, glow and glass, which the app's design system does not
 // use), but in the app's own colours: Forest and Sage, Sand and Gold, Coral, on the night canvas, with porcelain for the paper. One screen.
 // What moves: the shapes and the lines of the heading arriving, three blurred lights drifting behind, the shapes leaning towards the
-// pointer, and the greetings taking turns; all of it stands still under `prefers-reduced-motion`. The display size is a poster size,
+// pointer, and the greetings taking turns (the decoration is `app-poster-backdrop`); all of it stands still under `prefers-reduced-motion`. The display size is a poster size,
 // well past the app's type scale. Built mobile first in spirit: the phone layout has its own rules at the end, not just smaller numbers.
 :host {
   --display: clamp(2rem, 7.4vw, 6.75rem);
@@ -16,6 +16,8 @@
   --cell: clamp(2.5rem, 6vw, 5rem);
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --edge: clamp(1.25rem, 4vw, 3rem);
+  // The height of the top row: what the shapes and the grid keep clear of.
+  --top: 4rem;
 
   position: relative;
   display: flex;
@@ -39,68 +41,6 @@
 
   &:focus-visible {
     transform: none;
-  }
-}
-
-// Three blurred lights, far behind.
-.glow {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.orb {
-  position: absolute;
-  inline-size: 52vmax;
-  block-size: 52vmax;
-  border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.5;
-
-  &.forest {
-    inset-block-start: -22vmax;
-    inset-inline-end: -12vmax;
-    background: radial-gradient(circle, #5f9a76 0%, rgba(95, 154, 118, 0) 70%);
-  }
-
-  &.sand {
-    inset-block-end: -26vmax;
-    inset-inline-start: -16vmax;
-    background: radial-gradient(circle, #dcc79e 0%, rgba(220, 199, 158, 0) 70%);
-  }
-
-  &.coral {
-    inset-block-start: 28vh;
-    inset-inline-start: 38vw;
-    inline-size: 34vmax;
-    block-size: 34vmax;
-    opacity: 0.28;
-    background: radial-gradient(circle, #df8277 0%, rgba(223, 130, 119, 0) 70%);
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    animation: drift 24s ease-in-out infinite alternate;
-
-    &.sand {
-      animation-duration: 30s;
-      animation-delay: -8s;
-    }
-
-    &.coral {
-      animation-duration: 19s;
-      animation-delay: -4s;
-    }
-  }
-}
-
-@keyframes drift {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    transform: translate3d(6vmax, 4vmax, 0) scale(1.15);
   }
 }
 
@@ -168,185 +108,6 @@ main {
   flex: 1;
   grid-template-rows: 1fr auto;
   padding: 0 var(--edge) max(1.5rem, env(safe-area-inset-bottom));
-}
-
-.grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-position: center top;
-  background-size: var(--cell) var(--cell);
-}
-
-// Two stepped shapes of colour, flush with the corners, as in the pictures: they arrive from their corners and lean towards the pointer.
-.block {
-  position: absolute;
-  inline-size: clamp(10rem, 36vw, 40rem);
-  block-size: clamp(9rem, 42vh, 30rem);
-  pointer-events: none;
-
-  @media (prefers-reduced-motion: no-preference) {
-    transition: translate 0.4s ease-out;
-    translate: calc(var(--mx, 0) * -14px) calc(var(--my, 0) * -10px);
-  }
-
-  &.one {
-    inset-block-start: 0;
-    inset-inline-end: 0;
-    background: linear-gradient(135deg, var(--forest) 0%, var(--sage) 52%, var(--sand) 100%);
-    clip-path: polygon(
-      0 0,
-      100% 0,
-      100% 100%,
-      66% 100%,
-      66% 76%,
-      44% 76%,
-      44% 50%,
-      22% 50%,
-      22% 26%,
-      0 26%
-    );
-
-    &:dir(rtl) {
-      clip-path: polygon(
-        0 0,
-        100% 0,
-        100% 26%,
-        78% 26%,
-        78% 50%,
-        56% 50%,
-        56% 76%,
-        34% 76%,
-        34% 100%,
-        0 100%
-      );
-    }
-
-    @media (prefers-reduced-motion: no-preference) {
-      animation: arrive-top 1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-    }
-  }
-
-  &.two {
-    inline-size: clamp(9rem, 25vw, 30rem);
-    inset-block-end: 3.5rem;
-    inset-inline-start: 0;
-    background: linear-gradient(45deg, var(--sand) 0%, var(--gold) 38%, var(--coral) 100%);
-    clip-path: polygon(
-      0 0,
-      34% 0,
-      34% 28%,
-      62% 28%,
-      62% 56%,
-      82% 56%,
-      82% 78%,
-      100% 78%,
-      100% 100%,
-      0 100%
-    );
-
-    &:dir(rtl) {
-      clip-path: polygon(
-        66% 0,
-        100% 0,
-        100% 100%,
-        0 100%,
-        0 78%,
-        18% 78%,
-        18% 56%,
-        38% 56%,
-        38% 28%,
-        66% 28%
-      );
-    }
-
-    @media (prefers-reduced-motion: no-preference) {
-      animation: arrive-bottom 1s 0.15s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-    }
-  }
-}
-
-@keyframes arrive-top {
-  from {
-    opacity: 0;
-    transform: translate3d(12%, -14%, 0);
-  }
-}
-
-@keyframes arrive-bottom {
-  from {
-    opacity: 0;
-    transform: translate3d(-12%, 14%, 0);
-  }
-}
-
-// Two glossy glass orbs on the shapes, with a bright symbol each: the microphone of someone speaking, the hand of someone who would like
-// to. A highlight at the top, a shade at the bottom, and a sheen of the colour behind.
-.badge {
-  position: absolute;
-  display: grid;
-  place-items: center;
-  inline-size: clamp(4rem, 9vw, 8.5rem);
-  block-size: clamp(4rem, 9vw, 8.5rem);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 32% 26%,
-    rgba(255, 255, 255, 0.7) 0%,
-    rgba(255, 255, 255, 0.22) 18%,
-    rgba(255, 255, 255, 0.04) 46%,
-    rgba(0, 0, 0, 0.5) 100%
-  );
-  box-shadow:
-    inset 0 10px 22px rgba(255, 255, 255, 0.35),
-    inset 0 -12px 26px rgba(0, 0, 0, 0.4),
-    0 22px 56px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(10px) saturate(1.5);
-  color: #fff;
-  font-size: clamp(1.5rem, 3.4vw, 3.25rem);
-  pointer-events: none;
-
-  // The specular spot.
-  &::after {
-    content: '';
-    position: absolute;
-    inset-block-start: 9%;
-    inset-inline-start: 24%;
-    inline-size: 34%;
-    block-size: 18%;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
-    filter: blur(5px);
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    transition: translate 0.4s ease-out;
-    translate: calc(var(--mx, 0) * 12px) calc(var(--my, 0) * 9px);
-    animation: bob 6s ease-in-out infinite alternate;
-
-    &.hand {
-      animation-duration: 7.5s;
-      animation-delay: -2s;
-    }
-  }
-
-  &.mic {
-    inset-block-start: clamp(1.25rem, 5vh, 4.5rem);
-    inset-inline-end: clamp(1.25rem, 5vw, 7rem);
-  }
-
-  &.hand {
-    inset-block-end: calc(3.5rem + clamp(1.25rem, 9vh, 8rem));
-    inset-inline-start: clamp(1rem, 4vw, 6rem);
-  }
-}
-
-@keyframes bob {
-  to {
-    margin-block-start: -0.75rem;
-  }
 }
 
 .center {
@@ -603,6 +364,7 @@ h1 {
   :host {
     --display: clamp(1.9rem, 9.6vw, 3.4rem);
     --edge: 1.25rem;
+    --top: 3.5rem;
   }
 
   .top {
@@ -628,33 +390,6 @@ h1 {
   // Enough height for the words and the shapes together: on a short phone the page scrolls rather than the shapes landing on the buttons.
   .hero {
     min-block-size: 44rem;
-  }
-
-  .block {
-    inline-size: 46vw;
-    block-size: 20vh;
-
-    &.two {
-      inline-size: 40vw;
-      block-size: min(16vh, 6.5rem);
-      inset-block-end: 7.5rem;
-    }
-  }
-
-  .badge {
-    inline-size: 4rem;
-    block-size: 4rem;
-    font-size: 1.5rem;
-
-    &.mic {
-      inset-block-start: 1rem;
-      inset-inline-end: 1rem;
-    }
-
-    &.hand {
-      inset-block-end: calc(7.5rem + 1rem);
-      inset-inline-start: 0.75rem;
-    }
   }
 
   .center {
@@ -713,17 +448,6 @@ h1 {
 
   .hero {
     min-block-size: 28rem;
-  }
-
-  .block {
-    block-size: 30vh;
-    inline-size: 26vw;
-  }
-
-  .badge {
-    inline-size: 3.25rem;
-    block-size: 3.25rem;
-    font-size: 1.25rem;
   }
 
   .center {

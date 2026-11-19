@@ -68,7 +68,10 @@ describe('HomePageComponent (container)', () => {
     ]);
   });
 
-  it('draws the glow, the grid, the two stepped blocks and their glass badges as decoration only', () => {
+  it('draws the glow, the grid, the two stepped blocks and their glass orbs as decoration only', () => {
+    const backdrop = root().querySelector('app-poster-backdrop')!;
+
+    expect(backdrop.getAttribute('aria-hidden')).toBe('true');
     for (const selector of [
       '.glow',
       '.grid',
@@ -77,14 +80,12 @@ describe('HomePageComponent (container)', () => {
       '.badge.mic',
       '.badge.hand',
     ]) {
-      expect(root().querySelector(selector)?.getAttribute('aria-hidden'), selector).toBe('true');
+      expect(backdrop.querySelector(selector), selector).not.toBeNull();
     }
-    expect(root().querySelectorAll('.glow .orb')).toHaveLength(3);
-    expect(root().querySelector('.badge.mic .pi-microphone')).not.toBeNull();
-    expect(root().querySelector('.badge.hand .pi-hand')).not.toBeNull();
-    expect(
-      root().querySelector('.glow, .grid, .block')?.querySelector('button, a, input'),
-    ).toBeNull();
+    expect(backdrop.querySelectorAll('.glow .orb')).toHaveLength(3);
+    expect(backdrop.querySelector('.badge.mic .pi-microphone')).not.toBeNull();
+    expect(backdrop.querySelector('.badge.hand .pi-hand')).not.toBeNull();
+    expect(backdrop.querySelector('button, a, input')).toBeNull();
   });
 
   it('sets each line of the heading on its own block, under a small label', () => {
