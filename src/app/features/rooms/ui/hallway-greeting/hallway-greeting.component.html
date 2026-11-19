@@ -1,41 +1,38 @@
-<p-card role="region" aria-labelledby="greeting">
+<p-card role="region" aria-labelledby="greeting" [style]="sky()">
   @let current = hint();
-  <div class="banner">
-    <div class="words">
-      <h1 id="greeting">{{ greeting() | t: { name: name() } }}</h1>
-      <p class="lead">
-        @switch (current.kind) {
-          @case ('practising') {
-            {{
-              'Rooms practising {language}: {count}'
-                | t: { language: language()?.name | t, count: current.count }
-            }}
-          }
-          @case ('first') {
-            {{
-              'Nobody is practising {language} yet. Be the first.'
-                | t: { language: language()?.name | t }
-            }}
-          }
-          @default {
-            {{ 'Join a conversation to practise a language.' | t }}
-          }
+  <div class="banner" [class.night]="scene().night" [attr.data-sky]="scene().slot">
+    <h1 id="greeting">{{ greeting() | t: { name: name() } }}</h1>
+    <p class="lead">
+      @switch (current.kind) {
+        @case ('practising') {
+          {{
+            'Rooms practising {language}: {count}'
+              | t: { language: language()?.name | t, count: current.count }
+          }}
         }
-      </p>
-      <button
-        pButton
-        type="button"
-        class="start"
-        icon="pi pi-plus"
-        [class.always]="current.kind === 'first'"
-        [label]="
-          current.kind === 'first'
-            ? ('Start a {language} room' | t: { language: language()?.name | t })
-            : ('Start a room' | t)
-        "
-        (click)="start.emit()"
-      ></button>
-    </div>
-    <img ngSrc="illustrations/conversation.svg" width="320" height="200" alt="" priority />
+        @case ('first') {
+          {{
+            'Nobody is practising {language} yet. Be the first.'
+              | t: { language: language()?.name | t }
+          }}
+        }
+        @default {
+          {{ 'Join a conversation to practise a language.' | t }}
+        }
+      }
+    </p>
+    <button
+      pButton
+      type="button"
+      class="start"
+      icon="pi pi-plus"
+      [class.always]="current.kind === 'first'"
+      [label]="
+        current.kind === 'first'
+          ? ('Start a {language} room' | t: { language: language()?.name | t })
+          : ('Start a room' | t)
+      "
+      (click)="start.emit()"
+    ></button>
   </div>
 </p-card>

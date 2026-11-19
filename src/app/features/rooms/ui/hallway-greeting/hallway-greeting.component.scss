@@ -2,17 +2,23 @@
   display: block;
 }
 
-// Small screens first: the words, and the illustration small beside them. From 48rem the illustration grows into the space.
+// The words sit over a picture of the sky for the hour. The picture is its own, so the words' colours are fixed (ink on the light
+// skies, porcelain on the dark ones) and do not follow the theme.
 .banner {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 1rem;
-}
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-block-size: 8.5rem;
+  color: #20251f;
 
-img {
-  inline-size: clamp(4.5rem, 22vw, 15rem);
-  block-size: auto;
+  @media (min-width: 48rem) {
+    min-block-size: 10rem;
+  }
+
+  &.night {
+    color: #f7f5ef;
+  }
 }
 
 h1 {
@@ -27,7 +33,8 @@ h1 {
 
 .lead {
   margin: 0.5rem 0 1rem;
-  color: var(--p-text-muted-color);
+  color: inherit;
+  opacity: 0.85;
 }
 
 // Where there is no sidebar (a phone) this is the way to start a room; with the sidebar it only shows when it has something to say:

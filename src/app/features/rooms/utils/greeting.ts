@@ -19,3 +19,16 @@ export function partOfDay(hour: number): keyof typeof GREETINGS {
   }
   return hour >= 18 && hour < 22 ? 'evening' : 'night';
 }
+
+/** Which sky the banner shows: one for every two hours of the day, and whether it is dark enough to need light words. */
+export interface Scene {
+  /** 0 to 11: the hour divided by two. */
+  readonly slot: number;
+  readonly night: boolean;
+}
+
+/** The sky for an hour, like the weather outside: from midnight in pairs of hours, dark from 8 pm to 6 am. */
+export function sceneFor(hour: number): Scene {
+  const slot = Math.floor((((hour % 24) + 24) % 24) / 2);
+  return { slot, night: slot <= 2 || slot >= 10 };
+}

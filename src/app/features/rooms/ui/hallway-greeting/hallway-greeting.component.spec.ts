@@ -65,12 +65,52 @@ describe('HallwayGreetingComponent (presentational)', () => {
     expect(root().querySelector('#greeting')).not.toBeNull();
   });
 
-  it('has an illustration at its side that says nothing a screen reader needs', async () => {
+  it("has no picture to describe: the sky is the card's own background", async () => {
     await render();
-    const image = root().querySelector('img')!;
 
-    expect(image.getAttribute('src')).toContain('illustrations/conversation.svg');
-    expect(image.getAttribute('alt')).toBe('');
+    expect(root().querySelector('img')).toBeNull();
+  });
+
+  it('shows the sky for the hour, a new one every two hours', async () => {
+    const sky = () => root().querySelector<HTMLElement>('.p-card')?.style.backgroundImage ?? '';
+    await render({ hour: 9 });
+    expect(sky()).toContain('banners/sky-04.svg');
+
+    for (const [hour, file] of [
+      [0, 'sky-00'],
+      [7, 'sky-03'],
+      [13, 'sky-06'],
+      [19, 'sky-09'],
+      [23, 'sky-11'],
+    ] as const) {
+      fixture.componentRef.setInput('hour', hour);
+      await fixture.whenStable();
+      expect(sky(), `at ${hour}:00`).toContain(`banners/${file}.svg`);
+    }
+  });
+
+  it('keeps the same sky through the two hours and changes it on the hour', async () => {
+    const slot = () => root().querySelector('.banner')?.getAttribute('data-sky');
+    await render({ hour: 10 });
+    expect(slot()).toBe('5');
+
+    fixture.componentRef.setInput('hour', 11);
+    await fixture.whenStable();
+    expect(slot()).toBe('5');
+
+    fixture.componentRef.setInput('hour', 12);
+    await fixture.whenStable();
+    expect(slot()).toBe('6');
+  });
+
+  it('puts light words on the dark skies of the night and dark words on the days', async () => {
+    const night = () => root().querySelector('.banner')?.classList.contains('night');
+    await render({ hour: 12 });
+    expect(night()).toBe(false);
+
+    fixture.componentRef.setInput('hour', 22);
+    await fixture.whenStable();
+    expect(night()).toBe(true);
   });
 
   it('says how many open rooms are practising what the person learns', async () => {
