@@ -4,47 +4,51 @@
   </p-menu>
 </nav>
 
-@if (room(); as current) {
-  <app-current-room-card class="go-live" [room]="current" (back)="backToRoom.emit()" />
-} @else {
-  <div class="go-live">
-    <app-live-waves />
-    <p-card [attr.aria-label]="'Go live' | t">
-      <ng-template #title>{{ 'Go live' | t }}</ng-template>
-      <ng-template #subtitle>{{
-        'Start a room and let people practise with you.' | t
-      }}</ng-template>
-      <ng-template #footer>
-        <button
-          pButton
-          type="button"
-          icon="pi pi-plus"
-          [fluid]="true"
-          [label]="'Start a room' | t"
-          (click)="startRoom.emit()"
-        ></button>
-      </ng-template>
-    </p-card>
-  </div>
-}
-
-<button
-  pButton
-  type="button"
-  class="account"
-  severity="secondary"
-  aria-haspopup="dialog"
-  [text]="true"
-  [attr.aria-label]="'Profile and settings' | t"
-  (click)="settings.emit($event)"
->
-  @if (picture(); as image) {
-    <p-avatar shape="circle" size="normal" aria-hidden="true" [image]="image" />
+<div class="foot">
+  @if (room(); as current) {
+    @if (!viewing()) {
+      <app-current-room-card class="go-live" [room]="current" (back)="backToRoom.emit()" />
+    }
   } @else {
-    <p-avatar shape="circle" size="normal" aria-hidden="true" icon="pi pi-user" />
+    <div class="go-live">
+      <app-live-waves />
+      <p-card [attr.aria-label]="'Go live' | t">
+        <ng-template #title>{{ 'Go live' | t }}</ng-template>
+        <ng-template #subtitle>{{
+          'Start a room and let people practise with you.' | t
+        }}</ng-template>
+        <ng-template #footer>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-plus"
+            [fluid]="true"
+            [label]="'Start a room' | t"
+            (click)="startRoom.emit()"
+          ></button>
+        </ng-template>
+      </p-card>
+    </div>
   }
-  <span class="who" aria-hidden="true">
-    <strong>{{ name() }}</strong>
-    <small>{{ languages() }}</small>
-  </span>
-</button>
+
+  <button
+    pButton
+    type="button"
+    class="account"
+    severity="secondary"
+    aria-haspopup="dialog"
+    [text]="true"
+    [attr.aria-label]="'Profile and settings' | t"
+    (click)="settings.emit($event)"
+  >
+    @if (picture(); as image) {
+      <p-avatar shape="circle" size="normal" aria-hidden="true" [image]="image" />
+    } @else {
+      <p-avatar shape="circle" size="normal" aria-hidden="true" icon="pi pi-user" />
+    }
+    <span class="who" aria-hidden="true">
+      <strong>{{ name() }}</strong>
+      <small>{{ languages() }}</small>
+    </span>
+  </button>
+</div>

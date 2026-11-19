@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import RoomListPageComponent from './room-list-page.component';
+import { ActiveRoomService } from '@core/rooms/active-room.service';
 import { RoomStartService } from '@core/rooms/room-start.service';
 import { fakeIdentity } from '@core/auth/auth-testing';
 import { failUntilGivenUp, openFeed } from '../../data-access/room-feed-testing';
@@ -129,6 +130,24 @@ describe('RoomListPageComponent (container)', () => {
     await render(withRooms());
 
     expect(root().querySelector('.counts')).toBeNull();
+  });
+
+  it('does not offer to start a room while the person is in one already', async () => {
+    TestBed.inject(ActiveRoomService).set({
+      id: 'r-9',
+      title: 'Mine',
+      targetLanguage: 'es',
+      nativeLanguage: 'en',
+      hostId: 'm-1',
+      hostName: 'Mona',
+      hostAvatar: '',
+      participantCount: 1,
+      speakers: 1,
+      seats: 6,
+    });
+    await render(withRooms());
+
+    expect(root().querySelector('app-hallway-greeting button.start')).toBeNull();
   });
 
   it('lists every open room under one heading, Active rooms', async () => {

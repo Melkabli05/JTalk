@@ -17,18 +17,20 @@
         }}
       }
     </p>
-    <button
-      pButton
-      type="button"
-      class="start"
-      icon="pi pi-plus"
-      [class.always]="first"
-      [label]="
-        first
-          ? ('Start a {language} room' | t: { language: language.name | t })
-          : ('Start a room' | t)
-      "
-      (click)="start.emit()"
-    ></button>
+    @if (canStart()) {
+      <button
+        pButton
+        type="button"
+        class="start"
+        icon="pi pi-plus"
+        [class.always]="first"
+        [label]="
+          first
+            ? ('Start a {language} room' | t: { language: language.name | t })
+            : ('Start a room' | t)
+        "
+        (click)="start.emit()"
+      ></button>
+    }
   </div>
 </p-card>

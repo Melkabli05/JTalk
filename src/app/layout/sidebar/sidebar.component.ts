@@ -44,6 +44,8 @@ export class SidebarComponent {
 
   /** The room the person is in while they look elsewhere: a card about it then takes the Go live card's place. */
   readonly room = input<CurrentRoom | null>(null);
+  /** The person is looking at that room's own page, so nothing about it (or about starting another room) is offered. */
+  readonly viewing = input(false);
 
   readonly startRoom = output<void>();
   readonly backToRoom = output<void>();

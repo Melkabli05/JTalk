@@ -153,12 +153,12 @@ export class AppShellComponent {
   );
 
   /** The room they are in, while they are somewhere else: the header offers a way back to it. */
-  protected readonly liveRoom = computed(() => {
-    const room = this.activeRoom.room();
-    return room && !(this.url().split(/[?#]/)[0] ?? '').startsWith(`/rooms/${room.id}`)
-      ? room
-      : null;
+  protected readonly inRoom = this.activeRoom.room;
+  protected readonly onRoomPage = computed(() => {
+    const room = this.inRoom();
+    return !!room && (this.url().split(/[?#]/)[0] ?? '').startsWith(`/rooms/${room.id}`);
   });
+  protected readonly liveRoom = computed(() => (this.onRoomPage() ? null : this.inRoom()));
 
   protected readonly breadcrumbs = computed(() => this.translated(this.route().breadcrumbs));
   protected readonly wide = computed(() => this.route().wide);

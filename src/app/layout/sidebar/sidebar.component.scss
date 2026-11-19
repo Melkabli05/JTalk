@@ -14,9 +14,15 @@
   }
 }
 
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-block-start: auto;
+}
+
 .go-live {
   position: relative;
-  margin-block-start: auto;
 }
 
 // The card is above its waves, which ring its border from behind.

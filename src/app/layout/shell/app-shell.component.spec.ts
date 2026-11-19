@@ -223,7 +223,7 @@ describe('AppShellComponent (container)', () => {
       return TestBed.inject(Router);
     }
 
-    it('turns the Go live card into the way back to it on any other page, and not on its own page', async () => {
+    it('turns the Go live card into the way back to it on any other page, and offers nothing on its own page', async () => {
       const router = await renderWithRoutes();
       const active = TestBed.inject(ActiveRoomService);
       expect(card().textContent).toContain('Go live');
@@ -250,7 +250,8 @@ describe('AppShellComponent (container)', () => {
       back().click();
       await fixture.whenStable();
       expect(router.url).toBe('/rooms/r-1');
-      expect(back().textContent).toContain('Start a room');
+      expect(root().querySelector('app-sidebar .go-live')).toBeNull();
+      expect(root().querySelector('app-sidebar')?.textContent).not.toContain('Start a room');
 
       await router.navigateByUrl('/section');
       await fixture.whenStable();

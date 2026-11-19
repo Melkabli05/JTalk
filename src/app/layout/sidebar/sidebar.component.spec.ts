@@ -91,6 +91,15 @@ describe('SidebarComponent (presentational)', () => {
     expect(start).not.toHaveBeenCalled();
   });
 
+  it('offers nothing about rooms while the person is looking at the room they are in', async () => {
+    await render({ room: ROOM, viewing: true });
+
+    expect(root().querySelector('.go-live')).toBeNull();
+    expect(root().textContent).not.toContain('Start a room');
+    expect(root().textContent).not.toContain('Back to the room');
+    expect(root().querySelector('button.account')).not.toBeNull();
+  });
+
   it('is the Go live card again once the room is left', async () => {
     await render({ room: ROOM });
 

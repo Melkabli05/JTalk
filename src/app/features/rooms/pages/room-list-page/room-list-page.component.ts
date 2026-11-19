@@ -4,6 +4,7 @@ import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
+import { ActiveRoomService } from '@core/rooms/active-room.service';
 import { RoomStartService } from '@core/rooms/room-start.service';
 import { ClockService } from '@core/time/clock.service';
 import { I18n } from '@shared/utils/i18n/i18n.service';
@@ -37,6 +38,7 @@ export default class RoomListPageComponent {
   private readonly i18n = inject(I18n);
   private readonly roomStart = inject(RoomStartService);
   protected readonly clock = inject(ClockService);
+  protected readonly inRoom = inject(ActiveRoomService).room;
   protected readonly facade = inject(RoomListFacade);
 
   protected readonly state = this.facade.state;

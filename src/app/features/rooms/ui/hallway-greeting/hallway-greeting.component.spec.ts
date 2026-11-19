@@ -147,6 +147,13 @@ describe('HallwayGreetingComponent (presentational)', () => {
     expect(lead()).toBe('Join a conversation to practise a language.');
   });
 
+  it('does not offer to start a room while the person is in one already', async () => {
+    await render({ rooms: [], learning: 'es', canStart: false });
+
+    expect(root().querySelector('button.start')).toBeNull();
+    expect(root().textContent).toContain('Nobody is practising Spanish yet');
+  });
+
   it('asks to start a room', async () => {
     await render();
     const started = vi.fn();

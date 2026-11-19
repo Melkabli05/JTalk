@@ -4,6 +4,7 @@
     [rooms]="state.shown()"
     [learning]="me()?.learning ?? ''"
     [hour]="clock.hour()"
+    [canStart]="!inRoom()"
     (start)="starting.set(true)"
   />
 

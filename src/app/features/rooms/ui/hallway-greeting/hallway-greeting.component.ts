@@ -19,6 +19,8 @@ export class HallwayGreetingComponent {
   readonly learning = input('');
   /** The hour on the person's clock, 0 to 23. */
   readonly hour = input.required<number>();
+  /** False while the person is in a room already: there is nothing to start. */
+  readonly canStart = input(true);
 
   readonly start = output<void>();
 
