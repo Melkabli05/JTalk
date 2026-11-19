@@ -87,7 +87,7 @@ describe('ChatPanelComponent (presentational)', () => {
 
     it('shows every message to scroll through, how many there are, and a way to open them in the drawer', async () => {
       const expanded: unknown[] = [];
-      await render({ compact: true, framed: true, comments: many });
+      await render({ compact: true, framed: true, expandable: true, comments: many });
       fixture.componentInstance.expand.subscribe((event) => expanded.push(event));
 
       expect([...root().querySelectorAll('.message-item .text')].map((e) => e.textContent)).toEqual(
@@ -98,6 +98,12 @@ describe('ChatPanelComponent (presentational)', () => {
 
       button('Expand')!.click();
       expect(expanded).toHaveLength(1);
+    });
+
+    it('offers no Expand where there is no sheet to open it in', async () => {
+      await render({ compact: true, framed: true, comments: many });
+
+      expect(button('Expand')).toBeUndefined();
     });
 
     it('can still be written in and replied to, but leaves pinning a topic to the full view', async () => {

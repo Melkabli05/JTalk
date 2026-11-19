@@ -82,6 +82,8 @@ export class ChatPanelComponent {
   readonly moderating = input(false);
   readonly reactions = input<ReadonlyMap<string, CommentTally>>(new Map());
   readonly compact = input(false);
+  /** Whether the whole thread can be opened in the sheet (on a phone): the Expand button. */
+  readonly expandable = input(false);
   readonly framed = input(false);
 
   readonly submitted = output<CommentDraft>();

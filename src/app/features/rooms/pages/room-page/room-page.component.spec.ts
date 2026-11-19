@@ -190,7 +190,10 @@ describe('RoomPageComponent (container)', () => {
     });
     http = TestBed.inject(HttpTestingController);
   });
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
 
   it('joins the room and shows what it is, who is on stage and who is listening', async () => {
     await open();
@@ -311,7 +314,19 @@ describe('RoomPageComponent (container)', () => {
     ).toBe('true');
   });
 
-  it('shows the discussion on the page, and Expand moves it into the drawer, never both', async () => {
+  /** Which of the page's screen-size questions are answered yes. */
+  const screen = (...matching: string[]) =>
+    vi.spyOn(BreakpointObserver.prototype, 'observe').mockImplementation((query) =>
+      of({
+        matches: [query].flat().some((q) => matching.includes(q)),
+        breakpoints: {},
+      }),
+    );
+  const PHONE = '(max-width: 40rem)';
+  const BESIDE = '(min-width: 80rem)';
+
+  it('shows the discussion on the page, and on a phone Expand moves it into the sheet, never both', async () => {
+    const observe = screen(PHONE);
     await open();
 
     expect(root().querySelectorAll('app-chat-panel')).toHaveLength(1);
@@ -322,12 +337,22 @@ describe('RoomPageComponent (container)', () => {
 
     expect(document.body.querySelectorAll('app-chat-panel')).toHaveLength(1);
     expect(document.body.querySelector('app-chat-panel section.framed.trimmed')).toBeNull();
+    observe.mockRestore();
+  });
+
+  it('has no drawer at all on a screen wider than a phone: no Expand, no chat button', async () => {
+    const observe = screen();
+    await open();
+
+    expect(root().querySelector('app-chat-panel section.framed.trimmed')).not.toBeNull();
+    expect(root().querySelector('.expand')).toBeNull();
+    expect(controlNames().some((name) => name.startsWith('Chat'))).toBe(false);
+    expect(document.body.querySelector('p-drawer')).toBeNull();
+    observe.mockRestore();
   });
 
   it('puts the discussion in a column beside the room on a wide screen, with no Expand and no chat button', async () => {
-    const observe = vi
-      .spyOn(BreakpointObserver.prototype, 'observe')
-      .mockReturnValue(of({ matches: true, breakpoints: {} }));
+    const observe = screen(BESIDE);
     await open();
 
     const side = root().querySelector('aside.side app-chat-panel');
@@ -339,7 +364,8 @@ describe('RoomPageComponent (container)', () => {
     observe.mockRestore();
   });
 
-  it('titles the drawer with how many are in the room', async () => {
+  it('titles the sheet with how many are in the room', async () => {
+    const observe = screen(PHONE);
     await open();
 
     press('Chat', root().querySelector('app-room-controls')!);
@@ -348,9 +374,11 @@ describe('RoomPageComponent (container)', () => {
     expect(document.body.querySelector('.sheet-title')?.textContent).toMatch(
       /Live Discussion\s+\d+ in room/,
     );
+    observe.mockRestore();
   });
 
   it('opens the chat from the dock, and a comment the person sends appears once the server has kept it', async () => {
+    screen(PHONE);
     await open();
 
     press('Chat', root().querySelector('app-room-controls')!);
@@ -372,6 +400,7 @@ describe('RoomPageComponent (container)', () => {
   });
 
   it('badges the chat button with what others said while it was closed', async () => {
+    screen(PHONE);
     await open();
 
     link.last.listener.chatEvent({

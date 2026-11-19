@@ -58,6 +58,11 @@
   background: var(--p-content-border-color);
 }
 
+// The host's tools are in the header on a wide screen and in the dock on a phone.
+.host-action {
+  display: none;
+}
+
 @container dock (min-width: 30rem) {
   button.hand {
     min-inline-size: 9rem;
@@ -102,7 +107,11 @@ p-toolbar {
       padding: 0;
     }
 
-    button:not(.hand):not(.leave) {
+    .host-action {
+      display: inline-flex;
+    }
+
+    button:not(.hand):not(.leave):not(.room-end) {
       border-color: var(--p-content-border-color);
       background: var(--p-content-background);
       box-shadow: var(--p-jtalk-elevation-1);
@@ -132,8 +141,13 @@ p-toolbar {
       order: 3;
     }
 
-    .hand {
+    .hand,
+    .room-edit {
       order: 4;
+    }
+
+    .room-end {
+      order: 5;
     }
 
     .divider {
@@ -141,7 +155,7 @@ p-toolbar {
     }
 
     .leave {
-      order: 5;
+      order: 6;
     }
   }
 }

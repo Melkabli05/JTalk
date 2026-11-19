@@ -12,7 +12,7 @@
       <p-tag class="count" severity="secondary" [rounded]="true"
         >{{ comments().length }} messages</p-tag
       >
-      @if (compact()) {
+      @if (compact() && expandable()) {
         <button
           pButton
           type="button"

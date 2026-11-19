@@ -162,10 +162,10 @@
         (memberSelected)="selectedId.set($event)"
       />
 
-      @if (!beside() && !chatOpen()) {
+      @if (!beside() && !(phone() && chatOpen())) {
         <ng-container
           [ngTemplateOutlet]="discussion"
-          [ngTemplateOutletContext]="{ compact: true, framed: true }"
+          [ngTemplateOutletContext]="{ compact: true, framed: true, expandable: phone() }"
         />
       }
 
@@ -180,7 +180,10 @@
           [audio]="facade.audio.status()"
           [canSpeak]="facade.audio.canSpeak()"
           [canStepDown]="canStepDownFromDock()"
-          [chatShown]="!beside()"
+          [chatShown]="phone()"
+          [isHost]="state.isHost()"
+          (editRoom)="editing.set(true)"
+          (endRoom)="end()"
           [micOn]="facade.audio.micOn()"
           [micRefused]="facade.audio.micRefused()"
           [soundBlocked]="facade.audio.soundBlocked()"
@@ -252,10 +255,11 @@
   (edited)="edit($event)"
 />
 
-<ng-template #discussion let-compact="compact" let-framed="framed">
+<ng-template #discussion let-compact="compact" let-framed="framed" let-expandable="expandable">
   <app-chat-panel
     [compact]="compact"
     [framed]="framed"
+    [expandable]="expandable"
     (expand)="toggleChat(true)"
     [comments]="chat.comments()"
     [topic]="chat.topic()"
@@ -282,28 +286,30 @@
   />
 </ng-template>
 
-<p-drawer
-  [position]="phone() ? 'bottom' : 'right'"
-  styleClass="chat-drawer"
-  ariaCloseLabel="Close the discussion"
-  [visible]="chatOpen()"
-  [modal]="phone()"
-  [dismissible]="phone()"
-  (visibleChange)="toggleChat($event)"
->
-  <ng-template #header>
-    <div class="sheet-title">
-      <h2>Live Discussion</h2>
-      <span class="sheet-dot" aria-hidden="true"></span>
-      <p-tag severity="secondary" [rounded]="true">
-        {{ state.room()?.participantCount ?? 0 }} in room
-      </p-tag>
-    </div>
-  </ng-template>
-  <ng-container
-    [ngTemplateOutlet]="discussion"
-    [ngTemplateOutletContext]="{ compact: false, framed: false }"
-  />
-</p-drawer>
+@if (phone()) {
+  <p-drawer
+    position="bottom"
+    styleClass="chat-drawer"
+    ariaCloseLabel="Close the discussion"
+    [visible]="chatOpen()"
+    [modal]="true"
+    [dismissible]="true"
+    (visibleChange)="toggleChat($event)"
+  >
+    <ng-template #header>
+      <div class="sheet-title">
+        <h2>Live Discussion</h2>
+        <span class="sheet-dot" aria-hidden="true"></span>
+        <p-tag severity="secondary" [rounded]="true">
+          {{ state.room()?.participantCount ?? 0 }} in room
+        </p-tag>
+      </div>
+    </ng-template>
+    <ng-container
+      [ngTemplateOutlet]="discussion"
+      [ngTemplateOutletContext]="{ compact: false, framed: false }"
+    />
+  </p-drawer>
+}
 
 <p-confirmdialog />
