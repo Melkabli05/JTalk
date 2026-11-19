@@ -288,9 +288,6 @@
     </p-message>
   } @else {
     <form class="composer" [formRoot]="composerForm">
-      @if (error(); as message) {
-        <p-message severity="error" size="small">{{ message }}</p-message>
-      }
       @if (replyingTo(); as original) {
         <p class="replying">
           <span
@@ -323,10 +320,10 @@
           type="submit"
           class="send"
           icon="pi pi-arrow-up"
-          [severity]="side() ? 'primary' : 'secondary'"
+          severity="primary"
           [rounded]="true"
-          [disabled]="submitting()"
-          aria-label="Send"
+          [disabled]="submitting() || !composerValid()"
+          aria-label="Send message"
         ></button>
       </div>
     </form>

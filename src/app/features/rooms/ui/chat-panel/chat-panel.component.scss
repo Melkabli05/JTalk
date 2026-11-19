@@ -421,7 +421,7 @@
 
 .composer {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.375rem;
 }
 
 .replying {
@@ -429,6 +429,7 @@
   align-items: center;
   justify-content: space-between;
   margin: 0;
+  padding: 0 0.5rem;
   color: var(--p-text-muted-color);
   font-size: var(--p-jtalk-type-secondary);
 }
@@ -436,7 +437,7 @@
 .write {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
   padding: 0.375rem 0.375rem 0.375rem 0.75rem;
   border: 1px solid var(--ring);
   border-radius: var(--p-jtalk-radius-pill);
@@ -455,10 +456,23 @@
   }
 
   .send {
-    inline-size: 2rem;
-    block-size: 2rem;
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
     min-block-size: 0;
     padding: 0;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--p-jtalk-brand);
+    color: white;
+
+    &:disabled {
+      opacity: 0.5;
+      background: var(--p-text-muted-color);
+    }
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.1);
+    }
   }
 }
 

@@ -127,6 +127,7 @@ export class ChatPanelComponent {
   private pickingFor: string | null = null;
   /** The column beside the room: messages are bubbles there, and cards under the room and in the sheet. */
   protected readonly side = computed(() => this.framed() && !this.compact());
+  protected readonly composerValid = computed(() => this.composer().content.trim().length > 0);
   protected readonly now = signal(Date.now());
   protected readonly timeAgo = timeAgo;
 
