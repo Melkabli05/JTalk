@@ -71,6 +71,14 @@ export function parseRoomEvent(raw: unknown): RoomUpdate | undefined {
       const reactions = readReactions(event?.['reactions']);
       return reactions.length > 0 ? { type, reactions } : undefined;
     }
+    case 'PARTICIPANT_PROFILE_UPDATED': {
+      const profileUpdate = asRecord(event?.['profileUpdate']);
+      const userId = profileUpdate?.['userId'];
+      const avatarUrl = profileUpdate?.['avatarUrl'];
+      return typeof userId === 'string' && typeof avatarUrl === 'string'
+        ? { type, userId, avatarUrl }
+        : undefined;
+    }
     default:
       return undefined;
   }

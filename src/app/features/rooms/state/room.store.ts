@@ -176,6 +176,9 @@ export class RoomStore {
           (room) => room && { ...room, participantCount: update.participantCount },
         );
         break;
+      case 'PARTICIPANT_PROFILE_UPDATED':
+        this.identity.updateUserAvatar(update.userId, update.avatarUrl);
+        break;
     }
   }
 

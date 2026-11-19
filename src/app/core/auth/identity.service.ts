@@ -95,6 +95,18 @@ export class IdentityService {
     }
   }
 
+  /** Updates a user's avatar in the directory when it changes in a room (real-time update from backend). */
+  updateUserAvatar(userId: string, avatarUrl: string): void {
+    this.others.update((known) => {
+      const updated = new Map(known);
+      const person = updated.get(userId);
+      if (person) {
+        updated.set(userId, { ...person, avatar: avatarUrl });
+      }
+      return updated;
+    });
+  }
+
   /**
    * Creates the profile on the first save, and changes it after that: one request either way, the languages included, so a save either
    * happens whole or not at all (a chosen picture is a second request, after it). The answer is the saved profile, which becomes the one shown (no second round trip to read it back).

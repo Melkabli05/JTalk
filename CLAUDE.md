@@ -2,8 +2,8 @@
 
 Angular 22 starter. Refer to the docs before writing code; do not rely on memory for Angular 22 or Optimus APIs.
 
-- Angular: https://angular.dev (style guide: /style-guide; AI best practices: https://angular.dev/assets/context/best-practices.md)
-- Optimus UI: https://optimus.openng.org/llms/llms.txt (per-component Markdown: /llms/components/<name>.md)
+- Angular: <https://angular.dev> (style guide: /style-guide; AI best practices: <https://angular.dev/assets/context/best-practices.md>)
+- Optimus UI: <https://optimus.openng.org/llms/llms.txt> (per-component Markdown: `/llms/components/<name>.md`)
 - Read installed types (`node_modules/@angular/*/types`, `@openng/*`) when the web docs are thin.
 
 ## Structure (mirrors the project owner's reference tree: keep it exact)
@@ -17,7 +17,7 @@ Angular 22 starter. Refer to the docs before writing code; do not rely on memory
 
 ## Optimus first (standing rule from the owner)
 
-Always prefer an Optimus builtin over building a component. Check https://optimus.openng.org/llms/llms.txt before writing UI, and
+Always prefer an Optimus builtin over building a component. Check <https://optimus.openng.org/llms/llms.txt> before writing UI, and
 only build when nothing fits (say why). Current mapping: header and navigation one `p-menubar` (brand in `#start`, actions in `#end`, inside `<nav aria-label="Primary">`; it collapses to a menu button on phones),
 breadcrumb `p-breadcrumb`, record lists `p-table` with its own paginator (`[paginator]`, `[alwaysShowPaginator]="false"`), `pSortableColumn` + `p-sortIcon`, and a `p-iconfield` search calling `table.filterGlobal` (never hand-rolled paging, sorting or filtering), buttons the **`pButton` directive** (never `<p-button>`: 2.0.2 adds a native
 `autofocus` attribute; link buttons are `<a pButton routerLink>`), status `p-tag`, errors `p-message` (`variant="simple"` for field

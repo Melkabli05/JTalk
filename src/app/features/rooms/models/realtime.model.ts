@@ -36,7 +36,12 @@ export type RoomUpdate =
       /** Who hosts the room now; present when the room was handed over, absent when the host only edited it. */
       readonly hostId?: string;
     }
-  | { readonly type: 'REACTIONS'; readonly reactions: readonly ReactionBurst[] };
+  | { readonly type: 'REACTIONS'; readonly reactions: readonly ReactionBurst[] }
+  | {
+      readonly type: 'PARTICIPANT_PROFILE_UPDATED';
+      readonly userId: string;
+      readonly avatarUrl: string;
+    };
 
 export interface RealtimeConnection {
   readonly setMicrophone: (on: boolean) => Promise<void>;
