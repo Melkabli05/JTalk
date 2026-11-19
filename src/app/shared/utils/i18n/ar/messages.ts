@@ -283,6 +283,7 @@ export const messages: Readonly<Record<string, string>> = {
   'Good afternoon, {name}': 'طاب يومك، {name}',
   'Good evening': 'مساء الخير',
   'Good evening, {name}': 'مساء الخير، {name}',
+  Settings: 'الإعدادات',
   'Active rooms': 'الغرف النشطة',
   'Go live': 'انطلق مباشرًا',
   'Start a room and let people practise with you.': 'ابدأ غرفة ودع الآخرين يتدرّبون معك.',

@@ -35,7 +35,7 @@ describe('AppShellComponent (container)', () => {
 
   const settings = () => document.querySelector<HTMLElement>('.settings');
   async function openAccount() {
-    root().querySelector<HTMLButtonElement>('aside button.me-card')!.click();
+    root().querySelector<HTMLButtonElement>('aside button.account')!.click();
     await vi.waitFor(() => expect(settings()).not.toBeNull());
   }
   const settingsButton = (name: string) =>
@@ -91,7 +91,7 @@ describe('AppShellComponent (container)', () => {
 
   it('shows the app name as a link home, at the top of the sidebar', async () => {
     await render();
-    const brand = root().querySelector<HTMLAnchorElement>('aside a.brand')!;
+    const brand = root().querySelector<HTMLAnchorElement>('a.brand')!;
 
     expect(brand.textContent?.trim()).toBe('Jtalk');
     expect(brand.getAttribute('href')).toBe('/');
@@ -101,7 +101,7 @@ describe('AppShellComponent (container)', () => {
     await render();
 
     expect(root().querySelector('header.bar')).toBeNull();
-    expect(root().querySelector('button.account')).toBeNull();
+    expect(root().querySelector('aside button.account')).not.toBeNull();
     expect(
       [...root().querySelectorAll('button')].map((b) => b.getAttribute('aria-label')),
     ).toContain('Profile and settings');
@@ -150,7 +150,9 @@ describe('AppShellComponent (container)', () => {
 
     expect(document.documentElement.lang).toBe('ar');
     expect(document.documentElement.dir).toBe('rtl');
-    const links = [...root().querySelectorAll('nav a.nav-link')].map((a) => a.textContent?.trim());
+    const links = [...root().querySelectorAll('aside [role="menuitem"] a')].map((a) =>
+      a.textContent?.trim(),
+    );
     expect(links).toEqual(['الغرف', 'الأشخاص', 'الملف الشخصي']);
     expect(root().querySelector('a.skip-link')?.textContent).toContain('تخطَّ');
 
@@ -158,13 +160,15 @@ describe('AppShellComponent (container)', () => {
     await vi.waitFor(() => expect(i18n.locale()).toBe('en'));
     await fixture.whenStable();
     expect(document.documentElement.dir).toBe('ltr');
-    expect(root().querySelector('nav a.nav-link')?.textContent?.trim()).toBe('Rooms');
+    expect(root().querySelector('aside [role="menuitem"] a')?.textContent?.trim()).toBe('Rooms');
   });
 
   it('has a primary navigation landmark with real links', async () => {
     await render();
     const links = [
-      ...root().querySelectorAll<HTMLAnchorElement>('nav[aria-label="Primary"] a.nav-link'),
+      ...root().querySelectorAll<HTMLAnchorElement>(
+        'aside nav[aria-label="Primary"] [role="menuitem"] a',
+      ),
     ];
 
     expect(links.map((a) => a.textContent?.trim())).toEqual(['Rooms', 'People', 'Profile']);
@@ -274,7 +278,7 @@ describe('AppShellComponent (container)', () => {
     const router = TestBed.inject(Router);
     await router.navigateByUrl('/section');
 
-    root().querySelector<HTMLButtonElement>('aside .go-live button.start')!.click();
+    root().querySelector<HTMLButtonElement>('aside .go-live button')!.click();
     await fixture.whenStable();
 
     expect(router.url).toBe('/');
@@ -334,8 +338,8 @@ describe('AppShellComponent routing', () => {
     await harness.fixture.whenStable();
     const root = harness.fixture.nativeElement as HTMLElement;
     const current = () =>
-      [...root.querySelectorAll('nav[aria-label="Primary"] a.nav-link[aria-current="page"]')].map(
-        (a) => a.textContent?.trim(),
+      [...root.querySelectorAll('aside [role="menuitem"] a[aria-current="page"]')].map((a) =>
+        a.textContent?.trim(),
       );
     expect(current()).toEqual(['Rooms']);
 
@@ -348,9 +352,9 @@ describe('AppShellComponent routing', () => {
     const harness = await RouterTestingHarness.create('/section');
     await harness.fixture.whenStable();
     const root = harness.fixture.nativeElement as HTMLElement;
-    const link = [
-      ...root.querySelectorAll<HTMLAnchorElement>('nav[aria-label="Primary"] a.nav-link'),
-    ].find((a) => a.textContent?.includes('Rooms'))!;
+    const link = [...root.querySelectorAll<HTMLAnchorElement>('aside [role="menuitem"] a')].find(
+      (a) => a.textContent?.includes('Rooms'),
+    )!;
 
     link.click();
     await harness.fixture.whenStable();
@@ -367,7 +371,7 @@ describe('AppShellComponent profile gate', () => {
   const page = () => document.body;
   const settings = () => document.querySelector<HTMLElement>('.settings');
   async function openAccount() {
-    root().querySelector<HTMLButtonElement>('aside button.me-card')!.click();
+    root().querySelector<HTMLButtonElement>('aside button.account')!.click();
     await vi.waitFor(() => expect(settings()).not.toBeNull());
   }
   const settingsButton = (name: string) =>
@@ -500,7 +504,7 @@ describe('AppShellComponent profile gate', () => {
   it('shows the picture the person chose on the account card in the sidebar', async () => {
     await render(profile({ avatarUrl: '/avatars/avatar-06.svg' }));
 
-    expect(root().querySelector('aside .me-card img')?.getAttribute('src')).toBe(
+    expect(root().querySelector('aside button.account img')?.getAttribute('src')).toBe(
       'avatars/avatar-06.svg',
     );
   });
@@ -508,8 +512,8 @@ describe('AppShellComponent profile gate', () => {
   it('shows a plain icon on the account card in the sidebar of someone with no picture', async () => {
     await render(profile());
 
-    expect(root().querySelector('aside .me-card img')).toBeNull();
-    expect(root().querySelector('aside .me-card .pi-user')).not.toBeNull();
+    expect(root().querySelector('aside button.account img')).toBeNull();
+    expect(root().querySelector('aside button.account .pi-user')).not.toBeNull();
   });
 
   it('signs out through Auth0, which sends the person back to the app', async () => {
@@ -525,7 +529,7 @@ describe('AppShellComponent profile gate', () => {
   it('names the person on the sidebar card, which opens the same settings', async () => {
     await render(profile({ displayName: 'Mona Hassan' }));
 
-    const card = root().querySelector<HTMLButtonElement>('aside button.me-card')!;
+    const card = root().querySelector<HTMLButtonElement>('aside button.account')!;
     expect(card.textContent).toContain('Mona Hassan');
 
     card.click();

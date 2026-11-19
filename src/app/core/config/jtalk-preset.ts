@@ -247,8 +247,9 @@ export const JtalkPreset = definePreset(Aura, {
         background: 'transparent',
         borderColor: 'transparent',
         borderRadius: '0',
-        padding: '0.75rem 1.5rem',
+        padding: '0.5rem 1rem',
       },
+      item: { padding: '0.5rem', gap: '0.375rem' },
       css: ({ dt }) => `
         .p-menubar {
           flex-wrap: wrap;
@@ -333,7 +334,24 @@ export const JtalkPreset = definePreset(Aura, {
       `,
     },
     menu: {
-      css: () => `
+      // The sidebar's navigation (a menu that is not a popup) sits on the canvas: no box, the page you are on a tonal pill with a Forest icon.
+      item: { borderRadius: radius.control },
+      css: ({ dt }) => `
+        .p-menu:not(.p-menu-overlay) {
+          background: transparent;
+          border-color: transparent;
+          box-shadow: none;
+        }
+        .p-menu:not(.p-menu-overlay) .p-menu-item-link {
+          min-height: 2.75rem;
+        }
+        .p-menu:not(.p-menu-overlay) .p-menu-item-link-active {
+          background: color-mix(in srgb, ${dt('primary.color')} 14%, transparent);
+          font-weight: 650;
+        }
+        .p-menu:not(.p-menu-overlay) .p-menu-item-link-active .p-menu-item-icon {
+          color: ${dt('primary.color')};
+        }
         .p-menu-item-link.danger-item,
         .p-menu-item-link.danger-item .p-menu-item-icon {
           color: var(--p-red-500);

@@ -41,28 +41,29 @@
   z-index: 20;
 }
 
+// The sidebar is the library's own menu, with the Go live card and the account below it; under 64rem a menubar across the top takes its
+// place. Only the layout is ours.
 .rail {
   grid-area: rail;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1rem;
-  padding: 0.5rem t.$gutter;
-  border-block-end: 1px solid var(--p-content-border-color);
-  background: var(--p-content-background);
+  display: none;
 
   @media (min-width: 64rem) {
     position: sticky;
     inset-block-start: 0;
+    display: flex;
     flex-direction: column;
-    flex-wrap: nowrap;
-    align-items: stretch;
-    gap: 0;
+    gap: 1rem;
     block-size: 100dvh;
-    padding: 1.5rem 1rem 1rem;
-    border-block-end: 0;
-    border-inline-end: 1px solid var(--p-content-border-color);
+    padding: 1rem;
     overflow-y: auto;
+  }
+}
+
+.top {
+  grid-area: rail;
+
+  @media (min-width: 64rem) {
+    display: none;
   }
 }
 
@@ -70,7 +71,6 @@
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.25rem 0.5rem;
   font-weight: 700;
   font-size: var(--p-jtalk-type-section);
   color: var(--p-text-color);
@@ -79,162 +79,37 @@
   app-brand-mark {
     font-size: 1rem;
   }
-
-  @media (min-width: 64rem) {
-    margin-block-end: 1.5rem;
-  }
-}
-
-.rail nav {
-  // On a phone the brand and the picture share the first row and the pages take the second.
-  order: 3;
-  inline-size: 100%;
-
-  @media (min-width: 64rem) {
-    order: 0;
-    inline-size: auto;
-  }
-}
-
-.nav {
-  display: flex;
-  gap: 0.25rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-
-  @media (min-width: 64rem) {
-    flex-direction: column;
-  }
-}
-
-// A row of the sidebar: the page you are on is a tonal pill, with Forest on its icon (active means Forest, and nothing else).
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  min-block-size: 2.75rem;
-  padding: 0 0.875rem;
-  border-radius: var(--p-jtalk-radius-control);
-  color: var(--p-text-color);
-  font-weight: 550;
-  text-decoration: none;
-  transition: background-color var(--p-jtalk-motion-fast) ease;
-
-  .pi {
-    color: var(--p-text-muted-color);
-    font-size: 1.125rem;
-  }
-
-  &:hover {
-    background: var(--p-content-hover-background);
-  }
-
-  &[aria-current='page'] {
-    background: var(--p-content-hover-background);
-    font-weight: 700;
-
-    .pi {
-      color: var(--p-jtalk-brand);
-    }
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--p-primary-color);
-    outline-offset: 2px;
-  }
 }
 
 .go-live {
-  display: none;
-  margin-block: auto 1rem;
-  padding: 1.25rem 1rem 1rem;
-  border-radius: var(--p-jtalk-radius-panel);
-  background: var(--p-content-hover-background);
-
-  @media (min-width: 64rem) {
-    display: block;
-  }
-
-  .art {
-    color: var(--p-jtalk-brand);
-
-    .spark {
-      color: var(--p-jtalk-moderator);
-      stroke: var(--p-jtalk-moderator);
-    }
-  }
-
-  h2 {
-    margin: 0.75rem 0 0.25rem;
-    font-size: var(--p-jtalk-type-card);
-  }
-
-  p {
-    margin: 0 0 1rem;
-    color: var(--p-text-muted-color);
-    font-size: var(--p-jtalk-type-secondary);
-  }
-
-  .start {
-    inline-size: 100%;
-  }
+  margin-block-start: auto;
 }
 
-.me-card {
-  display: flex;
-  align-items: center;
+.account {
+  justify-content: flex-start;
   gap: 0.75rem;
-  margin-inline-start: auto;
-  padding: 0.25rem;
-  border: 0;
-  border-radius: var(--p-jtalk-radius-control);
-  background: none;
-  color: inherit;
-  font: inherit;
   text-align: start;
-  cursor: pointer;
 
-  @media (min-width: 64rem) {
-    margin-inline-start: 0;
-    padding: 0.5rem;
-  }
-
-  &:hover {
-    background: var(--p-content-hover-background);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--p-primary-color);
-    outline-offset: 2px;
-  }
-
-  // Under the sidebar's width the card is just the picture, at the end of the top row.
   .who {
     display: none;
-    flex: 1;
     flex-direction: column;
     min-inline-size: 0;
 
     @media (min-width: 64rem) {
       display: flex;
     }
-
-    strong {
-      overflow: hidden;
-      font-size: var(--p-jtalk-type-secondary);
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
   }
 
-  .chevron {
-    display: none;
-    color: var(--p-text-muted-color);
+  strong,
+  small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-    @media (min-width: 64rem) {
-      display: inline;
-    }
+  small {
+    color: var(--p-text-muted-color);
+    font-weight: 400;
   }
 }
 

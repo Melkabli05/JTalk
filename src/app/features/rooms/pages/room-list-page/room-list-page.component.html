@@ -1,15 +1,13 @@
 <div class="page">
-  <section class="hero" aria-labelledby="greeting">
-    <div class="words">
+  <p-card class="hero" role="region" aria-labelledby="greeting">
+    <ng-template #title>
       <h1 id="greeting">{{ greeting() | t: { name: firstName() } }}</h1>
-      <p class="lead">{{ 'Join a conversation to practise a language.' | t }}</p>
-      @if (state.languages().length > 1) {
-        <app-language-filter
-          class="filter"
-          [languages]="state.languages()"
-          [(selected)]="state.filter"
-        />
-      }
+    </ng-template>
+    <ng-template #subtitle>{{ 'Join a conversation to practise a language.' | t }}</ng-template>
+    @if (state.languages().length > 1) {
+      <app-language-filter [languages]="state.languages()" [(selected)]="state.filter" />
+    }
+    <ng-template #footer>
       <button
         pButton
         type="button"
@@ -18,16 +16,8 @@
         [label]="'Start a room' | t"
         (click)="starting.set(true)"
       ></button>
-    </div>
-    <div class="art" aria-hidden="true">
-      <span class="disc big"></span>
-      <span class="disc small"></span>
-      <span class="disc ring"></span>
-      <span class="tick one"></span>
-      <span class="tick two"></span>
-      <span class="tick three"></span>
-    </div>
-  </section>
+    </ng-template>
+  </p-card>
 
   @if (state.rooms()) {
     <p class="cdk-visually-hidden" role="status">

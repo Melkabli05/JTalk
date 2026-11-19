@@ -1,4 +1,5 @@
-import { Component, computed, inject } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, computed, inject, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   ActivatedRouteSnapshot,
@@ -9,6 +10,9 @@ import {
 } from '@angular/router';
 import { MenuItem } from '@openng/optimus-ui/api';
 import { Breadcrumb } from '@openng/optimus-ui/breadcrumb';
+import { Card } from '@openng/optimus-ui/card';
+import { Menu } from '@openng/optimus-ui/menu';
+import { Menubar } from '@openng/optimus-ui/menubar';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { ProgressBar } from '@openng/optimus-ui/progressbar';
 import { filter, map } from 'rxjs';
@@ -37,11 +41,16 @@ import { Popover } from '@openng/optimus-ui/popover';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { ToggleSwitch } from '@openng/optimus-ui/toggleswitch';
 
-const NAV_ITEMS = [
-  { route: '/', icon: 'pi pi-microphone', label: msg('Rooms') },
-  { route: '/people', icon: 'pi pi-users', label: msg('People') },
-  { route: '/profile', icon: 'pi pi-user', label: msg('Profile') },
-] as const;
+const NAV_ITEMS: MenuItem[] = [
+  {
+    label: msg('Rooms'),
+    icon: 'pi pi-microphone',
+    routerLink: '/',
+    routerLinkActiveOptions: { exact: true },
+  },
+  { label: msg('People'), icon: 'pi pi-users', routerLink: '/people' },
+  { label: msg('Profile'), icon: 'pi pi-user', routerLink: '/profile' },
+];
 
 function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wide: boolean } {
   const breadcrumbs: MenuItem[] = [];
@@ -65,7 +74,11 @@ function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wid
   selector: 'app-shell',
   imports: [
     Avatar,
+    Card,
     FormsModule,
+    Menu,
+    Menubar,
+    NgTemplateOutlet,
     InitialsPipe,
     Popover,
     ProfileDialogComponent,
@@ -104,7 +117,21 @@ export class AppShellComponent {
     const me = this.identity.profile();
     return me ? `${languageOf(me.nativeLanguage).flag} → ${languageOf(me.learning).flag}` : '';
   });
-  protected readonly navItems = NAV_ITEMS;
+  protected readonly navItems = computed(() => this.translated(NAV_ITEMS));
+  // Across the top (a phone) the words are enough, with no icons, so four fit on one row; there is no account card there, so the
+  // settings are one more item.
+  protected readonly topItems = computed(() =>
+    [
+      ...this.navItems(),
+      ...this.translated([
+        {
+          label: msg('Settings'),
+          command: ({ originalEvent }) => this.settings().toggle(originalEvent),
+        },
+      ]),
+    ].map((item) => ({ ...item, icon: undefined })),
+  );
+  private readonly settings = viewChild.required(Popover);
 
   protected readonly navigating = computed(() => !!this.router.currentNavigation());
 

@@ -8,59 +8,23 @@
   />
 }
 
-<aside class="rail">
+<ng-template #brand>
   <a class="brand" routerLink="/">
     <app-brand-mark />
     {{ appName | t }}
   </a>
+</ng-template>
 
-  <nav [attr.aria-label]="'Primary' | t" appAriaCurrent>
-    <ul class="nav">
-      @for (item of navItems; track item.route) {
-        <li>
-          <a class="nav-link" [routerLink]="item.route">
-            <i [class]="item.icon" aria-hidden="true"></i>
-            <span>{{ item.label | t }}</span>
-          </a>
-        </li>
-      }
-    </ul>
-  </nav>
-
-  <section class="go-live" [attr.aria-label]="'Go live' | t">
-    <svg
-      class="art"
-      viewBox="0 0 64 64"
-      width="56"
-      height="56"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="3"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="24" y="8" width="16" height="28" rx="8" />
-      <path d="M16 30c0 9 7 16 16 16s16-7 16-16M32 46v10M24 56h16" />
-      <path class="spark" d="M12 14l4 4M52 14l-4 4M8 24h5M51 24h5" />
-    </svg>
-    <h2>{{ 'Go live' | t }}</h2>
-    <p>{{ 'Start a room and let people practise with you.' | t }}</p>
-    <button
-      pButton
-      type="button"
-      class="start"
-      [label]="'Start a room' | t"
-      (click)="startRoom()"
-    ></button>
-  </section>
-
+<ng-template #account>
   <button
+    pButton
     type="button"
-    class="me-card"
+    class="account"
+    severity="secondary"
     aria-haspopup="dialog"
+    [text]="true"
     [attr.aria-label]="'Profile and settings' | t"
-    (click)="account.toggle($event)"
+    (click)="settings.toggle($event)"
   >
     @if (myPicture(); as picture) {
       <p-avatar shape="circle" size="large" aria-hidden="true" [image]="picture" />
@@ -69,11 +33,39 @@
     }
     <span class="who" aria-hidden="true">
       <strong>{{ identity.profile()?.name }}</strong>
-      <span class="muted">{{ myLanguages() }}</span>
+      <small>{{ myLanguages() }}</small>
     </span>
-    <i class="pi pi-angle-right chevron" aria-hidden="true"></i>
   </button>
+</ng-template>
+
+<aside class="rail">
+  <nav [attr.aria-label]="'Primary' | t" appAriaCurrent>
+    <p-menu [model]="navItems()" [ariaLabel]="'Primary' | t">
+      <ng-template #start><ng-container [ngTemplateOutlet]="brand" /></ng-template>
+    </p-menu>
+  </nav>
+  <p-card class="go-live" [attr.aria-label]="'Go live' | t">
+    <ng-template #title>{{ 'Go live' | t }}</ng-template>
+    <ng-template #subtitle>{{ 'Start a room and let people practise with you.' | t }}</ng-template>
+    <ng-template #footer>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-plus"
+        [fluid]="true"
+        [label]="'Start a room' | t"
+        (click)="startRoom()"
+      ></button>
+    </ng-template>
+  </p-card>
+  <ng-container [ngTemplateOutlet]="account" />
 </aside>
+
+<nav class="top" [attr.aria-label]="'Primary' | t" appAriaCurrent>
+  <p-menubar breakpoint="0px" [model]="topItems()" [ariaLabel]="'Primary' | t">
+    <ng-template #start><ng-container [ngTemplateOutlet]="brand" /></ng-template>
+  </p-menubar>
+</nav>
 
 @if (liveRoom(); as live) {
   <header class="bar">
@@ -96,7 +88,7 @@
   </header>
 }
 
-<p-popover #account appendTo="body" [ariaLabel]="'Profile and settings' | t">
+<p-popover #settings appendTo="body" [ariaLabel]="'Profile and settings' | t">
   <div class="settings">
     @if (identity.profile(); as me) {
       <div class="me">
@@ -117,7 +109,7 @@
           severity="secondary"
           [outlined]="true"
           [label]="'Your profile' | t"
-          (click)="account.hide()"
+          (click)="settings.hide()"
         ></a>
       </div>
     }
@@ -147,7 +139,7 @@
       severity="secondary"
       [outlined]="true"
       [label]="'Sign out' | t"
-      (click)="account.hide(); signOut()"
+      (click)="settings.hide(); signOut()"
     ></button>
   </div>
 </p-popover>

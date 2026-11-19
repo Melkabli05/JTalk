@@ -2,132 +2,21 @@
   max-inline-size: 76rem;
 }
 
-// The greeting: a tonal panel with the words on one side and a few shapes on the other.
 .hero {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  overflow: hidden;
   margin-block-end: 2rem;
-  padding: 1.75rem 2rem;
-  border-radius: var(--p-jtalk-radius-panel);
-  background: var(--p-content-hover-background);
-
-  @media (max-width: 40rem) {
-    padding: 1.25rem;
-  }
-}
-
-.words {
-  position: relative;
-  z-index: 1;
-  min-inline-size: 0;
 }
 
 h1 {
   margin: 0;
   font-size: var(--p-jtalk-type-hero);
-  font-weight: 700;
   line-height: 1.15;
-  text-wrap: balance;
-
-  @media (max-width: 40rem) {
-    font-size: var(--p-jtalk-type-title);
-  }
 }
 
-.lead {
-  margin: 0.5rem 0 1rem;
-  max-inline-size: 28rem;
-  color: var(--p-text-muted-color);
-}
-
-.filter {
-  display: block;
-  overflow-x: auto;
-}
-
-// On a phone the sidebar's Go live card is not there, so the hero carries the way to start a room.
+// On a phone the sidebar's Go live card is not there, so the greeting carries the way to start a room.
 .start {
-  margin-block-start: 1rem;
-
   @media (min-width: 64rem) {
     display: none;
   }
-}
-
-// Decoration: one Forest disc with two lighter ones behind it and three ticks, like a sound just made. Nothing moves.
-.art {
-  position: relative;
-  flex: none;
-  inline-size: 15rem;
-  block-size: 9rem;
-
-  @media (max-width: 48rem) {
-    display: none;
-  }
-}
-
-.disc {
-  position: absolute;
-  border-radius: 50%;
-
-  &.big {
-    inset-block-start: 0.5rem;
-    inset-inline-end: 3rem;
-    inline-size: 6.5rem;
-    block-size: 6.5rem;
-    background: var(--p-jtalk-brand);
-  }
-
-  &.small {
-    inset-block-end: 0;
-    inset-inline-end: 0;
-    inline-size: 4.5rem;
-    block-size: 4.5rem;
-    background: color-mix(in srgb, var(--p-jtalk-brand) 22%, transparent);
-  }
-
-  &.ring {
-    inset-block-end: 0.25rem;
-    inset-inline-end: 8.5rem;
-    inline-size: 5rem;
-    block-size: 5rem;
-    border: 2px solid color-mix(in srgb, var(--p-jtalk-brand) 40%, transparent);
-  }
-}
-
-.tick {
-  position: absolute;
-  inline-size: 0.25rem;
-  block-size: 1.25rem;
-  border-radius: 999px;
-  background: var(--p-jtalk-moderator);
-
-  &.one {
-    inset-block-start: 0;
-    inset-inline-end: 1.5rem;
-    rotate: 20deg;
-  }
-
-  &.two {
-    inset-block-start: 0.75rem;
-    inset-inline-end: 0;
-    rotate: 70deg;
-  }
-
-  &.three {
-    inset-block-start: 0;
-    inset-inline-end: 4rem;
-    rotate: -25deg;
-    background: var(--p-jtalk-danger);
-  }
-}
-
-.group {
-  margin-block-end: 2rem;
 }
 
 .group h2 {
