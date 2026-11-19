@@ -1,4 +1,6 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { AudienceGridComponent } from './audience-grid.component';
 import type { Person } from '@core/auth/identity.models';
 
@@ -30,6 +32,18 @@ describe('AudienceGridComponent (presentational)', () => {
     expect(
       [...root().querySelectorAll('.person')].map((p) => p.getAttribute('aria-label')),
     ).toEqual(['Ada (you), Listener', 'Bob, Listener']);
+  });
+
+  it('shows faces only: each name is a tooltip and a spoken label, not text on the page', async () => {
+    await render();
+
+    expect(root().querySelector('.name')).toBeNull();
+    expect(root().textContent).not.toContain('Ada');
+    expect(
+      fixture.debugElement
+        .queryAll(By.directive(Tooltip))
+        .map((el) => el.injector.get(Tooltip).content),
+    ).toEqual(['Ada', 'Bob']);
   });
 
   it('gives the host a menu only on the people it has actions for', async () => {

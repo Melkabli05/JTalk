@@ -9,60 +9,66 @@
   ></a>
 } @else if (state.joined() && state.ready() && state.room(); as current) {
   <div class="room">
-    <header class="hero">
-      <div class="top">
-        <a
+    <header class="top">
+      <a
+        pButton
+        routerLink="/"
+        class="back"
+        icon="pi pi-arrow-left"
+        severity="secondary"
+        [rounded]="true"
+        [text]="true"
+        [attr.aria-label]="'Back to the rooms' | t"
+        [pTooltip]="'Back to the rooms' | t"
+      ></a>
+      <p class="live">
+        <span class="dot" aria-hidden="true"></span>
+        <span>{{ 'Live' | t }}</span>
+      </p>
+      <div class="actions">
+        @let shareLabel = 'Share' | t;
+        <button
           pButton
-          routerLink="/"
-          class="back"
-          icon="pi pi-arrow-left"
+          type="button"
+          icon="pi pi-share-alt"
           severity="secondary"
           [rounded]="true"
-          [text]="true"
-          [attr.aria-label]="'Back to the rooms' | t"
-          [pTooltip]="'Back to the rooms' | t"
-        ></a>
-        <p class="live">
-          <span class="dot" aria-hidden="true"></span>
-          <span>{{ 'Live' | t }}</span>
-          <span aria-hidden="true">·</span>
-          <span>{{ '{count} in the room' | t: { count: current.participantCount } }}</span>
-        </p>
+          [outlined]="true"
+          [label]="shareLabel"
+          (click)="share()"
+        ></button>
         @if (state.isHost()) {
           <div class="host-tools" role="group" [attr.aria-label]="'Host controls' | t">
             @let editLabel = 'Edit the room' | t;
-            <div class="host-tool">
-              <button
-                pButton
-                type="button"
-                icon="pi pi-pencil"
-                severity="warn"
-                [rounded]="true"
-                [outlined]="true"
-                [attr.aria-label]="editLabel"
-                [pTooltip]="editLabel"
-                (click)="editing.set(true)"
-              ></button>
-              <span class="caption" aria-hidden="true">{{ 'Edit' | t }}</span>
-            </div>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-pencil"
+              severity="secondary"
+              [rounded]="true"
+              [outlined]="true"
+              [attr.aria-label]="editLabel"
+              [pTooltip]="editLabel"
+              (click)="editing.set(true)"
+            ></button>
             @let endLabel = 'End the room' | t;
-            <div class="host-tool">
-              <button
-                pButton
-                type="button"
-                icon="pi pi-stop-circle"
-                severity="danger"
-                [rounded]="true"
-                [outlined]="true"
-                [attr.aria-label]="endLabel"
-                [pTooltip]="endLabel"
-                (click)="end()"
-              ></button>
-              <span class="caption" aria-hidden="true">{{ 'End' | t }}</span>
-            </div>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-stop-circle"
+              severity="danger"
+              [rounded]="true"
+              [outlined]="true"
+              [attr.aria-label]="endLabel"
+              [pTooltip]="endLabel"
+              (click)="end()"
+            ></button>
           </div>
         }
       </div>
+    </header>
+
+    <section class="hero">
       <h1 #heading tabindex="-1">{{ current.title }}</h1>
       @if (current.topic) {
         <p class="topic">{{ current.topic }}</p>
@@ -75,12 +81,27 @@
         <span aria-hidden="true">·</span>
         {{ 'Hosted by {name}' | t: { name: host().name } }}
       </p>
-    </header>
+      <div class="stats">
+        @let hands = 'Raised hands' | t;
+        @let onStage = 'On stage' | t;
+        @let seats = `${state.speakers().length}/${current.maxStageSeats}`;
+        <span
+          role="img"
+          [attr.aria-label]="'{count} in the room' | t: { count: current.participantCount }"
+        >
+          <p-chip aria-hidden="true" icon="pi pi-users" [label]="`${current.participantCount}`" />
+        </span>
+        <span role="img" [attr.aria-label]="`${hands}: ${current.handRaiseCount}`">
+          <p-chip aria-hidden="true" icon="pi pi-hand" [label]="`${current.handRaiseCount}`" />
+        </span>
+        <span role="img" [attr.aria-label]="`${onStage} ${seats}`">
+          <p-chip aria-hidden="true" icon="pi pi-microphone" [label]="seats" />
+        </span>
+      </div>
+    </section>
 
     <section class="stage" aria-labelledby="stage-heading">
-      <h2 id="stage-heading" class="cdk-visually-hidden">
-        {{ 'On stage' | t }} {{ state.speakers().length }}/{{ current.maxStageSeats }}
-      </h2>
+      <h2 id="stage-heading" class="section-head">{{ 'On stage' | t }}</h2>
       <app-stage-seats
         [speakers]="state.speakers()"
         [seats]="current.maxStageSeats"
@@ -97,34 +118,33 @@
       />
     </section>
 
-    <div class="side">
-      @if (state.isHost() && state.queue().length > 0) {
-        <p-card class="requests" role="group" aria-labelledby="hands-heading">
-          <ng-template #title>
-            <h2 id="hands-heading">
-              {{ 'Raised hands' | t }}
-              <p-badge severity="secondary" [value]="state.queue().length" />
-            </h2>
-          </ng-template>
-          <app-raised-hands
-            [ids]="state.queue()"
-            [members]="state.members()"
-            [canInvite]="state.isHost() && seatFree()"
-            (invited)="invite($event)"
-          />
-        </p-card>
-      }
-      <app-audience-section
-        [collapsible]="!wide()"
-        [ids]="state.audience()"
-        [members]="state.members()"
-        [meId]="state.meId()"
-        [reconnecting]="state.reconnecting()"
-        [reactions]="state.reactionsByPerson()"
-        [moderation]="moderation()"
-        (memberSelected)="selectedId.set($event)"
-      />
-    </div>
+    @if (state.isHost() && state.queue().length > 0) {
+      <p-card class="requests" role="group" aria-labelledby="hands-heading">
+        <ng-template #title>
+          <h2 id="hands-heading">
+            {{ 'Raised hands' | t }}
+            <p-badge severity="secondary" [value]="state.queue().length" />
+          </h2>
+        </ng-template>
+        <app-raised-hands
+          [ids]="state.queue()"
+          [members]="state.members()"
+          [canInvite]="state.isHost() && seatFree()"
+          (invited)="invite($event)"
+        />
+      </p-card>
+    }
+
+    <app-audience-section
+      [collapsible]="!wide()"
+      [ids]="state.audience()"
+      [members]="state.members()"
+      [meId]="state.meId()"
+      [reconnecting]="state.reconnecting()"
+      [reactions]="state.reactionsByPerson()"
+      [moderation]="moderation()"
+      (memberSelected)="selectedId.set($event)"
+    />
 
     <div class="dock">
       @if (facade.action.error(); as failure) {

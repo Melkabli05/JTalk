@@ -209,6 +209,31 @@ describe('RoomPageComponent (container)', () => {
     expect(root().querySelector('app-raised-hands')).toBeNull();
   });
 
+  it('shows the room centred: its title and topic, and three counts, each read in words', async () => {
+    await open();
+    const chips = [...root().querySelectorAll('.stats [role="img"]')];
+
+    expect(chips).toHaveLength(3);
+    expect(chips.map((c) => c.getAttribute('aria-label'))).toEqual([
+      expect.stringMatching(/in the room$/),
+      expect.stringMatching(/^Raised hands: \d+$/),
+      expect.stringMatching(/^On stage \d+\/\d+$/),
+    ]);
+  });
+
+  it('copies the address of the room when Share is pressed, and says so', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const toast = vi.spyOn(TestBed.inject(MessageService), 'add');
+    await open();
+
+    press('Share', root().querySelector('header')!);
+    await settle();
+
+    expect(writeText).toHaveBeenCalledWith(`${location.origin}/rooms/r-1`);
+    expect(toast).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Link copied.' }));
+  });
+
   it('moves focus to the room title once it has opened, so screen readers announce it', async () => {
     await open();
 
@@ -234,7 +259,7 @@ describe('RoomPageComponent (container)', () => {
       h.textContent?.replace(/\s+/g, ' ').trim(),
     );
     expect(headings).toHaveLength(2);
-    expect(headings[0]).toBe('On stage 1/4');
+    expect(headings[0]).toBe('On stage');
     expect(headings[1]).toContain('Listeners');
     expect(root().querySelectorAll('section[aria-labelledby]')).toHaveLength(1);
     expect(root().querySelectorAll('p-card[aria-labelledby]')).toHaveLength(0);
@@ -320,7 +345,7 @@ describe('RoomPageComponent (container)', () => {
       await open();
       await openAudience();
       [...root().querySelectorAll<HTMLButtonElement>('app-audience-grid .person')]
-        .find((person) => person.textContent?.includes('b-1'))!
+        .find((person) => person.getAttribute('aria-label')?.includes('b-1'))!
         .click();
       await settle(BILAL);
     }
@@ -542,7 +567,7 @@ describe('RoomPageComponent (container)', () => {
       await open(asHost);
       await openAudience();
       [...root().querySelectorAll<HTMLButtonElement>('app-audience-grid .person')]
-        .find((p) => p.textContent?.includes('b-1'))!
+        .find((p) => p.getAttribute('aria-label')?.includes('b-1'))!
         .click();
       await settle();
 

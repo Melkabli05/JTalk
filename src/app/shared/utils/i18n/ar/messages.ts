@@ -253,8 +253,6 @@ export const messages: Readonly<Record<string, string>> = {
   'On mic': 'الميكروفون مفتوح',
   'Back to the room': 'العودة إلى الغرفة',
   'You are in a room': 'أنت في غرفة',
-  Edit: 'تعديل',
-  End: 'إنهاء',
   'Delete your account': 'حذف حسابك',
   'Remove your profile and everything that goes with it. This cannot be undone.':
     'احذف ملفّك الشخصي وكل ما يتبعه. لا يمكن التراجع عن ذلك.',
@@ -292,6 +290,9 @@ export const messages: Readonly<Record<string, string>> = {
   'Rooms practising {language}: {count}': 'الغرف التي تتدرّب على {language}: {count}',
   'Nobody is practising {language} yet. Be the first.':
     'لا أحد يتدرّب على {language} بعد. كن الأول.',
+  Share: 'مشاركة',
+  'Link copied.': 'تم نسخ الرابط.',
+  'Could not copy the link.': 'تعذّر نسخ الرابط.',
   Settings: 'الإعدادات',
   'Active rooms': 'الغرف النشطة',
   'Go live': 'انطلق مباشرًا',

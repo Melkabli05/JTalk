@@ -1,4 +1,5 @@
 import { LiveAnnouncer } from '@angular/cdk/a11y';
+import { DOCUMENT } from '@angular/common';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
   Component,
@@ -21,6 +22,7 @@ import { Card } from '@openng/optimus-ui/card';
 import { ConfirmDialog } from '@openng/optimus-ui/confirmdialog';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
+import { Chip } from '@openng/optimus-ui/chip';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { PersonCardService } from '@core/people/person-card.service';
@@ -53,6 +55,7 @@ import { roomLook } from '../../utils/room-look';
     RouterLink,
     Skeleton,
     StageSeatsComponent,
+    Chip,
     Tooltip,
     TranslatePipe,
   ],
@@ -69,6 +72,7 @@ export default class RoomPageComponent {
   private readonly i18n = inject(I18n);
   private readonly announcer = inject(LiveAnnouncer);
   private readonly breakpoints = inject(BreakpointObserver);
+  private readonly document = inject(DOCUMENT);
   protected readonly locale = this.i18n.locale;
   private focused = false;
   private previous: Stage | null = null;
@@ -197,6 +201,14 @@ export default class RoomPageComponent {
       }
     });
     this.facade.exited.pipe(takeUntilDestroyed()).subscribe(() => this.leaveBecause());
+  }
+
+  protected share(): void {
+    const link = new URL(`/rooms/${this.id()}`, this.document.location.origin).href;
+    void this.document.defaultView?.navigator.clipboard.writeText(link).then(
+      () => this.toast.add({ severity: 'success', summary: this.i18n.t('Link copied.') }),
+      () => this.toast.add({ severity: 'warn', summary: this.i18n.t('Could not copy the link.') }),
+    );
   }
 
   protected leave(): void {

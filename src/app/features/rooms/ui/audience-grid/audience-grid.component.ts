@@ -1,6 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 import type { MenuItem } from '@openng/optimus-ui/api';
 import { Tag } from '@openng/optimus-ui/tag';
+import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 import { memberOf } from '../../utils/members';
@@ -11,7 +12,7 @@ import type { FloatingReaction } from '../../models/reaction.model';
 
 @Component({
   selector: 'app-audience-grid',
-  imports: [ModerationMenuComponent, PersonAvatarComponent, Tag, TranslatePipe],
+  imports: [ModerationMenuComponent, PersonAvatarComponent, Tag, Tooltip, TranslatePipe],
   template: `
     <ul class="audience" [attr.aria-label]="'In the audience' | t">
       @for (person of people(); track person.member.id) {
@@ -29,11 +30,13 @@ import type { FloatingReaction } from '../../models/reaction.model';
               "
               (click)="memberSelected.emit(person.member.id)"
             >
-              <app-person-avatar [member]="person.member" [reaction]="person.reaction" />
-              <span class="name" aria-hidden="true">{{ person.member.name }}</span>
-              @if (person.me) {
-                <p-tag severity="info" aria-hidden="true" [value]="'You' | t" />
-              }
+              <app-person-avatar
+                size="large"
+                tooltipPosition="top"
+                [member]="person.member"
+                [reaction]="person.reaction"
+                [pTooltip]="person.member.name"
+              />
               @if (person.reconnecting) {
                 <p-tag severity="secondary" icon="pi pi-sync" [value]="'Reconnecting' | t" />
               }

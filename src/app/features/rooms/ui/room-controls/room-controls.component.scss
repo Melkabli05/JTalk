@@ -63,11 +63,6 @@ button.hand {
   justify-content: center;
 }
 
-// Leaving is a soft terracotta, not a filled danger: it is the way out, not a warning.
-button.leave:enabled {
-  background: color-mix(in srgb, var(--p-jtalk-danger) 8%, transparent);
-}
-
 .reactions {
   display: grid;
   grid-template-columns: repeat(5, 3rem);

@@ -40,6 +40,23 @@ describe('StageSeatsComponent (presentational)', () => {
     expect(people[1].textContent).toContain('You');
   });
 
+  it('marks the host with a Host tag, not a crown', async () => {
+    await render();
+
+    expect(root().querySelectorAll('p-tag')).toHaveLength(1);
+    expect(root().querySelector('p-tag')?.textContent).toContain('Host');
+    expect(root().querySelector('.pi-crown')).toBeNull();
+  });
+
+  it('puts a microphone on every speaker: open, or crossed out while muted', async () => {
+    await render({ muted: ['s-2'] });
+    const badges = [...root().querySelectorAll('.person .mic')];
+
+    expect(badges).toHaveLength(2);
+    expect(badges.map((b) => b.classList.contains('off'))).toEqual([false, true]);
+    expect(badges[1]?.querySelector('.pi-slashed')).not.toBeNull();
+  });
+
   it('gives the host a menu on the seats it is given actions for, with no button of its own', async () => {
     await render({ moderation: new Map([['s-2', [{ label: 'Mute' }]]]) });
     const seat = () => root().querySelectorAll<HTMLElement>('app-moderation-menu .person')[1];
