@@ -75,6 +75,7 @@ export class ChatPanelComponent {
   readonly mutedUsers = input<readonly string[]>([]);
   readonly members = input.required<ReadonlyMap<string, Person>>();
   readonly meId = input<string | null>(null);
+  readonly hostId = input<string | null>(null);
   readonly isHost = input(false);
   readonly submitting = input(false);
   readonly error = input<string | null>(null);

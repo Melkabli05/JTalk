@@ -100,11 +100,21 @@
         (scroll)="scrolled()"
       >
         @for (comment of comments(); track comment.id) {
-          <li class="message-item">
+          <li
+            class="message-item"
+            [class.host]="comment.authorId === hostId()"
+            [class.mine]="comment.authorId === meId()"
+          >
             <app-person-avatar size="normal" [member]="personOf(comment.authorId)" />
             <div class="body">
               <p class="meta">
                 <span class="author">{{ nameOf(comment.authorId) }}</span>
+                @if (comment.authorId === hostId()) {
+                  <span class="badge">Host</span>
+                }
+                @if (comment.authorId === meId()) {
+                  <span class="badge">You</span>
+                }
                 @if (muteIds().has(comment.authorId)) {
                   <span class="tag">Muted</span>
                 }

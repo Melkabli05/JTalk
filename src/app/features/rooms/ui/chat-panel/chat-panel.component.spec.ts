@@ -186,6 +186,24 @@ describe('ChatPanelComponent (presentational)', () => {
     expect(root().querySelector('section.cards')).toBeNull();
   });
 
+  it('marks the host’s messages and the reader’s own', async () => {
+    await render({
+      hostId: 'b-1',
+      comments: [
+        comment('c-1', 'b-1', 'Welcome'),
+        comment('c-2', 'm-1', 'Hola'),
+        comment('c-3', 'x-1', 'Hi'),
+      ],
+    });
+
+    const badges = [...root().querySelectorAll('.message-item')].map((item) =>
+      item.querySelector('.badge')?.textContent?.trim(),
+    );
+    expect(badges).toEqual(['Host', 'You', undefined]);
+    expect(root().querySelectorAll('.message-item.host')).toHaveLength(1);
+    expect(root().querySelectorAll('.message-item.mine')).toHaveLength(1);
+  });
+
   it('is a log, so a screen reader hears new messages politely', async () => {
     await render();
 
