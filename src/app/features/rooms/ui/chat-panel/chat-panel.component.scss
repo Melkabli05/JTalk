@@ -214,13 +214,17 @@
   background: var(--p-jtalk-brand);
 }
 
-// Beside the stage the discussion is a block of the page: the last few messages, as tall as they are, not a scrolling panel.
-.inline {
-  block-size: auto;
+// On the page the discussion is a card of its own. Trimmed, it is the last few messages as tall as they are; otherwise it fills the
+// height it is given and the thread scrolls inside it.
+.framed {
   padding: 1rem;
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-jtalk-radius-card);
   background: var(--p-content-background);
+}
+
+.trimmed {
+  block-size: auto;
 
   .feed {
     flex: none;

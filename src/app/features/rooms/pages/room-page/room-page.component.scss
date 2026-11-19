@@ -2,6 +2,22 @@
   display: block;
 }
 
+// From 80rem the discussion is a column of its own beside the room, as tall as the screen, and it scrolls inside itself.
+.page {
+  @media (min-width: 80rem) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 24rem;
+    align-items: start;
+    gap: 2rem;
+  }
+}
+
+.side {
+  position: sticky;
+  inset-block-start: 1.5rem;
+  block-size: calc(100dvh - 3rem);
+}
+
 // One centred column: the way out and the actions, the room, the stage, the audience, and the dock on the floor.
 .room {
   display: flex;

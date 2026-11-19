@@ -126,26 +126,28 @@ let nextId = 0;
               (click)="handRaised() ? lowerHand.emit() : raiseHand.emit()"
             ></button>
           }
-          <p-overlay-badge
-            [value]="unread() > 0 ? unread() : null"
-            [badgeDisabled]="unread() === 0"
-            badgeSize="small"
-            severity="danger"
-          >
-            <button
-              pButton
-              type="button"
-              size="large"
-              icon="pi pi-comments"
-              severity="secondary"
-              [outlined]="true"
-              [rounded]="true"
-              [attr.aria-label]="chatLabel()"
-              [pTooltip]="chatLabel()"
-              tooltipPosition="top"
-              (click)="chat.emit()"
-            ></button>
-          </p-overlay-badge>
+          @if (chatShown()) {
+            <p-overlay-badge
+              [value]="unread() > 0 ? unread() : null"
+              [badgeDisabled]="unread() === 0"
+              badgeSize="small"
+              severity="danger"
+            >
+              <button
+                pButton
+                type="button"
+                size="large"
+                icon="pi pi-comments"
+                severity="secondary"
+                [outlined]="true"
+                [rounded]="true"
+                [attr.aria-label]="chatLabel()"
+                [pTooltip]="chatLabel()"
+                tooltipPosition="top"
+                (click)="chat.emit()"
+              ></button>
+            </p-overlay-badge>
+          }
           @let reactLabel = 'React';
           <button
             pButton
@@ -214,6 +216,7 @@ export class RoomControlsComponent {
   readonly soundBlocked = input(false);
   readonly micRefused = input(false);
   readonly unread = input(0);
+  readonly chatShown = input(true);
 
   readonly leave = output<void>();
   readonly stepDown = output<void>();

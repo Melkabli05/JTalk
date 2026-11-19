@@ -72,6 +72,7 @@ export class ChatPanelComponent {
   readonly error = input<string | null>(null);
   readonly moderating = input(false);
   readonly compact = input(false);
+  readonly framed = input(false);
 
   readonly submitted = output<CommentDraft>();
   readonly deleted = output<string>();

@@ -1,3 +1,5 @@
+import { of } from 'rxjs';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import {
@@ -313,13 +315,28 @@ describe('RoomPageComponent (container)', () => {
     await open();
 
     expect(root().querySelectorAll('app-chat-panel')).toHaveLength(1);
-    expect(root().querySelector('app-chat-panel section.inline')).not.toBeNull();
+    expect(root().querySelector('app-chat-panel section.framed.trimmed')).not.toBeNull();
 
     press('Expand', root().querySelector('app-chat-panel')!);
     await settle();
 
     expect(document.body.querySelectorAll('app-chat-panel')).toHaveLength(1);
-    expect(document.body.querySelector('app-chat-panel section.inline')).toBeNull();
+    expect(document.body.querySelector('app-chat-panel section.framed.trimmed')).toBeNull();
+  });
+
+  it('puts the discussion in a column beside the room on a wide screen, with no Expand and no chat button', async () => {
+    const observe = vi
+      .spyOn(BreakpointObserver.prototype, 'observe')
+      .mockReturnValue(of({ matches: true, breakpoints: {} }));
+    await open();
+
+    const side = root().querySelector('aside.side app-chat-panel');
+    expect(side?.querySelector('section.framed')).not.toBeNull();
+    expect(side?.querySelector('section.trimmed')).toBeNull();
+    expect(side?.querySelector('h2')?.textContent).toBe('Live Discussion');
+    expect(root().querySelectorAll('app-chat-panel')).toHaveLength(1);
+    expect(controlNames().some((name) => name.startsWith('Chat'))).toBe(false);
+    observe.mockRestore();
   });
 
   it('opens the chat from the dock, and a comment the person sends appears once the server has kept it', async () => {

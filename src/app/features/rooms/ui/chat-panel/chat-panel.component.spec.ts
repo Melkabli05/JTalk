@@ -87,7 +87,7 @@ describe('ChatPanelComponent (presentational)', () => {
 
     it('shows the last three messages, how many there are, and a way to open them all', async () => {
       const expanded: unknown[] = [];
-      await render({ compact: true, comments: many });
+      await render({ compact: true, framed: true, comments: many });
       fixture.componentInstance.expand.subscribe((event) => expanded.push(event));
 
       expect([...root().querySelectorAll('.message-item .text')].map((e) => e.textContent)).toEqual(
@@ -108,11 +108,19 @@ describe('ChatPanelComponent (presentational)', () => {
       expect(root().querySelector('form.pin')).toBeNull();
     });
 
-    it('is the whole thread, with no header, in the full view', async () => {
+    it('is the whole thread, with no header, in the drawer', async () => {
       await render({ comments: many });
 
       expect(root().querySelectorAll('.message-item')).toHaveLength(5);
       expect(root().querySelector('.head')).toBeNull();
+    });
+
+    it('is the whole thread under a header, but with nothing to expand, in a column of its own', async () => {
+      await render({ framed: true, comments: many });
+
+      expect(root().querySelectorAll('.message-item')).toHaveLength(5);
+      expect(root().querySelector('h2')?.textContent).toBe('Live Discussion');
+      expect(button('Expand')).toBeUndefined();
     });
   });
 

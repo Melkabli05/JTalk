@@ -1,21 +1,28 @@
-<section class="chat" [class.inline]="compact()" aria-label="Live discussion">
-  @if (compact()) {
+<section
+  class="chat"
+  [class.framed]="framed()"
+  [class.trimmed]="compact()"
+  aria-label="Live discussion"
+>
+  @if (framed()) {
     <header class="head">
       <span class="dot" aria-hidden="true"></span>
       <h2>Live Discussion</h2>
       <span class="count">{{ comments().length }} messages</span>
-      <button
-        pButton
-        type="button"
-        class="expand"
-        size="small"
-        icon="pi pi-window-maximize"
-        severity="secondary"
-        [rounded]="true"
-        [outlined]="true"
-        label="Expand"
-        (click)="expand.emit()"
-      ></button>
+      @if (compact()) {
+        <button
+          pButton
+          type="button"
+          class="expand"
+          size="small"
+          icon="pi pi-window-maximize"
+          severity="secondary"
+          [rounded]="true"
+          [outlined]="true"
+          label="Expand"
+          (click)="expand.emit()"
+        ></button>
+      }
     </header>
   }
 

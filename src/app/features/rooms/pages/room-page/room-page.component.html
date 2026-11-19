@@ -2,187 +2,201 @@
   <p-message severity="warn">{{ failure }}</p-message>
   <a pButton routerLink="/" class="back-link" icon="pi pi-arrow-left" label="Back to the rooms"></a>
 } @else if (state.joined() && state.ready() && state.room(); as current) {
-  <div class="room">
-    <header class="top">
-      <a
-        pButton
-        routerLink="/"
-        class="back"
-        icon="pi pi-arrow-left"
-        severity="secondary"
-        [rounded]="true"
-        [text]="true"
-        aria-label="Back to the rooms"
-        pTooltip="Back to the rooms"
-      ></a>
-      <p class="live">
-        <span class="dot" aria-hidden="true"></span>
-        <span>Live</span>
-      </p>
-      <div class="actions">
+  <div class="page">
+    <div class="room">
+      <header class="top">
+        <a
+          pButton
+          routerLink="/"
+          class="back"
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          [rounded]="true"
+          [text]="true"
+          aria-label="Back to the rooms"
+          pTooltip="Back to the rooms"
+        ></a>
+        <p class="live">
+          <span class="dot" aria-hidden="true"></span>
+          <span>Live</span>
+        </p>
+        <div class="actions">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-share-alt"
+            severity="secondary"
+            [rounded]="true"
+            [outlined]="true"
+            label="Share"
+            aria-label="Share"
+            (click)="share()"
+          ></button>
+          @if (state.isHost()) {
+            <div class="host-tools" role="group" aria-label="Host controls">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                severity="secondary"
+                [rounded]="true"
+                [outlined]="true"
+                label="Edit"
+                aria-label="Edit the room"
+                (click)="editing.set(true)"
+              ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-stop-circle"
+                severity="danger"
+                [rounded]="true"
+                [outlined]="true"
+                label="End"
+                aria-label="End the room"
+                (click)="end()"
+              ></button>
+            </div>
+          }
+        </div>
         <button
           pButton
           type="button"
-          icon="pi pi-share-alt"
+          class="more"
+          icon="pi pi-ellipsis-v"
           severity="secondary"
+          aria-haspopup="menu"
+          [text]="true"
           [rounded]="true"
-          [outlined]="true"
-          label="Share"
-          aria-label="Share"
-          (click)="share()"
+          aria-label="Room actions"
+          (click)="menu.toggle($event)"
         ></button>
-        @if (state.isHost()) {
-          <div class="host-tools" role="group" aria-label="Host controls">
-            <button
-              pButton
-              type="button"
-              icon="pi pi-pencil"
-              severity="secondary"
-              [rounded]="true"
-              [outlined]="true"
-              label="Edit"
-              aria-label="Edit the room"
-              (click)="editing.set(true)"
-            ></button>
-            <button
-              pButton
-              type="button"
-              icon="pi pi-stop-circle"
-              severity="danger"
-              [rounded]="true"
-              [outlined]="true"
-              label="End"
-              aria-label="End the room"
-              (click)="end()"
-            ></button>
-          </div>
+        <p-menu #menu appendTo="body" [popup]="true" [model]="pageMenu()" />
+      </header>
+
+      <section class="hero">
+        <h1 #heading tabindex="-1">{{ current.title }}</h1>
+        @if (current.topic) {
+          <p class="topic">{{ current.topic }}</p>
         }
-      </div>
-      <button
-        pButton
-        type="button"
-        class="more"
-        icon="pi pi-ellipsis-v"
-        severity="secondary"
-        aria-haspopup="menu"
-        [text]="true"
-        [rounded]="true"
-        aria-label="Room actions"
-        (click)="menu.toggle($event)"
-      ></button>
-      <p-menu #menu appendTo="body" [popup]="true" [model]="pageMenu()" />
-    </header>
+        <p class="meta">
+          <span aria-hidden="true">{{ look().target.flag }}</span>
+          {{ look().target.name }}
+          <span aria-hidden="true">·</span>
+          for {{ look().native.name }} speakers
+          <span aria-hidden="true">·</span>
+          Hosted by {{ host().name }}
+        </p>
+        <div class="stats">
+          @let hands = 'Raised hands';
+          @let onStage = 'On stage';
+          @let seats = `${state.speakers().length}/${current.maxStageSeats}`;
+          <span role="img" [attr.aria-label]="`${current.participantCount} in the room`">
+            <p-chip aria-hidden="true" icon="pi pi-users" [label]="`${current.participantCount}`" />
+          </span>
+          <span role="img" [attr.aria-label]="`${hands}: ${current.handRaiseCount}`">
+            <p-chip aria-hidden="true" icon="pi pi-hand" [label]="`${current.handRaiseCount}`" />
+          </span>
+          <span role="img" [attr.aria-label]="`${onStage} ${seats}`">
+            <p-chip aria-hidden="true" icon="pi pi-microphone" [label]="seats" />
+          </span>
+        </div>
+      </section>
 
-    <section class="hero">
-      <h1 #heading tabindex="-1">{{ current.title }}</h1>
-      @if (current.topic) {
-        <p class="topic">{{ current.topic }}</p>
+      <section class="stage" aria-labelledby="stage-heading">
+        <h2 id="stage-heading" class="section-head">
+          On stage
+          <p-tag severity="secondary" [rounded]="true">
+            {{ state.speakers().length }}/{{ current.maxStageSeats }}
+          </p-tag>
+        </h2>
+        <app-stage-seats
+          [speakers]="state.speakers()"
+          [seats]="current.maxStageSeats"
+          [hostId]="current.hostId"
+          [meId]="state.meId()"
+          [members]="state.members()"
+          [canTakeSeat]="!state.onStage() && !facade.action.submitting()"
+          [speaking]="facade.audio.speaking()"
+          [muted]="mutedIds()"
+          [reactions]="state.reactionsByPerson()"
+          [moderation]="moderation()"
+          (memberSelected)="selectedId.set($event)"
+          (seatTaken)="facade.takeSeat()"
+        />
+      </section>
+
+      @if (state.isHost() && state.queue().length > 0) {
+        <p-card class="requests" role="group" aria-labelledby="hands-heading">
+          <ng-template #title>
+            <h2 id="hands-heading">
+              Raised hands
+              <p-badge severity="secondary" [value]="state.queue().length" />
+            </h2>
+          </ng-template>
+          <app-raised-hands
+            [ids]="state.queue()"
+            [members]="state.members()"
+            [canInvite]="state.isHost() && seatFree()"
+            (invited)="invite($event)"
+          />
+        </p-card>
       }
-      <p class="meta">
-        <span aria-hidden="true">{{ look().target.flag }}</span>
-        {{ look().target.name }}
-        <span aria-hidden="true">·</span>
-        for {{ look().native.name }} speakers
-        <span aria-hidden="true">·</span>
-        Hosted by {{ host().name }}
-      </p>
-      <div class="stats">
-        @let hands = 'Raised hands';
-        @let onStage = 'On stage';
-        @let seats = `${state.speakers().length}/${current.maxStageSeats}`;
-        <span role="img" [attr.aria-label]="`${current.participantCount} in the room`">
-          <p-chip aria-hidden="true" icon="pi pi-users" [label]="`${current.participantCount}`" />
-        </span>
-        <span role="img" [attr.aria-label]="`${hands}: ${current.handRaiseCount}`">
-          <p-chip aria-hidden="true" icon="pi pi-hand" [label]="`${current.handRaiseCount}`" />
-        </span>
-        <span role="img" [attr.aria-label]="`${onStage} ${seats}`">
-          <p-chip aria-hidden="true" icon="pi pi-microphone" [label]="seats" />
-        </span>
-      </div>
-    </section>
 
-    <section class="stage" aria-labelledby="stage-heading">
-      <h2 id="stage-heading" class="section-head">
-        On stage
-        <p-tag severity="secondary" [rounded]="true">
-          {{ state.speakers().length }}/{{ current.maxStageSeats }}
-        </p-tag>
-      </h2>
-      <app-stage-seats
-        [speakers]="state.speakers()"
-        [seats]="current.maxStageSeats"
-        [hostId]="current.hostId"
-        [meId]="state.meId()"
+      <app-audience-section
+        [swipeable]="!wide()"
+        [ids]="state.audience()"
         [members]="state.members()"
-        [canTakeSeat]="!state.onStage() && !facade.action.submitting()"
-        [speaking]="facade.audio.speaking()"
-        [muted]="mutedIds()"
+        [meId]="state.meId()"
+        [reconnecting]="state.reconnecting()"
         [reactions]="state.reactionsByPerson()"
         [moderation]="moderation()"
         (memberSelected)="selectedId.set($event)"
-        (seatTaken)="facade.takeSeat()"
       />
-    </section>
 
-    @if (state.isHost() && state.queue().length > 0) {
-      <p-card class="requests" role="group" aria-labelledby="hands-heading">
-        <ng-template #title>
-          <h2 id="hands-heading">
-            Raised hands
-            <p-badge severity="secondary" [value]="state.queue().length" />
-          </h2>
-        </ng-template>
-        <app-raised-hands
-          [ids]="state.queue()"
-          [members]="state.members()"
-          [canInvite]="state.isHost() && seatFree()"
-          (invited)="invite($event)"
+      @if (!beside() && !chatOpen()) {
+        <ng-container
+          [ngTemplateOutlet]="discussion"
+          [ngTemplateOutletContext]="{ compact: true, framed: true }"
         />
-      </p-card>
-    }
-
-    <app-audience-section
-      [swipeable]="!wide()"
-      [ids]="state.audience()"
-      [members]="state.members()"
-      [meId]="state.meId()"
-      [reconnecting]="state.reconnecting()"
-      [reactions]="state.reactionsByPerson()"
-      [moderation]="moderation()"
-      (memberSelected)="selectedId.set($event)"
-    />
-
-    @if (!chatOpen()) {
-      <ng-container [ngTemplateOutlet]="discussion" [ngTemplateOutletContext]="{ inline: true }" />
-    }
-
-    <div class="dock">
-      @if (facade.action.error(); as failure) {
-        <p-message class="failure" severity="error">{{ failure }}</p-message>
       }
-      <app-room-controls
-        [onStage]="state.onStage()"
-        [handRaised]="state.handRaised()"
-        [busy]="facade.action.submitting()"
-        [audio]="facade.audio.status()"
-        [canSpeak]="facade.audio.canSpeak()"
-        [canStepDown]="canStepDownFromDock()"
-        [micOn]="facade.audio.micOn()"
-        [micRefused]="facade.audio.micRefused()"
-        [soundBlocked]="facade.audio.soundBlocked()"
-        [unread]="chat.unread()"
-        (chat)="toggleChat(true)"
-        (toggleMic)="facade.audio.toggleMicrophone()"
-        (enableSound)="facade.audio.enableSound()"
-        (retryAudio)="facade.reconnectAudio()"
-        (leave)="leave()"
-        (stepDown)="facade.stepDown()"
-        (raiseHand)="facade.raiseHand()"
-        (lowerHand)="facade.lowerHand()"
-        (react)="facade.react($event)"
-      />
+
+      <div class="dock">
+        @if (facade.action.error(); as failure) {
+          <p-message class="failure" severity="error">{{ failure }}</p-message>
+        }
+        <app-room-controls
+          [onStage]="state.onStage()"
+          [handRaised]="state.handRaised()"
+          [busy]="facade.action.submitting()"
+          [audio]="facade.audio.status()"
+          [canSpeak]="facade.audio.canSpeak()"
+          [canStepDown]="canStepDownFromDock()"
+          [chatShown]="!beside()"
+          [micOn]="facade.audio.micOn()"
+          [micRefused]="facade.audio.micRefused()"
+          [soundBlocked]="facade.audio.soundBlocked()"
+          [unread]="chat.unread()"
+          (chat)="toggleChat(true)"
+          (toggleMic)="facade.audio.toggleMicrophone()"
+          (enableSound)="facade.audio.enableSound()"
+          (retryAudio)="facade.reconnectAudio()"
+          (leave)="leave()"
+          (stepDown)="facade.stepDown()"
+          (raiseHand)="facade.raiseHand()"
+          (lowerHand)="facade.lowerHand()"
+          (react)="facade.react($event)"
+        />
+      </div>
     </div>
+    @if (beside()) {
+      <aside class="side">
+        <ng-container
+          [ngTemplateOutlet]="discussion"
+          [ngTemplateOutletContext]="{ compact: false, framed: true }"
+        />
+      </aside>
+    }
   </div>
 } @else {
   <div class="loading" role="status" aria-busy="true">
@@ -230,9 +244,10 @@
   (edited)="edit($event)"
 />
 
-<ng-template #discussion let-inline="inline">
+<ng-template #discussion let-compact="compact" let-framed="framed">
   <app-chat-panel
-    [compact]="inline"
+    [compact]="compact"
+    [framed]="framed"
     (expand)="toggleChat(true)"
     [comments]="chat.comments()"
     [topic]="chat.topic()"
@@ -265,7 +280,10 @@
   [dismissible]="false"
   (visibleChange)="toggleChat($event)"
 >
-  <ng-container [ngTemplateOutlet]="discussion" [ngTemplateOutletContext]="{ inline: false }" />
+  <ng-container
+    [ngTemplateOutlet]="discussion"
+    [ngTemplateOutletContext]="{ compact: false, framed: false }"
+  />
 </p-drawer>
 
 <p-confirmdialog />

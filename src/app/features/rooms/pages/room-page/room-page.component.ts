@@ -8,6 +8,7 @@ import {
   ElementRef,
   inject,
   input,
+  type Signal,
   signal,
   untracked,
   viewChild,
@@ -84,10 +85,8 @@ export default class RoomPageComponent {
   readonly id = input.required<string>();
 
   protected readonly state = this.facade.state;
-  protected readonly wide = toSignal(
-    this.breakpoints.observe('(min-width: 1024px)').pipe(map((result) => result.matches)),
-    { initialValue: false },
-  );
+  protected readonly wide = this.matching('(min-width: 1024px)');
+  protected readonly beside = this.matching('(min-width: 80rem)');
   protected readonly look = computed(() => roomLook(this.state.room()));
   protected readonly host = computed(() => memberOf(this.state.members(), this.state.hostId()));
   protected readonly mutedIds = computed(() => {
@@ -223,6 +222,12 @@ export default class RoomPageComponent {
       }
     });
     this.facade.exited.pipe(takeUntilDestroyed()).subscribe(() => this.leaveBecause());
+  }
+
+  private matching(query: string): Signal<boolean> {
+    return toSignal(this.breakpoints.observe(query).pipe(map((result) => result.matches)), {
+      initialValue: false,
+    });
   }
 
   protected toggleChat(open: boolean): void {
