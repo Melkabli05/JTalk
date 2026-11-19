@@ -31,10 +31,12 @@ export class HallwayGreetingComponent {
     () => this.rooms().filter((room) => room.targetLanguage === this.learning()).length,
   );
 
-  protected readonly night = computed(() => this.hour() < 6 || this.hour() >= 20);
-  // One sky for every two hours; the veil keeps the words readable over it.
-  protected readonly sky = computed(() => {
-    const veil = this.night() ? 'rgb(8 12 30 / 40%)' : 'rgb(255 255 255 / 60%)';
-    return `linear-gradient(90deg, ${veil}, transparent 72%), url(banners/sky-${Math.floor(this.hour() / 2)}.svg) center / cover`;
-  });
+  /** The card is clear, so the photograph behind it shows through. */
+  protected readonly clear = {
+    root: { background: 'transparent', borderColor: 'transparent', shadow: 'none' },
+  };
+  /** The photographs of the late evening and the night are dark: the words on them are light. */
+  protected readonly dark = computed(() => this.hour() < 4 || this.hour() >= 20);
+  // One photograph for every two hours of the day.
+  protected readonly photo = computed(() => `url(banners/sky-${Math.floor(this.hour() / 2)}.jpg)`);
 }

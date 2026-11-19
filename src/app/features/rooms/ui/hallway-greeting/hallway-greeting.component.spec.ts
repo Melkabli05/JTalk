@@ -65,16 +65,18 @@ describe('HallwayGreetingComponent (presentational)', () => {
     expect(root().querySelector('#greeting')).not.toBeNull();
   });
 
-  it("has no picture to describe: the sky is the card's own background", async () => {
+  it('has a photograph behind the words, hidden from screen readers, and no image to describe', async () => {
     await render();
+    const photo = root().querySelector('.photo')!;
 
+    expect(photo.getAttribute('aria-hidden')).toBe('true');
     expect(root().querySelector('img')).toBeNull();
   });
 
-  it('shows the sky for the hour, a new one every two hours', async () => {
-    const sky = () => root().querySelector<HTMLElement>('.p-card')?.style.backgroundImage ?? '';
+  it('shows the photograph for the hour, a new one every two hours', async () => {
+    const photo = () => root().querySelector<HTMLElement>('.photo')?.style.backgroundImage ?? '';
     await render({ hour: 9 });
-    expect(sky()).toContain('banners/sky-4.svg');
+    expect(photo()).toContain('banners/sky-4.jpg');
 
     for (const [hour, file] of [
       [0, 'sky-0'],
@@ -85,32 +87,32 @@ describe('HallwayGreetingComponent (presentational)', () => {
     ] as const) {
       fixture.componentRef.setInput('hour', hour);
       await fixture.whenStable();
-      expect(sky(), `at ${hour}:00`).toContain(`banners/${file}.svg`);
+      expect(photo(), `at ${hour}:00`).toContain(`banners/${file}.jpg`);
     }
   });
 
-  it('keeps the same sky through the two hours and changes it on the hour', async () => {
-    const sky = () => root().querySelector<HTMLElement>('.p-card')?.style.backgroundImage;
+  it('keeps the same photograph through the two hours and changes it on the hour', async () => {
+    const photo = () => root().querySelector<HTMLElement>('.photo')?.style.backgroundImage;
     await render({ hour: 10 });
-    const morning = sky();
+    const morning = photo();
 
     fixture.componentRef.setInput('hour', 11);
     await fixture.whenStable();
-    expect(sky()).toBe(morning);
+    expect(photo()).toBe(morning);
 
     fixture.componentRef.setInput('hour', 12);
     await fixture.whenStable();
-    expect(sky()).not.toBe(morning);
+    expect(photo()).not.toBe(morning);
   });
 
-  it('puts light words on the dark skies of the night and dark words on the days', async () => {
-    const night = () => root().querySelector('.banner')?.classList.contains('night');
+  it('puts light words on the dark photographs of the night and dark words on the days', async () => {
+    const dark = () => root().querySelector('.hero')?.classList.contains('dark');
     await render({ hour: 12 });
-    expect(night()).toBe(false);
+    expect(dark()).toBe(false);
 
     fixture.componentRef.setInput('hour', 22);
     await fixture.whenStable();
-    expect(night()).toBe(true);
+    expect(dark()).toBe(true);
   });
 
   it('says how many open rooms are practising what the person learns', async () => {
