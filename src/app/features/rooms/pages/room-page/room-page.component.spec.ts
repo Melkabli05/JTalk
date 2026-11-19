@@ -276,7 +276,7 @@ describe('RoomPageComponent (container)', () => {
       h.textContent?.replace(/\s+/g, ' ').trim(),
     );
     expect(headings).toHaveLength(3);
-    expect(headings[0]).toBe('On stage 1/4');
+    expect(headings[0]).toBe('Stage 1 on stage');
     expect(headings[1]).toContain('Audience');
     expect(headings[2]).toBe('Live Discussion');
     expect(root().querySelectorAll('section[aria-labelledby]')).toHaveLength(2);

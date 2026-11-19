@@ -28,7 +28,9 @@ describe('AudienceSectionComponent (presentational)', () => {
     await render(['a', 'b', 'c']);
     const section = root().querySelector('section')!;
 
-    expect(root().querySelector('h2')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Audience 3');
+    expect(root().querySelector('h2')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      'Audience 3 listeners',
+    );
     expect(section.getAttribute('aria-labelledby')).toBe(root().querySelector('h2')?.id);
     expect(root().querySelectorAll('app-audience-grid .person')).toHaveLength(3);
   });
