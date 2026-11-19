@@ -289,7 +289,7 @@ export const JtalkPreset = definePreset(Aura, {
             color: ${dt('text.color')};
             font-size: 1.25rem;
           }
-          .p-menubar-item-label {
+          .p-menubar-root-list > .p-menubar-item > .p-menubar-item-content .p-menubar-item-label {
             position: absolute;
             inline-size: 1px;
             block-size: 1px;
@@ -297,6 +297,28 @@ export const JtalkPreset = definePreset(Aura, {
             clip-path: inset(50%);
             white-space: nowrap;
           }
+          .p-menubar-submenu .p-menubar-item-icon {
+            font-size: 1rem;
+          }
+          .p-menubar-submenu .p-menubar-item-link {
+            justify-content: flex-start;
+          }
+          .p-menubar-root-list > .p-menubar-item > .p-menubar-item-content .p-menubar-submenu-icon {
+            display: none;
+          }
+          .p-menubar-root-list > .p-menubar-item:last-child > .p-menubar-submenu {
+            inset-inline-start: auto;
+            inset-inline-end: 0;
+            min-inline-size: 12rem;
+          }
+        }
+        .p-menubar-item-link.danger-item,
+        .p-menubar-item-link.danger-item .p-menubar-item-icon {
+          color: var(--p-red-500);
+        }
+        .app-dark .p-menubar-item-link.danger-item,
+        .app-dark .p-menubar-item-link.danger-item .p-menubar-item-icon {
+          color: var(--p-red-400);
         }
       `,
     },

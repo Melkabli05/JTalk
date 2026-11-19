@@ -27,6 +27,8 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 import { languageOf } from '@shared/utils/languages';
 import { saveRequest } from '@shared/utils/save-request';
 
+const PROFILE_ITEM: MenuItem = { label: 'Profile', icon: 'pi pi-user', routerLink: '/profile' };
+
 const NAV_ITEMS: MenuItem[] = [
   {
     label: 'Rooms',
@@ -35,7 +37,7 @@ const NAV_ITEMS: MenuItem[] = [
     routerLinkActiveOptions: { exact: true },
   },
   { label: 'People', icon: 'pi pi-users', routerLink: '/people' },
-  { label: 'Profile', icon: 'pi pi-user', routerLink: '/profile' },
+  PROFILE_ITEM,
 ];
 
 function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wide: boolean } {
@@ -91,8 +93,8 @@ export class AppShellComponent {
     return me ? `${languageOf(me.nativeLanguage).flag} → ${languageOf(me.learning).flag}` : '';
   });
   protected readonly navItems = NAV_ITEMS;
-  // Across the top (a phone) the pages are icons, with their names kept for screen readers; there is no sidebar there, so the dark theme
-  // and Sign out are two more icons at the end, and the way back to a room you are in stands out in Forest.
+  // Across the top (a phone) the pages are icons, with their names kept for screen readers; there is no sidebar there, so the profile,
+  // the dark theme and Sign out are one menu at the end, and the way back to a room you are in stands out in Forest.
   protected readonly topItems = computed<MenuItem[]>(() => {
     const live = this.liveRoom();
     const dark = this.colorScheme.isDark();
@@ -107,13 +109,25 @@ export class AppShellComponent {
             },
           ]
         : []),
-      ...this.navItems,
+      ...this.navItems.filter((item) => item !== PROFILE_ITEM),
       {
-        label: dark ? 'Light theme' : 'Dark theme',
-        icon: dark ? 'pi pi-sun' : 'pi pi-moon',
-        command: () => this.colorScheme.toggle(),
+        label: 'More',
+        icon: 'pi pi-ellipsis-v',
+        items: [
+          PROFILE_ITEM,
+          {
+            label: dark ? 'Light theme' : 'Dark theme',
+            icon: dark ? 'pi pi-sun' : 'pi pi-moon',
+            command: () => this.colorScheme.toggle(),
+          },
+          {
+            label: 'Sign out',
+            icon: 'pi pi-sign-out',
+            linkClass: 'danger-item',
+            command: () => void this.identity.signOut(),
+          },
+        ],
       },
-      { label: 'Sign out', icon: 'pi pi-sign-out', command: () => void this.identity.signOut() },
     ];
   });
 

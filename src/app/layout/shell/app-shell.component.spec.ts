@@ -104,30 +104,43 @@ describe('AppShellComponent (container)', () => {
   });
 
   describe('the bar across the top, on a phone', () => {
-    const item = (name: string) =>
-      [...root().querySelectorAll<HTMLElement>('nav.top [role="menuitem"]')].find((i) =>
-        i.textContent?.includes(name),
+    const label = (name: string) =>
+      [...root().querySelectorAll<HTMLElement>('nav.top .p-menubar-item-label')].find(
+        (l) => l.textContent?.trim() === name,
       );
+    const rootLabels = () =>
+      [
+        ...root().querySelectorAll('nav.top .p-menubar-root-list > li > .p-menubar-item-content'),
+      ].map((c) => c.querySelector('.p-menubar-item-label')?.textContent?.trim());
 
-    it('has the pages, then the dark theme and Sign out as icons, and no Settings', async () => {
+    it('has the pages and one More menu, with the profile, the dark theme and Sign out inside it', async () => {
       await render();
 
+      expect(rootLabels()).toEqual(['Rooms', 'People', 'More']);
       expect(
-        [...root().querySelectorAll('nav.top [role="menuitem"]')].map((i) => i.textContent?.trim()),
-      ).toEqual(['Rooms', 'People', 'Profile', 'Dark theme', 'Sign out']);
-      expect(item('Dark theme')?.querySelector('.pi-moon')).not.toBeNull();
-      expect(item('Sign out')?.querySelector('.pi-sign-out')).not.toBeNull();
+        [...root().querySelectorAll('nav.top .p-menubar-submenu .p-menubar-item-label')].map((l) =>
+          l.textContent?.trim(),
+        ),
+      ).toEqual(['Profile', 'Dark theme', 'Sign out']);
+      expect(label('Dark theme')?.closest('li')?.querySelector('.pi-moon')).not.toBeNull();
+      expect(label('Sign out')?.closest('li')?.querySelector('.pi-sign-out')).not.toBeNull();
     });
 
-    it('switches the color scheme, and the icon and the name follow', async () => {
+    it('switches the color scheme from the menu, and the icon and the name follow', async () => {
       await render();
       const scheme = TestBed.inject(ColorSchemeService);
 
-      item('Dark theme')!.querySelector('a')!.click();
+      label('Dark theme')!.closest('a')!.click();
       await fixture.whenStable();
 
       expect(scheme.isDark()).toBe(true);
-      expect(item('Light theme')?.querySelector('.pi-sun')).not.toBeNull();
+      expect(label('Light theme')?.closest('li')?.querySelector('.pi-sun')).not.toBeNull();
+    });
+
+    it('links to the profile from the menu', async () => {
+      await render();
+
+      expect(label('Profile')?.closest('a')?.getAttribute('href')).toBe('/profile');
     });
   });
 
