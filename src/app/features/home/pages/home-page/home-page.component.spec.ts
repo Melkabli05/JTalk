@@ -92,7 +92,7 @@ describe('HomePageComponent (container)', () => {
 
     expect(root().querySelector('.tag')?.textContent).toBe('#Live audio');
     expect(lines.map((line) => line.textContent)).toEqual(['Learn a language', 'by talking.']);
-    expect(lines.map((line) => line.className)).toEqual(['line paper', 'line lavender']);
+    expect(lines.map((line) => line.className)).toEqual(['line paper', 'line sand']);
   });
 
   it('has a main button that is a square arrow tile and a label, and starts an account', () => {

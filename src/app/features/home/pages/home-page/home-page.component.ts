@@ -45,6 +45,9 @@ export default class HomePageComponent {
   protected readonly y = signal(0);
 
   protected moved(event: PointerEvent): void {
+    if (event.pointerType === 'touch') {
+      return; // a finger dragging is scrolling, not pointing
+    }
     this.x.set((event.clientX / window.innerWidth) * 2 - 1);
     this.y.set((event.clientY / window.innerHeight) * 2 - 1);
   }
