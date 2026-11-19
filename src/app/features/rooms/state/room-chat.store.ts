@@ -125,6 +125,22 @@ export class RoomChatStore {
           this.tally(update.commentId, update.previous, update.reaction, false);
         }
         break;
+      case 'COMMENT_PINNED':
+        this.commentsState.update((list) =>
+          list.map((comment) =>
+            comment.id === update.commentId
+              ? { ...comment, pinnedAt: new Date().toISOString() }
+              : comment,
+          ),
+        );
+        break;
+      case 'COMMENT_UNPINNED':
+        this.commentsState.update((list) =>
+          list.map((comment) =>
+            comment.id === update.commentId ? { ...comment, pinnedAt: undefined } : comment,
+          ),
+        );
+        break;
       case 'CHAT_MUTED':
         this.mutedUsersState.update((ids) =>
           ids.includes(update.userId) ? ids : [...ids, update.userId],

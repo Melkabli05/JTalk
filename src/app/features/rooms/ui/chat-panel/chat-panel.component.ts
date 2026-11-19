@@ -18,7 +18,6 @@ import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { Tag } from '@openng/optimus-ui/tag';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import type { Person } from '@core/auth/identity.models';
-import { TextFieldComponent } from '@shared/ui/text-field/text-field.component';
 import { TextareaFieldComponent } from '@shared/ui/textarea-field/textarea-field.component';
 import { formSubmission } from '@shared/utils/form-submission';
 import { timeAgo } from '@shared/utils/time-ago';
@@ -45,6 +44,7 @@ interface TopicModel {
 
 const NEAR_BOTTOM_PX = 48;
 const CLOCK_MS = 30_000;
+const LONG_PRESS_MS = 500;
 
 @Component({
   selector: 'app-chat-panel',
@@ -60,7 +60,6 @@ const CLOCK_MS = 30_000;
     Skeleton,
     Tag,
     TextareaFieldComponent,
-    TextFieldComponent,
     Tooltip,
   ],
   templateUrl: './chat-panel.component.html',
@@ -90,8 +89,10 @@ export class ChatPanelComponent {
   readonly deleted = output<string>();
   readonly muteRequested = output<string>();
   readonly unmuteRequested = output<string>();
-  readonly pinned = output<string>();
-  readonly unpinned = output<void>();
+  readonly topicPinned = output<string>();
+  readonly topicUnpinned = output<void>();
+  readonly commentPinned = output<string>();
+  readonly commentUnpinned = output<string>();
   readonly retry = output<void>();
   readonly expand = output<void>();
   readonly reacted = output<{ commentId: string; reaction: Reaction }>();
@@ -102,6 +103,7 @@ export class ChatPanelComponent {
   protected readonly correcting = signal(false);
   protected readonly composer = signal<ComposerModel>({ content: '' });
   protected readonly topicDraft = signal<TopicModel>({ text: '' });
+  private longPressTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   protected readonly byId = computed(
     () => new Map(this.comments().map((comment) => [comment.id, comment])),
@@ -161,7 +163,7 @@ export class ChatPanelComponent {
       submission: formSubmission<TopicModel>({
         busy: () => this.moderating(),
         submit: (value) => {
-          this.pinned.emit(value.text.trim());
+          this.topicPinned.emit(value.text.trim());
           this.topicDraft.set({ text: '' });
         },
       }),
@@ -204,6 +206,10 @@ export class ChatPanelComponent {
     return comment.replyTo ? this.byId().get(comment.replyTo) : undefined;
   }
 
+  protected isPinned(comment: RoomComment): boolean {
+    return !!comment.pinnedAt;
+  }
+
   protected reply(comment: RoomComment, correcting = false): void {
     this.replyingTo.set(comment);
     this.correcting.set(correcting);
@@ -241,5 +247,44 @@ export class ChatPanelComponent {
       element.scrollTop = element.scrollHeight;
     }
     this.stuck.set(true);
+  }
+
+  protected onCommentMouseDown(comment: RoomComment, event: MouseEvent | TouchEvent): void {
+    if (!this.isHost()) return;
+
+    const timer = setTimeout(() => {
+      this.showPinOption(comment);
+    }, LONG_PRESS_MS);
+
+    this.longPressTimers.set(comment.id, timer);
+  }
+
+  protected onCommentMouseUp(commentId: string): void {
+    const timer = this.longPressTimers.get(commentId);
+    if (timer) {
+      clearTimeout(timer);
+      this.longPressTimers.delete(commentId);
+    }
+  }
+
+  protected onCommentMouseLeave(commentId: string): void {
+    const timer = this.longPressTimers.get(commentId);
+    if (timer) {
+      clearTimeout(timer);
+      this.longPressTimers.delete(commentId);
+    }
+  }
+
+  protected togglePin(comment: RoomComment, event: Event): void {
+    event.stopPropagation();
+    if (comment.pinnedAt) {
+      this.commentUnpinned.emit(comment.id);
+    } else {
+      this.commentPinned.emit(comment.id);
+    }
+  }
+
+  private showPinOption(comment: RoomComment): void {
+    this.togglePin(comment, new Event('longpress'));
   }
 }

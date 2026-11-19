@@ -10,6 +10,7 @@ export interface RoomComment {
   readonly correctedContent?: string;
   readonly replyTo?: string;
   readonly createdAt: string;
+  readonly pinnedAt?: string;
 }
 
 /** What the room reacted to one comment with: how many people chose each reaction, and which one is the viewer's own. */
@@ -44,7 +45,9 @@ export type ChatUpdate =
       readonly previous: Reaction | null;
     }
   | { readonly type: 'CHAT_MUTED' | 'CHAT_UNMUTED'; readonly userId: string }
-  | { readonly type: 'TOPIC_CHANGED'; readonly topic: string | null };
+  | { readonly type: 'TOPIC_CHANGED'; readonly topic: string | null }
+  | { readonly type: 'COMMENT_PINNED'; readonly commentId: string }
+  | { readonly type: 'COMMENT_UNPINNED'; readonly commentId: string };
 
 export const COMMENTS_KEPT = 50;
 export const COMMENT_MAX_LENGTH = 500;

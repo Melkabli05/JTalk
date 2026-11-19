@@ -50,25 +50,10 @@
           [attr.aria-label]="clearLabel"
           [pTooltip]="clearLabel"
           tooltipPosition="left"
-          (click)="unpinned.emit()"
+          (click)="topicUnpinned.emit()"
         ></button>
       }
     </div>
-  }
-
-  @if (isHost() && !compact()) {
-    <form class="pin" [formRoot]="topicForm">
-      <app-text-field label="Pin a topic" [formField]="topicForm.text" />
-      <button
-        pButton
-        type="submit"
-        severity="secondary"
-        [outlined]="true"
-        [rounded]="true"
-        [disabled]="moderating()"
-        label="Pin"
-      ></button>
-    </form>
   }
 
   @if (failed()) {
@@ -104,7 +89,20 @@
             class="message-item"
             [class.host]="comment.authorId === hostId()"
             [class.mine]="comment.authorId === meId()"
+            [class.pinned]="isPinned(comment)"
+            (mousedown)="onCommentMouseDown(comment, $event)"
+            (touchstart)="onCommentMouseDown(comment, $event)"
+            (mouseup)="onCommentMouseUp(comment.id)"
+            (touchend)="onCommentMouseUp(comment.id)"
+            (mouseleave)="onCommentMouseLeave(comment.id)"
+            (touchcancel)="onCommentMouseLeave(comment.id)"
           >
+            @if (isPinned(comment)) {
+              <div class="pin-badge">
+                <i class="pi pi-bookmark-fill" aria-hidden="true"></i>
+                <span class="cdk-visually-hidden">Pinned</span>
+              </div>
+            }
             <app-person-avatar size="normal" [member]="personOf(comment.authorId)" />
             <div class="body">
               <div class="meta">
@@ -213,6 +211,19 @@
                     (click)="deleted.emit(comment.id)"
                   >
                     <i class="pi pi-trash" aria-hidden="true"></i>
+                  </button>
+                  @let pinLabel = isPinned(comment) ? `Unpin this comment` : `Pin this comment`;
+                  <button
+                    type="button"
+                    class="act"
+                    [class.pinned]="isPinned(comment)"
+                    [disabled]="moderating()"
+                    [attr.aria-label]="pinLabel"
+                    [pTooltip]="pinLabel"
+                    tooltipPosition="top"
+                    (click)="togglePin(comment, $event)"
+                  >
+                    <i class="pi" [class.pi-bookmark-fill]="isPinned(comment)" [class.pi-bookmark]="!isPinned(comment)" aria-hidden="true"></i>
                   </button>
                   @if (muteIds().has(comment.authorId)) {
                     @let unmuteLabel = `Unmute ${nameOf(comment.authorId)} in the chat`;

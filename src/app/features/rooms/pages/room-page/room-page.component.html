@@ -251,8 +251,10 @@
     (reacted)="facade.reactToComment($event.commentId, $event.reaction)"
     (muteRequested)="facade.muteInChat($event)"
     (unmuteRequested)="facade.unmuteInChat($event)"
-    (pinned)="facade.pinTopic($event)"
-    (unpinned)="facade.clearTopic()"
+    (topicPinned)="facade.pinTopic($event)"
+    (topicUnpinned)="facade.clearTopic()"
+    (commentPinned)="facade.pinComment($event)"
+    (commentUnpinned)="facade.unpinComment($event)"
     (retry)="chat.reload()"
   />
 </ng-template>

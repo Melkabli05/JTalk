@@ -48,4 +48,12 @@ export class ChatApiService {
   clearTopic(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}/comments/topic`);
   }
+
+  pinComment(id: string, commentId: string): Observable<void> {
+    return this.http.put<void>(`${this.base}/${id}/comments/${commentId}/pin`, {});
+  }
+
+  unpinComment(id: string, commentId: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}/comments/${commentId}/pin`);
+  }
 }

@@ -250,6 +250,20 @@ export class RoomFacade {
     });
   }
 
+  pinComment(commentId: string): void {
+    this.moderating.run(this.chats.pinComment(this.state.roomId(), commentId), {
+      next: () => undefined,
+      failure: 'Could not pin the comment. Please try again.',
+    });
+  }
+
+  unpinComment(commentId: string): void {
+    this.moderating.run(this.chats.unpinComment(this.state.roomId(), commentId), {
+      next: () => undefined,
+      failure: 'Could not unpin the comment. Please try again.',
+    });
+  }
+
   raiseHand(): void {
     this.run(
       this.stages.raiseHand(this.state.roomId()),
