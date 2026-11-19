@@ -89,15 +89,24 @@
   font-size: var(--p-jtalk-type-metadata);
 }
 
+.message-item app-person-avatar {
+  align-self: flex-start;
+  padding: 2px;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 50%;
+}
+
 .bubble {
-  padding: 0.75rem 1rem;
-  border-radius: var(--p-jtalk-radius-card);
-  background: color-mix(in srgb, var(--p-jtalk-brand) 8%, var(--p-content-background));
+  padding: 0.875rem 1.25rem;
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--p-jtalk-brand) 7%, var(--p-content-background));
+  font-size: var(--p-jtalk-type-card);
+  line-height: 1.45;
 }
 
 .author {
-  font-size: var(--p-jtalk-type-secondary);
-  font-weight: 650;
+  font-size: var(--p-jtalk-type-card);
+  font-weight: 600;
 }
 
 .tag {
