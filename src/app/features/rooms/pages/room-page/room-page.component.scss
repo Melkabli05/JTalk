@@ -124,6 +124,10 @@ h1 {
   margin-block-start: 0.5rem;
 }
 
+.room > app-chat-panel {
+  block-size: 28rem;
+}
+
 .stage-head {
   display: flex;
   align-items: center;
@@ -191,17 +195,50 @@ h1 {
 
 // A phone shows the room the way the owner's picture does: the way back, a small title with its topic under it, a ⋯ menu for the
 // actions, and then the stage and the audience as a compact block, about half the screen, with the dock below.
+// The room fills the screen: the head, the stage and the audience keep their size, only the thread of comments scrolls, and the composer
+// and the dock stay at the bottom. (On a screen shorter than 41rem the page scrolls instead of squeezing the thread away.)
 @media (max-width: 40rem) {
   .room {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto auto auto minmax(10rem, 1fr) auto;
     align-items: center;
     gap: 0.75rem 0.25rem;
+    block-size: max(calc(100dvh - 2.75rem - env(safe-area-inset-top)), 41rem);
     max-block-size: none;
+    overflow: clip;
+    overflow-clip-margin: 0.5rem;
 
     > :not(.top):not(.hero) {
       grid-column: 1 / -1;
     }
+  }
+
+  .stage {
+    grid-row: 2;
+  }
+
+  .handle {
+    grid-row: 3;
+  }
+
+  .requests {
+    grid-row: 4;
+  }
+
+  app-audience-section {
+    grid-row: 5;
+  }
+
+  .room > app-chat-panel {
+    grid-row: 6;
+    align-self: stretch;
+    block-size: auto;
+    min-block-size: 0;
+  }
+
+  .dock {
+    grid-row: 7;
   }
 
   .top {

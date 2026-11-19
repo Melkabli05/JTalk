@@ -98,7 +98,7 @@
         aria-live="polite"
         (scroll)="scrolled()"
       >
-        @for (comment of shown(); track comment.id) {
+        @for (comment of comments(); track comment.id) {
           <li class="message-item">
             <app-person-avatar size="normal" [member]="personOf(comment.authorId)" />
             <div class="body">
@@ -253,7 +253,7 @@
           <li class="empty">No messages yet. Say hello.</li>
         }
       </ul>
-      @if (!stuck() && !compact()) {
+      @if (!stuck()) {
         <button
           pButton
           type="button"

@@ -221,7 +221,8 @@
 }
 
 // Beside the room the discussion is a card of its own and fills the height it is given, the thread scrolling inside it. Under the room
-// (trimmed) it is the last few messages as tall as they are, each a card of its own, as the owner's picture has them.
+// (trimmed) it fills what the page leaves it, each message a card of its own, as the owner's picture has them, with the composer always
+// in view under the thread.
 .framed:not(.trimmed) {
   padding: 1rem;
   border: 1px solid var(--p-content-border-color);
@@ -230,8 +231,6 @@
 }
 
 .trimmed {
-  block-size: auto;
-
   // The sizes below are the owner's picture of the phone: small type, hairlines, and a card for each message.
   .head {
     margin-block-end: 0.625rem;
@@ -266,14 +265,10 @@
     }
   }
 
-  .feed {
-    flex: none;
-  }
-
   .messages {
     display: grid;
+    align-content: start;
     gap: 0.5rem;
-    overflow: visible;
   }
 
   .message-item {

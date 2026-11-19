@@ -85,13 +85,13 @@ describe('ChatPanelComponent (presentational)', () => {
   describe('beside the stage', () => {
     const many = ['a', 'b', 'c', 'd', 'e'].map((id) => comment(id, 'b-1', `Message ${id}`));
 
-    it('shows the last three messages, how many there are, and a way to open them all', async () => {
+    it('shows every message to scroll through, how many there are, and a way to open them in the drawer', async () => {
       const expanded: unknown[] = [];
       await render({ compact: true, framed: true, comments: many });
       fixture.componentInstance.expand.subscribe((event) => expanded.push(event));
 
       expect([...root().querySelectorAll('.message-item .text')].map((e) => e.textContent)).toEqual(
-        ['Message c', 'Message d', 'Message e'],
+        ['Message a', 'Message b', 'Message c', 'Message d', 'Message e'],
       );
       expect(root().querySelector('h2')?.textContent).toBe('Live Discussion');
       expect(root().querySelector('.head .count')?.textContent).toContain('5 messages');

@@ -44,7 +44,6 @@ interface TopicModel {
 }
 
 const NEAR_BOTTOM_PX = 48;
-const COMPACT_MESSAGES = 3;
 const CLOCK_MS = 30_000;
 
 @Component({
@@ -105,9 +104,6 @@ export class ChatPanelComponent {
     () => new Map(this.comments().map((comment) => [comment.id, comment])),
   );
   protected readonly muteIds = computed(() => new Set(this.mutedUsers()));
-  protected readonly shown = computed(() =>
-    this.compact() ? this.comments().slice(-COMPACT_MESSAGES) : this.comments(),
-  );
   protected readonly chips = computed(
     () =>
       new Map(
