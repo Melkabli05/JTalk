@@ -107,21 +107,23 @@
           >
             <app-person-avatar size="normal" [member]="personOf(comment.authorId)" />
             <div class="body">
-              <p class="meta">
-                <span class="author">{{ nameOf(comment.authorId) }}</span>
-                @if (comment.authorId === hostId()) {
-                  <span class="badge">Host</span>
-                }
-                @if (comment.authorId === meId()) {
-                  <span class="badge">You</span>
-                }
-                @if (muteIds().has(comment.authorId)) {
-                  <span class="tag">Muted</span>
-                }
+              <div class="meta">
+                <div class="who">
+                  <span class="author">{{ nameOf(comment.authorId) }}</span>
+                  @if (comment.authorId === hostId()) {
+                    <span class="badge">Host</span>
+                  }
+                  @if (comment.authorId === meId()) {
+                    <span class="badge">You</span>
+                  }
+                  @if (muteIds().has(comment.authorId)) {
+                    <span class="badge">Muted</span>
+                  }
+                </div>
                 <time class="when" [attr.datetime]="comment.createdAt">{{
                   timeAgo(comment.createdAt, now())
                 }}</time>
-              </p>
+              </div>
               <div class="bubble">
                 @if (quoted(comment); as original) {
                   <p class="quote">
@@ -147,115 +149,97 @@
                 @for (chip of chips().get(comment.id) ?? []; track chip.reaction) {
                   @let chipLabel = `${chip.label}, ${chip.count}`;
                   <button
-                    pButton
                     type="button"
                     class="chip"
-                    size="small"
-                    severity="secondary"
-                    [rounded]="true"
-                    [outlined]="chip.mine"
+                    [class.mine]="chip.mine"
                     [disabled]="muted()"
                     [attr.aria-pressed]="chip.mine"
                     [attr.aria-label]="chipLabel"
                     (click)="reacted.emit({ commentId: comment.id, reaction: chip.reaction })"
                   >
-                    <img [ngSrc]="chip.image" width="16" height="16" alt="" />
-                    {{ chip.count }}
+                    <img [ngSrc]="chip.image" width="12" height="12" alt="" />
+                    <span>{{ chip.count }}</span>
                   </button>
                 }
                 @if (!muted()) {
                   <button
-                    pButton
                     type="button"
                     class="add-reaction"
-                    size="small"
-                    icon="pi pi-plus"
-                    severity="secondary"
-                    [text]="true"
-                    [rounded]="true"
                     aria-label="Add a reaction"
                     aria-haspopup="true"
                     (click)="pick(comment, $event, picker)"
-                  ></button>
+                  >
+                    +
+                  </button>
                 }
                 @let replyLabel = `Reply to ${nameOf(comment.authorId)}`;
                 <button
-                  pButton
                   type="button"
-                  class="reply"
-                  size="small"
-                  icon="pi pi-reply"
-                  label="Reply"
-                  [text]="true"
-                  [rounded]="true"
+                  class="act reply"
                   [attr.aria-label]="replyLabel"
                   (click)="reply(comment)"
-                ></button>
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  <span>Reply</span>
+                </button>
                 @if (!compact() && comment.type === 'TEXT' && comment.authorId !== meId()) {
                   @let correctLabel = `Correct ${nameOf(comment.authorId)}`;
                   <button
-                    pButton
                     type="button"
-                    class="correct"
-                    size="small"
-                    icon="pi pi-pencil"
-                    severity="secondary"
-                    [text]="true"
-                    [rounded]="true"
+                    class="act"
                     [attr.aria-label]="correctLabel"
                     [pTooltip]="correctLabel"
                     tooltipPosition="top"
                     (click)="reply(comment, true)"
-                  ></button>
+                  >
+                    <i class="pi pi-pencil" aria-hidden="true"></i>
+                  </button>
                 }
                 @if (isHost() && comment.authorId !== meId()) {
                   @let deleteLabel = `Delete the comment by ${nameOf(comment.authorId)}`;
                   <button
-                    pButton
                     type="button"
-                    class="compact"
-                    icon="pi pi-trash"
-                    severity="danger"
-                    [text]="true"
-                    [rounded]="true"
+                    class="act danger"
                     [disabled]="moderating()"
                     [attr.aria-label]="deleteLabel"
                     [pTooltip]="deleteLabel"
                     tooltipPosition="top"
                     (click)="deleted.emit(comment.id)"
-                  ></button>
+                  >
+                    <i class="pi pi-trash" aria-hidden="true"></i>
+                  </button>
                   @if (muteIds().has(comment.authorId)) {
                     @let unmuteLabel = `Unmute ${nameOf(comment.authorId)} in the chat`;
                     <button
-                      pButton
                       type="button"
-                      class="compact"
-                      icon="pi pi-volume-up"
-                      severity="secondary"
-                      [text]="true"
-                      [rounded]="true"
+                      class="act"
                       [disabled]="moderating()"
                       [attr.aria-label]="unmuteLabel"
                       [pTooltip]="unmuteLabel"
                       tooltipPosition="top"
                       (click)="unmuteRequested.emit(comment.authorId)"
-                    ></button>
+                    >
+                      <i class="pi pi-volume-up" aria-hidden="true"></i>
+                    </button>
                   } @else {
                     @let muteLabel = `Mute ${nameOf(comment.authorId)} in the chat`;
                     <button
-                      pButton
                       type="button"
-                      class="compact"
-                      icon="pi pi-volume-off"
-                      severity="secondary"
-                      [text]="true"
-                      [rounded]="true"
+                      class="act"
                       [disabled]="moderating()"
                       [attr.aria-label]="muteLabel"
                       [pTooltip]="muteLabel"
                       tooltipPosition="top"
                       (click)="muteRequested.emit(comment.authorId)"
-                    ></button>
+                    >
+                      <i class="pi pi-volume-off" aria-hidden="true"></i>
+                    </button>
                   }
                 }
               </div>
