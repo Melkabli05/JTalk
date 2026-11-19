@@ -2,7 +2,14 @@ import { computed, effect, inject, linkedSignal, Service, signal, untracked } fr
 import { IdentityService } from '@core/auth/identity.service';
 import { loadedValue } from '@shared/utils/resource-value';
 import { ChatApiService } from '../data-access/chat-api.service';
-import { COMMENTS_KEPT, type ChatUpdate, type RoomComment } from '../models/chat.model';
+import {
+  COMMENTS_KEPT,
+  type ChatUpdate,
+  type CommentTally,
+  type RoomComment,
+} from '../models/chat.model';
+import type { Reaction } from '../models/reaction.model';
+import { withReaction } from '../utils/comment-reactions';
 import { RoomStore } from './room.store';
 
 @Service()
@@ -22,6 +29,9 @@ export class RoomChatStore {
   private readonly mutedUsersState = linkedSignal<readonly string[]>(
     () => this.loaded()?.mutedUsers ?? [],
   );
+  private readonly reactionsState = linkedSignal<ReadonlyMap<string, CommentTally>>(
+    () => this.loaded()?.reactions ?? new Map(),
+  );
   private readonly unreadState = signal(0);
   private readonly watching = signal(false);
   private missed: ChatUpdate[] = [];
@@ -30,6 +40,7 @@ export class RoomChatStore {
   readonly topic = this.topicState.asReadonly();
   readonly muted = this.mutedState.asReadonly();
   readonly mutedUsers = this.mutedUsersState.asReadonly();
+  readonly reactions = this.reactionsState.asReadonly();
   readonly unread = this.unreadState.asReadonly();
   readonly ready = computed(() => this.loaded() !== undefined);
   readonly failed = computed(() => this.resource.error() !== undefined);
@@ -70,6 +81,19 @@ export class RoomChatStore {
 
   removed(commentId: string): void {
     this.commentsState.update((list) => list.filter((comment) => comment.id !== commentId));
+    this.reactionsState.update((tallies) => {
+      const rest = new Map(tallies);
+      rest.delete(commentId);
+      return rest;
+    });
+  }
+
+  /** The viewer's own reaction to a comment is now this (none: taken back). The same whether it comes from their request or their other device. */
+  chose(commentId: string, reaction: Reaction | null): void {
+    const previous = this.reactionsState().get(commentId)?.mine ?? null;
+    if (previous !== reaction) {
+      this.tally(commentId, previous, reaction, true);
+    }
   }
 
   watch(open: boolean): void {
@@ -94,6 +118,13 @@ export class RoomChatStore {
       case 'COMMENT_DELETED':
         this.removed(update.commentId);
         break;
+      case 'COMMENT_REACTED':
+        if (update.userId === this.meId()) {
+          this.chose(update.commentId, update.reaction);
+        } else {
+          this.tally(update.commentId, update.previous, update.reaction, false);
+        }
+        break;
       case 'CHAT_MUTED':
         this.mutedUsersState.update((ids) =>
           ids.includes(update.userId) ? ids : [...ids, update.userId],
@@ -112,6 +143,24 @@ export class RoomChatStore {
         this.topicState.set(update.topic);
         break;
     }
+  }
+
+  private tally(
+    commentId: string,
+    previous: Reaction | null,
+    next: Reaction | null,
+    own: boolean,
+  ): void {
+    this.reactionsState.update((tallies) => {
+      const changed = withReaction(tallies.get(commentId), previous, next, own);
+      const all = new Map(tallies);
+      if (changed === undefined) {
+        all.delete(commentId);
+      } else {
+        all.set(commentId, changed);
+      }
+      return all;
+    });
   }
 
   private add(comment: RoomComment): void {

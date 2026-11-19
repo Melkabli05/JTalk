@@ -39,8 +39,26 @@ describe('chat parser', () => {
       topic: 'Weekend',
       muted: false,
       mutedUsers: ['u-2'],
+      reactions: new Map(),
     });
     expect(parseChatState({ comments: [], muted: true, mutedUsers: [] }).topic).toBeNull();
+  });
+
+  it('reads what each comment was reacted to with, and which reaction is the reader’s', () => {
+    const chat = parseChatState({
+      comments: [comment],
+      muted: false,
+      mutedUsers: [],
+      reactions: [
+        { commentId: 'c-1', counts: { CLAP: 2, FIRE: 1, UNKNOWN: 4, HEART: 0 }, mine: 'CLAP' },
+        { commentId: 'c-2', counts: { WOW: 1 } },
+        { counts: { WOW: 1 } },
+      ],
+    });
+
+    expect(chat.reactions.get('c-1')).toEqual({ counts: { CLAP: 2, FIRE: 1 }, mine: 'CLAP' });
+    expect(chat.reactions.get('c-2')).toEqual({ counts: { WOW: 1 }, mine: null });
+    expect(chat.reactions.size).toBe(2);
   });
 
   it.each([
@@ -50,6 +68,28 @@ describe('chat parser', () => {
     ['a topic that is not text', { comments: [], topic: 4, muted: false, mutedUsers: [] }],
   ])('refuses a chat with %s', (_name, raw) => {
     expect(() => parseChatState(raw)).toThrow();
+  });
+
+  it('reads someone choosing, changing or taking back a reaction', () => {
+    expect(
+      parseChatEvent({
+        type: 'COMMENT_REACTED',
+        commentId: 'c-1',
+        targetUserId: 'u-2',
+        reaction: 'HEART',
+        previous: 'CLAP',
+      }),
+    ).toEqual({
+      type: 'COMMENT_REACTED',
+      commentId: 'c-1',
+      userId: 'u-2',
+      reaction: 'HEART',
+      previous: 'CLAP',
+    });
+    expect(
+      parseChatEvent({ type: 'COMMENT_REACTED', commentId: 'c-1', targetUserId: 'u-2' }),
+    ).toMatchObject({ reaction: null, previous: null });
+    expect(parseChatEvent({ type: 'COMMENT_REACTED', commentId: 'c-1' })).toBeUndefined();
   });
 
   it('reads each change to the chat', () => {

@@ -726,6 +726,64 @@ describe('RoomFacade', () => {
       },
     );
 
+    describe('reacting to a comment', () => {
+      const reactions = () => facade.chat.reactions().get('c-1');
+
+      it('reacts, shows it once the server has kept it, and takes it back when pressed again', async () => {
+        await enter();
+        sent.length = 0;
+
+        facade.reactToComment('c-1', 'CLAP');
+        expect(reactions()).toBeUndefined();
+        await settle();
+        expect(sent.map((r) => `${r.method} ${r.url}`)).toEqual([
+          `PUT ${BASE}/comments/c-1/reaction`,
+        ]);
+        expect(sent[0].body).toEqual({ reaction: 'CLAP' });
+        expect(reactions()).toEqual({ counts: { CLAP: 1 }, mine: 'CLAP' });
+
+        sent.length = 0;
+        facade.reactToComment('c-1', 'CLAP');
+        await settle();
+        expect(sent.map((r) => `${r.method} ${r.url}`)).toEqual([
+          `DELETE ${BASE}/comments/c-1/reaction`,
+        ]);
+        expect(reactions()).toBeUndefined();
+      });
+
+      it('changes to another reaction with one request', async () => {
+        await enter();
+        facade.reactToComment('c-1', 'CLAP');
+        await settle();
+        sent.length = 0;
+
+        facade.reactToComment('c-1', 'FIRE');
+        await settle();
+
+        expect(sent.map((r) => `${r.method} ${r.url}`)).toEqual([
+          `PUT ${BASE}/comments/c-1/reaction`,
+        ]);
+        expect(reactions()).toEqual({ counts: { FIRE: 1 }, mine: 'FIRE' });
+      });
+
+      it('says nothing when it is only too fast, and says so when it is refused', async () => {
+        await enter();
+
+        failing[`PUT ${BASE}/comments/c-1/reaction`] = 429;
+        facade.reactToComment('c-1', 'CLAP');
+        await settle();
+        expect(toast.add).not.toHaveBeenCalled();
+
+        failing[`PUT ${BASE}/comments/c-1/reaction`] = 403;
+        facade.reactToComment('c-1', 'CLAP');
+        await settle();
+        expect(toast.add).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({ summary: 'Could not react to that comment.' }),
+        );
+        expect(reactions()).toBeUndefined();
+      });
+    });
+
     it('says so when moderating fails', async () => {
       await enter();
       failing[`DELETE ${BASE}/comments/c-1`] = 500;

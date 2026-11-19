@@ -10,8 +10,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormField, FormRoot, form, maxLength, required } from '@angular/forms/signals';
+import { NgOptimizedImage } from '@angular/common';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Message } from '@openng/optimus-ui/message';
+import { Popover } from '@openng/optimus-ui/popover';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import type { Person } from '@core/auth/identity.models';
@@ -23,10 +25,14 @@ import {
   COMMENT_MAX_LENGTH,
   TOPIC_MAX_LENGTH,
   type CommentDraft,
+  type CommentTally,
   type RoomComment,
 } from '../../models/chat.model';
+import { REACTIONS, type Reaction } from '../../models/reaction.model';
 import { memberOf } from '../../utils/members';
+import { REACTION_LOOKS } from '../../utils/reactions';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
+import { ReactionPickerComponent } from '../reaction-picker/reaction-picker.component';
 
 interface ComposerModel {
   content: string;
@@ -47,7 +53,10 @@ const CLOCK_MS = 30_000;
     FormField,
     FormRoot,
     Message,
+    NgOptimizedImage,
     PersonAvatarComponent,
+    Popover,
+    ReactionPickerComponent,
     Skeleton,
     TextareaFieldComponent,
     TextFieldComponent,
@@ -69,6 +78,7 @@ export class ChatPanelComponent {
   readonly submitting = input(false);
   readonly error = input<string | null>(null);
   readonly moderating = input(false);
+  readonly reactions = input<ReadonlyMap<string, CommentTally>>(new Map());
   readonly compact = input(false);
   readonly framed = input(false);
 
@@ -80,6 +90,7 @@ export class ChatPanelComponent {
   readonly unpinned = output<void>();
   readonly retry = output<void>();
   readonly expand = output<void>();
+  readonly reacted = output<{ commentId: string; reaction: Reaction }>();
 
   protected readonly log = viewChild<ElementRef<HTMLElement>>('log');
   protected readonly stuck = signal(true);
@@ -95,6 +106,22 @@ export class ChatPanelComponent {
   protected readonly shown = computed(() =>
     this.compact() ? this.comments().slice(-COMPACT_MESSAGES) : this.comments(),
   );
+  protected readonly chips = computed(
+    () =>
+      new Map(
+        [...this.reactions()].map(([commentId, tally]) => [
+          commentId,
+          REACTIONS.filter((reaction) => (tally.counts[reaction] ?? 0) > 0).map((reaction) => ({
+            reaction,
+            count: tally.counts[reaction] ?? 0,
+            mine: tally.mine === reaction,
+            label: REACTION_LOOKS[reaction].label,
+            image: REACTION_LOOKS[reaction].image,
+          })),
+        ]),
+      ),
+  );
+  private pickingFor: string | null = null;
   protected readonly now = signal(Date.now());
   protected readonly timeAgo = timeAgo;
 
@@ -191,6 +218,18 @@ export class ChatPanelComponent {
         element.scrollHeight - element.scrollTop - element.clientHeight <= NEAR_BOTTOM_PX,
       );
     }
+  }
+
+  protected pick(comment: RoomComment, event: Event, picker: Popover): void {
+    this.pickingFor = comment.id;
+    picker.toggle(event);
+  }
+
+  protected choose(reaction: Reaction, picker: Popover): void {
+    if (this.pickingFor !== null) {
+      this.reacted.emit({ commentId: this.pickingFor, reaction });
+    }
+    picker.hide();
   }
 
   protected jumpToLatest(): void {

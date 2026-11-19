@@ -1,4 +1,3 @@
-import { NgOptimizedImage } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Message } from '@openng/optimus-ui/message';
@@ -6,15 +5,23 @@ import { OverlayBadge } from '@openng/optimus-ui/overlaybadge';
 import { Popover } from '@openng/optimus-ui/popover';
 import { Toolbar } from '@openng/optimus-ui/toolbar';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
-import { REACTIONS, type Reaction } from '../../models/reaction.model';
+import type { Reaction } from '../../models/reaction.model';
 import type { AudioStatus } from '../../models/realtime.model';
-import { REACTION_LOOKS } from '../../utils/reactions';
+import { ReactionPickerComponent } from '../reaction-picker/reaction-picker.component';
 
 let nextId = 0;
 
 @Component({
   selector: 'app-room-controls',
-  imports: [ButtonDirective, Message, NgOptimizedImage, OverlayBadge, Popover, Toolbar, Tooltip],
+  imports: [
+    ButtonDirective,
+    Message,
+    OverlayBadge,
+    Popover,
+    ReactionPickerComponent,
+    Toolbar,
+    Tooltip,
+  ],
   template: `
     <span class="cdk-visually-hidden" [id]="labelId">Room controls</span>
     <div class="notes">
@@ -179,25 +186,7 @@ let nextId = 0;
           ></button>
         </div>
         <p-popover #picker appendTo="body" ariaLabel="Send a reaction">
-          <div class="reactions">
-            @for (item of looks; track item.reaction) {
-              @let label = item.label;
-              <button
-                pButton
-                type="button"
-                size="large"
-                class="reaction-choice"
-                [text]="true"
-                [rounded]="true"
-                [attr.aria-label]="label"
-                [pTooltip]="label"
-                tooltipPosition="top"
-                (click)="react.emit(item.reaction)"
-              >
-                <img [ngSrc]="item.image" width="28" height="28" alt="" />
-              </button>
-            }
-          </div>
+          <app-reaction-picker (chosen)="react.emit($event)" />
         </p-popover>
       </ng-template>
     </p-toolbar>
@@ -228,10 +217,6 @@ export class RoomControlsComponent {
   readonly react = output<Reaction>();
   readonly chat = output<void>();
 
-  protected readonly looks = REACTIONS.map((reaction) => ({
-    reaction,
-    ...REACTION_LOOKS[reaction],
-  }));
   /** The microphone is offered only to someone who may speak, and only while there is audio to speak into. */
   protected readonly micShown = computed(() => this.canSpeak() && this.audio() === 'connected');
   protected readonly chatLabel = computed(() =>

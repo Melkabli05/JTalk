@@ -124,6 +124,57 @@ describe('ChatPanelComponent (presentational)', () => {
     });
   });
 
+  describe('reactions to a message', () => {
+    const tallies = new Map([['c-1', { counts: { CLAP: 4, FIRE: 2 }, mine: 'FIRE' as const }]]);
+    const chips = () => [...root().querySelectorAll<HTMLButtonElement>('.chip')];
+
+    it('shows what each message was reacted to with, and which is mine', async () => {
+      await render({
+        comments: [comment('c-1', 'b-1', 'Hola'), comment('c-2', 'b-1', 'Adiós')],
+        reactions: tallies,
+      });
+
+      expect(chips().map((chip) => chip.getAttribute('aria-label'))).toEqual([
+        'Clap, 4',
+        'Fire, 2',
+      ]);
+      expect(chips().map((chip) => chip.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
+      expect(chips().map((chip) => chip.textContent?.trim())).toEqual(['4', '2']);
+      expect(root().querySelectorAll('.message-item')[1].querySelector('.chip')).toBeNull();
+    });
+
+    it('reacts, or takes it back, by pressing a chip', async () => {
+      await render({ comments: [comment('c-1', 'b-1', 'Hola')], reactions: tallies });
+      const chosen: unknown[] = [];
+      fixture.componentInstance.reacted.subscribe((choice) => chosen.push(choice));
+
+      chips()[0].click();
+
+      expect(chosen).toEqual([{ commentId: 'c-1', reaction: 'CLAP' }]);
+    });
+
+    it('offers all ten to choose from on a message, and reacts with the one chosen', async () => {
+      await render({ comments: [comment('c-1', 'b-1', 'Hola'), comment('c-2', 'b-1', 'Adiós')] });
+      const chosen: unknown[] = [];
+      fixture.componentInstance.reacted.subscribe((choice) => chosen.push(choice));
+
+      button('Add a reaction')!.click();
+      await fixture.whenStable();
+      const choices = [...document.body.querySelectorAll<HTMLButtonElement>('.reaction-choice')];
+      expect(choices).toHaveLength(10);
+      choices.find((choice) => choice.getAttribute('aria-label') === 'Heart')!.click();
+
+      expect(chosen).toEqual([{ commentId: 'c-1', reaction: 'HEART' }]);
+    });
+
+    it('is only to look at for someone the host muted', async () => {
+      await render({ comments: [comment('c-1', 'b-1', 'Hola')], reactions: tallies, muted: true });
+
+      expect(button('Add a reaction')).toBeUndefined();
+      expect(chips().every((chip) => chip.disabled)).toBe(true);
+    });
+  });
+
   it('is a log, so a screen reader hears new messages politely', async () => {
     await render();
 

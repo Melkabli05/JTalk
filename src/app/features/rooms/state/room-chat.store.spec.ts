@@ -136,6 +136,78 @@ describe('RoomChatStore', () => {
     expect(chat.unread()).toBe(1);
   });
 
+  it('opens with what each comment was reacted to with', async () => {
+    await opened(
+      state([comment('c-1')], {
+        reactions: [{ commentId: 'c-1', counts: { CLAP: 2 }, mine: 'CLAP' }],
+      }),
+    );
+
+    expect(chat.reactions().get('c-1')).toEqual({ counts: { CLAP: 2 }, mine: 'CLAP' });
+  });
+
+  it('moves the counts as others react, and leaves the viewer’s own choice alone', async () => {
+    await opened(state([comment('c-1')]));
+
+    chat.apply({
+      type: 'COMMENT_REACTED',
+      commentId: 'c-1',
+      userId: 'b-2',
+      reaction: 'CLAP',
+      previous: null,
+    });
+    chat.apply({
+      type: 'COMMENT_REACTED',
+      commentId: 'c-1',
+      userId: 'b-3',
+      reaction: 'FIRE',
+      previous: null,
+    });
+    chat.apply({
+      type: 'COMMENT_REACTED',
+      commentId: 'c-1',
+      userId: 'b-2',
+      reaction: 'HEART',
+      previous: 'CLAP',
+    });
+
+    expect(chat.reactions().get('c-1')).toEqual({ counts: { FIRE: 1, HEART: 1 }, mine: null });
+  });
+
+  it('makes the viewer’s own reaction theirs once, whether the request or their other device says it', async () => {
+    await opened(state([comment('c-1')]));
+
+    chat.chose('c-1', 'CLAP');
+    chat.apply({
+      type: 'COMMENT_REACTED',
+      commentId: 'c-1',
+      userId: 'm-1',
+      reaction: 'CLAP',
+      previous: null,
+    });
+    expect(chat.reactions().get('c-1')).toEqual({ counts: { CLAP: 1 }, mine: 'CLAP' });
+
+    chat.apply({
+      type: 'COMMENT_REACTED',
+      commentId: 'c-1',
+      userId: 'm-1',
+      reaction: null,
+      previous: 'CLAP',
+    });
+    chat.chose('c-1', null);
+    expect(chat.reactions().has('c-1')).toBe(false);
+  });
+
+  it('forgets the reactions of a comment that is deleted', async () => {
+    await opened(
+      state([comment('c-1')], { reactions: [{ commentId: 'c-1', counts: { CLAP: 1 } }] }),
+    );
+
+    chat.apply({ type: 'COMMENT_DELETED', commentId: 'c-1' });
+
+    expect(chat.reactions().size).toBe(0);
+  });
+
   it('knows who is muted, and when it is the person themselves', async () => {
     await opened();
 

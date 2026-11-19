@@ -199,6 +199,22 @@ export class RoomFacade {
     });
   }
 
+  /** Reacts to a comment with this, or takes the reaction back when it is already the person's own. The comment shows it once the service says it is kept. */
+  reactToComment(commentId: string, reaction: Reaction): void {
+    const taking = this.chat.reactions().get(commentId)?.mine === reaction;
+    const request = taking
+      ? this.chats.unreact(this.state.roomId(), commentId)
+      : this.chats.react(this.state.roomId(), commentId, reaction);
+    request.subscribe({
+      next: () => this.chat.chose(commentId, taking ? null : reaction),
+      error: (error: unknown) => {
+        if (httpStatus(error) !== 429) {
+          this.toast.add({ severity: 'warn', summary: 'Could not react to that comment.' });
+        }
+      },
+    });
+  }
+
   deleteComment(commentId: string): void {
     this.moderating.run(this.chats.remove(this.state.roomId(), commentId), {
       next: () => this.chat.removed(commentId),

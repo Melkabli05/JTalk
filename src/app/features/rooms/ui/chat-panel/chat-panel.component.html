@@ -131,6 +131,40 @@
                 }
               </div>
               <div class="actions">
+                @for (chip of chips().get(comment.id) ?? []; track chip.reaction) {
+                  @let chipLabel = `${chip.label}, ${chip.count}`;
+                  <button
+                    pButton
+                    type="button"
+                    class="chip"
+                    size="small"
+                    severity="secondary"
+                    [rounded]="true"
+                    [outlined]="chip.mine"
+                    [disabled]="muted()"
+                    [attr.aria-pressed]="chip.mine"
+                    [attr.aria-label]="chipLabel"
+                    (click)="reacted.emit({ commentId: comment.id, reaction: chip.reaction })"
+                  >
+                    <img [ngSrc]="chip.image" width="16" height="16" alt="" />
+                    {{ chip.count }}
+                  </button>
+                }
+                @if (!muted()) {
+                  <button
+                    pButton
+                    type="button"
+                    class="add-reaction"
+                    size="small"
+                    icon="pi pi-plus"
+                    severity="secondary"
+                    [text]="true"
+                    [rounded]="true"
+                    aria-label="Add a reaction"
+                    aria-haspopup="true"
+                    (click)="pick(comment, $event, picker)"
+                  ></button>
+                }
                 @let replyLabel = `Reply to ${nameOf(comment.authorId)}`;
                 <button
                   pButton
@@ -288,3 +322,7 @@
     </form>
   }
 </section>
+
+<p-popover #picker appendTo="body" ariaLabel="React to the comment">
+  <app-reaction-picker (chosen)="choose($event, picker)" />
+</p-popover>

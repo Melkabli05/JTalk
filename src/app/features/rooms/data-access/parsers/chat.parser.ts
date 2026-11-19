@@ -1,5 +1,6 @@
 import { asRecord, isStringList } from '@shared/utils/as-record';
-import type { ChatState, ChatUpdate, RoomComment } from '../../models/chat.model';
+import type { ChatState, ChatUpdate, CommentTally, RoomComment } from '../../models/chat.model';
+import { isReaction, REACTIONS, type Reaction } from '../../models/reaction.model';
 
 function readComment(raw: unknown): RoomComment | undefined {
   const comment = asRecord(raw);
@@ -24,6 +25,30 @@ function readComment(raw: unknown): RoomComment | undefined {
     ...(typeof corrected === 'string' ? { correctedContent: corrected } : {}),
     ...(typeof replyTo === 'string' ? { replyTo } : {}),
   };
+}
+
+function readReaction(raw: unknown): Reaction | null {
+  return isReaction(raw) ? raw : null;
+}
+
+function readReactions(raw: unknown): Map<string, CommentTally> {
+  const tallies = new Map<string, CommentTally>();
+  for (const item of Array.isArray(raw) ? (raw as unknown[]) : []) {
+    const entry = asRecord(item);
+    const counts = asRecord(entry?.['counts']);
+    if (typeof entry?.['commentId'] === 'string' && counts !== undefined) {
+      tallies.set(entry['commentId'], {
+        counts: Object.fromEntries(
+          REACTIONS.flatMap((reaction) => {
+            const count = counts[reaction];
+            return typeof count === 'number' && count > 0 ? [[reaction, count]] : [];
+          }),
+        ),
+        mine: readReaction(entry['mine']),
+      });
+    }
+  }
+  return tallies;
 }
 
 export function parseComment(raw: unknown): RoomComment {
@@ -51,6 +76,7 @@ export function parseChatState(raw: unknown): ChatState {
     topic,
     muted: state['muted'],
     mutedUsers: state['mutedUsers'],
+    reactions: readReactions(state['reactions']),
   };
 }
 
@@ -64,6 +90,16 @@ export function parseChatEvent(raw: unknown): ChatUpdate | undefined {
     case 'COMMENT_DELETED':
       return typeof event['commentId'] === 'string'
         ? { type: 'COMMENT_DELETED', commentId: event['commentId'] }
+        : undefined;
+    case 'COMMENT_REACTED':
+      return typeof event['commentId'] === 'string' && typeof event['targetUserId'] === 'string'
+        ? {
+            type: 'COMMENT_REACTED',
+            commentId: event['commentId'],
+            userId: event['targetUserId'],
+            reaction: readReaction(event['reaction']),
+            previous: readReaction(event['previous']),
+          }
         : undefined;
     case 'CHAT_MUTED':
     case 'CHAT_UNMUTED':
