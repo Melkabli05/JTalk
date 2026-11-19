@@ -15,51 +15,17 @@
   </a>
 </ng-template>
 
-<ng-template #account>
-  <button
-    pButton
-    type="button"
-    class="account"
-    severity="secondary"
-    aria-haspopup="dialog"
-    [text]="true"
-    [attr.aria-label]="'Profile and settings' | t"
-    (click)="settings.toggle($event)"
-  >
-    @if (myPicture(); as picture) {
-      <p-avatar shape="circle" size="large" aria-hidden="true" [image]="picture" />
-    } @else {
-      <p-avatar shape="circle" size="large" aria-hidden="true" icon="pi pi-user" />
-    }
-    <span class="who" aria-hidden="true">
-      <strong>{{ identity.profile()?.name }}</strong>
-      <small>{{ myLanguages() }}</small>
-    </span>
-  </button>
-</ng-template>
-
-<aside class="rail">
-  <nav [attr.aria-label]="'Primary' | t" appAriaCurrent>
-    <p-menu [model]="navItems()" [ariaLabel]="'Primary' | t">
-      <ng-template #start><ng-container [ngTemplateOutlet]="brand" /></ng-template>
-    </p-menu>
-  </nav>
-  <p-card class="go-live" [attr.aria-label]="'Go live' | t">
-    <ng-template #title>{{ 'Go live' | t }}</ng-template>
-    <ng-template #subtitle>{{ 'Start a room and let people practise with you.' | t }}</ng-template>
-    <ng-template #footer>
-      <button
-        pButton
-        type="button"
-        icon="pi pi-plus"
-        [fluid]="true"
-        [label]="'Start a room' | t"
-        (click)="startRoom()"
-      ></button>
-    </ng-template>
-  </p-card>
-  <ng-container [ngTemplateOutlet]="account" />
-</aside>
+<app-sidebar
+  class="rail"
+  [items]="navItems()"
+  [name]="identity.profile()?.name ?? ''"
+  [languages]="myLanguages()"
+  [picture]="myPicture()"
+  (startRoom)="startRoom()"
+  (settings)="settings.toggle($event)"
+>
+  <ng-container ngProjectAs="[brand]" [ngTemplateOutlet]="brand" />
+</app-sidebar>
 
 <nav class="top" [attr.aria-label]="'Primary' | t" appAriaCurrent>
   <p-menubar breakpoint="0px" [model]="topItems()" [ariaLabel]="'Primary' | t">

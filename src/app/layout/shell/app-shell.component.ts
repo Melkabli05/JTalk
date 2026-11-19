@@ -10,8 +10,6 @@ import {
 } from '@angular/router';
 import { MenuItem } from '@openng/optimus-ui/api';
 import { Breadcrumb } from '@openng/optimus-ui/breadcrumb';
-import { Card } from '@openng/optimus-ui/card';
-import { Menu } from '@openng/optimus-ui/menu';
 import { Menubar } from '@openng/optimus-ui/menubar';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { ProgressBar } from '@openng/optimus-ui/progressbar';
@@ -27,6 +25,7 @@ import { DirectionService } from '@core/config/direction.service';
 import { avatarUrl } from '@shared/utils/avatars';
 import { AriaCurrentDirective } from '@shared/directives/aria-current.directive';
 import { BrandMarkComponent } from '@shared/ui/brand-mark/brand-mark.component';
+import { SidebarComponent } from '../sidebar/sidebar.component';
 import { LocaleService } from '@core/config/locale.service';
 import { FormsModule } from '@angular/forms';
 import { Avatar } from '@openng/optimus-ui/avatar';
@@ -74,11 +73,8 @@ function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wid
   selector: 'app-shell',
   imports: [
     Avatar,
-    Card,
     FormsModule,
-    Menu,
     Menubar,
-    NgTemplateOutlet,
     InitialsPipe,
     Popover,
     ProfileDialogComponent,
@@ -92,6 +88,8 @@ function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wid
     Tooltip,
     AriaCurrentDirective,
     BrandMarkComponent,
+    NgTemplateOutlet,
+    SidebarComponent,
     LocaleSwitchComponent,
   ],
   templateUrl: './app-shell.component.html',

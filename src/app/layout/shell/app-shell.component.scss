@@ -45,26 +45,6 @@
 // place. Only the layout is ours.
 .rail {
   grid-area: rail;
-  display: none;
-
-  @media (min-width: 64rem) {
-    position: sticky;
-    inset-block-start: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    block-size: 100dvh;
-    padding: 1rem;
-    overflow-y: auto;
-  }
-}
-
-.top {
-  grid-area: rail;
-
-  @media (min-width: 64rem) {
-    display: none;
-  }
 }
 
 .brand {
@@ -81,35 +61,11 @@
   }
 }
 
-.go-live {
-  margin-block-start: auto;
-}
+.top {
+  grid-area: rail;
 
-.account {
-  justify-content: flex-start;
-  gap: 0.75rem;
-  text-align: start;
-
-  .who {
+  @media (min-width: 64rem) {
     display: none;
-    flex-direction: column;
-    min-inline-size: 0;
-
-    @media (min-width: 64rem) {
-      display: flex;
-    }
-  }
-
-  strong,
-  small {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  small {
-    color: var(--p-text-muted-color);
-    font-weight: 400;
   }
 }
 
