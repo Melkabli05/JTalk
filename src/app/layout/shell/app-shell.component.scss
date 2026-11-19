@@ -56,6 +56,18 @@
   app-brand-mark {
     font-size: 1rem;
   }
+
+  // On the narrowest phones the bar keeps room for its five icons: the mark alone, the name still there for screen readers.
+  @media (max-width: 24rem) {
+    .name {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
 }
 
 .top {
