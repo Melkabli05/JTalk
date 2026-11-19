@@ -8,121 +8,164 @@
   />
 }
 
-<header class="header">
+<aside class="rail">
+  <a class="brand" routerLink="/">
+    <app-brand-mark />
+    {{ appName | t }}
+  </a>
+
   <nav [attr.aria-label]="'Primary' | t" appAriaCurrent>
-    <p-menubar breakpoint="0px" [model]="navItems()" [ariaLabel]="'Primary' | t">
-      <ng-template #start>
-        <a class="brand" routerLink="/">
-          <app-brand-mark />
-          {{ appName | t }}
-        </a>
-      </ng-template>
-      <ng-template #end>
-        @if (liveRoom(); as live) {
-          @let back = 'Back to the room: {title}' | t: { title: live.title };
+    <ul class="nav">
+      @for (item of navItems; track item.route) {
+        <li>
+          <a class="nav-link" [routerLink]="item.route">
+            <i [class]="item.icon" aria-hidden="true"></i>
+            <span>{{ item.label | t }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+
+  <section class="go-live" [attr.aria-label]="'Go live' | t">
+    <svg
+      class="art"
+      viewBox="0 0 64 64"
+      width="56"
+      height="56"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="3"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="24" y="8" width="16" height="28" rx="8" />
+      <path d="M16 30c0 9 7 16 16 16s16-7 16-16M32 46v10M24 56h16" />
+      <path class="spark" d="M12 14l4 4M52 14l-4 4M8 24h5M51 24h5" />
+    </svg>
+    <h2>{{ 'Go live' | t }}</h2>
+    <p>{{ 'Start a room and let people practise with you.' | t }}</p>
+    <button
+      pButton
+      type="button"
+      class="start"
+      [label]="'Start a room' | t"
+      (click)="startRoom()"
+    ></button>
+  </section>
+
+  <button
+    type="button"
+    class="me-card"
+    aria-haspopup="dialog"
+    [attr.aria-label]="'Profile and settings' | t"
+    (click)="account.toggle($event)"
+  >
+    @if (myPicture(); as picture) {
+      <p-avatar shape="circle" size="large" aria-hidden="true" [image]="picture" />
+    } @else {
+      <p-avatar shape="circle" size="large" aria-hidden="true" icon="pi pi-user" />
+    }
+    <span class="who" aria-hidden="true">
+      <strong>{{ identity.profile()?.name }}</strong>
+      <span class="muted">{{ myLanguages() }}</span>
+    </span>
+    <i class="pi pi-angle-right chevron" aria-hidden="true"></i>
+  </button>
+</aside>
+
+<header class="bar">
+  @if (liveRoom(); as live) {
+    @let back = 'Back to the room: {title}' | t: { title: live.title };
+    <a
+      pButton
+      class="live-room"
+      size="small"
+      severity="primary"
+      [rounded]="true"
+      [outlined]="true"
+      [routerLink]="['/rooms', live.id]"
+      [attr.aria-label]="back"
+      [pTooltip]="back"
+      tooltipPosition="bottom"
+    >
+      <span class="live-dot" aria-hidden="true"></span>
+      <span class="live-title">{{ live.title }}</span>
+    </a>
+  }
+  <button
+    pButton
+    type="button"
+    class="account"
+    severity="secondary"
+    aria-haspopup="dialog"
+    [rounded]="true"
+    [text]="true"
+    [attr.aria-label]="'Profile and settings' | t"
+    (click)="account.toggle($event)"
+  >
+    @if (myPicture(); as picture) {
+      <p-avatar shape="circle" size="large" aria-hidden="true" [image]="picture" />
+    } @else {
+      <i class="pi pi-user" aria-hidden="true"></i>
+    }
+  </button>
+  <p-popover #account appendTo="body" [ariaLabel]="'Profile and settings' | t">
+    <div class="settings">
+      @if (identity.profile(); as me) {
+        <div class="me">
+          @if (myPicture(); as picture) {
+            <p-avatar shape="circle" size="large" aria-hidden="true" [image]="picture" />
+          } @else {
+            <p-avatar shape="circle" size="large" aria-hidden="true" [label]="me.name | initials" />
+          }
+          <div class="who">
+            <strong>{{ me.name }}</strong>
+            <span class="muted">{{ myLanguages() }}</span>
+          </div>
           <a
             pButton
-            class="live-room"
+            routerLink="/profile"
+            class="to-profile"
             size="small"
-            severity="primary"
-            [rounded]="true"
+            severity="secondary"
             [outlined]="true"
-            [routerLink]="['/rooms', live.id]"
-            [attr.aria-label]="back"
-            [pTooltip]="back"
-            tooltipPosition="bottom"
-          >
-            <span class="live-dot" aria-hidden="true"></span>
-            <span class="live-title">{{ live.title }}</span>
-          </a>
-        }
-        <button
-          pButton
-          type="button"
-          class="account"
-          severity="secondary"
-          aria-haspopup="dialog"
-          [rounded]="true"
-          [text]="true"
-          [attr.aria-label]="'Profile and settings' | t"
-          (click)="account.toggle($event)"
-        >
-          @if (myPicture(); as picture) {
-            <p-avatar shape="circle" size="normal" aria-hidden="true" [image]="picture" />
-          } @else {
-            <i class="pi pi-user" aria-hidden="true"></i>
-          }
-          @if (firstName()) {
-            <span class="account-name" aria-hidden="true">{{ firstName() }}</span>
-          }
-          <i class="pi pi-angle-down chevron" aria-hidden="true"></i>
-        </button>
-        <p-popover #account appendTo="body" [ariaLabel]="'Profile and settings' | t">
-          <div class="settings">
-            @if (identity.profile(); as me) {
-              <div class="me">
-                @if (myPicture(); as picture) {
-                  <p-avatar shape="circle" size="large" aria-hidden="true" [image]="picture" />
-                } @else {
-                  <p-avatar
-                    shape="circle"
-                    size="large"
-                    aria-hidden="true"
-                    [label]="me.name | initials"
-                  />
-                }
-                <div class="who">
-                  <strong>{{ me.name }}</strong>
-                  <span class="muted">{{ myLanguages() }}</span>
-                </div>
-                <a
-                  pButton
-                  routerLink="/profile"
-                  class="to-profile"
-                  size="small"
-                  severity="secondary"
-                  [outlined]="true"
-                  [label]="'Your profile' | t"
-                  (click)="account.hide()"
-                ></a>
-              </div>
-            }
-            <div class="row">
-              <span>{{ 'Language' | t }}</span>
-              <app-locale-switch
-                [locale]="locales.locale()"
-                (localeChange)="locales.switchTo($event)"
-              />
-            </div>
-            <div class="row">
-              <span aria-hidden="true">{{ 'Dark theme' | t }}</span>
-              <p-toggleswitch
-                [ariaLabel]="'Dark theme' | t"
-                [ngModel]="colorScheme.isDark()"
-                (ngModelChange)="colorScheme.toggle()"
-              />
-            </div>
-            <div class="row">
-              <span aria-hidden="true">{{ 'Right-to-left' | t }}</span>
-              <p-toggleswitch
-                [ariaLabel]="'Right-to-left' | t"
-                [ngModel]="direction.isRtl()"
-                (ngModelChange)="direction.toggle()"
-              />
-            </div>
-            <button
-              pButton
-              type="button"
-              severity="secondary"
-              [outlined]="true"
-              [label]="'Sign out' | t"
-              (click)="account.hide(); signOut()"
-            ></button>
-          </div>
-        </p-popover>
-      </ng-template>
-    </p-menubar>
-  </nav>
+            [label]="'Your profile' | t"
+            (click)="account.hide()"
+          ></a>
+        </div>
+      }
+      <div class="row">
+        <span>{{ 'Language' | t }}</span>
+        <app-locale-switch [locale]="locales.locale()" (localeChange)="locales.switchTo($event)" />
+      </div>
+      <div class="row">
+        <span aria-hidden="true">{{ 'Dark theme' | t }}</span>
+        <p-toggleswitch
+          [ariaLabel]="'Dark theme' | t"
+          [ngModel]="colorScheme.isDark()"
+          (ngModelChange)="colorScheme.toggle()"
+        />
+      </div>
+      <div class="row">
+        <span aria-hidden="true">{{ 'Right-to-left' | t }}</span>
+        <p-toggleswitch
+          [ariaLabel]="'Right-to-left' | t"
+          [ngModel]="direction.isRtl()"
+          (ngModelChange)="direction.toggle()"
+        />
+      </div>
+      <button
+        pButton
+        type="button"
+        severity="secondary"
+        [outlined]="true"
+        [label]="'Sign out' | t"
+        (click)="account.hide(); signOut()"
+      ></button>
+    </div>
+  </p-popover>
 </header>
 
 <main id="main-content" class="main" [class.wide]="wide()" tabindex="-1">

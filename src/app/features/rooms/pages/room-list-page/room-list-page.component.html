@@ -1,98 +1,110 @@
-<header class="head">
-  <div>
-    <h1>{{ 'Rooms' | t }}</h1>
-    <p class="lead">{{ 'Join a conversation to practise a language.' | t }}</p>
-  </div>
-  <button
-    pButton
-    type="button"
-    size="large"
-    icon="pi pi-plus"
-    [label]="'Start a room' | t"
-    (click)="starting.set(true)"
-  ></button>
-</header>
-
-@if (state.rooms()) {
-  @if (state.languages().length > 1) {
-    <app-language-filter
-      class="filter"
-      [languages]="state.languages()"
-      [(selected)]="state.filter"
-    />
-  }
-
-  <p class="cdk-visually-hidden" role="status">
-    {{ 'Rooms shown: {count}' | t: { count: state.shown().length } }}
-  </p>
-
-  @if (state.shown().length > 0) {
-    <ul class="rooms">
-      @for (room of state.shown(); track room.id) {
-        <li
-          animate.enter="room-in"
-          animate.leave="room-out"
-          [style.--position]="$index < 6 ? $index : 6"
-        >
-          <app-room-card [room]="room" [members]="state.members()" (opened)="open(room)" />
-        </li>
+<div class="page">
+  <section class="hero" aria-labelledby="greeting">
+    <div class="words">
+      <h1 id="greeting">{{ greeting() | t: { name: firstName() } }}</h1>
+      <p class="lead">{{ 'Join a conversation to practise a language.' | t }}</p>
+      @if (state.languages().length > 1) {
+        <app-language-filter
+          class="filter"
+          [languages]="state.languages()"
+          [(selected)]="state.filter"
+        />
       }
-    </ul>
-  } @else {
-    <section class="empty">
-      @if (state.filter() === '') {
-        <h2>{{ 'Quiet right now' | t }}</h2>
-        <p>{{ 'Nobody has opened a room. Start one and others can join you.' | t }}</p>
-      } @else {
-        <h2>{{ 'Nothing in this language yet' | t }}</h2>
-        <p>{{ 'No open room matches. Try another language, or start one.' | t }}</p>
-        <button
-          pButton
-          type="button"
-          severity="secondary"
-          [outlined]="true"
-          [label]="'Show all rooms' | t"
-          (click)="state.filter.set('')"
-        ></button>
-      }
-    </section>
-  }
-} @else if (state.failed()) {
-  <p-message severity="error" icon="pi pi-exclamation-triangle">
-    <span class="message">
-      {{ 'Could not load the rooms. Please try again.' | t }}
       <button
         pButton
         type="button"
-        size="small"
-        icon="pi pi-refresh"
-        severity="danger"
-        [text]="true"
-        [label]="'Try again' | t"
-        (click)="state.reload()"
+        class="start"
+        icon="pi pi-plus"
+        [label]="'Start a room' | t"
+        (click)="starting.set(true)"
       ></button>
-    </span>
-  </p-message>
-} @else {
-  <p class="cdk-visually-hidden" role="status">{{ 'Finding open rooms' | t }}</p>
-  <ul class="rooms" aria-hidden="true">
-    @for (placeholder of [1, 2, 3]; track placeholder) {
-      <li>
-        <p-card class="placeholder">
-          <p-skeleton width="45%" height="0.875rem" />
-          <p-skeleton width="70%" height="1.5rem" />
-          <p-skeleton width="92%" height="0.875rem" />
-          <span class="faces">
-            <p-skeleton shape="circle" size="2rem" />
-            <p-skeleton shape="circle" size="2rem" />
-            <p-skeleton shape="circle" size="2rem" />
-          </span>
-          <p-skeleton width="38%" height="0.875rem" />
-        </p-card>
-      </li>
+    </div>
+    <div class="art" aria-hidden="true">
+      <span class="disc big"></span>
+      <span class="disc small"></span>
+      <span class="disc ring"></span>
+      <span class="tick one"></span>
+      <span class="tick two"></span>
+      <span class="tick three"></span>
+    </div>
+  </section>
+
+  @if (state.rooms()) {
+    <p class="cdk-visually-hidden" role="status">
+      {{ 'Rooms shown: {count}' | t: { count: state.shown().length } }}
+    </p>
+
+    @if (state.shown().length > 0) {
+      <section class="group" aria-labelledby="active-heading">
+        <h2 id="active-heading">{{ 'Active rooms' | t }}</h2>
+        <ul class="rooms">
+          @for (room of state.shown(); track room.id) {
+            <li
+              animate.enter="room-in"
+              animate.leave="room-out"
+              [style.--position]="$index < 6 ? $index : 6"
+            >
+              <app-room-card [room]="room" [members]="state.members()" (opened)="open(room)" />
+            </li>
+          }
+        </ul>
+      </section>
+    } @else {
+      <section class="empty">
+        @if (state.filter() === '') {
+          <h2>{{ 'Quiet right now' | t }}</h2>
+          <p>{{ 'Nobody has opened a room. Start one and others can join you.' | t }}</p>
+        } @else {
+          <h2>{{ 'Nothing in this language yet' | t }}</h2>
+          <p>{{ 'No open room matches. Try another language, or start one.' | t }}</p>
+          <button
+            pButton
+            type="button"
+            severity="secondary"
+            [outlined]="true"
+            [label]="'Show all rooms' | t"
+            (click)="state.filter.set('')"
+          ></button>
+        }
+      </section>
     }
-  </ul>
-}
+  } @else if (state.failed()) {
+    <p-message severity="error" icon="pi pi-exclamation-triangle">
+      <span class="message">
+        {{ 'Could not load the rooms. Please try again.' | t }}
+        <button
+          pButton
+          type="button"
+          size="small"
+          icon="pi pi-refresh"
+          severity="danger"
+          [text]="true"
+          [label]="'Try again' | t"
+          (click)="state.reload()"
+        ></button>
+      </span>
+    </p-message>
+  } @else {
+    <p class="cdk-visually-hidden" role="status">{{ 'Finding open rooms' | t }}</p>
+    <ul class="rooms" aria-hidden="true">
+      @for (placeholder of [1, 2, 3]; track placeholder) {
+        <li>
+          <p-card class="placeholder">
+            <p-skeleton width="45%" height="0.875rem" />
+            <p-skeleton width="70%" height="1.5rem" />
+            <p-skeleton width="92%" height="0.875rem" />
+            <span class="faces">
+              <p-skeleton shape="circle" size="2rem" />
+              <p-skeleton shape="circle" size="2rem" />
+              <p-skeleton shape="circle" size="2rem" />
+            </span>
+            <p-skeleton width="38%" height="0.875rem" />
+          </p-card>
+        </li>
+      }
+    </ul>
+  }
+</div>
 
 <app-room-form-dialog
   [(visible)]="starting"

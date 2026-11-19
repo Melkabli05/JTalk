@@ -1,4 +1,5 @@
 import { ActiveRoomService } from '@core/rooms/active-room.service';
+import { RoomStartService } from '@core/rooms/room-start.service';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -88,15 +89,15 @@ describe('AppShellComponent (container)', () => {
     expect(root().querySelector('p-progressbar')).toBeNull();
   });
 
-  it('shows the app name as a link home, in the header landmark', async () => {
+  it('shows the app name as a link home, at the top of the sidebar', async () => {
     await render();
-    const brand = root().querySelector<HTMLAnchorElement>('header a.brand')!;
+    const brand = root().querySelector<HTMLAnchorElement>('aside a.brand')!;
 
     expect(brand.textContent?.trim()).toBe('Jtalk');
     expect(brand.getAttribute('href')).toBe('/');
   });
 
-  it('keeps the banner lean: the brand, the navigation and one account button', async () => {
+  it('keeps the top bar lean: one account button', async () => {
     await render();
 
     expect(
@@ -147,29 +148,25 @@ describe('AppShellComponent (container)', () => {
 
     expect(document.documentElement.lang).toBe('ar');
     expect(document.documentElement.dir).toBe('rtl');
-    const links = [...root().querySelectorAll('nav [role="menuitem"] a')].map((a) =>
-      a.textContent?.trim(),
-    );
-    expect(links).toEqual(['الغرف', 'الأشخاص']);
+    const links = [...root().querySelectorAll('nav a.nav-link')].map((a) => a.textContent?.trim());
+    expect(links).toEqual(['الغرف', 'الأشخاص', 'الملف الشخصي']);
     expect(root().querySelector('a.skip-link')?.textContent).toContain('تخطَّ');
 
     localeOption('English')!.click();
     await vi.waitFor(() => expect(i18n.locale()).toBe('en'));
     await fixture.whenStable();
     expect(document.documentElement.dir).toBe('ltr');
-    expect(root().querySelector('nav [role="menuitem"] a')?.textContent?.trim()).toBe('Rooms');
+    expect(root().querySelector('nav a.nav-link')?.textContent?.trim()).toBe('Rooms');
   });
 
   it('has a primary navigation landmark with real links', async () => {
     await render();
     const links = [
-      ...root().querySelectorAll<HTMLAnchorElement>(
-        'nav[aria-label="Primary"] [role="menuitem"] a',
-      ),
+      ...root().querySelectorAll<HTMLAnchorElement>('nav[aria-label="Primary"] a.nav-link'),
     ];
 
-    expect(links.map((a) => a.textContent?.trim())).toEqual(['Rooms', 'People']);
-    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/', '/people']);
+    expect(links.map((a) => a.textContent?.trim())).toEqual(['Rooms', 'People', 'Profile']);
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/', '/people', '/profile']);
   });
 
   it('lets a page ask for the full width of the content area (route data `wide`)', async () => {
@@ -254,10 +251,32 @@ describe('AppShellComponent (container)', () => {
       await router.navigateByUrl('/section');
       await fixture.whenStable();
 
-      const end = root().querySelector('.p-menubar-end')!;
-      expect([...end.querySelectorAll('a, button')][0]).toBe(badge());
+      const bar = root().querySelector('header.bar')!;
+      expect([...bar.querySelectorAll('a, button')][0]).toBe(badge());
       expect(badge()?.tabIndex).toBeGreaterThanOrEqual(0);
     });
+  });
+
+  it('starts a room from the sidebar: asks the hallway, wherever the person is', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        ...sdk(),
+        provideRouter([
+          { path: 'section', children: [] },
+          { path: '', children: [] },
+        ]),
+      ],
+    });
+    await render();
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/section');
+
+    root().querySelector<HTMLButtonElement>('aside .go-live button.start')!.click();
+    await fixture.whenStable();
+
+    expect(router.url).toBe('/');
+    expect(TestBed.inject(RoomStartService).requested()).toBe(true);
   });
 
   it('has a skip link and a focusable main landmark', async () => {
@@ -308,31 +327,14 @@ describe('AppShellComponent routing', () => {
     expect(crumbs(await open('/section'))).toEqual(['Section']);
   });
 
-  it('marks Rooms only on the hallway, not on every page below the root', async () => {
-    const harness = await RouterTestingHarness.create('/');
-    await harness.fixture.whenStable();
-    const root = harness.fixture.nativeElement as HTMLElement;
-    const highlighted = () =>
-      [...root.querySelectorAll('nav a.p-menubar-item-link-active')].map((a) =>
-        a.textContent?.trim(),
-      );
-    expect(highlighted()).toEqual(['Rooms']);
-
-    await harness.navigateByUrl('/section');
-    await harness.fixture.whenStable();
-    expect(highlighted()).toEqual([]);
-  });
-
   it('marks Rooms as the current page on the hallway, and nothing elsewhere', async () => {
     const harness = await RouterTestingHarness.create('/');
     await harness.fixture.whenStable();
     const root = harness.fixture.nativeElement as HTMLElement;
     const current = () =>
-      [
-        ...root.querySelectorAll(
-          'nav[aria-label="Primary"] [role="menuitem"] a[aria-current="page"]',
-        ),
-      ].map((a) => a.textContent?.trim());
+      [...root.querySelectorAll('nav[aria-label="Primary"] a.nav-link[aria-current="page"]')].map(
+        (a) => a.textContent?.trim(),
+      );
     expect(current()).toEqual(['Rooms']);
 
     await harness.navigateByUrl('/section/5');
@@ -345,7 +347,7 @@ describe('AppShellComponent routing', () => {
     await harness.fixture.whenStable();
     const root = harness.fixture.nativeElement as HTMLElement;
     const link = [
-      ...root.querySelectorAll<HTMLAnchorElement>('nav[aria-label="Primary"] [role="menuitem"] a'),
+      ...root.querySelectorAll<HTMLAnchorElement>('nav[aria-label="Primary"] a.nav-link'),
     ].find((a) => a.textContent?.includes('Rooms'))!;
 
     link.click();
@@ -518,10 +520,14 @@ describe('AppShellComponent profile gate', () => {
     expect(logout).toHaveBeenCalledTimes(1);
   });
 
-  it('names the person on the account button, for those with room for it', async () => {
+  it('names the person on the sidebar card, which opens the same settings', async () => {
     await render(profile({ displayName: 'Mona Hassan' }));
 
-    expect(root().querySelector('header .account .account-name')?.textContent).toBe('Mona');
+    const card = root().querySelector<HTMLButtonElement>('aside button.me-card')!;
+    expect(card.textContent).toContain('Mona Hassan');
+
+    card.click();
+    await vi.waitFor(() => expect(settings()).not.toBeNull());
   });
 
   it('links to the profile page from the account popover, and closes the popover', async () => {

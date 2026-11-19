@@ -1,9 +1,23 @@
 @use 'tokens' as t;
 
 :host {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'rail'
+    'bar'
+    'main';
+  grid-template-rows: auto auto 1fr;
   min-height: 100dvh;
+
+  // The sidebar takes a column of its own once there is room for it; below that it becomes a row across the top.
+  @media (min-width: 64rem) {
+    grid-template-columns: 15.5rem minmax(0, 1fr);
+    grid-template-areas:
+      'rail bar'
+      'rail main';
+    grid-template-rows: auto 1fr;
+  }
 }
 
 .skip-link {
@@ -27,15 +41,36 @@
   z-index: 20;
 }
 
-.header {
+.rail {
+  grid-area: rail;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.5rem t.$gutter;
   border-block-end: 1px solid var(--p-content-border-color);
   background: var(--p-content-background);
+
+  @media (min-width: 64rem) {
+    position: sticky;
+    inset-block-start: 0;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0;
+    block-size: 100dvh;
+    padding: 1.5rem 1rem 1rem;
+    border-block-end: 0;
+    border-inline-end: 1px solid var(--p-content-border-color);
+    overflow-y: auto;
+  }
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
+  padding: 0.25rem 0.5rem;
   font-weight: 700;
   font-size: var(--p-jtalk-type-section);
   color: var(--p-text-color);
@@ -43,6 +78,152 @@
 
   app-brand-mark {
     font-size: 1rem;
+  }
+
+  @media (min-width: 64rem) {
+    margin-block-end: 1.5rem;
+  }
+}
+
+.nav {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @media (min-width: 64rem) {
+    flex-direction: column;
+  }
+}
+
+// A row of the sidebar: the page you are on is a tonal pill, with Forest on its icon (active means Forest, and nothing else).
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  min-block-size: 2.75rem;
+  padding: 0 0.875rem;
+  border-radius: var(--p-jtalk-radius-control);
+  color: var(--p-text-color);
+  font-weight: 550;
+  text-decoration: none;
+  transition: background-color var(--p-jtalk-motion-fast) ease;
+
+  .pi {
+    color: var(--p-text-muted-color);
+    font-size: 1.125rem;
+  }
+
+  &:hover {
+    background: var(--p-content-hover-background);
+  }
+
+  &[aria-current='page'] {
+    background: var(--p-content-hover-background);
+    font-weight: 700;
+
+    .pi {
+      color: var(--p-jtalk-brand);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--p-primary-color);
+    outline-offset: 2px;
+  }
+}
+
+.go-live {
+  display: none;
+  margin-block: auto 1rem;
+  padding: 1.25rem 1rem 1rem;
+  border-radius: var(--p-jtalk-radius-panel);
+  background: var(--p-content-hover-background);
+
+  @media (min-width: 64rem) {
+    display: block;
+  }
+
+  .art {
+    color: var(--p-jtalk-brand);
+
+    .spark {
+      color: var(--p-jtalk-moderator);
+      stroke: var(--p-jtalk-moderator);
+    }
+  }
+
+  h2 {
+    margin: 0.75rem 0 0.25rem;
+    font-size: var(--p-jtalk-type-card);
+  }
+
+  p {
+    margin: 0 0 1rem;
+    color: var(--p-text-muted-color);
+    font-size: var(--p-jtalk-type-secondary);
+  }
+
+  .start {
+    inline-size: 100%;
+  }
+}
+
+.me-card {
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border: 0;
+  border-radius: var(--p-jtalk-radius-control);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  @media (min-width: 64rem) {
+    display: flex;
+  }
+
+  &:hover {
+    background: var(--p-content-hover-background);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--p-primary-color);
+    outline-offset: 2px;
+  }
+
+  .who {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-inline-size: 0;
+
+    strong {
+      overflow: hidden;
+      font-size: var(--p-jtalk-type-secondary);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .chevron {
+    color: var(--p-text-muted-color);
+  }
+}
+
+.bar {
+  grid-area: bar;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem t.$gutter 0;
+
+  @media (min-width: 64rem) {
+    padding-block-start: 1.5rem;
   }
 }
 
@@ -52,46 +233,27 @@
 }
 
 .main {
+  grid-area: main;
   box-sizing: border-box;
-  flex: 1;
-  width: 100%;
-  max-width: t.$content-width + 2 * t.$gutter;
+  inline-size: 100%;
+  max-inline-size: t.$content-width + 2 * t.$gutter;
   margin-inline: auto;
-  padding: 2rem t.$gutter;
+  padding: 1.5rem t.$gutter 2rem;
 
   &:focus {
     outline: none;
   }
 
   &.wide {
-    max-width: none;
+    max-inline-size: none;
+    margin-inline: 0;
   }
 }
 
 .account {
-  gap: 0.5rem;
-  padding: 0.25rem 0.5rem 0.25rem 0.25rem;
-}
-
-.account-name {
-  max-inline-size: 9rem;
-  overflow: hidden;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  @media (max-width: 40rem) {
-    display: none;
-  }
-}
-
-.chevron {
-  color: var(--p-text-muted-color);
-  font-size: 0.75rem;
-
-  @media (max-width: 40rem) {
-    display: none;
-  }
+  flex: none;
+  margin-inline-start: auto;
+  padding: 0.25rem;
 }
 
 .to-profile {

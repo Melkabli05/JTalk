@@ -277,4 +277,13 @@ export const messages: Readonly<Record<string, string>> = {
   'Audio only': 'صوت فقط',
   'No camera, no pressure': 'بلا كاميرا وبلا ضغط',
   'Live audio': 'صوت مباشر',
+  'Good morning': 'صباح الخير',
+  'Good morning, {name}': 'صباح الخير، {name}',
+  'Good afternoon': 'طاب يومك',
+  'Good afternoon, {name}': 'طاب يومك، {name}',
+  'Good evening': 'مساء الخير',
+  'Good evening, {name}': 'مساء الخير، {name}',
+  'Active rooms': 'الغرف النشطة',
+  'Go live': 'انطلق مباشرًا',
+  'Start a room and let people practise with you.': 'ابدأ غرفة ودع الآخرين يتدرّبون معك.',
 };

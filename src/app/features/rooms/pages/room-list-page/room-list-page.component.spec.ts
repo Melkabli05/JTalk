@@ -3,7 +3,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import RoomListPageComponent from './room-list-page.component';
+import RoomListPageComponent, { partOfDay } from './room-list-page.component';
+import { RoomStartService } from '@core/rooms/room-start.service';
 import { fakeIdentity } from '@core/auth/auth-testing';
 import { failUntilGivenUp, openFeed } from '../../data-access/room-feed-testing';
 
@@ -99,6 +100,38 @@ describe('RoomListPageComponent (container)', () => {
     expect(status()).toBe('Rooms shown: 1');
   });
 
+  it('greets the person by first name, at the hour of the day', async () => {
+    await render(withRooms(roomDto('r-1', 'Spanish', 'es')));
+
+    expect(root().querySelector('h1')?.textContent?.trim()).toMatch(
+      /^Good (morning|afternoon|evening), Mona$/,
+    );
+  });
+
+  it('lists every open room under one heading, Active rooms', async () => {
+    await render(
+      withRooms(
+        roomDto('a', 'A', 'es'),
+        roomDto('b', 'B', 'es'),
+        roomDto('c', 'C', 'fr'),
+        roomDto('d', 'D', 'fr'),
+        roomDto('e', 'E', 'ja'),
+      ),
+    );
+
+    expect(root().querySelectorAll('section.group')).toHaveLength(1);
+    expect(root().querySelector('section.group h2')?.textContent?.trim()).toBe('Active rooms');
+    expect(titles()).toEqual(['A', 'B', 'C', 'D', 'E']);
+  });
+
+  it('opens the form when the sidebar asks to start a room, even if it asked first', async () => {
+    TestBed.inject(RoomStartService).request();
+    await render(withRooms());
+
+    expect(TestBed.inject(RoomStartService).requested()).toBe(false);
+    expect(document.body.querySelector('p-dialog, .p-dialog')).not.toBeNull();
+  });
+
   it('gives each card a real heading under the page title', async () => {
     await render(withRooms(roomDto('r-1', 'Spanish', 'es')));
 
@@ -110,7 +143,7 @@ describe('RoomListPageComponent (container)', () => {
     await render(withRooms());
 
     expect(root().querySelector('.empty button')).toBeNull();
-    expect(root().querySelector('.head button')?.textContent).toContain('Start a room');
+    expect(root().querySelector('.hero button.start')?.textContent).toContain('Start a room');
   });
 
   it('lets the person try again when the rooms could not be loaded', async () => {
@@ -242,5 +275,13 @@ describe('RoomListPageComponent (container)', () => {
       expect(document.body.textContent).toContain('Could not open the room.');
       expect(TestBed.inject(Router).url).toBe('/');
     });
+  });
+});
+
+describe('partOfDay', () => {
+  it('splits the day at noon and at six in the evening', () => {
+    expect([0, 5, 11].map(partOfDay)).toEqual(['morning', 'morning', 'morning']);
+    expect([12, 17].map(partOfDay)).toEqual(['afternoon', 'afternoon']);
+    expect([18, 23].map(partOfDay)).toEqual(['evening', 'evening']);
   });
 });

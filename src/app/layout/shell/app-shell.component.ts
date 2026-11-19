@@ -10,12 +10,12 @@ import {
 import { MenuItem } from '@openng/optimus-ui/api';
 import { Breadcrumb } from '@openng/optimus-ui/breadcrumb';
 import { ButtonDirective } from '@openng/optimus-ui/button';
-import { Menubar } from '@openng/optimus-ui/menubar';
 import { ProgressBar } from '@openng/optimus-ui/progressbar';
 import { filter, map } from 'rxjs';
 import type { ProfileDraft } from '@core/auth/identity.models';
 import { IdentityService } from '@core/auth/identity.service';
 import { ActiveRoomService } from '@core/rooms/active-room.service';
+import { RoomStartService } from '@core/rooms/room-start.service';
 import { ProfileDialogComponent } from '@core/auth/ui/profile-dialog/profile-dialog.component';
 import { APP_NAME } from '@core/config/app-config';
 import { ColorSchemeService } from '@core/config/color-scheme.service';
@@ -37,19 +37,11 @@ import { Popover } from '@openng/optimus-ui/popover';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { ToggleSwitch } from '@openng/optimus-ui/toggleswitch';
 
-const NAV_ITEMS: MenuItem[] = [
-  {
-    label: msg('Rooms'),
-    icon: 'pi pi-microphone',
-    routerLink: '/',
-    routerLinkActiveOptions: { exact: true },
-  },
-  {
-    label: msg('People'),
-    icon: 'pi pi-users',
-    routerLink: '/people',
-  },
-];
+const NAV_ITEMS = [
+  { route: '/', icon: 'pi pi-microphone', label: msg('Rooms') },
+  { route: '/people', icon: 'pi pi-users', label: msg('People') },
+  { route: '/profile', icon: 'pi pi-user', label: msg('Profile') },
+] as const;
 
 function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wide: boolean } {
   const breadcrumbs: MenuItem[] = [];
@@ -81,7 +73,6 @@ function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wid
     TranslatePipe,
     RouterOutlet,
     RouterLink,
-    Menubar,
     Breadcrumb,
     ButtonDirective,
     ProgressBar,
@@ -98,6 +89,7 @@ export class AppShellComponent {
 
   protected readonly identity = inject(IdentityService);
   private readonly activeRoom = inject(ActiveRoomService);
+  private readonly roomStart = inject(RoomStartService);
   protected readonly colorScheme = inject(ColorSchemeService);
   protected readonly direction = inject(DirectionService);
   protected readonly locales = inject(LocaleService);
@@ -112,7 +104,7 @@ export class AppShellComponent {
     const me = this.identity.profile();
     return me ? `${languageOf(me.nativeLanguage).flag} → ${languageOf(me.learning).flag}` : '';
   });
-  protected readonly navItems = computed(() => this.translated(NAV_ITEMS));
+  protected readonly navItems = NAV_ITEMS;
 
   protected readonly navigating = computed(() => !!this.router.currentNavigation());
 
@@ -146,6 +138,11 @@ export class AppShellComponent {
 
   private translated(items: readonly MenuItem[]): MenuItem[] {
     return items.map((item) => ({ ...item, label: this.i18n.t(item.label ?? '') }));
+  }
+
+  protected startRoom(): void {
+    this.roomStart.request();
+    void this.router.navigate(['/']);
   }
 
   protected saveProfile(draft: ProfileDraft): void {
