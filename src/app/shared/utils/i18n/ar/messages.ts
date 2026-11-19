@@ -270,8 +270,10 @@ export const messages: Readonly<Record<string, string>> = {
   'Sign in': 'تسجيل الدخول',
   'Get started': 'ابدأ الآن',
   'I already have an account': 'لدي حساب بالفعل',
-  'Audio only. No camera, no pressure.': 'صوت فقط. بلا كاميرا وبلا ضغط.',
-  'Learn a language by talking.': 'تعلّم لغة بالحديث.',
   'Live audio rooms with people who speak it. Listen first, take the stage when you are ready.':
     'غرف صوتية مباشرة مع من يتحدّثونها. استمع أولًا، واعتلِ المنصّة حين تكون مستعدًا.',
+  'Learn a language': 'تعلّم لغة',
+  'by talking.': 'بالحديث.',
+  'Audio only': 'صوت فقط',
+  'No camera, no pressure': 'بلا كاميرا وبلا ضغط',
 };

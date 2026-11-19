@@ -5,29 +5,40 @@
     <app-brand-mark />
     {{ appName | t }}
   </a>
-  <div class="tools">
-    <app-locale-switch [locale]="locales.locale()" (localeChange)="locales.switchTo($event)" />
-    <button
-      pButton
-      type="button"
-      severity="secondary"
-      [outlined]="true"
-      [rounded]="true"
-      [label]="'Sign in' | t"
-      (click)="signIn('login')"
-    ></button>
-  </div>
+  <app-locale-switch
+    class="language"
+    [locale]="locales.locale()"
+    (localeChange)="locales.switchTo($event)"
+  />
+  <button
+    pButton
+    class="sign-in"
+    type="button"
+    severity="secondary"
+    [outlined]="true"
+    [rounded]="true"
+    [label]="'Sign in' | t"
+    (click)="signIn('login')"
+  ></button>
 </header>
 
 <main id="main-content" tabindex="-1">
   <section class="hero" aria-labelledby="hero-title">
-    <div class="copy">
-      <p class="greetings" aria-hidden="true">
-        @for (greeting of greetings; track greeting.lang) {
-          <span [lang]="greeting.lang" [style.--turn]="$index">{{ greeting.text }}</span>
-        }
-      </p>
-      <h1 id="hero-title">{{ 'Learn a language by talking.' | t }}</h1>
+    <!-- The picture: a grid, two stepped blocks of colour in the corners, and a badge on each, as in a room. All decoration. -->
+    <div class="grid" aria-hidden="true"></div>
+    <div class="block forest" aria-hidden="true"></div>
+    <div class="block sand" aria-hidden="true"></div>
+    <span class="badge mic" aria-hidden="true"><i class="pi pi-microphone"></i></span>
+    <span class="badge hand" aria-hidden="true"><i class="pi pi-hand"></i></span>
+
+    <div class="center">
+      <svg class="wave" viewBox="0 0 48 24" aria-hidden="true" focusable="false">
+        <path d="M2 14 C 7 2, 12 2, 17 12 S 27 22, 32 12 S 41 2, 46 10" />
+      </svg>
+      <h1 id="hero-title">
+        <span class="line paper">{{ 'Learn a language' | t }}</span
+        >&ngsp;<span class="line sand-line">{{ 'by talking.' | t }}</span>
+      </h1>
       <p class="lead">
         {{
           'Live audio rooms with people who speak it. Listen first, take the stage when you are ready.'
@@ -40,7 +51,6 @@
           type="button"
           size="large"
           icon="pi pi-arrow-right"
-          iconPos="right"
           [rounded]="true"
           [label]="'Get started' | t"
           (click)="signIn('signup')"
@@ -56,13 +66,16 @@
           (click)="signIn('login')"
         ></button>
       </div>
-      <p class="note">{{ 'Audio only. No camera, no pressure.' | t }}</p>
     </div>
 
-    <div class="voice" aria-hidden="true">
-      <span class="bar forest"></span>
-      <span class="bar sand"></span>
-      <span class="bar ink"></span>
-    </div>
+    <ul class="facts">
+      <li>{{ 'Audio only' | t }}</li>
+      <li class="greetings" aria-hidden="true">
+        @for (greeting of greetings; track greeting.lang) {
+          <span [lang]="greeting.lang" [style.--turn]="$index">{{ greeting.text }}</span>
+        }
+      </li>
+      <li>{{ 'No camera, no pressure' | t }}</li>
+    </ul>
   </section>
 </main>

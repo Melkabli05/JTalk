@@ -23,7 +23,9 @@ describe('HomePageComponent (container)', () => {
 
   it('is one section: a heading that says what Jtalk is, a line under it, and the way in', () => {
     expect(root().querySelectorAll('main section')).toHaveLength(1);
-    expect(root().querySelector('h1')?.textContent).toBe('Learn a language by talking.');
+    expect(root().querySelector('h1')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      'Learn a language by talking.',
+    );
     expect(root().querySelector('.lead')?.textContent).toContain('Live audio rooms');
     expect(root().querySelector('main')?.getAttribute('id')).toBe('main-content');
     expect(root().querySelector('a.skip-link')?.getAttribute('href')).toBe('#main-content');
@@ -66,12 +68,39 @@ describe('HomePageComponent (container)', () => {
     ]);
   });
 
-  it('draws the three bars of the mark as decoration only', () => {
-    const voice = root().querySelector('.voice')!;
+  it('draws the grid, the two stepped blocks with their badges and the squiggle as decoration only', () => {
+    for (const selector of ['.grid', '.block.forest', '.block.sand', '.wave']) {
+      expect(root().querySelector(selector)?.getAttribute('aria-hidden'), selector).toBe('true');
+    }
+    expect(
+      root().querySelector('.badge.mic .pi-microphone')?.closest('[aria-hidden="true"]'),
+    ).not.toBeNull();
+    expect(
+      root().querySelector('.badge.hand .pi-hand')?.closest('[aria-hidden="true"]'),
+    ).not.toBeNull();
+    expect(
+      root().querySelector('.grid, .block, .wave')?.querySelector('button, a, input'),
+    ).toBeNull();
+  });
 
-    expect(voice.getAttribute('aria-hidden')).toBe('true');
-    expect(voice.querySelectorAll('.bar')).toHaveLength(3);
-    expect(voice.querySelector('button, a, input')).toBeNull();
+  it('sets each line of the heading on its own block of colour', () => {
+    const lines = [...root().querySelectorAll('h1 .line')];
+
+    expect(lines.map((line) => line.textContent)).toEqual(['Learn a language', 'by talking.']);
+    expect(lines.map((line) => line.className)).toEqual(['line paper', 'line sand-line']);
+  });
+
+  it('lists three small facts along the bottom, the greetings in the middle', () => {
+    const facts = [...root().querySelectorAll('.facts li')];
+
+    expect(facts).toHaveLength(3);
+    expect(facts[0]?.textContent).toBe('Audio only');
+    expect(facts[1]?.classList).toContain('greetings');
+    expect(facts[2]?.textContent).toBe('No camera, no pressure');
+  });
+
+  it('is always in the night theme, whatever the visitor chose', () => {
+    expect(root().classList).toContain('app-dark');
   });
 
   it('switches language, and reads right to left in Arabic', async () => {

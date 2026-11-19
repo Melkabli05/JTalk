@@ -17,10 +17,12 @@ const GREETINGS = [
   { text: 'Ciao', lang: 'it' },
 ] as const;
 
-/** One screen: what Jtalk is, and the way in. Nothing below it. */
+/** One screen, like a poster: what Jtalk is, and the way in. Nothing below it. */
 @Component({
   selector: 'app-home-page',
   imports: [BrandMarkComponent, ButtonDirective, LocaleSwitchComponent, TranslatePipe],
+  // The home page is always in the night theme, a poster whatever the visitor's own: the dark tokens apply within it.
+  host: { class: 'app-dark' },
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.scss',
 })

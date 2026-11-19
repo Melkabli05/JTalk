@@ -51,7 +51,8 @@ describe('routes', () => {
     const harness = await RouterTestingHarness.create('/');
     await harness.fixture.whenStable();
 
-    expect(text(harness)).toContain('Learn a language by talking.');
+    expect(text(harness)).toContain('Learn a language');
+    expect(text(harness)).toContain('by talking.');
     expect(
       loginWithRedirect,
       'nobody is sent anywhere until they choose to',
@@ -65,7 +66,7 @@ describe('routes', () => {
     answerRoomList();
     await harness.fixture.whenStable();
 
-    expect(text(harness)).not.toContain('Learn a language by talking.');
+    expect(text(harness)).not.toContain('Learn a language');
   });
 
   it('sends someone who is not signed in to Auth0 when they ask for a page that needs an account, and shows them nothing meanwhile', async () => {
