@@ -333,6 +333,42 @@ h1 {
   }
 }
 
+.sheet-tabs {
+  display: flex;
+  margin: -1rem -1rem 0.75rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--p-content-border-color);
+  background: var(--p-content-background);
+}
+
+.sheet-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  flex: 1;
+  padding: 0.5rem 0.375rem;
+  border: 0;
+  background: transparent;
+  color: var(--p-text-muted-color);
+  font: 600 0.625rem;
+  cursor: pointer;
+}
+
+.sheet-tab i {
+  font-size: 1rem;
+}
+
+.sheet-tab:hover:not(:disabled) {
+  color: var(--p-text-color);
+  background: var(--p-content-hover-background);
+}
+
+.sheet-tab:disabled {
+  color: var(--p-jtalk-brand);
+  background: color-mix(in srgb, var(--p-jtalk-brand) 7%, transparent);
+}
+
 .sheet-title {
   display: flex;
   align-items: center;

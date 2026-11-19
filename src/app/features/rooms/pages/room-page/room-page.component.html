@@ -299,6 +299,30 @@
     (visibleChange)="toggleChat($event)"
   >
     <ng-template #header>
+      <nav class="sheet-tabs">
+        <button
+          type="button"
+          class="sheet-tab back"
+          icon="pi pi-arrow-left"
+          aria-label="Back to the room"
+          (click)="toggleChat(false)"
+        >
+          <i class="pi pi-arrow-left" aria-hidden="true"></i>
+          <span>Back to the room</span>
+        </button>
+        <button type="button" class="sheet-tab rooms" disabled>
+          <i class="pi pi-microphone" aria-hidden="true"></i>
+          <span>Rooms</span>
+        </button>
+        <button type="button" class="sheet-tab people">
+          <i class="pi pi-users" aria-hidden="true"></i>
+          <span>People</span>
+        </button>
+        <button type="button" class="sheet-tab more">
+          <i class="pi pi-ellipsis-h" aria-hidden="true"></i>
+          <span>More</span>
+        </button>
+      </nav>
       <div class="sheet-title">
         <h2>Live Discussion</h2>
         <span class="sheet-dot" aria-hidden="true"></span>
