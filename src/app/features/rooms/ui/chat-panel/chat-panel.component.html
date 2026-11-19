@@ -2,6 +2,7 @@
   class="chat"
   [class.framed]="framed()"
   [class.trimmed]="compact()"
+  [class.cards]="cards()"
   aria-label="Live discussion"
 >
   @if (framed()) {
@@ -32,8 +33,8 @@
     <div class="topic">
       <i class="pi pi-bookmark" aria-hidden="true"></i>
       <div class="topic-text">
-        <span class="topic-label">Topic</span>
-        <p>{{ pinnedTopic }}</p>
+        <span class="topic-label">Pinned room topic</span>
+        <p>“{{ pinnedTopic }}”</p>
       </div>
       @if (isHost()) {
         @let clearLabel = 'Clear the topic';
@@ -316,7 +317,7 @@
           type="submit"
           class="send"
           icon="pi pi-arrow-up"
-          [severity]="compact() ? 'secondary' : 'primary'"
+          [severity]="cards() ? 'secondary' : 'primary'"
           [rounded]="true"
           [disabled]="submitting()"
           aria-label="Send"

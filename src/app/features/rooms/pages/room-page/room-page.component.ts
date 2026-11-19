@@ -87,6 +87,7 @@ export default class RoomPageComponent {
   protected readonly state = this.facade.state;
   protected readonly wide = this.matching('(min-width: 1024px)');
   protected readonly beside = this.matching('(min-width: 80rem)');
+  protected readonly phone = this.matching('(max-width: 40rem)');
   protected readonly look = computed(() => roomLook(this.state.room()));
   protected readonly host = computed(() => memberOf(this.state.members(), this.state.hostId()));
   protected readonly mutedIds = computed(() => {

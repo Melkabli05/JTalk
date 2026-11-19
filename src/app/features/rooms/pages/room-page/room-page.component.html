@@ -282,14 +282,23 @@
 </ng-template>
 
 <p-drawer
-  header="Live Discussion"
-  position="right"
+  [position]="phone() ? 'bottom' : 'right'"
   styleClass="chat-drawer"
+  ariaCloseLabel="Close the discussion"
   [visible]="chatOpen()"
-  [modal]="false"
-  [dismissible]="false"
+  [modal]="phone()"
+  [dismissible]="phone()"
   (visibleChange)="toggleChat($event)"
 >
+  <ng-template #header>
+    <div class="sheet-title">
+      <h2>Live Discussion</h2>
+      <span class="sheet-dot" aria-hidden="true"></span>
+      <p-tag severity="secondary" [rounded]="true">
+        {{ state.room()?.participantCount ?? 0 }} in room
+      </p-tag>
+    </div>
+  </ng-template>
   <ng-container
     [ngTemplateOutlet]="discussion"
     [ngTemplateOutletContext]="{ compact: false, framed: false }"

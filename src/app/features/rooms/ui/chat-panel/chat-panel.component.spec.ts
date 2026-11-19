@@ -175,6 +175,17 @@ describe('ChatPanelComponent (presentational)', () => {
     });
   });
 
+  it('gives each message a card in the drawer and under the room, and bubbles only beside the room', async () => {
+    await render({ comments: [comment('c-1', 'b-1', 'Hola')] });
+    expect(root().querySelector('section.cards')).not.toBeNull();
+
+    await render({ comments: [comment('c-1', 'b-1', 'Hola')], compact: true, framed: true });
+    expect(root().querySelector('section.cards')).not.toBeNull();
+
+    await render({ comments: [comment('c-1', 'b-1', 'Hola')], framed: true });
+    expect(root().querySelector('section.cards')).toBeNull();
+  });
+
   it('is a log, so a screen reader hears new messages politely', async () => {
     await render();
 

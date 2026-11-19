@@ -120,6 +120,8 @@ export class ChatPanelComponent {
       ),
   );
   private pickingFor: string | null = null;
+  /** Each message a card of its own: under the room, and in the drawer; only the column beside the room has bubbles. */
+  protected readonly cards = computed(() => this.compact() || !this.framed());
   protected readonly now = signal(Date.now());
   protected readonly timeAgo = timeAgo;
 

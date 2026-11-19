@@ -339,6 +339,17 @@ describe('RoomPageComponent (container)', () => {
     observe.mockRestore();
   });
 
+  it('titles the drawer with how many are in the room', async () => {
+    await open();
+
+    press('Chat', root().querySelector('app-room-controls')!);
+    await settle();
+
+    expect(document.body.querySelector('.sheet-title')?.textContent).toMatch(
+      /Live Discussion\s+\d+ in room/,
+    );
+  });
+
   it('opens the chat from the dock, and a comment the person sends appears once the server has kept it', async () => {
     await open();
 
