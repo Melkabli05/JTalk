@@ -3,12 +3,45 @@
   block-size: 100%;
 }
 
+// Each message is a card, as in the owner's mock: small type, hairlines, the stone and slate colours (the dark theme uses the app's own).
+// Beside the room (`.side`) the messages are bubbles instead, and in the drawer (not `.framed`) the card is a little roomier.
 .chat {
+  --pad: 0.625rem;
+  --avatar: 1.75rem;
+  --card-bg: rgb(255 255 255 / 0.7);
+  --card-border: rgb(231 229 228 / 0.7);
+  --ink: #0f172a;
+  --ink-soft: #334155;
+  --quiet: #a8a29e;
+  --muted: #78716c;
+  --chip-bg: #f5f5f4;
+  --chip-border: rgb(231 229 228 / 0.8);
+  --chip-ink: #57534e;
+  --dashed: #d6d3d1;
+  --ring: #e7e5e4;
+  --host-bg: rgb(255 255 255 / 0.8);
+  --write-bg: rgb(255 255 255 / 0.9);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   block-size: 100%;
   min-block-size: 0;
+
+  :host-context(.app-dark) & {
+    --card-bg: color-mix(in srgb, var(--p-content-background) 70%, transparent);
+    --card-border: var(--p-content-border-color);
+    --ink: var(--p-text-color);
+    --ink-soft: var(--p-text-color);
+    --quiet: var(--p-text-muted-color);
+    --muted: var(--p-text-muted-color);
+    --chip-bg: var(--p-content-hover-background);
+    --chip-border: var(--p-content-border-color);
+    --chip-ink: var(--p-text-muted-color);
+    --dashed: var(--p-content-border-color);
+    --ring: var(--p-content-border-color);
+    --host-bg: var(--p-content-background);
+    --write-bg: var(--p-content-background);
+  }
 }
 
 .topic {
@@ -48,6 +81,45 @@
   }
 }
 
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-block-end: 0.625rem;
+  padding-inline: 0.25rem;
+
+  h2 {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .count {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .expand {
+    min-block-size: 0;
+    margin-inline-start: auto;
+    padding: 0.125rem 0.5rem;
+    border-color: var(--p-content-border-color);
+    color: var(--p-text-color);
+    font-size: 0.6875rem;
+    font-weight: 700;
+  }
+}
+
+.dot {
+  inline-size: 0.375rem;
+  block-size: 0.375rem;
+  border-radius: 50%;
+  background: var(--p-jtalk-brand);
+}
+
 .feed {
   position: relative;
   display: flex;
@@ -57,7 +129,10 @@
 }
 
 .messages {
+  display: grid;
   flex: 1;
+  align-content: start;
+  gap: 0.5rem;
   margin: 0;
   padding: 0;
   overflow-y: auto;
@@ -67,8 +142,40 @@
 
 .message-item {
   display: flex;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
+  gap: 0.625rem;
+  padding: var(--pad);
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
+  background: var(--card-bg);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+
+  &.host {
+    border-color: color-mix(in srgb, var(--p-jtalk-brand) 20%, transparent);
+    background: var(--host-bg);
+  }
+
+  &.mine {
+    border-color: color-mix(in srgb, var(--p-jtalk-brand) 20%, transparent);
+    background: color-mix(in srgb, var(--p-jtalk-brand) 5%, transparent);
+  }
+
+  app-person-avatar {
+    --p-avatar-width: var(--avatar);
+    --p-avatar-height: var(--avatar);
+    --p-avatar-font-size: 0.75rem;
+    align-self: flex-start;
+    margin-block-start: 0.125rem;
+    border: 1px solid var(--ring);
+    border-radius: 50%;
+  }
+
+  &.host app-person-avatar {
+    border-color: color-mix(in srgb, var(--p-jtalk-brand) 30%, transparent);
+  }
+
+  &.mine app-person-avatar {
+    border-color: color-mix(in srgb, var(--p-jtalk-brand) 40%, transparent);
+  }
 }
 
 .body {
@@ -80,41 +187,41 @@
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.125rem;
+}
+
+.author {
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
 .when {
   margin-inline-start: auto;
-  color: var(--p-text-muted-color);
-  font-size: var(--p-jtalk-type-metadata);
+  color: var(--quiet);
+  font-size: 0.625rem;
 }
 
-.message-item app-person-avatar {
-  align-self: flex-start;
-  padding: 2px;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: 50%;
+.badge,
+.tag {
+  padding: 0 0.375rem;
+  border-radius: 0.25rem;
+  background: var(--chip-border);
+  color: var(--muted);
+  font-size: 0.5625rem;
+  font-weight: 700;
+}
+
+.host .badge,
+.mine .badge {
+  background: color-mix(in srgb, var(--p-jtalk-brand) 15%, transparent);
+  color: var(--p-jtalk-brand);
 }
 
 .bubble {
-  padding: 0.875rem 1.25rem;
-  border-radius: 1.25rem;
-  background: color-mix(in srgb, var(--p-jtalk-brand) 7%, var(--p-content-background));
-  font-size: var(--p-jtalk-type-card);
-  line-height: 1.45;
-}
-
-.author {
-  font-size: var(--p-jtalk-type-card);
-  font-weight: 600;
-}
-
-.tag {
-  padding: 0 0.375rem;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-jtalk-radius-control);
-  color: var(--p-text-muted-color);
-  font-size: var(--p-jtalk-type-metadata);
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  line-height: 1.375;
 }
 
 .text,
@@ -152,8 +259,61 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.125rem;
-  margin-block-start: 0.125rem;
+  gap: 0.375rem;
+  margin-block-start: 0.5rem;
+
+  .chip,
+  .add-reaction,
+  .reply,
+  .correct {
+    min-block-size: 0;
+    --p-button-sm-font-size: 0.625rem;
+  }
+}
+
+.chip {
+  --p-button-sm-padding-x: 0.5rem;
+  --p-button-sm-padding-y: 0.125rem;
+  gap: 0.25rem;
+  margin: 0;
+  border: 1px solid var(--chip-border);
+  background: var(--chip-bg);
+  color: var(--chip-ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+
+  &[aria-pressed='true'] {
+    background: var(--card-bg);
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  img {
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+  }
+}
+
+.add-reaction {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  min-inline-size: 0;
+  padding: 0;
+  border: 1px dashed var(--dashed);
+  color: var(--quiet);
+}
+
+.reply,
+.correct {
+  --p-button-sm-padding-x: 0.375rem;
+  --p-button-sm-padding-y: 0.125rem;
+  gap: 0.25rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.reply {
+  margin-inline-start: auto;
 }
 
 .empty {
@@ -181,300 +341,53 @@
   gap: 0.5rem;
 }
 
-.write {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
-
-  app-textarea-field {
-    flex: 1;
-    min-inline-size: 0;
-  }
-}
-
-.head {
+.replying {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-
-  h2 {
-    margin: 0;
-    font-size: var(--p-jtalk-type-card);
-    font-weight: 700;
-  }
-
-  .count {
-    color: var(--p-text-muted-color);
-    font-size: var(--p-jtalk-type-secondary);
-  }
-
-  .expand {
-    margin-inline-start: auto;
-  }
+  justify-content: space-between;
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-secondary);
 }
 
-.dot {
-  inline-size: 0.5rem;
-  block-size: 0.5rem;
-  border-radius: 50%;
-  background: var(--p-jtalk-brand);
-}
+.write {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.375rem 0.375rem 0.75rem;
+  border: 1px solid var(--ring);
+  border-radius: var(--p-jtalk-radius-pill);
+  background: var(--write-bg);
 
-// Beside the room the discussion is a card of its own and fills the height it is given, the thread scrolling inside it. Under the room
-// (trimmed) it fills what the page leaves it, each message a card of its own, as the owner's picture has them, with the composer always
-// in view under the thread.
-.framed:not(.trimmed) {
-  padding: 1rem;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-jtalk-radius-card);
-  background: var(--p-content-background);
-}
-
-.cards {
-  --pad: 0.625rem;
-  --avatar: 1.75rem;
-  // The colours of the owner's mock (stone and slate on porcelain); the dark theme uses the app's own.
-  --card-bg: rgb(255 255 255 / 0.7);
-  --card-border: rgb(231 229 228 / 0.7);
-  --ink: #0f172a;
-  --ink-soft: #334155;
-  --quiet: #a8a29e;
-  --muted: #78716c;
-  --chip-bg: #f5f5f4;
-  --chip-border: rgb(231 229 228 / 0.8);
-  --chip-ink: #57534e;
-  --dashed: #d6d3d1;
-  --avatar-ring: #e7e5e4;
-  --host-bg: rgb(255 255 255 / 0.8);
-  --write-bg: rgb(255 255 255 / 0.9);
-
-  :host-context(.app-dark) & {
-    --card-bg: color-mix(in srgb, var(--p-content-background) 70%, transparent);
-    --card-border: var(--p-content-border-color);
-    --ink: var(--p-text-color);
-    --ink-soft: var(--p-text-color);
-    --quiet: var(--p-text-muted-color);
-    --muted: var(--p-text-muted-color);
-    --chip-bg: var(--p-content-hover-background);
-    --chip-border: var(--p-content-border-color);
-    --chip-ink: var(--p-text-muted-color);
-    --dashed: var(--p-content-border-color);
-    --avatar-ring: var(--p-content-border-color);
-    --host-bg: var(--p-content-background);
-    --write-bg: var(--p-content-background);
-  }
-
-  // The sizes below are the owner's picture of the phone: small type, hairlines, and a card for each message.
-  .head {
-    margin-block-end: 0.625rem;
-    padding-inline: 0.25rem;
-
-    h2 {
-      font-size: 0.75rem;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .dot {
-      inline-size: 0.375rem;
-      block-size: 0.375rem;
-    }
-
-    .count {
-      padding: 0.125rem 0.375rem;
-      font-size: 0.625rem;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    .expand {
-      min-block-size: 0;
-      padding: 0.125rem 0.5rem;
-      font-size: 0.6875rem;
-      gap: 0.25rem;
-      border-color: var(--p-content-border-color);
-      color: var(--p-text-color);
-      font-weight: 700;
-    }
-  }
-
-  .messages {
-    display: grid;
-    align-content: start;
-    gap: 0.5rem;
-  }
-
-  .message-item {
-    gap: 0.625rem;
-    padding: var(--pad);
-    border: 1px solid var(--card-border);
-    border-radius: 1rem;
-    background: var(--card-bg);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
-
-    &.host {
-      border-color: color-mix(in srgb, var(--p-jtalk-brand) 20%, transparent);
-      background: var(--host-bg);
-    }
-
-    &.mine {
-      border-color: color-mix(in srgb, var(--p-jtalk-brand) 20%, transparent);
-      background: color-mix(in srgb, var(--p-jtalk-brand) 5%, transparent);
-    }
-  }
-
-  app-person-avatar {
-    --p-avatar-width: var(--avatar);
-    --p-avatar-height: var(--avatar);
-    --p-avatar-font-size: 0.75rem;
-    align-self: flex-start;
-    margin-block-start: 0.125rem;
-    padding: 0;
-    border: 1px solid var(--avatar-ring);
-    border-radius: 50%;
-  }
-
-  .host app-person-avatar {
-    border-color: color-mix(in srgb, var(--p-jtalk-brand) 30%, transparent);
-  }
-
-  .mine app-person-avatar {
-    border-color: color-mix(in srgb, var(--p-jtalk-brand) 40%, transparent);
-  }
-
-  .badge {
-    padding: 0 0.375rem;
-    border-radius: 0.25rem;
-    background: var(--chip-border);
-    color: var(--muted);
-    font-size: 0.5625rem;
-    font-weight: 700;
-  }
-
-  .host .badge,
-  .mine .badge {
-    background: color-mix(in srgb, var(--p-jtalk-brand) 15%, transparent);
-    color: var(--p-jtalk-brand);
-  }
-
-  .meta {
-    margin: 0 0 0.125rem;
-  }
-
-  .author {
-    color: var(--ink);
-    font-size: 0.75rem;
-    font-weight: 700;
-  }
-
-  .when {
-    color: var(--quiet);
-    font-size: 0.625rem;
-  }
-
-  .bubble {
-    padding: 0;
-    border-radius: 0;
-    background: none;
-    color: var(--ink-soft);
-    font-size: 0.75rem;
-    line-height: 1.375;
-  }
-
-  .actions {
-    gap: 0.375rem;
-    margin-block-start: 0.5rem;
-  }
-
-  .chip,
-  .add-reaction,
-  .reply,
-  .correct {
-    min-block-size: 0;
-    --p-button-sm-font-size: 0.625rem;
-  }
-
-  .chip {
-    --p-button-sm-padding-x: 0.5rem;
-    --p-button-sm-padding-y: 0.125rem;
-    gap: 0.25rem;
-    margin: 0;
-    border: 1px solid var(--chip-border);
-    background: var(--chip-bg);
-    color: var(--chip-ink);
-    font-weight: 600;
-
-    &[aria-pressed='true'] {
-      background: var(--card-bg);
-      color: var(--ink);
-      font-weight: 700;
-    }
-
-    img {
-      inline-size: 0.75rem;
-      block-size: 0.75rem;
-    }
-  }
-
-  .add-reaction {
-    inline-size: 1.25rem;
-    block-size: 1.25rem;
+  app-textarea-field {
+    --p-textarea-background: transparent;
+    --p-textarea-border-color: transparent;
+    --p-textarea-hover-border-color: transparent;
+    --p-textarea-focus-border-color: transparent;
+    --p-textarea-shadow: none;
+    --pill-padding-x: 0.25rem;
+    flex: 1;
     min-inline-size: 0;
+    font-size: 0.75rem;
+  }
+
+  .send {
+    inline-size: 2rem;
+    block-size: 2rem;
+    min-block-size: 0;
     padding: 0;
-    border: 1px dashed var(--dashed);
-    color: var(--quiet);
-    font-size: 0.625rem;
-  }
-
-  .reply,
-  .correct {
-    --p-button-sm-padding-x: 0.375rem;
-    --p-button-sm-padding-y: 0.125rem;
-    gap: 0.25rem;
-    color: var(--muted);
-    font-weight: 600;
-  }
-
-  .reply {
-    margin-inline-start: auto;
-  }
-
-  .write {
-    align-items: center;
-    padding: 0.375rem 0.375rem 0.375rem 0.75rem;
-    border: 1px solid var(--avatar-ring);
-    border-radius: var(--p-jtalk-radius-pill);
-    background: var(--write-bg);
-
-    app-textarea-field {
-      --p-textarea-background: transparent;
-      --p-textarea-border-color: transparent;
-      --p-textarea-hover-border-color: transparent;
-      --p-textarea-focus-border-color: transparent;
-      --p-textarea-shadow: none;
-      --pill-padding-x: 0.25rem;
-      font-size: 0.75rem;
-    }
-
-    .send {
-      inline-size: 2rem;
-      block-size: 2rem;
-      min-block-size: 0;
-      padding: 0;
-    }
   }
 }
 
 // In the drawer the discussion is the sheet's whole content: the pinned topic is a band across the top, the thread scrolls under it, and the
-// composer is a bar across the bottom, as the owner's picture has it.
-.cards:not(.framed) {
+// composer is a bar across the bottom.
+.chat:not(.framed) {
   --pad: 0.75rem;
   --avatar: 2rem;
   gap: 0;
 
   .topic {
     align-items: center;
-    gap: 0.625rem;
     padding: 0.625rem 1rem;
     border: 0;
     border-block-end: 1px solid color-mix(in srgb, var(--p-jtalk-brand) 15%, transparent);
@@ -482,12 +395,12 @@
     background: color-mix(in srgb, var(--p-jtalk-brand) 10%, transparent);
     font-size: 0.75rem;
 
-    .pi {
+    .pi,
+    .topic-label {
       color: var(--p-jtalk-brand);
     }
 
     .topic-label {
-      color: var(--p-jtalk-brand);
       font-size: 0.6875rem;
       font-weight: 700;
       letter-spacing: 0.05em;
@@ -523,8 +436,32 @@
   }
 }
 
-.chip {
-  gap: 0.25rem;
-  margin-inline-end: 0.25rem;
-  font-variant-numeric: tabular-nums;
+// Beside the room: a card of its own that fills the height it is given, the thread scrolling inside it, and bubbles, not cards, for the
+// messages.
+.side {
+  --pad: 0.5rem 0;
+  padding: 1rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-jtalk-radius-card);
+  background: var(--p-content-background);
+
+  .message-item {
+    border: 0;
+    background: none;
+    box-shadow: none;
+    gap: 0.75rem;
+  }
+
+  .author {
+    font-size: var(--p-jtalk-type-card);
+    font-weight: 600;
+  }
+
+  .bubble {
+    padding: 0.875rem 1.25rem;
+    border-radius: 1.25rem;
+    background: color-mix(in srgb, var(--p-jtalk-brand) 7%, var(--p-content-background));
+    font-size: var(--p-jtalk-type-card);
+    line-height: 1.45;
+  }
 }

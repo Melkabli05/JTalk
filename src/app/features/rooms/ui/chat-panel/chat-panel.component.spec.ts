@@ -175,15 +175,16 @@ describe('ChatPanelComponent (presentational)', () => {
     });
   });
 
-  it('gives each message a card in the drawer and under the room, and bubbles only beside the room', async () => {
-    await render({ comments: [comment('c-1', 'b-1', 'Hola')] });
-    expect(root().querySelector('section.cards')).not.toBeNull();
+  it('gives each message a card in the sheet and under the room, and bubbles only beside the room', async () => {
+    const comments = [comment('c-1', 'b-1', 'Hola')];
+    await render({ comments });
+    expect(root().querySelector('section.side')).toBeNull();
 
-    await render({ comments: [comment('c-1', 'b-1', 'Hola')], compact: true, framed: true });
-    expect(root().querySelector('section.cards')).not.toBeNull();
+    await render({ comments, compact: true, framed: true });
+    expect(root().querySelector('section.side')).toBeNull();
 
-    await render({ comments: [comment('c-1', 'b-1', 'Hola')], framed: true });
-    expect(root().querySelector('section.cards')).toBeNull();
+    await render({ comments, framed: true });
+    expect(root().querySelector('section.side')).not.toBeNull();
   });
 
   it('marks the host’s messages and the reader’s own', async () => {

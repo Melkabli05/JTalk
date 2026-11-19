@@ -2,7 +2,7 @@
   class="chat"
   [class.framed]="framed()"
   [class.trimmed]="compact()"
-  [class.cards]="cards()"
+  [class.side]="side()"
   aria-label="Live discussion"
 >
   @if (framed()) {
@@ -327,7 +327,7 @@
           type="submit"
           class="send"
           icon="pi pi-arrow-up"
-          [severity]="cards() ? 'secondary' : 'primary'"
+          [severity]="side() ? 'primary' : 'secondary'"
           [rounded]="true"
           [disabled]="submitting()"
           aria-label="Send"
