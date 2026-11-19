@@ -64,74 +64,41 @@ describe('SidebarComponent (presentational)', () => {
     expect(asked).toHaveBeenCalledOnce();
   });
 
-  it('draws glow waves on the border of the card, calmer when idle and live while the person is in a room', async () => {
+  it('draws glow waves on the border of the Go live card', async () => {
     await render();
-    const waves = () => root().querySelector<HTMLElement>('.go-live app-live-waves')!;
-    expect(waves()).not.toBeNull();
-    expect(waves().classList.contains('live')).toBe(false);
 
-    fixture.componentRef.setInput('room', ROOM);
-    await fixture.whenStable();
-    expect(waves().classList.contains('live')).toBe(true);
+    expect(root().querySelector('.go-live app-live-waves')).not.toBeNull();
   });
 
-  it('turns the Go live card into the way back while the person is in a room', async () => {
+  it("puts the card about the room in the Go live card's place while the person is in a room, without the waves", async () => {
+    await render({ room: ROOM });
+
+    expect(root().querySelector('app-current-room-card.go-live')).not.toBeNull();
+    expect(root().querySelector('app-live-waves')).toBeNull();
+    expect(root().textContent).not.toContain('Start a room');
+  });
+
+  it('asks to go back to the room from that card', async () => {
     await render({ room: ROOM });
     const back = vi.fn();
     const start = vi.fn();
     fixture.componentInstance.backToRoom.subscribe(back);
     fixture.componentInstance.startRoom.subscribe(start);
-    const card = root().querySelector<HTMLElement>('.go-live')!;
 
-    expect(card.textContent).toContain('You are in a room');
-    expect(card.textContent).toContain('Spanish coffee');
-    expect(card.querySelector('p-tag')?.textContent).toContain('Live');
-    expect(card.textContent).not.toContain('Start a room');
-    card.querySelector('button')!.click();
+    root().querySelector<HTMLButtonElement>('app-current-room-card button')!.click();
 
     expect(back).toHaveBeenCalledOnce();
     expect(start).not.toHaveBeenCalled();
   });
 
-  it('says what the room is: its languages, its host and how busy it is, and not its description', async () => {
+  it('is the Go live card again once the room is left', async () => {
     await render({ room: ROOM });
-    const card = root().querySelector<HTMLElement>('.go-live')!;
-    const text = card.textContent?.replace(/\s+/g, ' ') ?? '';
 
-    expect(text).toContain('Spanish');
-    expect(text).toContain('for English speakers');
-    expect(card.querySelector('.topic')).toBeNull();
-    expect([...card.querySelectorAll('.stat')].map((el) => el.textContent?.trim())).toEqual([
-      '9',
-      '3/6',
-    ]);
-    expect(card.querySelector('.counts .cdk-visually-hidden')?.textContent).toContain(
-      '9 in the room',
-    );
-  });
+    fixture.componentRef.setInput('room', null);
+    await fixture.whenStable();
 
-  it('shows the host as a face with their name and the word Host', async () => {
-    await render({ room: ROOM });
-    const host = root().querySelector<HTMLElement>('.go-live .host')!;
-
-    expect(host.querySelector('.who strong')?.textContent).toBe('Hana');
-    expect(host.querySelector('.who small')?.textContent).toBe('Host');
-    expect(host.querySelector('p-avatar')?.textContent?.trim()).toBe('H');
-    expect(host.querySelector('.pi-crown')).not.toBeNull();
-  });
-
-  it("draws the host's own picture when they chose one", async () => {
-    await render({ room: { ...ROOM, hostAvatar: 'avatar-03' } });
-
-    expect(root().querySelector('.go-live .host img')?.getAttribute('src')).toBe(
-      'avatars/avatar-03.svg',
-    );
-  });
-
-  it('leaves out the host until their name is known', async () => {
-    await render({ room: { ...ROOM, hostName: '' } });
-
-    expect(root().querySelector('.go-live .host')).toBeNull();
+    expect(root().querySelector('app-current-room-card')).toBeNull();
+    expect(root().querySelector('.go-live app-live-waves')).not.toBeNull();
   });
 
   it('shows who is signed in and says where the account was pressed', async () => {

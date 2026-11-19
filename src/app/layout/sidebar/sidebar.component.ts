@@ -1,35 +1,20 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { MenuItem } from '@openng/optimus-ui/api';
 import { Avatar } from '@openng/optimus-ui/avatar';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
 import { Menu } from '@openng/optimus-ui/menu';
-import { Tag } from '@openng/optimus-ui/tag';
 import { AriaCurrentDirective } from '@shared/directives/aria-current.directive';
-import { InitialsPipe } from '@shared/pipes/initials.pipe';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { LiveWavesComponent } from '@shared/ui/live-waves/live-waves.component';
-import { avatarColors, avatarUrl } from '@shared/utils/avatars';
-import { msg } from '@shared/utils/i18n/msg';
-import { languageOf } from '@shared/utils/languages';
-
-/** What the Go live card says about the room the person is in. */
-export interface SidebarRoom {
-  readonly title: string;
-  readonly targetLanguage: string;
-  readonly nativeLanguage: string;
-  readonly hostId: string;
-  readonly hostName: string;
-  /** The id of the picture they chose, or empty. */
-  readonly hostAvatar: string;
-  readonly participantCount: number;
-  readonly speakers: number;
-  readonly seats: number;
-}
+import {
+  type CurrentRoom,
+  CurrentRoomCardComponent,
+} from './current-room-card/current-room-card.component';
 
 /**
- * The left rail from 64rem: the pages as the library's own menu with the brand in its start slot, the Go live card, and the account
- * at the foot. It only shows what it is given and says what was pressed; the shell decides what that does. How the menu looks is in the
+ * The left rail from 64rem: the pages as the library's own menu with the brand in its start slot, the Go live card (or, while the person is in a room elsewhere,
+ * the card that takes them back to it), and the account at the foot. It only shows what it is given and says what was pressed; the shell decides what that does. How the menu looks is in the
  * preset; this stylesheet is the rail's layout.
  */
 @Component({
@@ -39,10 +24,9 @@ export interface SidebarRoom {
     AriaCurrentDirective,
     ButtonDirective,
     Card,
-    InitialsPipe,
+    CurrentRoomCardComponent,
     LiveWavesComponent,
     Menu,
-    Tag,
     TranslatePipe,
   ],
   templateUrl: './sidebar.component.html',
@@ -58,32 +42,8 @@ export class SidebarComponent {
   readonly languages = input('');
   readonly picture = input<string | null>(null);
 
-  /** The room the person is in while they look elsewhere: the Go live card then offers the way back to it instead. */
-  readonly room = input<SidebarRoom | null>(null);
-
-  /** The languages of that room, with their flags. */
-  protected readonly roomLanguages = computed(() => {
-    const room = this.room();
-    return (
-      room && { target: languageOf(room.targetLanguage), native: languageOf(room.nativeLanguage) }
-    );
-  });
-
-  /** The host as a face and a name: their picture, or their initials in the colour they are always drawn in. */
-  protected readonly host = computed(() => {
-    const room = this.room();
-    return room?.hostName
-      ? {
-          name: room.hostName,
-          picture: avatarUrl(room.hostAvatar),
-          colors: avatarColors(room.hostId),
-        }
-      : null;
-  });
-
-  protected readonly heading = computed(() =>
-    this.room() ? msg('You are in a room') : msg('Go live'),
-  );
+  /** The room the person is in while they look elsewhere: a card about it then takes the Go live card's place. */
+  readonly room = input<CurrentRoom | null>(null);
 
   readonly startRoom = output<void>();
   readonly backToRoom = output<void>();

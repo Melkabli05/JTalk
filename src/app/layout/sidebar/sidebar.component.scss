@@ -24,65 +24,6 @@
   position: relative;
 }
 
-.detail {
-  display: block;
-  margin-block-start: 0.375rem;
-  color: var(--p-text-muted-color);
-  font-size: var(--p-jtalk-type-secondary);
-}
-
-.host {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  margin-block-start: 0.75rem;
-  color: var(--p-text-color);
-
-  .who {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    min-inline-size: 0;
-  }
-
-  strong {
-    overflow: hidden;
-    font-size: var(--p-jtalk-type-secondary);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  small {
-    color: var(--p-text-muted-color);
-    font-size: var(--p-jtalk-type-metadata);
-  }
-
-  .pi-crown {
-    color: var(--p-jtalk-moderator);
-    font-size: 0.875rem;
-  }
-}
-
-.counts {
-  display: flex;
-  gap: 1rem;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-}
-
-.stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.room {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 .account {
   justify-content: flex-start;
   gap: 0.75rem;

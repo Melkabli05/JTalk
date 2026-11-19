@@ -10,11 +10,6 @@
   pointer-events: none;
 }
 
-:host(.live) {
-  --speed: 2.2s;
-  --strength: 50%;
-}
-
 // Each wave is a ring on the border that grows outwards and fades, one after another.
 .wave {
   position: absolute;

@@ -2,11 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { LiveWavesComponent } from './live-waves.component';
 
 describe('LiveWavesComponent (presentational)', () => {
-  async function render(live?: boolean) {
+  async function render() {
     const fixture = TestBed.createComponent(LiveWavesComponent);
-    if (live !== undefined) {
-      fixture.componentRef.setInput('live', live);
-    }
     await fixture.whenStable();
     return fixture.nativeElement as HTMLElement;
   }
@@ -23,10 +20,5 @@ describe('LiveWavesComponent (presentational)', () => {
 
     expect(root.querySelectorAll('.wave')).toHaveLength(3);
     expect(root.querySelector('i, .pi')).toBeNull();
-  });
-
-  it('is marked live only while something is live', async () => {
-    expect((await render()).classList.contains('live')).toBe(false);
-    expect((await render(true)).classList.contains('live')).toBe(true);
   });
 });
