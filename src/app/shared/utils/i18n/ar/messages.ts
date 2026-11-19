@@ -284,6 +284,8 @@ export const messages: Readonly<Record<string, string>> = {
   'Good afternoon, {name}': 'طاب يومك، {name}',
   'Good evening': 'مساء الخير',
   'Good evening, {name}': 'مساء الخير، {name}',
+  'Rooms open: {count}': 'الغرف المفتوحة: {count}',
+  'People in rooms: {count}': 'المتواجدون في الغرف: {count}',
   Settings: 'الإعدادات',
   'Active rooms': 'الغرف النشطة',
   'Go live': 'انطلق مباشرًا',

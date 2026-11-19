@@ -62,6 +62,7 @@ describe('SidebarComponent (presentational)', () => {
 
     expect(card.textContent).toContain('You are in a room');
     expect(card.textContent).toContain('Spanish coffee');
+    expect(card.querySelector('p-tag')?.textContent).toContain('Live');
     expect(card.textContent).not.toContain('Start a room');
     card.querySelector('button')!.click();
 

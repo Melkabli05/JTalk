@@ -7,7 +7,14 @@
 <p-card class="go-live" [attr.aria-label]="heading() | t">
   <ng-template #title>{{ heading() | t }}</ng-template>
   <ng-template #subtitle>
-    {{ room()?.title ?? ('Start a room and let people practise with you.' | t) }}
+    @if (room(); as current) {
+      <span class="room">
+        <p-tag severity="success" [rounded]="true" [value]="'Live' | t" />
+        {{ current.title }}
+      </span>
+    } @else {
+      {{ 'Start a room and let people practise with you.' | t }}
+    }
   </ng-template>
   <ng-template #footer>
     @if (room()) {

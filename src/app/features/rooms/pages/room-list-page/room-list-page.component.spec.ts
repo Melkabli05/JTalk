@@ -108,6 +108,32 @@ describe('RoomListPageComponent (container)', () => {
     );
   });
 
+  it('says how many rooms are open and how many people are in them, as the filter narrows', async () => {
+    const busy = (id: string, language: string, count: number) => ({
+      ...roomDto(id, id, language),
+      participantCount: count,
+    });
+    await render(withRooms(busy('a', 'es', 4), busy('b', 'es', 6), busy('c', 'fr', 5)));
+    const stats = () =>
+      [...root().querySelectorAll('.stats p-tag')].map((t) =>
+        t.textContent?.replace(/\s+/g, ' ').trim(),
+      );
+    expect(stats()).toEqual(['Rooms open: 3', 'People in rooms: 15']);
+
+    [...root().querySelectorAll<HTMLElement>('app-language-filter [role="button"]')]
+      .find((o) => o.textContent?.includes('French'))!
+      .click();
+    await fixture.whenStable();
+
+    expect(stats()).toEqual(['Rooms open: 1', 'People in rooms: 5']);
+  });
+
+  it('shows no counts when there are no rooms', async () => {
+    await render(withRooms());
+
+    expect(root().querySelector('.stats')).toBeNull();
+  });
+
   it('lists every open room under one heading, Active rooms', async () => {
     await render(
       withRooms(

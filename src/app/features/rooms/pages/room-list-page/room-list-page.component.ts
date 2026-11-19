@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
 import { Message } from '@openng/optimus-ui/message';
+import { Tag } from '@openng/optimus-ui/tag';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { RoomStartService } from '@core/rooms/room-start.service';
 import { msg } from '@shared/utils/i18n/msg';
@@ -33,6 +34,7 @@ export function partOfDay(hour: number): keyof typeof GREETINGS {
     LanguageFilterComponent,
     Message,
     Skeleton,
+    Tag,
     RoomCardComponent,
     RoomFormDialogComponent,
     TranslatePipe,
@@ -49,6 +51,11 @@ export default class RoomListPageComponent {
 
   protected readonly state = this.facade.state;
   protected readonly starting = signal(false);
+
+  /** Everyone in the rooms shown, which is what the greeting says is going on. */
+  protected readonly people = computed(() =>
+    this.state.shown().reduce((sum, room) => sum + room.participantCount, 0),
+  );
 
   protected readonly firstName = computed(
     () =>
