@@ -7,6 +7,15 @@ const KEY = 'jtalk:room';
 export interface ActiveRoom {
   readonly id: string;
   readonly title: string;
+  readonly topic: string;
+  readonly targetLanguage: string;
+  readonly nativeLanguage: string;
+  /** The host's name, once it is known. */
+  readonly hostName: string;
+  readonly participantCount: number;
+  /** How many are on the stage, and how many seats it has. */
+  readonly speakers: number;
+  readonly seats: number;
 }
 
 /**

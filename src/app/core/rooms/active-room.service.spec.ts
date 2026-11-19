@@ -6,8 +6,28 @@ describe('ActiveRoomService', () => {
     const active = TestBed.inject(ActiveRoomService);
     expect(active.room()).toBeNull();
 
-    active.set({ id: 'r-1', title: 'Spanish coffee' });
-    expect(active.room()).toEqual({ id: 'r-1', title: 'Spanish coffee' });
+    active.set({
+      id: 'r-1',
+      title: 'Spanish coffee',
+      topic: 'Ordering food',
+      targetLanguage: 'es',
+      nativeLanguage: 'en',
+      hostName: 'Hana',
+      participantCount: 5,
+      speakers: 2,
+      seats: 6,
+    });
+    expect(active.room()).toEqual({
+      id: 'r-1',
+      title: 'Spanish coffee',
+      topic: 'Ordering food',
+      targetLanguage: 'es',
+      nativeLanguage: 'en',
+      hostName: 'Hana',
+      participantCount: 5,
+      speakers: 2,
+      seats: 6,
+    });
 
     active.set(null);
     expect(active.room()).toBeNull();
@@ -30,7 +50,17 @@ describe('ActiveRoomService', () => {
     it('writes the room to this tab, so a reload can go back to it, and takes it away once the room is left', () => {
       const active = TestBed.inject(ActiveRoomService);
 
-      active.set({ id: 'r-1', title: 'Spanish coffee' });
+      active.set({
+        id: 'r-1',
+        title: 'Spanish coffee',
+        topic: 'Ordering food',
+        targetLanguage: 'es',
+        nativeLanguage: 'en',
+        hostName: 'Hana',
+        participantCount: 5,
+        speakers: 2,
+        seats: 6,
+      });
       expect(sessionStorage.getItem('jtalk:room')).toBe('r-1');
 
       active.set(null);

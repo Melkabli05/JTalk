@@ -66,7 +66,17 @@ export class RoomFacade {
       const joined = this.state.joined();
       if (joined && room) {
         this.announced = true;
-        this.active.set({ id: this.state.roomId(), title: room.title });
+        this.active.set({
+          id: this.state.roomId(),
+          title: room.title,
+          topic: room.topic,
+          targetLanguage: room.targetLanguage,
+          nativeLanguage: room.nativeLanguage,
+          hostName: this.state.members().get(room.hostId)?.name ?? '',
+          participantCount: room.participantCount,
+          speakers: this.state.speakers().length,
+          seats: room.maxStageSeats,
+        });
       } else if (this.announced) {
         // Cleared only once the room has been announced and then left: while a room is being rejoined after a reload it is not "left".
         this.announced = false;

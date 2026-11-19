@@ -18,11 +18,11 @@ describe('LiveWavesComponent (presentational)', () => {
     expect(root.textContent?.trim()).toBe('');
   });
 
-  it('draws a microphone with three waves', async () => {
+  it('draws three waves and no icon', async () => {
     const root = await render();
 
     expect(root.querySelectorAll('.wave')).toHaveLength(3);
-    expect(root.querySelector('.core .pi-microphone')).not.toBeNull();
+    expect(root.querySelector('i, .pi')).toBeNull();
   });
 
   it('is marked live only while something is live', async () => {

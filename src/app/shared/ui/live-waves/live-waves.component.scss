@@ -1,44 +1,29 @@
 :host {
   --speed: 3.6s;
-  --strength: 26%;
+  --strength: 30%;
+  --radius: var(--p-card-border-radius, 16px);
 
-  position: relative;
-  display: grid;
-  place-items: center;
-  block-size: 6rem;
-  overflow: hidden;
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
   color: var(--p-primary-color);
+  pointer-events: none;
 }
 
 :host(.live) {
   --speed: 2.2s;
-  --strength: 42%;
+  --strength: 50%;
 }
 
-.core {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  inline-size: 2.75rem;
-  block-size: 2.75rem;
-  border-radius: 50%;
-  background: var(--p-primary-color);
-  box-shadow: 0 0 1.5rem color-mix(in srgb, var(--p-primary-color) var(--strength), transparent);
-  color: var(--p-primary-contrast-color);
-  font-size: 1.125rem;
-}
-
-// Each wave is a ring that grows from the microphone and fades, one after another.
+// Each wave is a ring on the border that grows outwards and fades, one after another.
 .wave {
   position: absolute;
-  inline-size: 2.75rem;
-  block-size: 2.75rem;
+  inset: 0;
   border: 2px solid color-mix(in srgb, var(--p-primary-color) var(--strength), transparent);
-  border-radius: 50%;
+  border-radius: var(--radius);
   box-shadow:
-    0 0 1rem color-mix(in srgb, var(--p-primary-color) var(--strength), transparent),
-    inset 0 0 1rem color-mix(in srgb, var(--p-primary-color) var(--strength), transparent);
+    0 0 0.75rem color-mix(in srgb, var(--p-primary-color) var(--strength), transparent),
+    inset 0 0 0.75rem color-mix(in srgb, var(--p-primary-color) var(--strength), transparent);
   opacity: 0;
 
   @media (prefers-reduced-motion: no-preference) {
@@ -55,29 +40,29 @@
 
   // Still, the rings are a soft halo.
   @media (prefers-reduced-motion: reduce) {
-    opacity: 0.6;
+    opacity: 0.5;
 
     &.two {
-      scale: 1.5;
+      scale: 1.03;
     }
 
     &.three {
-      scale: 1.9;
+      scale: 1.06;
     }
   }
 }
 
 @keyframes spread {
   0% {
-    opacity: 0.85;
+    opacity: 0.9;
     scale: 1;
   }
-  // The ring is gone before it reaches the edge of the box, so nothing is ever cut off.
+  // The ring is gone before it reaches the edge of the space around the box, so nothing is ever cut off.
   70% {
     opacity: 0;
   }
   100% {
     opacity: 0;
-    scale: 2.1;
+    scale: 1.07;
   }
 }

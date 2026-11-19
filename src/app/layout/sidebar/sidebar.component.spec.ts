@@ -4,6 +4,17 @@ import { provideRouter } from '@angular/router';
 import type { MenuItem } from '@openng/optimus-ui/api';
 import { SidebarComponent } from './sidebar.component';
 
+const ROOM = {
+  title: 'Spanish coffee',
+  topic: 'Ordering food',
+  targetLanguage: 'es',
+  nativeLanguage: 'en',
+  hostName: 'Hana',
+  participantCount: 9,
+  speakers: 3,
+  seats: 6,
+};
+
 const ITEMS: MenuItem[] = [
   { label: 'Rooms', icon: 'pi pi-microphone', routerLink: '/' },
   { label: 'People', icon: 'pi pi-users', routerLink: '/people' },
@@ -52,19 +63,19 @@ describe('SidebarComponent (presentational)', () => {
     expect(asked).toHaveBeenCalledOnce();
   });
 
-  it('draws glow waves above the card, calmer when idle and live while the person is in a room', async () => {
+  it('draws glow waves on the border of the card, calmer when idle and live while the person is in a room', async () => {
     await render();
     const waves = () => root().querySelector<HTMLElement>('.go-live app-live-waves')!;
     expect(waves()).not.toBeNull();
     expect(waves().classList.contains('live')).toBe(false);
 
-    fixture.componentRef.setInput('room', { title: 'Spanish coffee' });
+    fixture.componentRef.setInput('room', ROOM);
     await fixture.whenStable();
     expect(waves().classList.contains('live')).toBe(true);
   });
 
   it('turns the Go live card into the way back while the person is in a room', async () => {
-    await render({ room: { title: 'Spanish coffee' } });
+    await render({ room: ROOM });
     const back = vi.fn();
     const start = vi.fn();
     fixture.componentInstance.backToRoom.subscribe(back);
@@ -79,6 +90,32 @@ describe('SidebarComponent (presentational)', () => {
 
     expect(back).toHaveBeenCalledOnce();
     expect(start).not.toHaveBeenCalled();
+  });
+
+  it('says what the room is: its languages, topic, host and how busy it is', async () => {
+    await render({ room: ROOM });
+    const card = root().querySelector<HTMLElement>('.go-live')!;
+    const text = card.textContent?.replace(/\s+/g, ' ') ?? '';
+
+    expect(text).toContain('Spanish');
+    expect(text).toContain('for English speakers');
+    expect(text).toContain('Ordering food');
+    expect(text).toContain('Hosted by Hana');
+    expect([...card.querySelectorAll('.stat')].map((el) => el.textContent?.trim())).toEqual([
+      '9',
+      '3/6',
+    ]);
+    expect(card.querySelector('.counts .cdk-visually-hidden')?.textContent).toContain(
+      '9 in the room',
+    );
+  });
+
+  it('leaves out the topic and the host when it does not have them', async () => {
+    await render({ room: { ...ROOM, topic: '', hostName: '' } });
+    const text = root().querySelector('.go-live')?.textContent ?? '';
+
+    expect(text).not.toContain('Hosted by');
+    expect(root().querySelector('.go-live .topic')).toBeNull();
   });
 
   it('shows who is signed in and says where the account was pressed', async () => {

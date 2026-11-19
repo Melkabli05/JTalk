@@ -229,7 +229,17 @@ describe('AppShellComponent (container)', () => {
       expect(card().textContent).toContain('Go live');
       expect(back().textContent).toContain('Start a room');
 
-      active.set({ id: 'r-1', title: 'Spanish coffee' });
+      active.set({
+        id: 'r-1',
+        title: 'Spanish coffee',
+        topic: 'Ordering food',
+        targetLanguage: 'es',
+        nativeLanguage: 'en',
+        hostName: 'Hana',
+        participantCount: 5,
+        speakers: 2,
+        seats: 6,
+      });
       await router.navigateByUrl('/section');
       await fixture.whenStable();
       expect(card().textContent).toContain('You are in a room');
@@ -250,7 +260,17 @@ describe('AppShellComponent (container)', () => {
       const router = await renderWithRoutes();
       expect(onThePhone()).toBeUndefined();
 
-      TestBed.inject(ActiveRoomService).set({ id: 'r-1', title: 'Spanish coffee' });
+      TestBed.inject(ActiveRoomService).set({
+        id: 'r-1',
+        title: 'Spanish coffee',
+        topic: 'Ordering food',
+        targetLanguage: 'es',
+        nativeLanguage: 'en',
+        hostName: 'Hana',
+        participantCount: 5,
+        speakers: 2,
+        seats: 6,
+      });
       await router.navigateByUrl('/section');
       await fixture.whenStable();
 
@@ -263,7 +283,17 @@ describe('AppShellComponent (container)', () => {
     it('is gone once the room is left', async () => {
       const router = await renderWithRoutes();
       const active = TestBed.inject(ActiveRoomService);
-      active.set({ id: 'r-1', title: 'Spanish coffee' });
+      active.set({
+        id: 'r-1',
+        title: 'Spanish coffee',
+        topic: 'Ordering food',
+        targetLanguage: 'es',
+        nativeLanguage: 'en',
+        hostName: 'Hana',
+        participantCount: 5,
+        speakers: 2,
+        seats: 6,
+      });
       await router.navigateByUrl('/section');
       await fixture.whenStable();
       expect(back().textContent).toContain('Back to the room');

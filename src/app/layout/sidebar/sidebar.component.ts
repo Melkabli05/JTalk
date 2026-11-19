@@ -9,6 +9,19 @@ import { AriaCurrentDirective } from '@shared/directives/aria-current.directive'
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { LiveWavesComponent } from '@shared/ui/live-waves/live-waves.component';
 import { msg } from '@shared/utils/i18n/msg';
+import { languageOf } from '@shared/utils/languages';
+
+/** What the Go live card says about the room the person is in. */
+export interface SidebarRoom {
+  readonly title: string;
+  readonly topic: string;
+  readonly targetLanguage: string;
+  readonly nativeLanguage: string;
+  readonly hostName: string;
+  readonly participantCount: number;
+  readonly speakers: number;
+  readonly seats: number;
+}
 
 /**
  * The left rail from 64rem: the pages as the library's own menu with the brand in its start slot, the Go live card, and the account
@@ -41,7 +54,15 @@ export class SidebarComponent {
   readonly picture = input<string | null>(null);
 
   /** The room the person is in while they look elsewhere: the Go live card then offers the way back to it instead. */
-  readonly room = input<{ readonly title: string } | null>(null);
+  readonly room = input<SidebarRoom | null>(null);
+
+  /** The languages of that room, with their flags. */
+  protected readonly roomLanguages = computed(() => {
+    const room = this.room();
+    return (
+      room && { target: languageOf(room.targetLanguage), native: languageOf(room.nativeLanguage) }
+    );
+  });
 
   protected readonly heading = computed(() =>
     this.room() ? msg('You are in a room') : msg('Go live'),

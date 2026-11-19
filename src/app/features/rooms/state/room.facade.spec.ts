@@ -321,7 +321,14 @@ describe('RoomFacade', () => {
       expect(active.room()).toBeNull();
 
       await enter();
-      expect(active.room()).toEqual({ id: 'r-1', title: 'Spanish' });
+      expect(active.room()).toMatchObject({
+        id: 'r-1',
+        title: 'Spanish',
+        targetLanguage: 'es',
+        participantCount: 1,
+        speakers: 1,
+        seats: 4,
+      });
 
       facade.leave();
       await settle();
