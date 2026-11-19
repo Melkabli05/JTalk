@@ -5,7 +5,6 @@ import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
 import { Menu } from '@openng/optimus-ui/menu';
 import { AriaCurrentDirective } from '@shared/directives/aria-current.directive';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { LiveWavesComponent } from '@shared/ui/live-waves/live-waves.component';
 import {
   type CurrentRoom,
@@ -27,7 +26,6 @@ import {
     CurrentRoomCardComponent,
     LiveWavesComponent,
     Menu,
-    TranslatePipe,
   ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
@@ -49,6 +47,6 @@ export class SidebarComponent {
 
   readonly startRoom = output<void>();
   readonly backToRoom = output<void>();
-  /** The account was pressed; the event says where, so the settings can open beside it. */
-  readonly settings = output<MouseEvent>();
+  /** The account at the foot was pressed: it opens the profile, which holds the settings too. */
+  readonly profile = output<void>();
 }

@@ -4,7 +4,6 @@ import { Component, contentChild, input, output, TemplateRef } from '@angular/co
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { PersonRowComponent } from '@shared/ui/person-row/person-row.component';
 
 /**
@@ -13,20 +12,13 @@ import { PersonRowComponent } from '@shared/ui/person-row/person-row.component';
  */
 @Component({
   selector: 'app-people-list',
-  imports: [
-    ButtonDirective,
-    Message,
-    NgTemplateOutlet,
-    PersonRowComponent,
-    Skeleton,
-    TranslatePipe,
-  ],
+  imports: [ButtonDirective, Message, NgTemplateOutlet, PersonRowComponent, Skeleton],
   template: `
     @if (people().length > 0) {
       <ul class="list">
         @for (person of people(); track person.id) {
           <li animate.enter="row-in">
-            <app-person-row [person]="person" [locale]="locale()" (opened)="opened.emit($event)">
+            <app-person-row [person]="person" (opened)="opened.emit($event)">
               @if (action(); as template) {
                 <ng-container *ngTemplateOutlet="template; context: { $implicit: person }" />
               }
@@ -35,7 +27,7 @@ import { PersonRowComponent } from '@shared/ui/person-row/person-row.component';
         }
       </ul>
       @if (failed()) {
-        <p-message severity="error" size="small">{{ 'Could not load more people.' | t }}</p-message>
+        <p-message severity="error" size="small">Could not load more people.</p-message>
       }
       @if (hasMore() || failed()) {
         <button
@@ -46,12 +38,12 @@ import { PersonRowComponent } from '@shared/ui/person-row/person-row.component';
           [outlined]="true"
           [rounded]="true"
           [loading]="loading()"
-          [label]="failed() ? ('Try again' | t) : ('Show more' | t)"
+          [label]="failed() ? 'Try again' : 'Show more'"
           (click)="more.emit()"
         ></button>
       }
     } @else if (loading()) {
-      <div class="placeholders" role="status" [attr.aria-label]="'Finding people' | t">
+      <div class="placeholders" role="status" aria-label="Finding people">
         @for (row of rows; track row) {
           <div class="placeholder">
             <p-skeleton shape="circle" size="3rem" />
@@ -65,7 +57,7 @@ import { PersonRowComponent } from '@shared/ui/person-row/person-row.component';
     } @else if (failed()) {
       <p-message severity="error" icon="pi pi-exclamation-triangle">
         <span class="message">
-          {{ 'Could not load people.' | t }}
+          Could not load people.
           <button
             pButton
             type="button"
@@ -73,7 +65,7 @@ import { PersonRowComponent } from '@shared/ui/person-row/person-row.component';
             icon="pi pi-refresh"
             severity="danger"
             [text]="true"
-            [label]="'Try again' | t"
+            label="Try again"
             (click)="more.emit()"
           ></button>
         </span>
@@ -81,8 +73,8 @@ import { PersonRowComponent } from '@shared/ui/person-row/person-row.component';
     } @else {
       <section class="empty">
         <i [class]="icon()" aria-hidden="true"></i>
-        <h2>{{ title() | t }}</h2>
-        <p>{{ text() | t }}</p>
+        <h2>{{ title() }}</h2>
+        <p>{{ text() }}</p>
       </section>
     }
   `,
@@ -93,7 +85,6 @@ export class PeopleListComponent {
   readonly loading = input(false);
   readonly failed = input(false);
   readonly hasMore = input(false);
-  readonly locale = input('en');
   /** What an empty list says, and the icon above it. */
   readonly icon = input('pi pi-users');
   readonly title = input.required<string>();

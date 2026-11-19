@@ -1,11 +1,8 @@
-import { msg } from '@shared/utils/i18n/msg';
-
-/** The greeting for each part of the day, without and with a name. */
-export const GREETINGS = {
-  morning: [msg('Good morning'), msg('Good morning, {name}')],
-  afternoon: [msg('Good afternoon'), msg('Good afternoon, {name}')],
-  evening: [msg('Good evening'), msg('Good evening, {name}')],
-  night: [msg('Hello'), msg('Hello, {name}')],
+const GREETINGS = {
+  morning: 'Good morning',
+  afternoon: 'Good afternoon',
+  evening: 'Good evening',
+  night: 'Hello',
 } as const;
 
 export function partOfDay(hour: number): keyof typeof GREETINGS {
@@ -13,4 +10,10 @@ export function partOfDay(hour: number): keyof typeof GREETINGS {
     return 'night';
   }
   return hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+}
+
+/** "Good morning, Mona" at the person's time of day, or just "Good morning" until their name is known. */
+export function greetingFor(hour: number, name: string): string {
+  const greeting = GREETINGS[partOfDay(hour)];
+  return name ? `${greeting}, ${name}` : greeting;
 }

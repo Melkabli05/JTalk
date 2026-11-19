@@ -1,7 +1,6 @@
 import { Component, computed, input, linkedSignal, output } from '@angular/core';
 import { FormField, FormRoot, form, maxLength, required } from '@angular/forms/signals';
 import { ButtonDirective } from '@openng/optimus-ui/button';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { AvatarPickerComponent } from '@shared/ui/avatar-picker/avatar-picker.component';
 import {
   SelectFieldComponent,
@@ -11,7 +10,6 @@ import { TextFieldComponent } from '@shared/ui/text-field/text-field.component';
 import { TextareaFieldComponent } from '@shared/ui/textarea-field/textarea-field.component';
 import { avatarOrDefault } from '@shared/utils/avatars';
 import { formSubmission } from '@shared/utils/form-submission';
-import { msg } from '@shared/utils/i18n/msg';
 import { COUNTRY_CODES } from '@shared/utils/countries';
 import { LANGUAGES } from '@shared/utils/languages';
 import { countryNameOf, flagOf } from '@shared/utils/people';
@@ -36,14 +34,12 @@ interface ProfileFormModel {
     SelectFieldComponent,
     TextFieldComponent,
     TextareaFieldComponent,
-    TranslatePipe,
   ],
   templateUrl: './profile-form.component.html',
   styleUrl: './profile-form.component.scss',
 })
 export class ProfileFormComponent {
   readonly profile = input<Person>();
-  readonly locale = input('en');
   /** A save is in flight: a second submit is ignored and the button waits. */
   readonly busy = input(false);
 
@@ -56,12 +52,12 @@ export class ProfileFormComponent {
   }));
 
   protected readonly countries = computed<readonly SelectOption<string>[]>(() => [
-    { value: '', label: msg('Not set') },
+    { value: '', label: 'Not set' },
     ...COUNTRY_CODES.map((code) => ({
       value: code,
-      label: countryNameOf(code, this.locale()),
+      label: countryNameOf(code),
       prefix: flagOf(code),
-    })).sort((a, b) => a.label.localeCompare(b.label, this.locale())),
+    })).sort((a, b) => a.label.localeCompare(b.label, 'en')),
   ]);
 
   private readonly model = linkedSignal<ProfileFormModel>(() => ({
@@ -76,11 +72,11 @@ export class ProfileFormComponent {
   protected readonly profileForm = form(
     this.model,
     (path) => {
-      required(path.name, { message: msg('Enter your name.') });
-      maxLength(path.name, 40, { message: msg('Use at most 40 characters.') });
-      required(path.nativeLanguage, { message: msg('Choose a language.') });
-      required(path.learning, { message: msg('Choose a language.') });
-      maxLength(path.bio, 300, { message: msg('Use at most 300 characters.') });
+      required(path.name, { message: 'Enter your name.' });
+      maxLength(path.name, 40, { message: 'Use at most 40 characters.' });
+      required(path.nativeLanguage, { message: 'Choose a language.' });
+      required(path.learning, { message: 'Choose a language.' });
+      maxLength(path.bio, 300, { message: 'Use at most 300 characters.' });
     },
     {
       submission: formSubmission<ProfileFormModel>({

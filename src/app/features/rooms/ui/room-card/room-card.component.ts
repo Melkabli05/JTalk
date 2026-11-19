@@ -2,7 +2,6 @@ import { Component, computed, input, output } from '@angular/core';
 import { AvatarGroup } from '@openng/optimus-ui/avatargroup';
 import { Card } from '@openng/optimus-ui/card';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import type { Room } from '../../models/room.model';
 import { memberOf } from '../../utils/members';
 import { roomLook } from '../../utils/room-look';
@@ -15,7 +14,7 @@ let nextId = 0;
 
 @Component({
   selector: 'app-room-card',
-  imports: [AvatarGroup, Card, PersonAvatarComponent, Tooltip, TranslatePipe],
+  imports: [AvatarGroup, Card, PersonAvatarComponent, Tooltip],
   templateUrl: './room-card.component.html',
   styleUrl: './room-card.component.scss',
 })

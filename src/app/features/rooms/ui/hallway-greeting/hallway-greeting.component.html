@@ -2,19 +2,14 @@
   @let language = this.language();
   @let first = language && !practising();
   <div class="banner" [class.night]="night()">
-    <h1 id="greeting">{{ greeting() | t: { name: name() } }}</h1>
+    <h1 id="greeting">{{ greeting() }}</h1>
     <p class="lead">
       @if (!language) {
-        {{ 'Join a conversation to practise a language.' | t }}
+        Join a conversation to practise a language.
       } @else if (first) {
-        {{
-          'Nobody is practising {language} yet. Be the first.' | t: { language: language.name | t }
-        }}
+        Nobody is practising {{ language.name }} yet. Be the first.
       } @else {
-        {{
-          'Rooms practising {language}: {count}'
-            | t: { language: language.name | t, count: practising() }
-        }}
+        Rooms practising {{ language.name }}: {{ practising() }}
       }
     </p>
     @if (canStart()) {
@@ -24,11 +19,7 @@
         class="start"
         icon="pi pi-plus"
         [class.always]="first"
-        [label]="
-          first
-            ? ('Start a {language} room' | t: { language: language.name | t })
-            : ('Start a room' | t)
-        "
+        [label]="first ? `Start a ${language.name} room` : 'Start a room'"
         (click)="start.emit()"
       ></button>
     }

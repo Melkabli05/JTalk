@@ -1,42 +1,61 @@
 @if (identity.profile(); as me) {
   @if (cards.card(); as card) {
-    <app-profile-hero [person]="card.details" [details]="card.details" [locale]="locale()">
+    <app-profile-hero [person]="card.details" [details]="card.details">
       <div stats>
         @if (card.social; as stats) {
-          <app-social-stats
-            [followers]="stats.followers"
-            [following]="stats.following"
-            [locale]="locale()"
-          />
+          <app-social-stats [followers]="stats.followers" [following]="stats.following" />
         }
       </div>
     </app-profile-hero>
     <app-profile-about [card]="card" />
   } @else {
-    <app-profile-hero [person]="me" [locale]="locale()" />
+    <app-profile-hero [person]="me" />
   }
 
   <p-card class="editor">
-    <h2>{{ 'Edit profile' | t }}</h2>
-    <p class="lead">{{ 'Your name and picture are what people see in the rooms.' | t }}</p>
+    <h2>Edit profile</h2>
+    <p class="lead">Your name and picture are what people see in the rooms.</p>
     @if (saving.error(); as error) {
       <p-message class="error" severity="error" variant="simple" role="alert">{{
-        error | t
+        error
       }}</p-message>
     }
-    <app-profile-form
-      [profile]="me"
-      [locale]="locale()"
-      [busy]="saving.submitting()"
-      (saved)="save($event)"
-    />
+    <app-profile-form [profile]="me" [busy]="saving.submitting()" (saved)="save($event)" />
+  </p-card>
+
+  <p-card class="settings">
+    <h2>Settings</h2>
+    <div class="row">
+      <span id="dark-label">Dark theme</span>
+      <p-toggleswitch
+        ariaLabelledBy="dark-label"
+        [ngModel]="colorScheme.isDark()"
+        (ngModelChange)="colorScheme.toggle()"
+      />
+    </div>
+    <div class="row">
+      <span id="rtl-label">Right-to-left</span>
+      <p-toggleswitch
+        ariaLabelledBy="rtl-label"
+        [ngModel]="direction.isRtl()"
+        (ngModelChange)="direction.toggle()"
+      />
+    </div>
+    <button
+      pButton
+      type="button"
+      severity="secondary"
+      icon="pi pi-sign-out"
+      [outlined]="true"
+      [rounded]="true"
+      label="Sign out"
+      (click)="identity.signOut()"
+    ></button>
   </p-card>
 
   <p-card class="danger">
-    <h2>{{ 'Delete your account' | t }}</h2>
-    <p class="lead">
-      {{ 'Remove your profile and everything that goes with it. This cannot be undone.' | t }}
-    </p>
+    <h2>Delete your account</h2>
+    <p class="lead">Remove your profile and everything that goes with it. This cannot be undone.</p>
     <button
       pButton
       type="button"
@@ -44,7 +63,7 @@
       icon="pi pi-trash"
       [outlined]="true"
       [rounded]="true"
-      [label]="'Delete my account' | t"
+      label="Delete my account"
       (click)="confirmingDelete.set(true)"
     ></button>
   </p-card>
@@ -58,6 +77,6 @@
   />
 } @else {
   <div class="loading">
-    <p-progress-spinner [ariaLabel]="'Loading page' | t" />
+    <p-progress-spinner ariaLabel="Loading page" />
   </div>
 }

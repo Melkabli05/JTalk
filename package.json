@@ -4,7 +4,6 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "i18n:check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/i18n.mjs",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
@@ -12,7 +11,7 @@
     "lint": "ng lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm lint && pnpm format:check && pnpm test:ci && pnpm i18n:check && pnpm build"
+    "check": "pnpm lint && pnpm format:check && pnpm test:ci && pnpm build"
   },
   "private": true,
   "packageManager": "pnpm@12.14.0",

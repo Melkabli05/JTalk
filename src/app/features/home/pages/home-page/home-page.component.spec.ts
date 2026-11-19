@@ -12,7 +12,6 @@ describe('HomePageComponent (container)', () => {
 
   beforeEach(async () => {
     localStorage.clear();
-    localStorage.setItem('jtalk:locale', 'en');
     loginWithRedirect.mockClear();
     TestBed.configureTestingModule({
       providers: [fakeAuth0({ signedIn: false, loginWithRedirect })],
@@ -130,19 +129,5 @@ describe('HomePageComponent (container)', () => {
 
   it('is always in the night theme, whatever the visitor chose', () => {
     expect(root().classList).toContain('app-dark');
-  });
-
-  it('switches language, and reads right to left in Arabic', async () => {
-    const switcher = root().querySelector<HTMLElement>('app-locale-switch')!;
-    const arabic = [...switcher.querySelectorAll<HTMLElement>('[role="button"]')].find(
-      (option) => option.textContent?.trim() === 'العربية',
-    )!;
-
-    arabic.click();
-    await vi.waitFor(() => expect(root().querySelector('h1')?.textContent).toContain('تعلّم'));
-
-    expect(document.documentElement.dir).toBe('rtl');
-    localStorage.setItem('jtalk:locale', 'en');
-    document.documentElement.dir = 'ltr';
   });
 });

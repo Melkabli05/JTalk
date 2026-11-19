@@ -17,18 +17,16 @@
       />
     }
 
-    <p class="cdk-visually-hidden" role="status">
-      {{ 'Rooms shown: {count}' | t: { count: state.shown().length } }}
-    </p>
+    <p class="cdk-visually-hidden" role="status">Rooms shown: {{ state.shown().length }}</p>
 
     @if (state.shown().length > 0) {
       <section class="group" aria-labelledby="active-heading">
         <div class="group-head">
-          <h2 id="active-heading">{{ 'Active rooms' | t }}</h2>
+          <h2 id="active-heading">Active rooms</h2>
           <p class="counts">
-            {{ 'Rooms open: {count}' | t: { count: state.shown().length } }}
+            Rooms open: {{ state.shown().length }}
             <span aria-hidden="true">·</span>
-            {{ 'People in rooms: {count}' | t: { count: people() } }}
+            People in rooms: {{ people() }}
           </p>
         </div>
         <ul class="rooms">
@@ -46,17 +44,17 @@
     } @else {
       <section class="empty">
         @if (state.filter() === '') {
-          <h2>{{ 'Quiet right now' | t }}</h2>
-          <p>{{ 'Nobody has opened a room. Start one and others can join you.' | t }}</p>
+          <h2>Quiet right now</h2>
+          <p>Nobody has opened a room. Start one and others can join you.</p>
         } @else {
-          <h2>{{ 'Nothing in this language yet' | t }}</h2>
-          <p>{{ 'No open room matches. Try another language, or start one.' | t }}</p>
+          <h2>Nothing in this language yet</h2>
+          <p>No open room matches. Try another language, or start one.</p>
           <button
             pButton
             type="button"
             severity="secondary"
             [outlined]="true"
-            [label]="'Show all rooms' | t"
+            label="Show all rooms"
             (click)="state.filter.set('')"
           ></button>
         }
@@ -65,7 +63,7 @@
   } @else if (state.failed()) {
     <p-message severity="error" icon="pi pi-exclamation-triangle">
       <span class="message">
-        {{ 'Could not load the rooms. Please try again.' | t }}
+        Could not load the rooms. Please try again.
         <button
           pButton
           type="button"
@@ -73,13 +71,13 @@
           icon="pi pi-refresh"
           severity="danger"
           [text]="true"
-          [label]="'Try again' | t"
+          label="Try again"
           (click)="state.reload()"
         ></button>
       </span>
     </p-message>
   } @else {
-    <p class="cdk-visually-hidden" role="status">{{ 'Finding open rooms' | t }}</p>
+    <p class="cdk-visually-hidden" role="status">Finding open rooms</p>
     <ul class="rooms" aria-hidden="true">
       @for (placeholder of [1, 2, 3]; track placeholder) {
         <li>

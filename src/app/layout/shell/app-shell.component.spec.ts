@@ -8,9 +8,6 @@ import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { type Observable, of } from 'rxjs';
 import { fakeAuth0, fakeIdentity } from '@core/auth/auth-testing';
-import { ColorSchemeService } from '@core/config/color-scheme.service';
-import { DirectionService } from '@core/config/direction.service';
-import { I18n } from '@shared/utils/i18n/i18n.service';
 import { layoutRoutes } from '../layout.routes';
 import { AppShellComponent } from './app-shell.component';
 
@@ -33,26 +30,11 @@ describe('AppShellComponent (container)', () => {
   let fixture: ComponentFixture<AppShellComponent>;
   const root = () => fixture.nativeElement as HTMLElement;
 
-  const settings = () => document.querySelector<HTMLElement>('.settings');
-  async function openAccount() {
-    root().querySelector<HTMLButtonElement>('app-sidebar button.account')!.click();
-    await vi.waitFor(() => expect(settings()).not.toBeNull());
-  }
-  const settingsButton = (name: string) =>
-    [...(settings()?.querySelectorAll('button') ?? [])].find((b) => b.textContent?.includes(name));
-  const toggle = (label: string) =>
-    settings()!.querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)!;
-  const localeOption = (name: string) =>
-    [...(settings()?.querySelectorAll<HTMLElement>('p-selectbutton [role="button"]') ?? [])].find(
-      (option) => option.textContent?.trim() === name,
-    );
-
   beforeEach(() => {
     sessionStorage.clear();
     localStorage.clear();
     document.documentElement.dir = 'ltr';
     document.documentElement.lang = 'en';
-    localStorage.setItem('jtalk:locale', 'en');
     document.documentElement.classList.remove('app-dark');
     TestBed.configureTestingModule({ providers: [...sdk(), provideRouter([])] });
   });
@@ -105,64 +87,6 @@ describe('AppShellComponent (container)', () => {
     expect(
       [...root().querySelectorAll('button')].map((b) => b.getAttribute('aria-label')),
     ).toContain('Profile and settings');
-  });
-
-  it('offers sign-out to the signed-in user', async () => {
-    await render();
-    await openAccount();
-    expect(settingsButton('Sign out')).toBeDefined();
-  });
-
-  it('switches the color scheme from the dark theme switch', async () => {
-    await render();
-    await openAccount();
-    const scheme = TestBed.inject(ColorSchemeService);
-    expect(toggle('Dark theme').checked).toBe(false);
-
-    toggle('Dark theme').click();
-    await fixture.whenStable();
-
-    expect(scheme.isDark()).toBe(true);
-    expect(toggle('Dark theme').checked).toBe(true);
-  });
-
-  it('switches the reading direction from the right-to-left switch', async () => {
-    await render();
-    await openAccount();
-    const direction = TestBed.inject(DirectionService);
-
-    toggle('Right-to-left').click();
-    await fixture.whenStable();
-
-    expect(direction.isRtl()).toBe(true);
-    expect(document.documentElement.dir).toBe('rtl');
-    expect(toggle('Right-to-left').checked).toBe(true);
-  });
-
-  it('switches to Arabic from the language switch: its words, its direction, and a way back', async () => {
-    await render();
-    await openAccount();
-    const i18n = TestBed.inject(I18n);
-
-    localeOption('العربية')!.click();
-    await vi.waitFor(() => expect(i18n.locale()).toBe('ar'));
-    await fixture.whenStable();
-
-    expect(document.documentElement.lang).toBe('ar');
-    expect(document.documentElement.dir).toBe('rtl');
-    const links = [...root().querySelectorAll('app-sidebar [role="menuitem"] a')].map((a) =>
-      a.textContent?.trim(),
-    );
-    expect(links).toEqual(['الغرف', 'الأشخاص', 'الملف الشخصي']);
-    expect(root().querySelector('a.skip-link')?.textContent).toContain('تخطَّ');
-
-    localeOption('English')!.click();
-    await vi.waitFor(() => expect(i18n.locale()).toBe('en'));
-    await fixture.whenStable();
-    expect(document.documentElement.dir).toBe('ltr');
-    expect(root().querySelector('app-sidebar [role="menuitem"] a')?.textContent?.trim()).toBe(
-      'Rooms',
-    );
   });
 
   it('has a primary navigation landmark with real links', async () => {
@@ -431,13 +355,6 @@ describe('AppShellComponent profile gate', () => {
   let http: HttpTestingController;
   const root = () => fixture.nativeElement as HTMLElement;
   const page = () => document.body;
-  const settings = () => document.querySelector<HTMLElement>('.settings');
-  async function openAccount() {
-    root().querySelector<HTMLButtonElement>('app-sidebar button.account')!.click();
-    await vi.waitFor(() => expect(settings()).not.toBeNull());
-  }
-  const settingsButton = (name: string) =>
-    [...(settings()?.querySelectorAll('button') ?? [])].find((b) => b.textContent?.includes(name));
 
   const profile = (extra: object = {}) => ({
     id: 'm-1',
@@ -453,7 +370,6 @@ describe('AppShellComponent profile gate', () => {
 
   beforeEach(() => {
     localStorage.clear();
-    localStorage.setItem('jtalk:locale', 'en');
     TestBed.configureTestingModule({
       providers: [...httpStack(logout), provideRouter([{ path: 'profile', children: [] }])],
     });
@@ -529,8 +445,7 @@ describe('AppShellComponent profile gate', () => {
     http.expectNone(() => true); // the answer is the profile: nothing is read back, no second call
 
     expect(root().querySelector('router-outlet')).not.toBeNull();
-    await openAccount();
-    expect(settings()?.textContent).toContain('Mona');
+    expect(root().querySelector('app-sidebar button.account')?.textContent).toContain('Mona');
   });
 
   it('says so in the dialog when the profile could not be created, and keeps it open to try again', async () => {
@@ -560,15 +475,6 @@ describe('AppShellComponent profile gate', () => {
     expect(root().querySelector('router-outlet')).toBeNull();
   });
 
-  it('shows who the person is in the account popover, straight into the app', async () => {
-    await render(profile());
-
-    expect(page().textContent).not.toContain('Create your profile');
-    expect(root().querySelector('router-outlet')).not.toBeNull();
-    await openAccount();
-    expect(settings()?.textContent).toContain('Mona');
-  });
-
   it('shows the picture the person chose on the account card in the sidebar', async () => {
     await render(profile({ avatarUrl: '/avatars/avatar-06.svg' }));
 
@@ -584,35 +490,18 @@ describe('AppShellComponent profile gate', () => {
     expect(root().querySelector('app-sidebar button.account .pi-user')).not.toBeNull();
   });
 
-  it('signs out through Auth0, which sends the person back to the app', async () => {
-    await render(profile());
-
-    await openAccount();
-    settingsButton('Sign out')!.click();
-    await settle();
-
-    expect(logout).toHaveBeenCalledTimes(1);
-  });
-
-  it('names the person on the sidebar card, which opens the same settings', async () => {
+  it('names the person on the sidebar card, which opens their profile', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [...httpStack(logout), provideRouter([{ path: 'profile', children: [] }])],
+    });
     await render(profile({ displayName: 'Mona Hassan' }));
-
     const card = root().querySelector<HTMLButtonElement>('app-sidebar button.account')!;
     expect(card.textContent).toContain('Mona Hassan');
 
     card.click();
-    await vi.waitFor(() => expect(settings()).not.toBeNull());
-  });
-
-  it('links to the profile page from the account popover, and closes the popover', async () => {
-    await render(profile());
-
-    await openAccount();
-    const link = settings()!.querySelector<HTMLAnchorElement>('a[href="/profile"]')!;
-    expect(link.textContent).toContain('Your profile');
-
-    link.click();
     await settle();
-    await vi.waitFor(() => expect(settings()).toBeNull());
+
+    expect(TestBed.inject(Router).url).toBe('/profile');
   });
 });

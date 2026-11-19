@@ -1,7 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
 import type { MenuItem } from '@openng/optimus-ui/api';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import { msg } from '@shared/utils/i18n/msg';
 import { memberOf } from '../../utils/members';
 import { ModerationMenuComponent } from '../moderation-menu/moderation-menu.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
@@ -10,7 +8,7 @@ import type { FloatingReaction } from '../../models/reaction.model';
 
 @Component({
   selector: 'app-stage-seats',
-  imports: [ModerationMenuComponent, PersonAvatarComponent, TranslatePipe],
+  imports: [ModerationMenuComponent, PersonAvatarComponent],
   templateUrl: './stage-seats.component.html',
   styleUrl: './stage-seats.component.scss',
 })
@@ -47,7 +45,7 @@ export class StageSeatsComponent {
         muted: this.muted().includes(id),
         reaction: this.reactions().get(id) ?? null,
         actions: this.moderation().get(id) ?? [],
-        role: host ? msg('Host') : msg('Speaker'),
+        role: host ? 'Host' : 'Speaker',
       };
     });
     return this.scrolls()

@@ -14,7 +14,7 @@
           [name]="group"
           [value]="avatar.id"
           [checked]="value() === avatar.id"
-          [attr.aria-label]="'Avatar {number}' | t: { number: $index + 1 }"
+          [attr.aria-label]="`Avatar ${$index + 1}`"
           (change)="value.set(avatar.id)"
           (blur)="touch.emit()"
         />

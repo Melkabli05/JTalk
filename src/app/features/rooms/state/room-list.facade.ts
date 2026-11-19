@@ -1,5 +1,4 @@
 import { inject, Service, type Provider } from '@angular/core';
-import { msg } from '@shared/utils/i18n/msg';
 import { saveRequest } from '@shared/utils/save-request';
 import { RoomsApiService } from '../data-access/rooms-api.service';
 import type { RoomDraft } from '../models/room.model';
@@ -15,7 +14,7 @@ export class RoomListFacade {
   start(draft: RoomDraft, opened: (roomId: string) => void): void {
     this.opening.run(this.api.create(draft), {
       next: (session) => opened(session.room.id),
-      failure: msg('Could not open the room. Please try again.'),
+      failure: 'Could not open the room. Please try again.',
     });
   }
 }

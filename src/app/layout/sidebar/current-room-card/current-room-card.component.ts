@@ -4,7 +4,6 @@ import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
 import { Tag } from '@openng/optimus-ui/tag';
 import { InitialsPipe } from '@shared/pipes/initials.pipe';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { avatarColors, avatarUrl } from '@shared/utils/avatars';
 import { languageOf } from '@shared/utils/languages';
 
@@ -29,7 +28,7 @@ export interface CurrentRoom {
  */
 @Component({
   selector: 'app-current-room-card',
-  imports: [Avatar, ButtonDirective, Card, InitialsPipe, Tag, TranslatePipe],
+  imports: [Avatar, ButtonDirective, Card, InitialsPipe, Tag],
   templateUrl: './current-room-card.component.html',
   styleUrl: './current-room-card.component.scss',
 })

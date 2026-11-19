@@ -153,12 +153,6 @@ describe('ProfileFormComponent (presentational)', () => {
       );
     });
 
-    it('names the countries in the language of the reader', async () => {
-      await render({ profile: { ...MONA, countryCode: 'MA' }, locale: 'ar' });
-
-      expect(countryChoice()).toContain('المغرب');
-    });
-
     it('refuses a bio longer than 300 characters', async () => {
       await render({ profile: MONA });
       about().value = 'x'.repeat(301);

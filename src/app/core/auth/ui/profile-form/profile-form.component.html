@@ -1,30 +1,26 @@
 <form class="form" [formRoot]="profileForm">
-  <app-text-field
-    [label]="'Your name' | t"
-    autocomplete="nickname"
-    [formField]="profileForm.name"
-  />
-  <app-avatar-picker [label]="'Choose your picture' | t" [formField]="profileForm.avatar" />
+  <app-text-field label="Your name" autocomplete="nickname" [formField]="profileForm.name" />
+  <app-avatar-picker label="Choose your picture" [formField]="profileForm.avatar" />
 
   <div class="pair">
     <app-select-field
-      [label]="'I speak' | t"
+      label="I speak"
       [options]="languages"
       [formField]="profileForm.nativeLanguage"
     />
     <app-select-field
-      [label]="'I am learning' | t"
+      label="I am learning"
       [options]="languages"
       [formField]="profileForm.learning"
     />
   </div>
 
   <app-select-field
-    [label]="'Where you live' | t"
+    label="Where you live"
     [options]="countries()"
     [formField]="profileForm.countryCode"
   />
-  <app-textarea-field [label]="'About you' | t" [formField]="profileForm.bio" />
+  <app-textarea-field label="About you" [formField]="profileForm.bio" />
 
   <div class="actions">
     <button
@@ -32,7 +28,7 @@
       type="submit"
       size="large"
       [loading]="busy()"
-      [label]="profile() ? ('Save' | t) : ('Continue' | t)"
+      [label]="profile() ? 'Save' : 'Continue'"
     ></button>
   </div>
 </form>

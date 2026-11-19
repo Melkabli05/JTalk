@@ -1,16 +1,16 @@
 <p-card class="card" role="group" [attr.aria-labelledby]="titleId">
   <p class="meta">
     <span class="flag" aria-hidden="true">{{ look().target.flag }}</span>
-    {{ look().target.name | t }}
+    {{ look().target.name }}
     <span aria-hidden="true">·</span>
-    {{ 'for {language} speakers' | t: { language: look().native.name | t } }}
+    for {{ look().native.name }} speakers
   </p>
 
   <h2 class="title" [id]="titleId">
     <button
       type="button"
       class="open"
-      [attr.aria-label]="'Join {title}' | t: { title: room().title }"
+      [attr.aria-label]="`Join ${room().title}`"
       (click)="opened.emit()"
     >
       {{ room().title }}
@@ -21,12 +21,12 @@
     <p class="topic">{{ room().topic }}</p>
   }
 
-  <div class="speakers" role="group" [attr.aria-label]="'On stage' | t">
+  <div class="speakers" role="group" aria-label="On stage">
     @if (host(); as lead) {
       <span class="host">
         <app-person-avatar size="normal" [member]="lead" />
         <span class="name">{{ lead.name }}</span>
-        <span class="cdk-visually-hidden">{{ 'Host' | t }}</span>
+        <span class="cdk-visually-hidden">Host</span>
       </span>
     }
     <span class="others">
@@ -45,17 +45,17 @@
       }
       @if (more() > 0) {
         <span class="more" aria-hidden="true">+{{ more() }}</span>
-        <span class="cdk-visually-hidden">{{ '+{count} more' | t: { count: more() } }}</span>
+        <span class="cdk-visually-hidden">+{{ more() }} more</span>
       }
     </span>
   </div>
 
   <p class="counts">
     <span class="dot" aria-hidden="true"></span>
-    <span>{{ '{count} in the room' | t: { count: room().participantCount } }}</span>
+    <span>{{ room().participantCount }} in the room</span>
     @if (openSeats() > 0) {
       <span aria-hidden="true">·</span>
-      <span>{{ 'Open seats: {count}' | t: { count: openSeats() } }}</span>
+      <span>Open seats: {{ openSeats() }}</span>
     }
   </p>
 </p-card>

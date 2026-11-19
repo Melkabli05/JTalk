@@ -1,15 +1,14 @@
 import { Component, computed, input, output } from '@angular/core';
 import { ButtonDirective } from '@openng/optimus-ui/button';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { memberOf } from '../../utils/members';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 import type { Person } from '@core/auth/identity.models';
 
 @Component({
   selector: 'app-raised-hands',
-  imports: [ButtonDirective, PersonAvatarComponent, TranslatePipe],
+  imports: [ButtonDirective, PersonAvatarComponent],
   template: `
-    <ol class="hands" [attr.aria-label]="'Raised hands' | t">
+    <ol class="hands" aria-label="Raised hands">
       @for (person of people(); track person.id) {
         <li>
           <span class="position" aria-hidden="true">{{ $index + 1 }}</span>
@@ -21,8 +20,8 @@ import type { Person } from '@core/auth/identity.models';
               type="button"
               size="small"
               icon="pi pi-microphone"
-              [label]="'Invite' | t"
-              [attr.aria-label]="'Invite {name} to the stage' | t: { name: person.name }"
+              label="Invite"
+              [attr.aria-label]="'Invite ' + person.name + ' to the stage'"
               (click)="invited.emit(person.id)"
             ></button>
           }

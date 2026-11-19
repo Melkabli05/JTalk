@@ -4,8 +4,6 @@ import { filter, Subject, switchMap, tap, timer, type Observable } from 'rxjs';
 import { MessageService } from '@openng/optimus-ui/api';
 import { ActiveRoomService } from '@core/rooms/active-room.service';
 import { httpStatus } from '@shared/utils/http-status';
-import { I18n } from '@shared/utils/i18n/i18n.service';
-import { msg } from '@shared/utils/i18n/msg';
 import { saveRequest } from '@shared/utils/save-request';
 import { ParticipantsApiService } from '../data-access/participants-api.service';
 import { RealtimeService } from '../data-access/realtime.service';
@@ -26,8 +24,8 @@ export type RoomExit = 'removed' | 'ended' | 'closed';
 
 /** What the person is told when they are pushed out of the room, wherever in the app they are at that moment. */
 const EXIT_MESSAGES: Readonly<Record<RoomExit, string | null>> = {
-  removed: msg('The host removed you from this room.'),
-  ended: msg('This room has ended.'),
+  removed: 'The host removed you from this room.',
+  ended: 'This room has ended.',
   closed: null,
 };
 
@@ -44,7 +42,6 @@ export class RoomFacade {
   private readonly destroyRef = inject(DestroyRef);
   private readonly active = inject(ActiveRoomService);
   private readonly toast = inject(MessageService);
-  private readonly i18n = inject(I18n);
   readonly state = inject(RoomStore);
   readonly audio = inject(RealtimeService);
   private readonly pushedOut = new Subject<RoomExit>();
@@ -151,10 +148,10 @@ export class RoomFacade {
         // A room that could not be joined is not one to go back to after a reload.
         this.active.set(null);
         return httpStatus(error) === 403
-          ? msg('The host removed you from this room.')
+          ? 'The host removed you from this room.'
           : httpStatus(error) === 404
-            ? msg('This room has ended.')
-            : msg('Could not join the room. Please try again.');
+            ? 'This room has ended.'
+            : 'Could not join the room. Please try again.';
       },
     });
   }
@@ -180,63 +177,60 @@ export class RoomFacade {
   raiseHand(): void {
     this.run(
       this.stages.raiseHand(this.state.roomId()),
-      msg('Could not raise your hand. Please try again.'),
+      'Could not raise your hand. Please try again.',
     );
   }
 
   lowerHand(): void {
     this.run(
       this.stages.lowerHand(this.state.roomId()),
-      msg('Could not lower your hand. Please try again.'),
+      'Could not lower your hand. Please try again.',
     );
   }
 
   takeSeat(): void {
     this.run(
       this.stages.takeSeat(this.state.roomId()),
-      msg('Could not take the seat. Please try again.'),
+      'Could not take the seat. Please try again.',
     );
   }
 
   stepDown(): void {
-    this.run(
-      this.stages.leaveSeat(this.state.roomId()),
-      msg('Could not step down. Please try again.'),
-    );
+    this.run(this.stages.leaveSeat(this.state.roomId()), 'Could not step down. Please try again.');
   }
 
   invite(userId: string): void {
     this.run(
       this.stages.promote(this.state.roomId(), userId),
-      msg('Could not invite them. Please try again.'),
+      'Could not invite them. Please try again.',
     );
   }
 
   demote(userId: string): void {
     this.run(
       this.stages.demote(this.state.roomId(), userId),
-      msg('Could not move them. Please try again.'),
+      'Could not move them. Please try again.',
     );
   }
 
   mute(userId: string): void {
     this.run(
       this.stages.mute(this.state.roomId(), userId),
-      msg('Could not mute them. Please try again.'),
+      'Could not mute them. Please try again.',
     );
   }
 
   remove(userId: string): void {
     this.run(
       this.participants.remove(this.state.roomId(), userId),
-      msg('Could not remove them. Please try again.'),
+      'Could not remove them. Please try again.',
     );
   }
 
   close(): void {
     this.run(
       this.rooms.close(this.state.roomId()),
-      msg('Could not end the room. Please try again.'),
+      'Could not end the room. Please try again.',
       () => this.exit('closed'),
     );
   }
@@ -247,7 +241,7 @@ export class RoomFacade {
         this.state.apply({ type: 'ROOM_UPDATED', title, topic, maxStageSeats });
         done();
       },
-      failure: msg('Could not save the room. Please try again.'),
+      failure: 'Could not save the room. Please try again.',
     });
   }
 
@@ -290,7 +284,7 @@ export class RoomFacade {
     void this.audio.disconnect();
     const summary = EXIT_MESSAGES[reason];
     if (summary) {
-      this.toast.add({ severity: 'warn', summary: this.i18n.t(summary) });
+      this.toast.add({ severity: 'warn', summary: summary });
     }
     this.pushedOut.next(reason);
   }

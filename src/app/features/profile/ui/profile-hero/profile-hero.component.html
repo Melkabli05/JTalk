@@ -40,12 +40,7 @@
           </span>
         }
         @if (extra.joinedAt) {
-          <span>
-            {{
-              'Joined {date}'
-                | t: { date: (extra.joinedAt | date: 'MMMM y' : undefined : locale()) }
-            }}
-          </span>
+          <span> Joined {{ extra.joinedAt | date: 'MMMM y' }} </span>
         }
       </p>
     }
@@ -53,14 +48,14 @@
       <li>
         <p-tag severity="secondary" [rounded]="true">
           <span aria-hidden="true">{{ native().flag }}</span>
-          {{ 'Speaks {language}' | t: { language: native().name | t } }}
+          Speaks {{ native().name }}
         </p-tag>
       </li>
       @if (person().learning) {
         <li>
           <p-tag severity="secondary" [rounded]="true">
             <span aria-hidden="true">{{ learning().flag }}</span>
-            {{ 'Learning {language}' | t: { language: learning().name | t } }}
+            Learning {{ learning().name }}
           </p-tag>
         </li>
       }

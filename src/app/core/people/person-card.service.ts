@@ -1,6 +1,5 @@
 import { computed, inject, Service, signal } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { msg } from '@shared/utils/i18n/msg';
 import { partnerMatch } from '@shared/utils/people';
 import { loadedValue } from '@shared/utils/resource-value';
 import { saveRequest } from '@shared/utils/save-request';
@@ -59,18 +58,18 @@ export class PersonCardService {
   }
 
   follow(): void {
-    this.change((id) => this.api.follow(id), msg('Could not follow them. Please try again.'));
+    this.change((id) => this.api.follow(id), 'Could not follow them. Please try again.');
   }
 
   unfollow(): void {
-    this.change((id) => this.api.unfollow(id), msg('Could not unfollow them. Please try again.'));
+    this.change((id) => this.api.unfollow(id), 'Could not unfollow them. Please try again.');
   }
 
   /** Blocks the person whose card is open, or anyone else by id (the host's menu on a seat). */
   block(done: () => void, id: string | null = this.shown()): void {
     this.change(
       (target) => this.api.block(target),
-      msg('Could not block them. Please try again.'),
+      'Could not block them. Please try again.',
       done,
       id,
     );

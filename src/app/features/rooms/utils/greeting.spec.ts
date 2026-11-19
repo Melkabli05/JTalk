@@ -1,4 +1,4 @@
-import { GREETINGS, partOfDay } from './greeting';
+import { greetingFor, partOfDay } from './greeting';
 
 describe('partOfDay', () => {
   it('is morning from five until noon, afternoon until six, evening until ten, and night until five', () => {
@@ -7,11 +7,17 @@ describe('partOfDay', () => {
     expect([18, 20, 21].map(partOfDay)).toEqual(['evening', 'evening', 'evening']);
     expect([22, 23, 0, 3, 4].map(partOfDay)).toEqual(['night', 'night', 'night', 'night', 'night']);
   });
+});
 
-  it('has a greeting with a name and one without for each part of the day', () => {
-    for (const [without, withName] of Object.values(GREETINGS)) {
-      expect(without).not.toContain('{name}');
-      expect(withName).toContain('{name}');
-    }
+describe('greetingFor', () => {
+  it('names the person at their time of day, and says Hello in the small hours', () => {
+    expect(greetingFor(9, 'Mona')).toBe('Good morning, Mona');
+    expect(greetingFor(14, 'Mona')).toBe('Good afternoon, Mona');
+    expect(greetingFor(19, 'Mona')).toBe('Good evening, Mona');
+    expect(greetingFor(2, 'Mona')).toBe('Hello, Mona');
+  });
+
+  it('is only the greeting until the name is known', () => {
+    expect(greetingFor(9, '')).toBe('Good morning');
   });
 });

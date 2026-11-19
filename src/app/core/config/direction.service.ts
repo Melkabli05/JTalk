@@ -1,5 +1,4 @@
 import { DOCUMENT, effect, inject, Service, signal, computed } from '@angular/core';
-import { LOCALES, savedLocale } from '@shared/utils/i18n/locales';
 import { readItem, writeItem } from '@shared/utils/safe-storage';
 import { STORAGE_KEYS } from './app-config';
 
@@ -13,9 +12,7 @@ export class DirectionService {
   private readonly document = inject(DOCUMENT);
   private readonly stored = readItem('local', STORAGE_KEYS.direction);
 
-  readonly direction = signal<TextDirection>(
-    isDirection(this.stored) ? this.stored : LOCALES[savedLocale()].dir,
-  );
+  readonly direction = signal<TextDirection>(isDirection(this.stored) ? this.stored : 'ltr');
   readonly isRtl = computed(() => this.direction() === 'rtl');
 
   constructor() {

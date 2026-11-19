@@ -25,7 +25,6 @@ import { GlobalErrorHandler } from '@core/error-handling/global-error-handler';
 import { ActiveRoomService } from '@core/rooms/active-room.service';
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
-import { I18n } from '@shared/utils/i18n/i18n.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -56,7 +55,6 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       inject(ColorSchemeService);
       inject(DirectionService);
-      return inject(I18n).init();
     }),
     // A reload does not leave the room: the one this tab was in is joined again, without holding up the start of the app.
     provideAppInitializer(() => {

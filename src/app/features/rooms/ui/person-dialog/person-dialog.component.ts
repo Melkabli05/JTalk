@@ -11,11 +11,9 @@ import { Dialog } from '@openng/optimus-ui/dialog';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { FollowButtonComponent } from '@shared/ui/follow-button/follow-button.component';
 import { PartnerMatchComponent } from '@shared/ui/partner-match/partner-match.component';
 import { SocialStatsComponent } from '@shared/ui/social-stats/social-stats.component';
-import { msg } from '@shared/utils/i18n/msg';
 import { languageOf } from '@shared/utils/languages';
 import { countryNameOf, flagOf, PROFICIENCY_LABELS } from '@shared/utils/people';
 import type { RoomRole } from '../../models/room.model';
@@ -47,7 +45,6 @@ let nextId = 0;
     Skeleton,
     SocialStatsComponent,
     Tooltip,
-    TranslatePipe,
   ],
   templateUrl: './person-dialog.component.html',
   styleUrl: './person-dialog.component.scss',
@@ -71,7 +68,6 @@ export class PersonDialogComponent {
   readonly loading = input(false);
   readonly busy = input(false);
   readonly error = input<string | null>(null);
-  readonly locale = input('en');
 
   readonly invite = output<void>();
   readonly demote = output<void>();
@@ -88,25 +84,21 @@ export class PersonDialogComponent {
   protected readonly learning = computed(() => languageOf(this.member()?.learning ?? ''));
   protected readonly onStage = computed(() => this.role() !== 'LISTENER');
   protected readonly roleName = computed(() =>
-    this.role() === 'HOST'
-      ? msg('Host')
-      : this.role() === 'SPEAKER'
-        ? msg('Speaker')
-        : msg('Listener'),
+    this.role() === 'HOST' ? 'Host' : this.role() === 'SPEAKER' ? 'Speaker' : 'Listener',
   );
   /** What to say after the role: their microphone for someone on the stage, else that they are listening. */
   protected readonly caption = computed(() =>
     !this.onStage()
-      ? msg('In the audience')
+      ? 'In the audience'
       : this.muted()
-        ? msg('Muted')
+        ? 'Muted'
         : this.speaking()
-          ? msg('Speaking')
-          : msg('On mic'),
+          ? 'Speaking'
+          : 'On mic',
   );
   protected readonly origin = computed(() => {
     const code = this.card()?.details.countryCode ?? '';
-    return code === '' ? null : { flag: flagOf(code), name: countryNameOf(code, this.locale()) };
+    return code === '' ? null : { flag: flagOf(code), name: countryNameOf(code) };
   });
   /** What they speak and learn, in one line: `Spanish (Native) · Arabic (Intermediate)`. */
   protected readonly languageLine = computed(() => {
@@ -117,7 +109,7 @@ export class PersonDialogComponent {
     return [
       ...languages.native.map((code) => ({
         ...languageOf(code),
-        level: msg('Native'),
+        level: 'Native',
       })),
       ...languages.learning.map((entry) => ({
         ...languageOf(entry.code),

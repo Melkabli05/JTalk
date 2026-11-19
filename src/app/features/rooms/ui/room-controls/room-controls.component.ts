@@ -5,7 +5,6 @@ import { Message } from '@openng/optimus-ui/message';
 import { Popover } from '@openng/optimus-ui/popover';
 import { Toolbar } from '@openng/optimus-ui/toolbar';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { REACTIONS, type Reaction } from '../../models/reaction.model';
 import type { AudioStatus } from '../../models/realtime.model';
 import { REACTION_LOOKS } from '../../utils/reactions';
@@ -14,25 +13,25 @@ let nextId = 0;
 
 @Component({
   selector: 'app-room-controls',
-  imports: [ButtonDirective, Message, NgOptimizedImage, Popover, Toolbar, Tooltip, TranslatePipe],
+  imports: [ButtonDirective, Message, NgOptimizedImage, Popover, Toolbar, Tooltip],
   template: `
-    <span class="cdk-visually-hidden" [id]="labelId">{{ 'Room controls' | t }}</span>
+    <span class="cdk-visually-hidden" [id]="labelId">Room controls</span>
     <div class="notes">
       @if (audio() === 'connecting') {
         <p class="connecting" role="status">
           <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
-          {{ 'Connecting audio…' | t }}
+          Connecting audio…
         </p>
       }
       @if (audio() === 'reconnecting') {
-        <p-message severity="warn" size="small" icon="pi pi-spin pi-spinner">{{
-          'Reconnecting… trying to restore your connection.' | t
-        }}</p-message>
+        <p-message severity="warn" size="small" icon="pi pi-spin pi-spinner"
+          >Reconnecting… trying to restore your connection.</p-message
+        >
       }
       @if (audio() === 'failed') {
         <p-message severity="error" size="small" icon="pi pi-exclamation-triangle">
           <span class="message">
-            {{ 'Audio is not available.' | t }}
+            Audio is not available.
             <button
               pButton
               type="button"
@@ -40,28 +39,28 @@ let nextId = 0;
               icon="pi pi-refresh"
               severity="danger"
               [text]="true"
-              [label]="'Reconnect audio' | t"
+              label="Reconnect audio"
               (click)="retryAudio.emit()"
             ></button>
           </span>
         </p-message>
       }
       @if (micRefused()) {
-        <p-message severity="warn" size="small" icon="pi pi-exclamation-triangle">{{
-          'Your microphone is blocked. Allow it in your browser, then press Unmute.' | t
-        }}</p-message>
+        <p-message severity="warn" size="small" icon="pi pi-exclamation-triangle"
+          >Your microphone is blocked. Allow it in your browser, then press Unmute.</p-message
+        >
       }
       @if (soundBlocked()) {
         <p-message severity="info" size="small" icon="pi pi-volume-off">
           <span class="message">
-            {{ 'Sound is off in this browser.' | t }}
+            Sound is off in this browser.
             <button
               pButton
               type="button"
               size="small"
               icon="pi pi-volume-up"
               [text]="true"
-              [label]="'Turn on sound' | t"
+              label="Turn on sound"
               (click)="enableSound.emit()"
             ></button>
           </span>
@@ -70,7 +69,7 @@ let nextId = 0;
       @if (handRaised() && !onStage() && !micRefused()) {
         <p class="hint" role="status">
           <i class="pi pi-hand" aria-hidden="true"></i>
-          {{ 'Waiting for the host to let you speak. Tap the hand again to cancel.' | t }}
+          Waiting for the host to let you speak. Tap the hand again to cancel.
         </p>
       }
     </div>
@@ -78,7 +77,7 @@ let nextId = 0;
       <ng-template #center>
         <div class="controls">
           @if (micShown()) {
-            @let micLabel = micOn() ? ('Mute' | t) : ('Unmute' | t);
+            @let micLabel = micOn() ? 'Mute' : 'Unmute';
             <button
               pButton
               type="button"
@@ -94,7 +93,7 @@ let nextId = 0;
             ></button>
           }
           @if (canStepDown()) {
-            @let stepLabel = 'Step down to the audience' | t;
+            @let stepLabel = 'Step down to the audience';
             <button
               pButton
               type="button"
@@ -121,12 +120,12 @@ let nextId = 0;
               [outlined]="handRaised()"
               [rounded]="true"
               [disabled]="busy()"
-              [label]="'Raise hand' | t"
+              label="Raise hand"
               [attr.aria-pressed]="handRaised()"
               (click)="handRaised() ? lowerHand.emit() : raiseHand.emit()"
             ></button>
           }
-          @let reactLabel = 'React' | t;
+          @let reactLabel = 'React';
           <button
             pButton
             type="button"
@@ -141,7 +140,7 @@ let nextId = 0;
             (click)="picker.toggle($event)"
           ></button>
           <span class="divider" aria-hidden="true"></span>
-          @let leaveLabel = 'Leave quietly' | t;
+          @let leaveLabel = 'Leave quietly';
           <button
             pButton
             type="button"
@@ -156,10 +155,10 @@ let nextId = 0;
             (click)="leave.emit()"
           ></button>
         </div>
-        <p-popover #picker appendTo="body" [ariaLabel]="'Send a reaction' | t">
+        <p-popover #picker appendTo="body" ariaLabel="Send a reaction">
           <div class="reactions">
             @for (item of looks; track item.reaction) {
-              @let label = item.label | t;
+              @let label = item.label;
               <button
                 pButton
                 type="button"

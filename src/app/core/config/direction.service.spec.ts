@@ -16,15 +16,6 @@ describe('DirectionService', () => {
     expect(document.documentElement.dir).toBe('ltr');
   });
 
-  it('starts right to left when the saved language is Arabic', () => {
-    localStorage.setItem('jtalk:locale', 'ar');
-    const service = TestBed.inject(DirectionService);
-    TestBed.tick();
-
-    expect(service.direction()).toBe('rtl');
-    expect(document.documentElement.dir).toBe('rtl');
-  });
-
   it('switches the whole page and remembers the choice', () => {
     const service = TestBed.inject(DirectionService);
 

@@ -3,7 +3,6 @@ import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Dialog } from '@openng/optimus-ui/dialog';
 import { InputText } from '@openng/optimus-ui/inputtext';
 import { Message } from '@openng/optimus-ui/message';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 
 let nextId = 0;
 
@@ -13,36 +12,30 @@ let nextId = 0;
  */
 @Component({
   selector: 'app-delete-account-dialog',
-  imports: [ButtonDirective, Dialog, InputText, Message, TranslatePipe],
+  imports: [ButtonDirective, Dialog, InputText, Message],
   template: `
     <p-dialog
       styleClass="delete-account"
       [modal]="true"
       [dismissableMask]="!busy()"
       [closable]="!busy()"
-      [header]="'Delete your account' | t"
+      header="Delete your account"
       [style]="{ width: '28rem', maxWidth: '95vw' }"
       [visible]="visible()"
       (visibleChange)="visible.set($event)"
       (onHide)="typed.set('')"
     >
       <p class="what">
-        {{
-          'This permanently deletes your profile, your languages, who you follow and who follows you, and the people you blocked. It cannot be undone.'
-            | t
-        }}
+        This permanently deletes your profile, your languages, who you follow and who follows you,
+        and the people you blocked. It cannot be undone.
       </p>
       <p class="again">
-        {{
-          'A room you host goes to the person who has been on its stage the longest, or closes if nobody else is on it. The rooms you hosted are erased.'
-            | t
-        }}
+        A room you host goes to the person who has been on its stage the longest, or closes if
+        nobody else is on it. The rooms you hosted are erased.
       </p>
-      <p class="again">{{ 'You can sign up again any time, with a fresh profile.' | t }}</p>
+      <p class="again">You can sign up again any time, with a fresh profile.</p>
 
-      <label class="ask" [for]="fieldId">
-        {{ 'Type {word} to confirm' | t: { word: word() } }}
-      </label>
+      <label class="ask" [for]="fieldId"> Type {{ word() }} to confirm </label>
       <input
         pInputText
         autocomplete="off"
@@ -56,7 +49,7 @@ let nextId = 0;
 
       @if (error(); as failure) {
         <p-message class="failure" severity="error" size="small" role="alert">{{
-          failure | t
+          failure
         }}</p-message>
       }
 
@@ -68,7 +61,7 @@ let nextId = 0;
           [text]="true"
           [rounded]="true"
           [disabled]="busy()"
-          [label]="'Cancel' | t"
+          label="Cancel"
           (click)="visible.set(false)"
         ></button>
         <button
@@ -79,7 +72,7 @@ let nextId = 0;
           [rounded]="true"
           [loading]="busy()"
           [disabled]="!matches() || busy()"
-          [label]="'Delete my account' | t"
+          label="Delete my account"
           (click)="confirmed.emit()"
         ></button>
       </div>

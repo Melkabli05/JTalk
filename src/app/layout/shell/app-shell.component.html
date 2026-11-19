@@ -1,23 +1,19 @@
-<a class="skip-link" href="#main-content">{{ 'Skip to main content' | t }}</a>
+<a class="skip-link" href="#main-content">Skip to main content</a>
 
 @if (navigating()) {
-  <p-progressbar
-    class="navigation-progress"
-    mode="indeterminate"
-    [attr.aria-label]="'Loading page' | t"
-  />
+  <p-progressbar class="navigation-progress" mode="indeterminate" aria-label="Loading page" />
 }
 
 <ng-template #brand>
   <a class="brand" routerLink="/">
     <app-brand-mark />
-    {{ appName | t }}
+    {{ appName }}
   </a>
 </ng-template>
 
 <app-sidebar
   class="rail"
-  [items]="navItems()"
+  [items]="navItems"
   [name]="identity.profile()?.name ?? ''"
   [languages]="myLanguages()"
   [picture]="myPicture()"
@@ -25,81 +21,25 @@
   [viewing]="onRoomPage()"
   (startRoom)="startRoom()"
   (backToRoom)="backToRoom()"
-  (settings)="settings.toggle($event)"
+  (profile)="openProfile()"
 >
   <ng-container ngProjectAs="[brand]" [ngTemplateOutlet]="brand" />
 </app-sidebar>
 
 @if (!onRoomAddress()) {
-  <nav class="top" [attr.aria-label]="'Primary' | t" appAriaCurrent>
-    <p-menubar breakpoint="0px" [model]="topItems()" [ariaLabel]="'Primary' | t">
+  <nav class="top" aria-label="Primary" appAriaCurrent>
+    <p-menubar breakpoint="0px" [model]="topItems()" ariaLabel="Primary">
       <ng-template #start><ng-container [ngTemplateOutlet]="brand" /></ng-template>
     </p-menubar>
   </nav>
 }
-
-<p-popover #settings appendTo="body" [ariaLabel]="'Profile and settings' | t">
-  <div class="settings">
-    @if (identity.profile(); as me) {
-      <div class="me">
-        @if (myPicture(); as picture) {
-          <p-avatar shape="circle" size="large" aria-hidden="true" [image]="picture" />
-        } @else {
-          <p-avatar shape="circle" size="large" aria-hidden="true" [label]="me.name | initials" />
-        }
-        <div class="who">
-          <strong>{{ me.name }}</strong>
-          <span class="muted">{{ myLanguages() }}</span>
-        </div>
-        <a
-          pButton
-          routerLink="/profile"
-          class="to-profile"
-          size="small"
-          severity="secondary"
-          [outlined]="true"
-          [label]="'Your profile' | t"
-          (click)="settings.hide()"
-        ></a>
-      </div>
-    }
-    <div class="row">
-      <span>{{ 'Language' | t }}</span>
-      <app-locale-switch [locale]="locales.locale()" (localeChange)="locales.switchTo($event)" />
-    </div>
-    <div class="row">
-      <span aria-hidden="true">{{ 'Dark theme' | t }}</span>
-      <p-toggleswitch
-        [ariaLabel]="'Dark theme' | t"
-        [ngModel]="colorScheme.isDark()"
-        (ngModelChange)="colorScheme.toggle()"
-      />
-    </div>
-    <div class="row">
-      <span aria-hidden="true">{{ 'Right-to-left' | t }}</span>
-      <p-toggleswitch
-        [ariaLabel]="'Right-to-left' | t"
-        [ngModel]="direction.isRtl()"
-        (ngModelChange)="direction.toggle()"
-      />
-    </div>
-    <button
-      pButton
-      type="button"
-      severity="secondary"
-      [outlined]="true"
-      [label]="'Sign out' | t"
-      (click)="settings.hide(); signOut()"
-    ></button>
-  </div>
-</p-popover>
 
 <main id="main-content" class="main" [class.wide]="wide()" tabindex="-1">
   @if (breadcrumbs().length > 0) {
     <p-breadcrumb
       class="breadcrumb"
       [model]="breadcrumbs()"
-      [pt]="{ root: { 'aria-label': 'Breadcrumb' | t } }"
+      [pt]="{ root: { 'aria-label': 'Breadcrumb' } }"
     />
   }
   @if (!identity.needsProfile()) {

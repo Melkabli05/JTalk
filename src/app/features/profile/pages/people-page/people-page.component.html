@@ -1,42 +1,40 @@
 <header class="head">
-  <h1>{{ 'People' | t }}</h1>
-  <p class="lead">{{ 'Find people to practise with, and keep up with the ones you know.' | t }}</p>
+  <h1>People</h1>
+  <p class="lead">Find people to practise with, and keep up with the ones you know.</p>
 </header>
 
 @if (directory.action.error(); as failure) {
-  <p-message class="failure" severity="error">{{ failure | t }}</p-message>
+  <p-message class="failure" severity="error">{{ failure }}</p-message>
 }
 
 <p-tabs [value]="section()" [scrollable]="true" (valueChange)="section.set($any($event))">
   <p-tablist>
     <p-tab value="discover">
       <i class="pi pi-compass" aria-hidden="true"></i>
-      {{ 'Discover' | t }}
+      Discover
     </p-tab>
     <p-tab value="search">
       <i class="pi pi-search" aria-hidden="true"></i>
-      {{ 'Search' | t }}
+      Search
     </p-tab>
     <p-tab value="following">
       <i class="pi pi-user-plus" aria-hidden="true"></i>
-      {{ 'Following' | t }}
+      Following
     </p-tab>
     <p-tab value="followers">
       <i class="pi pi-users" aria-hidden="true"></i>
-      {{ 'Followers' | t }}
+      Followers
     </p-tab>
     <p-tab value="blocked">
       <i class="pi pi-ban" aria-hidden="true"></i>
-      {{ 'Blocked' | t }}
+      Blocked
     </p-tab>
   </p-tablist>
 
   <p-tabpanels>
     <p-tabpanel value="discover" [lazy]="true">
       <ng-template #content>
-        <p class="hint">
-          {{ 'People who speak what you are learning and are learning what you speak.' | t }}
-        </p>
+        <p class="hint">People who speak what you are learning and are learning what you speak.</p>
         <app-people-list
           icon="pi pi-compass"
           [title]="empty.partners.title"
@@ -45,7 +43,6 @@
           [loading]="directory.partners.loading()"
           [failed]="directory.partners.failed()"
           [hasMore]="directory.partners.hasMore()"
-          [locale]="locale()"
           (opened)="open($event)"
           (more)="
             directory.partners.items().length > 0
@@ -76,14 +73,14 @@
             autocomplete="off"
             maxlength="50"
             [value]="directory.term()"
-            [attr.aria-label]="'Search by name or handle' | t"
-            [placeholder]="'Search by name or handle' | t"
+            aria-label="Search by name or handle"
+            placeholder="Search by name or handle"
             (input)="typed($event)"
           />
         </p-iconfield>
         <p class="cdk-visually-hidden" role="status">
           @if (directory.searching() && !directory.searchLoading()) {
-            {{ 'People found: {count}' | t: { count: directory.results().length } }}
+            People found: {{ directory.results().length }}
           }
         </p>
         <app-people-list
@@ -93,7 +90,6 @@
           [people]="directory.results()"
           [loading]="directory.searchLoading()"
           [failed]="directory.searchFailed()"
-          [locale]="locale()"
           (opened)="open($event)"
         >
           <ng-template let-person>
@@ -119,7 +115,6 @@
           [loading]="directory.following.loading()"
           [failed]="directory.following.failed()"
           [hasMore]="directory.following.hasMore()"
-          [locale]="locale()"
           (opened)="open($event)"
           (more)="
             directory.following.items().length > 0
@@ -150,7 +145,6 @@
           [loading]="directory.followers.loading()"
           [failed]="directory.followers.failed()"
           [hasMore]="directory.followers.hasMore()"
-          [locale]="locale()"
           (opened)="open($event)"
           (more)="
             directory.followers.items().length > 0
@@ -164,10 +158,7 @@
     <p-tabpanel value="blocked" [lazy]="true">
       <ng-template #content>
         <p class="hint">
-          {{
-            'People you block cannot find you in search or suggestions, and you cannot find them.'
-              | t
-          }}
+          People you block cannot find you in search or suggestions, and you cannot find them.
         </p>
         <app-people-list
           icon="pi pi-ban"
@@ -176,7 +167,6 @@
           [people]="directory.blocked.items()"
           [loading]="directory.blocked.loading()"
           [failed]="directory.blocked.failed()"
-          [locale]="locale()"
           (opened)="open($event)"
           (more)="directory.blocked.reload()"
         >
@@ -189,7 +179,7 @@
               [rounded]="true"
               [outlined]="true"
               [disabled]="directory.isBusy(person.id)"
-              [label]="'Unblock' | t"
+              label="Unblock"
               (click)="unblock(person)"
             ></button>
           </ng-template>

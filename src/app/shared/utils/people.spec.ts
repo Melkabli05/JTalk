@@ -77,15 +77,14 @@ describe('people helpers', () => {
   });
 
   it('names a country in the reader language, falling back to the code', () => {
-    expect(countryNameOf('MA', 'en')).toBe('Morocco');
-    expect(countryNameOf('MA', 'ar')).toBe('المغرب');
-    expect(countryNameOf('??', 'en')).toBe('??');
+    expect(countryNameOf('MA')).toBe('Morocco');
+    expect(countryNameOf('??')).toBe('??');
   });
 
   it('shortens big counts', () => {
-    expect(compactCount(980, 'en')).toBe('980');
-    expect(compactCount(1250, 'en')).toBe('1.3K');
-    expect(compactCount(2_400_000, 'en')).toBe('2.4M');
+    expect(compactCount(980)).toBe('980');
+    expect(compactCount(1250)).toBe('1.3K');
+    expect(compactCount(2_400_000)).toBe('2.4M');
   });
 });
 

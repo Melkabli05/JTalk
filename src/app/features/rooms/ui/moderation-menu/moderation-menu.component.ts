@@ -1,7 +1,6 @@
 import { Component, type ElementRef, input, type OnDestroy, viewChild } from '@angular/core';
 import type { MenuItem } from '@openng/optimus-ui/api';
 import { Menu } from '@openng/optimus-ui/menu';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 
 /** How long the pointer rests on a seat before the menu opens, so passing over seats does not flash menus. */
 const HOVER_MS = 350;
@@ -20,7 +19,7 @@ const PRESS_SLOP_PX = 10;
  */
 @Component({
   selector: 'app-moderation-menu',
-  imports: [Menu, TranslatePipe],
+  imports: [Menu],
   template: `
     <div
       #seat
@@ -42,7 +41,7 @@ const PRESS_SLOP_PX = 10;
         appendTo="body"
         [popup]="true"
         [model]="[...items()]"
-        [ariaLabel]="'{name}: moderation' | t: { name: name() }"
+        [ariaLabel]="name() + ': moderation'"
         (onShow)="shown()"
         (onHide)="hidden()"
       />

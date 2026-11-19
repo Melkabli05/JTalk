@@ -10,11 +10,8 @@
     <script>
       (function () {
         try {
-          var locale = localStorage.getItem('jtalk:locale');
           var direction = localStorage.getItem('jtalk:direction');
-          if (locale === 'ar') document.documentElement.lang = 'ar';
-          if (direction === 'rtl' || (direction === null && locale === 'ar'))
-            document.documentElement.dir = 'rtl';
+          if (direction === 'rtl') document.documentElement.dir = 'rtl';
           var saved = localStorage.getItem('jtalk:color-scheme');
           var dark =
             saved === 'dark' ||

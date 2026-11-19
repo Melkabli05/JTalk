@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { msg } from '@shared/utils/i18n/msg';
 import { signedOutGuard } from '@core/auth/signed-out.guard';
 import { layoutRoutes } from './layout/layout.routes';
 
@@ -26,7 +25,7 @@ export const routes: Routes = [
     },
     {
       path: '**',
-      title: msg('Page not found'),
+      title: 'Page not found',
       loadComponent: () =>
         import('@core/error-handling/pages/not-found-page/not-found-page.component'),
     },

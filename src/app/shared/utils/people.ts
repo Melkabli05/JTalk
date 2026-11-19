@@ -1,5 +1,4 @@
 import { asRecord, isStringList } from '@shared/utils/as-record';
-import { msg } from '@shared/utils/i18n/msg';
 
 /** Someone as a row in a list: enough to recognise them and open their profile. */
 export interface PersonSummary {
@@ -22,10 +21,10 @@ export const PROFICIENCIES: readonly Proficiency[] = [
 ];
 
 export const PROFICIENCY_LABELS: Readonly<Record<Proficiency, string>> = {
-  BEGINNER: msg('Beginner'),
-  INTERMEDIATE: msg('Intermediate'),
-  ADVANCED: msg('Advanced'),
-  FLUENT: msg('Fluent'),
+  BEGINNER: 'Beginner',
+  INTERMEDIATE: 'Intermediate',
+  ADVANCED: 'Advanced',
+  FLUENT: 'Fluent',
 };
 
 export interface LearningLanguage {
@@ -108,19 +107,18 @@ export function flagOf(countryCode: string): string {
     : '';
 }
 
-export function countryNameOf(countryCode: string, locale: string): string {
+export function countryNameOf(countryCode: string): string {
   try {
     return (
-      new Intl.DisplayNames([locale], { type: 'region' }).of(countryCode.toUpperCase()) ??
-      countryCode
+      new Intl.DisplayNames(['en'], { type: 'region' }).of(countryCode.toUpperCase()) ?? countryCode
     );
   } catch {
     return countryCode;
   }
 }
 
-export function compactCount(count: number, locale: string): string {
-  return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(
+export function compactCount(count: number): string {
+  return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(
     count,
   );
 }

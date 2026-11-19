@@ -1,13 +1,12 @@
 import { NgOptimizedImage } from '@angular/common';
 import { Component, ElementRef, viewChildren, model } from '@angular/core';
-import { TranslatePipe } from '../../pipes/translate.pipe';
 import { AVATARS } from '../../utils/avatars';
 import { FieldControlDirective } from '../field-control.directive';
 import { FieldErrorsComponent } from '../field-errors/field-errors.component';
 
 @Component({
   selector: 'app-avatar-picker',
-  imports: [FieldErrorsComponent, NgOptimizedImage, TranslatePipe],
+  imports: [FieldErrorsComponent, NgOptimizedImage],
   templateUrl: './avatar-picker.component.html',
   styleUrl: './avatar-picker.component.scss',
 })

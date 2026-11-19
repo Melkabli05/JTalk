@@ -110,10 +110,10 @@ describe('SidebarComponent (presentational)', () => {
     expect(root().querySelector('.go-live app-live-waves')).not.toBeNull();
   });
 
-  it('shows who is signed in and says where the account was pressed', async () => {
+  it('shows who is signed in and asks for their profile when the account is pressed', async () => {
     await render({ name: 'Mona Hassan', languages: '🇦🇷 → 🇬🇧' });
     const pressed = vi.fn();
-    fixture.componentInstance.settings.subscribe(pressed);
+    fixture.componentInstance.profile.subscribe(pressed);
     const account = root().querySelector<HTMLButtonElement>('button.account')!;
 
     expect(account.textContent).toContain('Mona Hassan');
@@ -121,7 +121,6 @@ describe('SidebarComponent (presentational)', () => {
     expect(account.getAttribute('aria-label')).toBe('Profile and settings');
     account.click();
     expect(pressed).toHaveBeenCalledOnce();
-    expect(pressed.mock.lastCall?.[0]).toBeInstanceOf(MouseEvent);
   });
 
   it('draws the picture they chose, or a plain icon when there is none', async () => {

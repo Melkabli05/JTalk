@@ -1,24 +1,19 @@
-<a class="skip-link" href="#main-content">{{ 'Skip to main content' | t }}</a>
+<a class="skip-link" href="#main-content">Skip to main content</a>
 
 <app-poster-backdrop />
 
 <header class="top">
   <a class="brand" href="/">
     <app-brand-mark />
-    {{ appName | t }}
+    {{ appName }}
   </a>
-  <app-locale-switch
-    class="language"
-    [locale]="locales.locale()"
-    (localeChange)="locales.switchTo($event)"
-  />
   <button
     pButton
     class="sign-in"
     type="button"
     severity="secondary"
     [outlined]="true"
-    [label]="'Sign in' | t"
+    label="Sign in"
     (click)="signIn('login')"
   ></button>
 </header>
@@ -26,21 +21,19 @@
 <main id="main-content" tabindex="-1">
   <section class="hero" aria-labelledby="hero-title">
     <div class="center">
-      <p class="tag">#{{ 'Live audio' | t }}</p>
+      <p class="tag">#Live audio</p>
       <h1 id="hero-title">
-        <span class="line paper">{{ 'Learn a language' | t }}</span
-        >&ngsp;<span class="line sand">{{ 'by talking.' | t }}</span>
+        <span class="line paper">Learn a language</span>&ngsp;<span class="line sand"
+          >by talking.</span
+        >
       </h1>
       <p class="lead">
-        {{
-          'Live audio rooms with people who speak it. Listen first, take the stage when you are ready.'
-            | t
-        }}
+        Live audio rooms with people who speak it. Listen first, take the stage when you are ready.
       </p>
       <div class="cta">
         <button class="go" type="button" (click)="signIn('signup')">
           <span class="arrow" aria-hidden="true"><i class="pi pi-arrow-right"></i></span>
-          <span class="label">{{ 'Get started' | t }}</span>
+          <span class="label">Get started</span>
         </button>
         <button
           pButton
@@ -48,20 +41,20 @@
           type="button"
           severity="secondary"
           [text]="true"
-          [label]="'I already have an account' | t"
+          label="I already have an account"
           (click)="signIn('login')"
         ></button>
       </div>
     </div>
 
     <ul class="facts">
-      <li>{{ 'Audio only' | t }}</li>
+      <li>Audio only</li>
       <li class="greetings" aria-hidden="true">
         @for (greeting of greetings; track greeting.lang) {
           <span [lang]="greeting.lang" [style.--turn]="$index">{{ greeting.text }}</span>
         }
       </li>
-      <li>{{ 'No camera, no pressure' | t }}</li>
+      <li>No camera, no pressure</li>
     </ul>
   </section>
 </main>

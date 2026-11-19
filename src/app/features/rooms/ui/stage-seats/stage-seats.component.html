@@ -2,7 +2,7 @@
   class="stage"
   tabindex="-1"
   [class.scrolls]="scrolls()"
-  [attr.aria-label]="'On stage' | t"
+  aria-label="On stage"
   [attr.data-size]="avatarSize()"
 >
   @for (speaker of onStage(); track speaker.member.id) {
@@ -18,8 +18,8 @@
           "
           [attr.aria-label]="
             speaker.me
-              ? ('{name} (you), {role}' | t: { name: speaker.member.name, role: speaker.role | t })
-              : ('{name}, {role}' | t: { name: speaker.member.name, role: speaker.role | t })
+              ? `${speaker.member.name} (you), ${speaker.role}`
+              : `${speaker.member.name}, ${speaker.role}`
           "
           (click)="memberSelected.emit(speaker.member.id)"
         >
@@ -38,19 +38,15 @@
             ></span>
           </span>
           @if (speaker.speaking) {
-            <span class="cdk-visually-hidden" [id]="`state-${speaker.member.id}`">{{
-              'Speaking' | t
-            }}</span>
+            <span class="cdk-visually-hidden" [id]="`state-${speaker.member.id}`">Speaking</span>
           } @else if (speaker.muted) {
-            <span class="cdk-visually-hidden" [id]="`state-${speaker.member.id}`">{{
-              'Muted' | t
-            }}</span>
+            <span class="cdk-visually-hidden" [id]="`state-${speaker.member.id}`">Muted</span>
           }
           <span class="name" aria-hidden="true">{{ speaker.member.name }}</span>
           <span class="role" aria-hidden="true">
-            {{ speaker.host ? ('Host' | t) : ('Speaker' | t) }}
+            {{ speaker.host ? 'Host' : 'Speaker' }}
             @if (speaker.me) {
-              · {{ 'You' | t }}
+              · You
             }
           </span>
         </button>
@@ -63,13 +59,11 @@
         type="button"
         class="tile seat"
         [disabled]="!canTakeSeat()"
-        [attr.aria-label]="
-          'Take free seat {number} of {total}' | t: { number: seat, total: seats() }
-        "
+        [attr.aria-label]="`Take free seat ${seat} of ${seats()}`"
         (click)="seatTaken.emit()"
       >
         <span class="ring" aria-hidden="true"><i class="pi pi-plus"></i></span>
-        <span class="open" aria-hidden="true">{{ 'Open seat' | t }}</span>
+        <span class="open" aria-hidden="true">Open seat</span>
       </button>
     </li>
   }

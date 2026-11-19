@@ -1,12 +1,6 @@
 @if (facade.joining.error(); as failure) {
-  <p-message severity="warn">{{ failure | t }}</p-message>
-  <a
-    pButton
-    routerLink="/"
-    class="back-link"
-    icon="pi pi-arrow-left"
-    [label]="'Back to the rooms' | t"
-  ></a>
+  <p-message severity="warn">{{ failure }}</p-message>
+  <a pButton routerLink="/" class="back-link" icon="pi pi-arrow-left" label="Back to the rooms"></a>
 } @else if (state.joined() && state.ready() && state.room(); as current) {
   <div class="room">
     <header class="top">
@@ -18,12 +12,12 @@
         severity="secondary"
         [rounded]="true"
         [text]="true"
-        [attr.aria-label]="'Back to the rooms' | t"
-        [pTooltip]="'Back to the rooms' | t"
+        aria-label="Back to the rooms"
+        pTooltip="Back to the rooms"
       ></a>
       <p class="live">
         <span class="dot" aria-hidden="true"></span>
-        <span>{{ 'Live' | t }}</span>
+        <span>Live</span>
       </p>
       <div class="actions">
         <button
@@ -33,12 +27,12 @@
           severity="secondary"
           [rounded]="true"
           [outlined]="true"
-          [label]="'Share' | t"
-          [attr.aria-label]="'Share' | t"
+          label="Share"
+          aria-label="Share"
           (click)="share()"
         ></button>
         @if (state.isHost()) {
-          <div class="host-tools" role="group" [attr.aria-label]="'Host controls' | t">
+          <div class="host-tools" role="group" aria-label="Host controls">
             <button
               pButton
               type="button"
@@ -46,8 +40,8 @@
               severity="secondary"
               [rounded]="true"
               [outlined]="true"
-              [label]="'Edit' | t"
-              [attr.aria-label]="'Edit the room' | t"
+              label="Edit"
+              aria-label="Edit the room"
               (click)="editing.set(true)"
             ></button>
             <button
@@ -57,8 +51,8 @@
               severity="danger"
               [rounded]="true"
               [outlined]="true"
-              [label]="'End' | t"
-              [attr.aria-label]="'End the room' | t"
+              label="End"
+              aria-label="End the room"
               (click)="end()"
             ></button>
           </div>
@@ -73,7 +67,7 @@
         aria-haspopup="menu"
         [text]="true"
         [rounded]="true"
-        [attr.aria-label]="'Room actions' | t"
+        aria-label="Room actions"
         (click)="menu.toggle($event)"
       ></button>
       <p-menu #menu appendTo="body" [popup]="true" [model]="pageMenu()" />
@@ -86,20 +80,17 @@
       }
       <p class="meta">
         <span aria-hidden="true">{{ look().target.flag }}</span>
-        {{ look().target.name | t }}
+        {{ look().target.name }}
         <span aria-hidden="true">·</span>
-        {{ 'for {language} speakers' | t: { language: look().native.name | t } }}
+        for {{ look().native.name }} speakers
         <span aria-hidden="true">·</span>
-        {{ 'Hosted by {name}' | t: { name: host().name } }}
+        Hosted by {{ host().name }}
       </p>
       <div class="stats">
-        @let hands = 'Raised hands' | t;
-        @let onStage = 'On stage' | t;
+        @let hands = 'Raised hands';
+        @let onStage = 'On stage';
         @let seats = `${state.speakers().length}/${current.maxStageSeats}`;
-        <span
-          role="img"
-          [attr.aria-label]="'{count} in the room' | t: { count: current.participantCount }"
-        >
+        <span role="img" [attr.aria-label]="`${current.participantCount} in the room`">
           <p-chip aria-hidden="true" icon="pi pi-users" [label]="`${current.participantCount}`" />
         </span>
         <span role="img" [attr.aria-label]="`${hands}: ${current.handRaiseCount}`">
@@ -113,7 +104,7 @@
 
     <section class="stage" aria-labelledby="stage-heading">
       <h2 id="stage-heading" class="section-head">
-        {{ 'On stage' | t }}
+        On stage
         <p-tag severity="secondary" [rounded]="true">
           {{ state.speakers().length }}/{{ current.maxStageSeats }}
         </p-tag>
@@ -138,7 +129,7 @@
       <p-card class="requests" role="group" aria-labelledby="hands-heading">
         <ng-template #title>
           <h2 id="hands-heading">
-            {{ 'Raised hands' | t }}
+            Raised hands
             <p-badge severity="secondary" [value]="state.queue().length" />
           </h2>
         </ng-template>
@@ -164,7 +155,7 @@
 
     <div class="dock">
       @if (facade.action.error(); as failure) {
-        <p-message class="failure" severity="error">{{ failure | t }}</p-message>
+        <p-message class="failure" severity="error">{{ failure }}</p-message>
       }
       <app-room-controls
         [onStage]="state.onStage()"
@@ -189,7 +180,7 @@
   </div>
 } @else {
   <div class="loading" role="status" aria-busy="true">
-    <span class="cdk-visually-hidden">{{ 'Joining the room' | t }}</span>
+    <span class="cdk-visually-hidden">Joining the room</span>
     <p-skeleton width="16rem" height="2.5rem" borderRadius="12px" />
     <p-skeleton width="100%" height="11rem" borderRadius="22px" />
     <p-skeleton width="100%" height="7rem" borderRadius="22px" />
@@ -213,7 +204,6 @@
   [loading]="cards.loading()"
   [busy]="cards.action.submitting()"
   [error]="cards.action.error()"
-  [locale]="locale()"
   (visibleChange)="selectedId.set(null)"
   (follow)="cards.follow()"
   (unfollow)="cards.unfollow()"

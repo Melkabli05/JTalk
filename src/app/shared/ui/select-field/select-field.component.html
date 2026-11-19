@@ -15,11 +15,11 @@
 >
   <ng-template #selectedItem>
     @if (selected(); as chosen) {
-      <span>{{ chosen.prefix }} {{ chosen.label | t }}</span>
+      <span>{{ chosen.prefix }} {{ chosen.label }}</span>
     }
   </ng-template>
   <ng-template #item let-option>
-    <span>{{ option.prefix }} {{ option.label | t }}</span>
+    <span>{{ option.prefix }} {{ option.label }}</span>
   </ng-template>
 </p-select>
 <app-field-errors [attr.id]="errorsId" [errors]="errors()" [visible]="showErrors()" />

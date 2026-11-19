@@ -1,8 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
 import type { MenuItem } from '@openng/optimus-ui/api';
 import { Tag } from '@openng/optimus-ui/tag';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import { msg } from '@shared/utils/i18n/msg';
 import { memberOf } from '../../utils/members';
 import { ModerationMenuComponent } from '../moderation-menu/moderation-menu.component';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
@@ -11,9 +9,9 @@ import type { FloatingReaction } from '../../models/reaction.model';
 
 @Component({
   selector: 'app-audience-grid',
-  imports: [ModerationMenuComponent, PersonAvatarComponent, Tag, TranslatePipe],
+  imports: [ModerationMenuComponent, PersonAvatarComponent, Tag],
   template: `
-    <ul class="audience" [class.row]="layout() === 'row'" [attr.aria-label]="'In the audience' | t">
+    <ul class="audience" [class.row]="layout() === 'row'" aria-label="In the audience">
       @for (person of people(); track person.member.id) {
         <li>
           <app-moderation-menu [name]="person.member.name" [items]="person.actions">
@@ -23,9 +21,8 @@ import type { FloatingReaction } from '../../models/reaction.model';
               aria-haspopup="dialog"
               [attr.aria-label]="
                 person.me
-                  ? ('{name} (you), {role}'
-                    | t: { name: person.member.name, role: person.role | t })
-                  : ('{name}, {role}' | t: { name: person.member.name, role: person.role | t })
+                  ? person.member.name + ' (you), ' + person.role
+                  : person.member.name + ', ' + person.role
               "
               (click)="memberSelected.emit(person.member.id)"
             >
@@ -36,16 +33,16 @@ import type { FloatingReaction } from '../../models/reaction.model';
               />
               <span class="name" aria-hidden="true">{{ person.member.name }}</span>
               @if (person.me) {
-                <p-tag severity="info" aria-hidden="true" [value]="'You' | t" />
+                <p-tag severity="info" aria-hidden="true" value="You" />
               }
               @if (person.reconnecting) {
-                <p-tag severity="secondary" icon="pi pi-sync" [value]="'Reconnecting' | t" />
+                <p-tag severity="secondary" icon="pi pi-sync" value="Reconnecting" />
               }
             </button>
           </app-moderation-menu>
         </li>
       } @empty {
-        <li class="empty">{{ 'Nobody is listening yet.' | t }}</li>
+        <li class="empty">Nobody is listening yet.</li>
       }
     </ul>
   `,
@@ -71,7 +68,7 @@ export class AudienceGridComponent {
       reconnecting: this.reconnecting().includes(id),
       reaction: this.reactions().get(id) ?? null,
       actions: this.moderation().get(id) ?? [],
-      role: msg('Listener'),
+      role: 'Listener',
     })),
   );
 }

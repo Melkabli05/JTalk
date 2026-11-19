@@ -1,20 +1,20 @@
 <form class="form" [formRoot]="roomForm">
   @if (error(); as message) {
-    <p-message severity="error">{{ message | t }}</p-message>
+    <p-message severity="error">{{ message }}</p-message>
   }
 
-  <app-text-field [label]="'Title' | t" [formField]="roomForm.title" />
-  <app-text-field [label]="'Topic' | t" [formField]="roomForm.topic" />
+  <app-text-field label="Title" [formField]="roomForm.title" />
+  <app-text-field label="Topic" [formField]="roomForm.topic" />
 
   @if (!room()) {
     <div class="pair">
       <app-select-field
-        [label]="'I want to practise' | t"
+        label="I want to practise"
         [options]="languages"
         [formField]="roomForm.targetLanguage"
       />
       <app-select-field
-        [label]="'For speakers of' | t"
+        label="For speakers of"
         [options]="languages"
         [formField]="roomForm.nativeLanguage"
       />
@@ -22,7 +22,7 @@
   }
 
   <app-select-field
-    [label]="'Stage seats, including you' | t"
+    label="Stage seats, including you"
     [options]="seats"
     [formField]="roomForm.maxStageSeats"
   />
@@ -33,7 +33,7 @@
       type="button"
       severity="secondary"
       [text]="true"
-      [label]="'Cancel' | t"
+      label="Cancel"
       (click)="cancelled.emit()"
     ></button>
     <button
@@ -41,7 +41,7 @@
       type="submit"
       [loading]="submitting()"
       [disabled]="submitting()"
-      [label]="room() ? ('Save' | t) : ('Open the room' | t)"
+      [label]="room() ? 'Save' : 'Open the room'"
     ></button>
   </div>
 </form>

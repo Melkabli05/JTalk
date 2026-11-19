@@ -1,15 +1,15 @@
-<p-card [attr.aria-label]="'You are in a room' | t">
-  <ng-template #title>{{ 'You are in a room' | t }}</ng-template>
+<p-card aria-label="You are in a room">
+  <ng-template #title>You are in a room</ng-template>
   <ng-template #subtitle>
     <span class="room">
-      <p-tag severity="success" [rounded]="true" [value]="'Live' | t" />
+      <p-tag severity="success" [rounded]="true" value="Live" />
       {{ room().title }}
     </span>
     <span class="detail">
       <span aria-hidden="true">{{ languages().target.flag }}</span>
-      {{ languages().target.name | t }}
+      {{ languages().target.name }}
       <span aria-hidden="true">·</span>
-      {{ 'for {language} speakers' | t: { language: languages().native.name | t } }}
+      for {{ languages().native.name }} speakers
     </span>
     @if (host(); as lead) {
       <span class="host">
@@ -25,7 +25,7 @@
         }
         <span class="who">
           <strong>{{ lead.name }}</strong>
-          <small>{{ 'Host' | t }}</small>
+          <small>Host</small>
         </span>
         <i class="pi pi-crown" aria-hidden="true"></i>
       </span>
@@ -40,8 +40,9 @@
         }}</span
       >
       <span class="cdk-visually-hidden">
-        {{ '{count} in the room' | t: { count: room().participantCount } }}. {{ 'On stage' | t }}
-        {{ room().speakers }}/{{ room().seats }}.
+        {{ room().participantCount }} in the room. On stage {{ room().speakers }}/{{
+          room().seats
+        }}.
       </span>
     </span>
   </ng-template>
@@ -50,7 +51,7 @@
       pButton
       type="button"
       [fluid]="true"
-      [label]="'Back to the room' | t"
+      label="Back to the room"
       (click)="back.emit()"
     ></button>
   </ng-template>

@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, inject, viewChild } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   ActivatedRouteSnapshot,
@@ -11,7 +11,6 @@ import {
 import { MenuItem } from '@openng/optimus-ui/api';
 import { Breadcrumb } from '@openng/optimus-ui/breadcrumb';
 import { Menubar } from '@openng/optimus-ui/menubar';
-import { ButtonDirective } from '@openng/optimus-ui/button';
 import { ProgressBar } from '@openng/optimus-ui/progressbar';
 import { filter, map } from 'rxjs';
 import type { ProfileDraft } from '@core/auth/identity.models';
@@ -20,34 +19,22 @@ import { ActiveRoomService } from '@core/rooms/active-room.service';
 import { RoomStartService } from '@core/rooms/room-start.service';
 import { ProfileDialogComponent } from '@core/auth/ui/profile-dialog/profile-dialog.component';
 import { APP_NAME } from '@core/config/app-config';
-import { ColorSchemeService } from '@core/config/color-scheme.service';
-import { DirectionService } from '@core/config/direction.service';
 import { avatarUrl } from '@shared/utils/avatars';
 import { AriaCurrentDirective } from '@shared/directives/aria-current.directive';
 import { BrandMarkComponent } from '@shared/ui/brand-mark/brand-mark.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
-import { LocaleService } from '@core/config/locale.service';
-import { FormsModule } from '@angular/forms';
-import { Avatar } from '@openng/optimus-ui/avatar';
-import { InitialsPipe } from '@shared/pipes/initials.pipe';
-import { LocaleSwitchComponent } from '@shared/ui/locale-switch/locale-switch.component';
-import { I18n } from '@shared/utils/i18n/i18n.service';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import { msg } from '@shared/utils/i18n/msg';
 import { languageOf } from '@shared/utils/languages';
 import { saveRequest } from '@shared/utils/save-request';
-import { Popover } from '@openng/optimus-ui/popover';
-import { ToggleSwitch } from '@openng/optimus-ui/toggleswitch';
 
 const NAV_ITEMS: MenuItem[] = [
   {
-    label: msg('Rooms'),
+    label: 'Rooms',
     icon: 'pi pi-microphone',
     routerLink: '/',
     routerLinkActiveOptions: { exact: true },
   },
-  { label: msg('People'), icon: 'pi pi-users', routerLink: '/people' },
-  { label: msg('Profile'), icon: 'pi pi-user', routerLink: '/profile' },
+  { label: 'People', icon: 'pi pi-users', routerLink: '/people' },
+  { label: 'Profile', icon: 'pi pi-user', routerLink: '/profile' },
 ];
 
 function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wide: boolean } {
@@ -71,24 +58,16 @@ function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wid
 @Component({
   selector: 'app-shell',
   imports: [
-    Avatar,
-    FormsModule,
     Menubar,
-    InitialsPipe,
-    Popover,
     ProfileDialogComponent,
-    ToggleSwitch,
-    TranslatePipe,
     RouterOutlet,
     RouterLink,
     Breadcrumb,
-    ButtonDirective,
     ProgressBar,
     AriaCurrentDirective,
     BrandMarkComponent,
     NgTemplateOutlet,
     SidebarComponent,
-    LocaleSwitchComponent,
   ],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss',
@@ -99,10 +78,6 @@ export class AppShellComponent {
   protected readonly identity = inject(IdentityService);
   private readonly activeRoom = inject(ActiveRoomService);
   private readonly roomStart = inject(RoomStartService);
-  protected readonly colorScheme = inject(ColorSchemeService);
-  protected readonly direction = inject(DirectionService);
-  protected readonly locales = inject(LocaleService);
-  private readonly i18n = inject(I18n);
   protected readonly appName = APP_NAME;
   protected readonly creating = saveRequest();
   protected readonly myPicture = computed(() => avatarUrl(this.identity.profile()?.avatar));
@@ -113,33 +88,25 @@ export class AppShellComponent {
     const me = this.identity.profile();
     return me ? `${languageOf(me.nativeLanguage).flag} → ${languageOf(me.learning).flag}` : '';
   });
-  protected readonly navItems = computed(() => this.translated(NAV_ITEMS));
-  // Across the top (a phone) the pages are icons, with their names kept for screen readers; there is no account card there, so the
-  // settings are one more item, and the way back to a room you are in stands out in Forest.
+  protected readonly navItems = NAV_ITEMS;
+  // Across the top (a phone) the pages are icons, with their names kept for screen readers (Profile holds the settings), and the way
+  // back to a room you are in stands out in Forest.
   protected readonly topItems = computed(() => {
     const live = this.liveRoom();
     return [
       ...(live
-        ? this.translated([
+        ? [
             {
-              label: msg('Back to the room'),
+              label: 'Back to the room',
               icon: 'pi pi-headphones',
               linkClass: 'live-item',
               routerLink: ['/rooms', live.id],
             },
-          ])
+          ]
         : []),
-      ...this.navItems(),
-      ...this.translated([
-        {
-          label: msg('Settings'),
-          icon: 'pi pi-cog',
-          command: ({ originalEvent }) => this.settings().toggle(originalEvent),
-        },
-      ]),
+      ...this.navItems,
     ];
   });
-  private readonly settings = viewChild.required(Popover);
 
   protected readonly navigating = computed(() => !!this.router.currentNavigation());
 
@@ -172,12 +139,8 @@ export class AppShellComponent {
   });
   protected readonly liveRoom = computed(() => (this.onRoomPage() ? null : this.inRoom()));
 
-  protected readonly breadcrumbs = computed(() => this.translated(this.route().breadcrumbs));
+  protected readonly breadcrumbs = computed(() => this.route().breadcrumbs);
   protected readonly wide = computed(() => this.route().wide);
-
-  private translated(items: readonly MenuItem[]): MenuItem[] {
-    return items.map((item) => ({ ...item, label: this.i18n.t(item.label ?? '') }));
-  }
 
   protected backToRoom(): void {
     const live = this.liveRoom();
@@ -194,11 +157,11 @@ export class AppShellComponent {
   protected saveProfile(draft: ProfileDraft): void {
     this.creating.run(this.identity.saveProfile(draft), {
       next: () => undefined,
-      failure: msg('Could not save your profile. Please try again.'),
+      failure: 'Could not save your profile. Please try again.',
     });
   }
 
-  protected signOut(): Promise<void> {
-    return this.identity.signOut();
+  protected openProfile(): void {
+    void this.router.navigate(['/profile']);
   }
 }

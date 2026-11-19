@@ -1,7 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
 import { Avatar } from '@openng/optimus-ui/avatar';
 import { InitialsPipe } from '@shared/pipes/initials.pipe';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { avatarColors, avatarUrl } from '@shared/utils/avatars';
 import { languageOf } from '@shared/utils/languages';
 import { countryNameOf, flagOf, PersonSummary } from '@shared/utils/people';
@@ -9,7 +8,7 @@ import { countryNameOf, flagOf, PersonSummary } from '@shared/utils/people';
 /** Someone in a list: picture, name, and one quiet line about them. Pressing them opens them; what else can be done goes beside them. */
 @Component({
   selector: 'app-person-row',
-  imports: [Avatar, InitialsPipe, TranslatePipe],
+  imports: [Avatar, InitialsPipe],
   template: `
     <button type="button" class="open" (click)="opened.emit(person().id)">
       @if (picture(); as image) {
@@ -37,7 +36,7 @@ import { countryNameOf, flagOf, PersonSummary } from '@shared/utils/people';
           }
           <span>
             <span aria-hidden="true">{{ native().flag }}</span>
-            {{ 'Speaks {language}' | t: { language: native().name | t } }}
+            Speaks {{ native().name }}
           </span>
         </span>
       </span>
@@ -48,7 +47,6 @@ import { countryNameOf, flagOf, PersonSummary } from '@shared/utils/people';
 })
 export class PersonRowComponent {
   readonly person = input.required<PersonSummary>();
-  readonly locale = input('en');
 
   readonly opened = output<string>();
 
@@ -57,6 +55,6 @@ export class PersonRowComponent {
   protected readonly native = computed(() => languageOf(this.person().nativeLanguage));
   protected readonly origin = computed(() => {
     const code = this.person().countryCode ?? '';
-    return code === '' ? null : { flag: flagOf(code), name: countryNameOf(code, this.locale()) };
+    return code === '' ? null : { flag: flagOf(code), name: countryNameOf(code) };
   });
 }

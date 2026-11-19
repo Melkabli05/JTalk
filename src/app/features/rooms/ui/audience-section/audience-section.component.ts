@@ -1,7 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import type { MenuItem } from '@openng/optimus-ui/api';
 import { Tag } from '@openng/optimus-ui/tag';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { AudienceGridComponent } from '../audience-grid/audience-grid.component';
 import type { Person } from '@core/auth/identity.models';
 import type { FloatingReaction } from '../../models/reaction.model';
@@ -10,18 +9,16 @@ let nextId = 0;
 
 @Component({
   selector: 'app-audience-section',
-  imports: [AudienceGridComponent, Tag, TranslatePipe],
+  imports: [AudienceGridComponent, Tag],
   template: `
     <section [attr.aria-labelledby]="headingId">
       <div class="head">
         <h2 class="heading" [id]="headingId">
-          {{ 'Audience' | t }}
+          Audience
           <p-tag severity="secondary" [rounded]="true">{{ ids().length }}</p-tag>
         </h2>
         @if (swipeable() && ids().length > 0) {
-          <span class="hint" aria-hidden="true"
-            >{{ 'Swipe' | t }} <i class="pi pi-arrow-right"></i
-          ></span>
+          <span class="hint" aria-hidden="true">Swipe <i class="pi pi-arrow-right"></i></span>
         }
       </div>
       <app-audience-grid

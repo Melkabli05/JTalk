@@ -8,10 +8,8 @@ import { Message } from '@openng/optimus-ui/message';
 import { ProgressSpinner } from '@openng/optimus-ui/progressspinner';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { PersonCardService } from '@core/people/person-card.service';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { FollowButtonComponent } from '@shared/ui/follow-button/follow-button.component';
 import { SocialStatsComponent } from '@shared/ui/social-stats/social-stats.component';
-import { I18n } from '@shared/utils/i18n/i18n.service';
 import { ProfileAboutComponent } from '../../ui/profile-about/profile-about.component';
 import { ProfileHeroComponent } from '../../ui/profile-hero/profile-hero.component';
 
@@ -29,7 +27,6 @@ import { ProfileHeroComponent } from '../../ui/profile-hero/profile-hero.compone
     RouterLink,
     SocialStatsComponent,
     Tooltip,
-    TranslatePipe,
   ],
   providers: [ConfirmationService, PersonCardService],
   templateUrl: './person-page.component.html',
@@ -38,16 +35,14 @@ import { ProfileHeroComponent } from '../../ui/profile-hero/profile-hero.compone
 export default class PersonPageComponent {
   private readonly confirmation = inject(ConfirmationService);
   private readonly toast = inject(MessageService);
-  private readonly i18n = inject(I18n);
 
   protected readonly cards = inject(PersonCardService);
-  protected readonly locale = this.i18n.locale;
 
   readonly id = input.required<string>();
 
   protected readonly moreActions = computed<MenuItem[]>(() => [
     {
-      label: this.i18n.t('Block'),
+      label: 'Block',
       icon: 'pi pi-ban',
       linkClass: 'danger-item',
       command: () => this.block(),
@@ -63,20 +58,17 @@ export default class PersonPageComponent {
   protected block(): void {
     const name = this.cards.card()?.details.name ?? '';
     this.confirmation.confirm({
-      header: this.i18n.t('Block {name}', { name }),
-      message: this.i18n.t(
-        'Blocking removes any follows between you and {name}, and you will not find each other in search or partner suggestions.',
-        { name },
-      ),
+      header: `Block ${name}`,
+      message: `Blocking removes any follows between you and ${name}, and you will not find each other in search or partner suggestions.`,
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: this.i18n.t('Block'),
-      rejectLabel: this.i18n.t('Cancel'),
+      acceptLabel: 'Block',
+      rejectLabel: 'Cancel',
       acceptButtonProps: { severity: 'danger' },
       accept: () =>
         this.cards.block(() =>
           this.toast.add({
             severity: 'success',
-            summary: this.i18n.t('{name} is blocked.', { name }),
+            summary: `${name} is blocked.`,
           }),
         ),
     });

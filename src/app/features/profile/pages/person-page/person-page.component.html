@@ -1,5 +1,5 @@
 @if (cards.card(); as card) {
-  <app-profile-hero [person]="card.details" [details]="card.details" [locale]="locale()">
+  <app-profile-hero [person]="card.details" [details]="card.details">
     <div actions>
       @if (!card.isMe) {
         @if (card.social; as stats) {
@@ -12,7 +12,7 @@
             (unfollow)="cards.unfollow()"
           />
         }
-        @let moreLabel = 'More actions' | t;
+        @let moreLabel = 'More actions';
         <button
           pButton
           type="button"
@@ -41,21 +41,20 @@
           [followers]="stats.followers"
           [following]="stats.following"
           [followsMe]="stats.followsMe && !card.isMe"
-          [locale]="locale()"
         />
       }
     </div>
   </app-profile-hero>
 
   @if (cards.action.error(); as failure) {
-    <p-message severity="error">{{ failure | t }}</p-message>
+    <p-message severity="error">{{ failure }}</p-message>
   }
 
   <app-profile-about [card]="card" />
 } @else if (cards.failed()) {
   <p-message severity="error" icon="pi pi-exclamation-triangle">
     <span class="message">
-      {{ 'This profile could not be found.' | t }}
+      This profile could not be found.
       <a
         pButton
         routerLink="/"
@@ -63,13 +62,13 @@
         icon="pi pi-arrow-left"
         severity="danger"
         [text]="true"
-        [label]="'Back to the rooms' | t"
+        label="Back to the rooms"
       ></a>
     </span>
   </p-message>
 } @else {
   <div class="loading">
-    <p-progress-spinner [ariaLabel]="'Finding their profile' | t" />
+    <p-progress-spinner ariaLabel="Finding their profile" />
   </div>
 }
 

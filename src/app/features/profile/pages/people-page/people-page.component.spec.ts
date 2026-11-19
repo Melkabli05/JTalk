@@ -87,7 +87,6 @@ describe('PeoplePageComponent (container)', () => {
 
   beforeEach(() => {
     localStorage.clear();
-    localStorage.setItem('jtalk:locale', 'en');
     toast.add.mockClear();
     sent = [];
     failing = new Set();

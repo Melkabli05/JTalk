@@ -26,10 +26,7 @@ import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { Tag } from '@openng/optimus-ui/tag';
 import { Chip } from '@openng/optimus-ui/chip';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { PersonCardService } from '@core/people/person-card.service';
-import { I18n } from '@shared/utils/i18n/i18n.service';
-import { msg } from '@shared/utils/i18n/msg';
 import type { RoomRole, RoomEdit, Stage } from '../../models/room.model';
 import { RoomFacade } from '../../state/room.facade';
 import { AudienceSectionComponent } from '../../ui/audience-section/audience-section.component';
@@ -61,7 +58,6 @@ import { roomLook } from '../../utils/room-look';
     Tag,
     Chip,
     Tooltip,
-    TranslatePipe,
   ],
   providers: [ConfirmationService, PersonCardService],
   templateUrl: './room-page.component.html',
@@ -73,11 +69,9 @@ export default class RoomPageComponent {
   private readonly router = inject(Router);
   private readonly confirmation = inject(ConfirmationService);
   private readonly toast = inject(MessageService);
-  private readonly i18n = inject(I18n);
   private readonly announcer = inject(LiveAnnouncer);
   private readonly breakpoints = inject(BreakpointObserver);
   private readonly document = inject(DOCUMENT);
-  protected readonly locale = this.i18n.locale;
   private focused = false;
   private previous: Stage | null = null;
   private heardMicrophone = false;
@@ -104,16 +98,16 @@ export default class RoomPageComponent {
   });
   /** The page's actions behind the ⋯ button, which is what a phone shows instead of the buttons in the header. */
   protected readonly pageMenu = computed<MenuItem[]>(() => [
-    { label: this.i18n.t('Share'), icon: 'pi pi-share-alt', command: () => this.share() },
+    { label: 'Share', icon: 'pi pi-share-alt', command: () => this.share() },
     ...(this.state.isHost()
       ? [
           {
-            label: this.i18n.t('Edit the room'),
+            label: 'Edit the room',
             icon: 'pi pi-pencil',
             command: () => this.editing.set(true),
           },
           {
-            label: this.i18n.t('End the room'),
+            label: 'End the room',
             icon: 'pi pi-stop-circle',
             linkClass: 'danger-item',
             command: () => this.end(),
@@ -216,9 +210,7 @@ export default class RoomPageComponent {
         untracked(() =>
           this.toast.add({
             severity: 'warn',
-            summary: this.i18n.t(
-              'Your microphone is blocked. Allow it in your browser, then press Unmute.',
-            ),
+            summary: 'Your microphone is blocked. Allow it in your browser, then press Unmute.',
           }),
         );
       }
@@ -229,8 +221,8 @@ export default class RoomPageComponent {
   protected share(): void {
     const link = new URL(`/rooms/${this.id()}`, this.document.location.origin).href;
     void this.document.defaultView?.navigator.clipboard.writeText(link).then(
-      () => this.toast.add({ severity: 'success', summary: this.i18n.t('Link copied.') }),
-      () => this.toast.add({ severity: 'warn', summary: this.i18n.t('Could not copy the link.') }),
+      () => this.toast.add({ severity: 'success', summary: 'Link copied.' }),
+      () => this.toast.add({ severity: 'warn', summary: 'Could not copy the link.' }),
     );
   }
 
@@ -258,11 +250,11 @@ export default class RoomPageComponent {
     this.selectedId.set(null);
     const name = memberOf(this.state.members(), userId).name;
     this.confirmation.confirm({
-      header: this.i18n.t('Remove from the room'),
-      message: this.i18n.t('{name} will leave the room and cannot come back.', { name }),
+      header: 'Remove from the room',
+      message: `${name} will leave the room and cannot come back.`,
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: this.i18n.t('Remove'),
-      rejectLabel: this.i18n.t('Cancel'),
+      acceptLabel: 'Remove',
+      rejectLabel: 'Cancel',
       acceptButtonProps: { severity: 'danger' },
       accept: () => this.facade.remove(userId),
     });
@@ -286,21 +278,18 @@ export default class RoomPageComponent {
   private blockPerson(id: string): void {
     const name = memberOf(this.state.members(), id).name;
     this.confirmation.confirm({
-      header: this.i18n.t('Block {name}', { name }),
-      message: this.i18n.t(
-        'Blocking removes any follows between you and {name}, and you will not find each other in search or partner suggestions.',
-        { name },
-      ),
+      header: `Block ${name}`,
+      message: `Blocking removes any follows between you and ${name}, and you will not find each other in search or partner suggestions.`,
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: this.i18n.t('Block'),
-      rejectLabel: this.i18n.t('Cancel'),
+      acceptLabel: 'Block',
+      rejectLabel: 'Cancel',
       acceptButtonProps: { severity: 'danger' },
       accept: () =>
         this.cards.block(() => {
           this.selectedId.set(null);
           this.toast.add({
             severity: 'success',
-            summary: this.i18n.t('{name} is blocked.', { name }),
+            summary: `${name} is blocked.`,
           });
         }, id),
     });
@@ -317,7 +306,7 @@ export default class RoomPageComponent {
 
   private muteItem(id: string): MenuItem {
     return {
-      label: this.i18n.t('Mute'),
+      label: 'Mute',
       icon: 'pi pi-microphone pi-slashed',
       command: () => this.facade.mute(id),
     };
@@ -328,7 +317,7 @@ export default class RoomPageComponent {
     const move: MenuItem[] = speaker
       ? [
           {
-            label: this.i18n.t('Move to the audience'),
+            label: 'Move to the audience',
             icon: 'pi pi-arrow-down',
             command: () => this.demote(id),
           },
@@ -336,7 +325,7 @@ export default class RoomPageComponent {
       : this.seatFree()
         ? [
             {
-              label: this.i18n.t('Invite to the stage'),
+              label: 'Invite to the stage',
               icon: 'pi pi-microphone',
               command: () => this.invite(id),
             },
@@ -347,13 +336,13 @@ export default class RoomPageComponent {
       ...move,
       { separator: true },
       {
-        label: this.i18n.t('Remove from the room'),
+        label: 'Remove from the room',
         icon: 'pi pi-user-minus',
         linkClass: 'danger-item',
         command: () => this.remove(id),
       },
       {
-        label: this.i18n.t('Block'),
+        label: 'Block',
         icon: 'pi pi-ban',
         linkClass: 'danger-item',
         command: () => this.blockPerson(id),
@@ -363,11 +352,11 @@ export default class RoomPageComponent {
 
   protected end(): void {
     this.confirmation.confirm({
-      header: this.i18n.t('End the room'),
-      message: this.i18n.t('The room closes for everyone in it.'),
+      header: 'End the room',
+      message: 'The room closes for everyone in it.',
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: this.i18n.t('End the room'),
-      rejectLabel: this.i18n.t('Cancel'),
+      acceptLabel: 'End the room',
+      rejectLabel: 'Cancel',
       acceptButtonProps: { severity: 'danger' },
       accept: () => this.facade.close(),
     });
@@ -376,7 +365,7 @@ export default class RoomPageComponent {
   protected edit(change: RoomEdit): void {
     this.facade.edit(change, () => {
       this.editing.set(false);
-      this.toast.add({ severity: 'success', summary: this.i18n.t('The room was updated.') });
+      this.toast.add({ severity: 'success', summary: 'The room was updated.' });
     });
   }
 
@@ -398,24 +387,16 @@ export default class RoomPageComponent {
       (queued) => !before.handRaiseQueue.includes(queued),
     )) {
       if (id === me) {
-        said.push(this.i18n.t('You raised your hand.'));
+        said.push('You raised your hand.');
       } else if (this.state.isHost()) {
-        said.push(this.i18n.t('{name} raised a hand.', { name: nameOf(id) }));
+        said.push(`${nameOf(id)} raised a hand.`);
       }
     }
     for (const id of stage.speakers.filter((speaker) => !before.speakers.includes(speaker))) {
-      said.push(
-        id === me
-          ? this.i18n.t('You are now on stage.')
-          : this.i18n.t('{name} joined the stage.', { name: nameOf(id) }),
-      );
+      said.push(id === me ? 'You are now on stage.' : `${nameOf(id)} joined the stage.`);
     }
     for (const id of before.speakers.filter((speaker) => !stage.speakers.includes(speaker))) {
-      said.push(
-        id === me
-          ? this.i18n.t('You moved to the audience.')
-          : this.i18n.t('{name} left the stage.', { name: nameOf(id) }),
-      );
+      said.push(id === me ? 'You moved to the audience.' : `${nameOf(id)} left the stage.`);
     }
     if (said.length > 0) {
       void this.announcer.announce(said.join(' '), 'polite');
@@ -426,7 +407,7 @@ export default class RoomPageComponent {
     if (on !== this.heardMicrophone) {
       this.heardMicrophone = on;
       void this.announcer.announce(
-        this.i18n.t(on ? msg('Your microphone is on.') : msg('Your microphone is off.')),
+        on ? 'Your microphone is on.' : 'Your microphone is off.',
         'polite',
       );
     }

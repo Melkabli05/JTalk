@@ -1,5 +1,3 @@
-import { msg } from '@shared/utils/i18n/msg';
-
 export interface Language {
   readonly code: string;
   readonly flag: string;
@@ -7,18 +5,18 @@ export interface Language {
 }
 
 export const LANGUAGES: readonly Language[] = [
-  { code: 'en', flag: '🇬🇧', name: msg('English') },
-  { code: 'es', flag: '🇪🇸', name: msg('Spanish') },
-  { code: 'ar', flag: '🇸🇦', name: msg('Arabic') },
-  { code: 'fr', flag: '🇫🇷', name: msg('French') },
-  { code: 'de', flag: '🇩🇪', name: msg('German') },
-  { code: 'ja', flag: '🇯🇵', name: msg('Japanese') },
-  { code: 'zh', flag: '🇨🇳', name: msg('Chinese') },
-  { code: 'pt', flag: '🇧🇷', name: msg('Portuguese') },
-  { code: 'ru', flag: '🇷🇺', name: msg('Russian') },
-  { code: 'tr', flag: '🇹🇷', name: msg('Turkish') },
-  { code: 'hi', flag: '🇮🇳', name: msg('Hindi') },
-  { code: 'it', flag: '🇮🇹', name: msg('Italian') },
+  { code: 'en', flag: '🇬🇧', name: 'English' },
+  { code: 'es', flag: '🇪🇸', name: 'Spanish' },
+  { code: 'ar', flag: '🇸🇦', name: 'Arabic' },
+  { code: 'fr', flag: '🇫🇷', name: 'French' },
+  { code: 'de', flag: '🇩🇪', name: 'German' },
+  { code: 'ja', flag: '🇯🇵', name: 'Japanese' },
+  { code: 'zh', flag: '🇨🇳', name: 'Chinese' },
+  { code: 'pt', flag: '🇧🇷', name: 'Portuguese' },
+  { code: 'ru', flag: '🇷🇺', name: 'Russian' },
+  { code: 'tr', flag: '🇹🇷', name: 'Turkish' },
+  { code: 'hi', flag: '🇮🇳', name: 'Hindi' },
+  { code: 'it', flag: '🇮🇹', name: 'Italian' },
 ];
 
 export function languageOf(code: string): Language {

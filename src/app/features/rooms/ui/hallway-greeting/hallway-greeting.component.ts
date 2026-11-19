@@ -1,14 +1,13 @@
 import { Component, computed, input, output } from '@angular/core';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { languageOf } from '@shared/utils/languages';
 import type { Room } from '../../models/room.model';
-import { GREETINGS, partOfDay } from '../../utils/greeting';
+import { greetingFor } from '../../utils/greeting';
 
 @Component({
   selector: 'app-hallway-greeting',
-  imports: [ButtonDirective, Card, TranslatePipe],
+  imports: [ButtonDirective, Card],
   templateUrl: './hallway-greeting.component.html',
   styleUrl: './hallway-greeting.component.scss',
 })
@@ -24,9 +23,7 @@ export class HallwayGreetingComponent {
 
   readonly start = output<void>();
 
-  protected readonly greeting = computed(
-    () => GREETINGS[partOfDay(this.hour())][this.name() ? 1 : 0],
-  );
+  protected readonly greeting = computed(() => greetingFor(this.hour(), this.name()));
   protected readonly language = computed(() =>
     this.learning() ? languageOf(this.learning()) : null,
   );

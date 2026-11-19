@@ -2,10 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { IdentityService } from '@core/auth/identity.service';
 import { APP_NAME } from '@core/config/app-config';
-import { LocaleService } from '@core/config/locale.service';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { BrandMarkComponent } from '@shared/ui/brand-mark/brand-mark.component';
-import { LocaleSwitchComponent } from '@shared/ui/locale-switch/locale-switch.component';
 import { PosterBackdropComponent } from '../../ui/poster-backdrop/poster-backdrop.component';
 
 /** "Hello" in the languages people practise here, each in its own: they take turns along the bottom. They are the point, not copy. */
@@ -24,14 +21,8 @@ const GREETINGS = [
  */
 @Component({
   selector: 'app-home-page',
-  imports: [
-    BrandMarkComponent,
-    ButtonDirective,
-    LocaleSwitchComponent,
-    PosterBackdropComponent,
-    TranslatePipe,
-  ],
-  // Always the night theme, so the controls from the component library (the language switch, Sign in) are drawn for a dark page.
+  imports: [BrandMarkComponent, ButtonDirective, PosterBackdropComponent],
+  // Always the night theme, so the controls from the component library (Sign in) are drawn for a dark page.
   host: {
     class: 'app-dark',
     '[style.--mx]': 'x()',
@@ -44,7 +35,6 @@ const GREETINGS = [
 export default class HomePageComponent {
   private readonly identity = inject(IdentityService);
 
-  protected readonly locales = inject(LocaleService);
   protected readonly appName = APP_NAME;
   protected readonly greetings = GREETINGS;
   /** Where the pointer is, from -1 (left, top) to 1 (right, bottom): the shapes lean a little towards it (only where motion is welcome). */

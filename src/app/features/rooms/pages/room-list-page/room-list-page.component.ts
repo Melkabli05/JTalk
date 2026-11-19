@@ -7,8 +7,6 @@ import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { ActiveRoomService } from '@core/rooms/active-room.service';
 import { RoomStartService } from '@core/rooms/room-start.service';
 import { ClockService } from '@core/time/clock.service';
-import { I18n } from '@shared/utils/i18n/i18n.service';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import type { Room, RoomDraft } from '../../models/room.model';
 import { provideRoomList, RoomListFacade } from '../../state/room-list.facade';
 import { HallwayGreetingComponent } from '../../ui/hallway-greeting/hallway-greeting.component';
@@ -27,7 +25,6 @@ import { RoomFormDialogComponent } from '../../ui/room-form-dialog/room-form-dia
     Skeleton,
     RoomCardComponent,
     RoomFormDialogComponent,
-    TranslatePipe,
   ],
   providers: [provideRoomList()],
   templateUrl: './room-list-page.component.html',
@@ -35,7 +32,6 @@ import { RoomFormDialogComponent } from '../../ui/room-form-dialog/room-form-dia
 })
 export default class RoomListPageComponent {
   private readonly router = inject(Router);
-  private readonly i18n = inject(I18n);
   private readonly roomStart = inject(RoomStartService);
   protected readonly clock = inject(ClockService);
   protected readonly inRoom = inject(ActiveRoomService).room;
@@ -63,8 +59,8 @@ export default class RoomListPageComponent {
   protected readonly defaults = computed<RoomDraft>(() => {
     const me = this.me();
     return {
-      title: this.i18n.t('Practice room'),
-      topic: this.i18n.t('Just chatting'),
+      title: 'Practice room',
+      topic: 'Just chatting',
       targetLanguage: me?.learning ?? 'es',
       nativeLanguage: me?.nativeLanguage ?? 'en',
       maxStageSeats: 6,

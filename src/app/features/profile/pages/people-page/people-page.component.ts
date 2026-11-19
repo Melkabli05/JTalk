@@ -8,38 +8,35 @@ import { InputIcon } from '@openng/optimus-ui/inputicon';
 import { InputText } from '@openng/optimus-ui/inputtext';
 import { Message } from '@openng/optimus-ui/message';
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from '@openng/optimus-ui/tabs';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { FollowButtonComponent } from '@shared/ui/follow-button/follow-button.component';
-import { I18n } from '@shared/utils/i18n/i18n.service';
-import { msg } from '@shared/utils/i18n/msg';
 import { PeopleDirectory } from '../../state/people-directory';
 import { PeopleListComponent } from '../../ui/people-list/people-list.component';
 
 /** What each list says when it is empty. The texts are marked with `msg` so they are translated. */
 const EMPTY = {
   partners: {
-    title: msg('No partners yet'),
-    text: msg('Add the languages you speak and learn to your profile and partners show up here.'),
+    title: 'No partners yet',
+    text: 'Add the languages you speak and learn to your profile and partners show up here.',
   },
   typing: {
-    title: msg('Search for people'),
-    text: msg('Type at least two letters of a name or a handle.'),
+    title: 'Search for people',
+    text: 'Type at least two letters of a name or a handle.',
   },
   nobody: {
-    title: msg('No one found'),
-    text: msg('Try another spelling, or a part of their name or handle.'),
+    title: 'No one found',
+    text: 'Try another spelling, or a part of their name or handle.',
   },
   following: {
-    title: msg('You are not following anyone yet'),
-    text: msg('Follow people you enjoy talking to and they will be here.'),
+    title: 'You are not following anyone yet',
+    text: 'Follow people you enjoy talking to and they will be here.',
   },
   followers: {
-    title: msg('No followers yet'),
-    text: msg('When someone follows you, you will see them here.'),
+    title: 'No followers yet',
+    text: 'When someone follows you, you will see them here.',
   },
   blocked: {
-    title: msg('You have not blocked anyone'),
-    text: msg('Someone you block from their profile or from a room will be listed here.'),
+    title: 'You have not blocked anyone',
+    text: 'Someone you block from their profile or from a room will be listed here.',
   },
 } as const;
 
@@ -60,7 +57,6 @@ type Section = 'discover' | 'search' | 'following' | 'followers' | 'blocked';
     TabPanel,
     TabPanels,
     Tabs,
-    TranslatePipe,
   ],
   providers: [PeopleDirectory],
   templateUrl: './people-page.component.html',
@@ -69,10 +65,8 @@ type Section = 'discover' | 'search' | 'following' | 'followers' | 'blocked';
 export default class PeoplePageComponent {
   private readonly router = inject(Router);
   private readonly toast = inject(MessageService);
-  private readonly i18n = inject(I18n);
 
   protected readonly directory = inject(PeopleDirectory);
-  protected readonly locale = this.i18n.locale;
   protected readonly empty = EMPTY;
 
   protected readonly section = signal<Section>('discover');
@@ -114,7 +108,7 @@ export default class PeoplePageComponent {
     this.directory.unblock(person.id, () =>
       this.toast.add({
         severity: 'success',
-        summary: this.i18n.t('{name} is unblocked.', { name: person.name }),
+        summary: `${person.name} is unblocked.`,
       }),
     );
   }

@@ -1,30 +1,27 @@
 import { Component, computed, input } from '@angular/core';
 import { Card } from '@openng/optimus-ui/card';
 import type { PersonCard } from '@core/people/person-card.model';
-import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { LanguageLevelsComponent } from '@shared/ui/language-levels/language-levels.component';
 import { PartnerMatchComponent } from '@shared/ui/partner-match/partner-match.component';
 
 @Component({
   selector: 'app-profile-about',
-  imports: [Card, LanguageLevelsComponent, PartnerMatchComponent, TranslatePipe],
+  imports: [Card, LanguageLevelsComponent, PartnerMatchComponent],
   template: `
     @if (hasAbout()) {
       <p-card class="about">
-        <h2>{{ 'About' | t }}</h2>
+        <h2>About</h2>
         @if (card().details.bio) {
           <p class="bio">{{ card().details.bio }}</p>
         } @else if (card().isMe) {
-          <p class="empty">
-            {{ 'Add a short bio so people know what you like to talk about.' | t }}
-          </p>
+          <p class="empty">Add a short bio so people know what you like to talk about.</p>
         }
         <app-partner-match [match]="card().match" />
       </p-card>
     }
     @if (card().languages; as languages) {
       <p-card class="languages">
-        <h2>{{ 'Languages' | t }}</h2>
+        <h2>Languages</h2>
         <app-language-levels [native]="languages.native" [learning]="languages.learning" />
       </p-card>
     }

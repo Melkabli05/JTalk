@@ -4,7 +4,6 @@ import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { debounceTime, finalize, map, of, type Observable } from 'rxjs';
 import { IdentityService } from '@core/auth/identity.service';
 import { PeopleApiService } from '@core/people/people-api.service';
-import { msg } from '@shared/utils/i18n/msg';
 import { pagedList } from '@shared/utils/paged-list';
 import { saveRequest } from '@shared/utils/save-request';
 import type { PartnerCursor } from '@core/people/people.parser';
@@ -73,16 +72,11 @@ export class PeopleDirectory {
   }
 
   follow(id: string): void {
-    this.change(id, true, this.api.follow(id), msg('Could not follow them. Please try again.'));
+    this.change(id, true, this.api.follow(id), 'Could not follow them. Please try again.');
   }
 
   unfollow(id: string): void {
-    this.change(
-      id,
-      false,
-      this.api.unfollow(id),
-      msg('Could not unfollow them. Please try again.'),
-    );
+    this.change(id, false, this.api.unfollow(id), 'Could not unfollow them. Please try again.');
   }
 
   /** Lets someone you blocked find you again, and takes them off the list. */
@@ -93,7 +87,7 @@ export class PeopleDirectory {
         this.blocked.remove(id);
         done();
       },
-      failure: msg('Could not unblock them. Please try again.'),
+      failure: 'Could not unblock them. Please try again.',
     });
   }
 

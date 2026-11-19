@@ -95,7 +95,6 @@ describe('Staying in a room while looking at other pages', () => {
   beforeEach(async () => {
     localStorage.clear();
     sessionStorage.clear();
-    localStorage.setItem('jtalk:locale', 'en');
     sent = [];
     link = new FakeRealtimeLink();
     TestBed.configureTestingModule({

@@ -11,9 +11,9 @@
     <header class="strip">
       <p class="pass">
         <span class="dot" [class.live]="speaking()" aria-hidden="true"></span>
-        {{ roleName() | t }} · {{ caption() | t }}
+        {{ roleName() }} · {{ caption() }}
         @if (isMe()) {
-          · {{ 'You' | t }}
+          · You
         }
       </p>
       @if (card()) {
@@ -24,11 +24,11 @@
           icon="pi pi-user"
           [text]="true"
           [rounded]="true"
-          [label]="'View profile' | t"
+          label="View profile"
           (click)="viewProfile.emit()"
         ></button>
       }
-      @let closeLabel = 'Close' | t;
+      @let closeLabel = 'Close';
       <button
         pButton
         type="button"
@@ -62,11 +62,7 @@
                 <span>&#64;{{ shown.details.username }}</span>
               }
               @if (shown.details.joinedAt; as joined) {
-                <span>
-                  {{
-                    'Joined {date}' | t: { date: (joined | date: 'MMMM y' : undefined : locale()) }
-                  }}
-                </span>
+                <span> Joined {{ joined | date: 'MMMM y' }} </span>
               }
             </p>
           }
@@ -96,9 +92,9 @@
       }
 
       @if (canMute() || canDemote() || canInvite() || canStepDown() || canRemove()) {
-        <div class="actions" role="group" [attr.aria-label]="'Actions' | t">
+        <div class="actions" role="group" aria-label="Actions">
           @if (canMute()) {
-            @let muteLabel = muted() ? ('Muted' | t) : ('Mute' | t);
+            @let muteLabel = muted() ? 'Muted' : 'Mute';
             <div class="action">
               <button
                 pButton
@@ -113,13 +109,11 @@
                 [pTooltip]="muteLabel"
                 (click)="mute.emit()"
               ></button>
-              <span class="caption" aria-hidden="true">{{
-                muted() ? ('Muted' | t) : ('Mute mic' | t)
-              }}</span>
+              <span class="caption" aria-hidden="true">{{ muted() ? 'Muted' : 'Mute mic' }}</span>
             </div>
           }
           @if (canInvite()) {
-            @let inviteLabel = 'Invite to the stage' | t;
+            @let inviteLabel = 'Invite to the stage';
             <div class="action">
               <button
                 pButton
@@ -133,11 +127,11 @@
                 [pTooltip]="inviteLabel"
                 (click)="invite.emit()"
               ></button>
-              <span class="caption" aria-hidden="true">{{ 'To the stage' | t }}</span>
+              <span class="caption" aria-hidden="true">To the stage</span>
             </div>
           }
           @if (canDemote()) {
-            @let demoteLabel = 'Move to the audience' | t;
+            @let demoteLabel = 'Move to the audience';
             <div class="action">
               <button
                 pButton
@@ -151,11 +145,11 @@
                 [pTooltip]="demoteLabel"
                 (click)="demote.emit()"
               ></button>
-              <span class="caption" aria-hidden="true">{{ 'To the audience' | t }}</span>
+              <span class="caption" aria-hidden="true">To the audience</span>
             </div>
           }
           @if (canStepDown()) {
-            @let stepLabel = 'Step down to the audience' | t;
+            @let stepLabel = 'Step down to the audience';
             <div class="action">
               <button
                 pButton
@@ -169,11 +163,11 @@
                 [pTooltip]="stepLabel"
                 (click)="stepDown.emit()"
               ></button>
-              <span class="caption" aria-hidden="true">{{ 'Step down' | t }}</span>
+              <span class="caption" aria-hidden="true">Step down</span>
             </div>
           }
           @if (canRemove()) {
-            @let removeLabel = 'Remove from the room' | t;
+            @let removeLabel = 'Remove from the room';
             <div class="action">
               <button
                 pButton
@@ -187,24 +181,23 @@
                 [pTooltip]="removeLabel"
                 (click)="remove.emit()"
               ></button>
-              <span class="caption" aria-hidden="true">{{ 'Remove' | t }}</span>
+              <span class="caption" aria-hidden="true">Remove</span>
             </div>
           }
         </div>
       }
 
       @if (error(); as failure) {
-        <p-message class="failure" severity="error" size="small">{{ failure | t }}</p-message>
+        <p-message class="failure" severity="error" size="small">{{ failure }}</p-message>
       }
 
       @if (card(); as shown) {
-        <section class="facts" [attr.aria-label]="'About them' | t">
+        <section class="facts" aria-label="About them">
           @if (shown.social; as stats) {
             <app-social-stats
               [followers]="stats.followers"
               [following]="stats.following"
               [followsMe]="stats.followsMe && !shown.isMe"
-              [locale]="locale()"
             />
           }
           @if (languageLine().length > 0) {
@@ -213,9 +206,9 @@
               @for (entry of languageLine(); track entry.code) {
                 <span>
                   <span aria-hidden="true">{{ entry.flag }}</span>
-                  {{ entry.name | t }}
+                  {{ entry.name }}
                   @if (entry.level; as level) {
-                    ({{ level | t }})
+                    ({{ level }})
                   }
                 </span>
               }
@@ -227,7 +220,7 @@
           <p class="bio">{{ shown.details.bio }}</p>
         }
       } @else if (loading()) {
-        <div class="placeholders" role="status" [attr.aria-label]="'Finding their profile' | t">
+        <div class="placeholders" role="status" aria-label="Finding their profile">
           <p-skeleton width="100%" height="4rem" borderRadius="var(--p-jtalk-radius-card)" />
           <p-skeleton width="90%" height="1rem" />
           <p-skeleton width="60%" height="1rem" />
@@ -237,13 +230,13 @@
           @if (person.nativeLanguage) {
             <span>
               <span aria-hidden="true">{{ native().flag }}</span>
-              {{ 'Speaks {language}' | t: { language: native().name | t } }}
+              Speaks {{ native().name }}
             </span>
           }
           @if (person.learning) {
             <span>
               <span aria-hidden="true">{{ learning().flag }}</span>
-              {{ 'Learning {language}' | t: { language: learning().name | t } }}
+              Learning {{ learning().name }}
             </span>
           }
         </p>
@@ -256,9 +249,9 @@
               <span class="safety-title">
                 <i class="pi pi-shield" aria-hidden="true"></i>
                 @if (canRemove()) {
-                  {{ 'Moderation and safety' | t }}
+                  Moderation and safety
                 } @else {
-                  {{ 'Safety' | t }}
+                  Safety
                 }
               </span>
             </p-accordion-header>
@@ -270,7 +263,7 @@
                 icon="pi pi-ban"
                 severity="danger"
                 [text]="true"
-                [label]="'Block' | t"
+                label="Block"
                 (click)="block.emit()"
               ></button>
             </p-accordion-content>
