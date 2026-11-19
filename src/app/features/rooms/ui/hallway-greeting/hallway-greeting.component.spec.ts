@@ -74,13 +74,13 @@ describe('HallwayGreetingComponent (presentational)', () => {
   it('shows the sky for the hour, a new one every two hours', async () => {
     const sky = () => root().querySelector<HTMLElement>('.p-card')?.style.backgroundImage ?? '';
     await render({ hour: 9 });
-    expect(sky()).toContain('banners/sky-04.svg');
+    expect(sky()).toContain('banners/sky-4.svg');
 
     for (const [hour, file] of [
-      [0, 'sky-00'],
-      [7, 'sky-03'],
-      [13, 'sky-06'],
-      [19, 'sky-09'],
+      [0, 'sky-0'],
+      [7, 'sky-3'],
+      [13, 'sky-6'],
+      [19, 'sky-9'],
       [23, 'sky-11'],
     ] as const) {
       fixture.componentRef.setInput('hour', hour);
@@ -90,17 +90,17 @@ describe('HallwayGreetingComponent (presentational)', () => {
   });
 
   it('keeps the same sky through the two hours and changes it on the hour', async () => {
-    const slot = () => root().querySelector('.banner')?.getAttribute('data-sky');
+    const sky = () => root().querySelector<HTMLElement>('.p-card')?.style.backgroundImage;
     await render({ hour: 10 });
-    expect(slot()).toBe('5');
+    const morning = sky();
 
     fixture.componentRef.setInput('hour', 11);
     await fixture.whenStable();
-    expect(slot()).toBe('5');
+    expect(sky()).toBe(morning);
 
     fixture.componentRef.setInput('hour', 12);
     await fixture.whenStable();
-    expect(slot()).toBe('6');
+    expect(sky()).not.toBe(morning);
   });
 
   it('puts light words on the dark skies of the night and dark words on the days', async () => {
@@ -116,7 +116,7 @@ describe('HallwayGreetingComponent (presentational)', () => {
   it('says how many open rooms are practising what the person learns', async () => {
     await render({
       rooms: [room('a'), room('b', 'fr'), room('c')],
-      me: { learning: 'es' },
+      learning: 'es',
     });
 
     expect(lead()).toBe('Rooms practising Spanish: 2');
@@ -125,7 +125,7 @@ describe('HallwayGreetingComponent (presentational)', () => {
   });
 
   it('says they could be the first, and offers to start one in that language, when nobody practises it', async () => {
-    await render({ rooms: [room('a', 'fr')], me: { learning: 'ja' } });
+    await render({ rooms: [room('a', 'fr')], learning: 'ja' });
 
     expect(lead()).toBe('Nobody is practising Japanese yet. Be the first.');
     expect(startButton().textContent).toContain('Start a Japanese room');
@@ -133,7 +133,7 @@ describe('HallwayGreetingComponent (presentational)', () => {
   });
 
   it('follows the rooms as they come and go', async () => {
-    await render({ rooms: [], me: { learning: 'es' } });
+    await render({ rooms: [], learning: 'es' });
     expect(lead()).toContain('Be the first');
 
     fixture.componentRef.setInput('rooms', [room('a')]);
@@ -142,7 +142,7 @@ describe('HallwayGreetingComponent (presentational)', () => {
   });
 
   it('keeps to the plain line until it is known what the person learns', async () => {
-    await render({ rooms: [room('a')], me: null });
+    await render({ rooms: [room('a')], learning: '' });
 
     expect(lead()).toBe('Join a conversation to practise a language.');
   });

@@ -2,8 +2,7 @@
   display: block;
 }
 
-// The words sit over a picture of the sky for the hour. The picture is its own, so the words' colours are fixed (ink on the light
-// skies, porcelain on the dark ones) and do not follow the theme.
+// The sky is a picture of its own, so the text colours do not follow the theme.
 .banner {
   display: flex;
   flex-direction: column;
@@ -33,12 +32,10 @@ h1 {
 
 .lead {
   margin: 0.5rem 0 1rem;
-  color: inherit;
   opacity: 0.85;
 }
 
-// Where there is no sidebar (a phone) this is the way to start a room; with the sidebar it only shows when it has something to say:
-// nobody is practising the language yet.
+// The sidebar has the Go live card; this button is shown there only when nobody is practising the language.
 .start:not(.always) {
   @media (min-width: 64rem) {
     display: none;

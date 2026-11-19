@@ -1,24 +1,20 @@
-<p-card role="region" aria-labelledby="greeting" [style]="sky()">
-  @let current = hint();
-  <div class="banner" [class.night]="scene().night" [attr.data-sky]="scene().slot">
+<p-card role="region" aria-labelledby="greeting" [style]="{ background: sky() }">
+  @let language = this.language();
+  @let first = language && !practising();
+  <div class="banner" [class.night]="night()">
     <h1 id="greeting">{{ greeting() | t: { name: name() } }}</h1>
     <p class="lead">
-      @switch (current.kind) {
-        @case ('practising') {
-          {{
-            'Rooms practising {language}: {count}'
-              | t: { language: language()?.name | t, count: current.count }
-          }}
-        }
-        @case ('first') {
-          {{
-            'Nobody is practising {language} yet. Be the first.'
-              | t: { language: language()?.name | t }
-          }}
-        }
-        @default {
-          {{ 'Join a conversation to practise a language.' | t }}
-        }
+      @if (!language) {
+        {{ 'Join a conversation to practise a language.' | t }}
+      } @else if (first) {
+        {{
+          'Nobody is practising {language} yet. Be the first.' | t: { language: language.name | t }
+        }}
+      } @else {
+        {{
+          'Rooms practising {language}: {count}'
+            | t: { language: language.name | t, count: practising() }
+        }}
       }
     </p>
     <button
@@ -26,10 +22,10 @@
       type="button"
       class="start"
       icon="pi pi-plus"
-      [class.always]="current.kind === 'first'"
+      [class.always]="first"
       [label]="
-        current.kind === 'first'
-          ? ('Start a {language} room' | t: { language: language()?.name | t })
+        first
+          ? ('Start a {language} room' | t: { language: language.name | t })
           : ('Start a room' | t)
       "
       (click)="start.emit()"

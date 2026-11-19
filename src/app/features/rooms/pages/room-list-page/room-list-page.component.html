@@ -2,7 +2,7 @@
   <app-hallway-greeting
     [name]="firstName()"
     [rooms]="state.shown()"
-    [me]="me()"
+    [learning]="me()?.learning ?? ''"
     [hour]="clock.hour()"
     (start)="starting.set(true)"
   />
