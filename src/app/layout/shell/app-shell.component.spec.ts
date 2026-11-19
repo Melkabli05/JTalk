@@ -35,7 +35,7 @@ describe('AppShellComponent (container)', () => {
 
   const settings = () => document.querySelector<HTMLElement>('.settings');
   async function openAccount() {
-    root().querySelector<HTMLButtonElement>('header button.account')!.click();
+    root().querySelector<HTMLButtonElement>('aside button.me-card')!.click();
     await vi.waitFor(() => expect(settings()).not.toBeNull());
   }
   const settingsButton = (name: string) =>
@@ -97,12 +97,14 @@ describe('AppShellComponent (container)', () => {
     expect(brand.getAttribute('href')).toBe('/');
   });
 
-  it('keeps the top bar lean: one account button', async () => {
+  it('keeps the account in the sidebar: there is no top bar until there is a room to go back to', async () => {
     await render();
 
+    expect(root().querySelector('header.bar')).toBeNull();
+    expect(root().querySelector('button.account')).toBeNull();
     expect(
-      [...root().querySelectorAll('header button')].map((b) => b.getAttribute('aria-label')),
-    ).toEqual(['Profile and settings']);
+      [...root().querySelectorAll('button')].map((b) => b.getAttribute('aria-label')),
+    ).toContain('Profile and settings');
   });
 
   it('offers sign-out to the signed-in user', async () => {
@@ -365,7 +367,7 @@ describe('AppShellComponent profile gate', () => {
   const page = () => document.body;
   const settings = () => document.querySelector<HTMLElement>('.settings');
   async function openAccount() {
-    root().querySelector<HTMLButtonElement>('header button.account')!.click();
+    root().querySelector<HTMLButtonElement>('aside button.me-card')!.click();
     await vi.waitFor(() => expect(settings()).not.toBeNull());
   }
   const settingsButton = (name: string) =>
@@ -495,19 +497,19 @@ describe('AppShellComponent profile gate', () => {
     expect(settings()?.textContent).toContain('Mona');
   });
 
-  it('shows the picture the person chose on the account button', async () => {
+  it('shows the picture the person chose on the account card in the sidebar', async () => {
     await render(profile({ avatarUrl: '/avatars/avatar-06.svg' }));
 
-    expect(root().querySelector('header .account img')?.getAttribute('src')).toBe(
+    expect(root().querySelector('aside .me-card img')?.getAttribute('src')).toBe(
       'avatars/avatar-06.svg',
     );
   });
 
-  it('shows a plain icon on the account button of someone with no picture', async () => {
+  it('shows a plain icon on the account card in the sidebar of someone with no picture', async () => {
     await render(profile());
 
-    expect(root().querySelector('header .account img')).toBeNull();
-    expect(root().querySelector('header .account .pi-user')).not.toBeNull();
+    expect(root().querySelector('aside .me-card img')).toBeNull();
+    expect(root().querySelector('aside .me-card .pi-user')).not.toBeNull();
   });
 
   it('signs out through Auth0, which sends the person back to the app', async () => {

@@ -75,8 +75,8 @@
   </button>
 </aside>
 
-<header class="bar">
-  @if (liveRoom(); as live) {
+@if (liveRoom(); as live) {
+  <header class="bar">
     @let back = 'Back to the room: {title}' | t: { title: live.title };
     <a
       pButton
@@ -93,80 +93,64 @@
       <span class="live-dot" aria-hidden="true"></span>
       <span class="live-title">{{ live.title }}</span>
     </a>
-  }
-  <button
-    pButton
-    type="button"
-    class="account"
-    severity="secondary"
-    aria-haspopup="dialog"
-    [rounded]="true"
-    [text]="true"
-    [attr.aria-label]="'Profile and settings' | t"
-    (click)="account.toggle($event)"
-  >
-    @if (myPicture(); as picture) {
-      <p-avatar shape="circle" size="large" aria-hidden="true" [image]="picture" />
-    } @else {
-      <i class="pi pi-user" aria-hidden="true"></i>
-    }
-  </button>
-  <p-popover #account appendTo="body" [ariaLabel]="'Profile and settings' | t">
-    <div class="settings">
-      @if (identity.profile(); as me) {
-        <div class="me">
-          @if (myPicture(); as picture) {
-            <p-avatar shape="circle" size="large" aria-hidden="true" [image]="picture" />
-          } @else {
-            <p-avatar shape="circle" size="large" aria-hidden="true" [label]="me.name | initials" />
-          }
-          <div class="who">
-            <strong>{{ me.name }}</strong>
-            <span class="muted">{{ myLanguages() }}</span>
-          </div>
-          <a
-            pButton
-            routerLink="/profile"
-            class="to-profile"
-            size="small"
-            severity="secondary"
-            [outlined]="true"
-            [label]="'Your profile' | t"
-            (click)="account.hide()"
-          ></a>
+  </header>
+}
+
+<p-popover #account appendTo="body" [ariaLabel]="'Profile and settings' | t">
+  <div class="settings">
+    @if (identity.profile(); as me) {
+      <div class="me">
+        @if (myPicture(); as picture) {
+          <p-avatar shape="circle" size="large" aria-hidden="true" [image]="picture" />
+        } @else {
+          <p-avatar shape="circle" size="large" aria-hidden="true" [label]="me.name | initials" />
+        }
+        <div class="who">
+          <strong>{{ me.name }}</strong>
+          <span class="muted">{{ myLanguages() }}</span>
         </div>
-      }
-      <div class="row">
-        <span>{{ 'Language' | t }}</span>
-        <app-locale-switch [locale]="locales.locale()" (localeChange)="locales.switchTo($event)" />
+        <a
+          pButton
+          routerLink="/profile"
+          class="to-profile"
+          size="small"
+          severity="secondary"
+          [outlined]="true"
+          [label]="'Your profile' | t"
+          (click)="account.hide()"
+        ></a>
       </div>
-      <div class="row">
-        <span aria-hidden="true">{{ 'Dark theme' | t }}</span>
-        <p-toggleswitch
-          [ariaLabel]="'Dark theme' | t"
-          [ngModel]="colorScheme.isDark()"
-          (ngModelChange)="colorScheme.toggle()"
-        />
-      </div>
-      <div class="row">
-        <span aria-hidden="true">{{ 'Right-to-left' | t }}</span>
-        <p-toggleswitch
-          [ariaLabel]="'Right-to-left' | t"
-          [ngModel]="direction.isRtl()"
-          (ngModelChange)="direction.toggle()"
-        />
-      </div>
-      <button
-        pButton
-        type="button"
-        severity="secondary"
-        [outlined]="true"
-        [label]="'Sign out' | t"
-        (click)="account.hide(); signOut()"
-      ></button>
+    }
+    <div class="row">
+      <span>{{ 'Language' | t }}</span>
+      <app-locale-switch [locale]="locales.locale()" (localeChange)="locales.switchTo($event)" />
     </div>
-  </p-popover>
-</header>
+    <div class="row">
+      <span aria-hidden="true">{{ 'Dark theme' | t }}</span>
+      <p-toggleswitch
+        [ariaLabel]="'Dark theme' | t"
+        [ngModel]="colorScheme.isDark()"
+        (ngModelChange)="colorScheme.toggle()"
+      />
+    </div>
+    <div class="row">
+      <span aria-hidden="true">{{ 'Right-to-left' | t }}</span>
+      <p-toggleswitch
+        [ariaLabel]="'Right-to-left' | t"
+        [ngModel]="direction.isRtl()"
+        (ngModelChange)="direction.toggle()"
+      />
+    </div>
+    <button
+      pButton
+      type="button"
+      severity="secondary"
+      [outlined]="true"
+      [label]="'Sign out' | t"
+      (click)="account.hide(); signOut()"
+    ></button>
+  </div>
+</p-popover>
 
 <main id="main-content" class="main" [class.wide]="wide()" tabindex="-1">
   <p-breadcrumb
