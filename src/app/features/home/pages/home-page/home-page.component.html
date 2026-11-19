@@ -1,5 +1,12 @@
 <a class="skip-link" href="#main-content">{{ 'Skip to main content' | t }}</a>
 
+<!-- Soft light behind everything: three blurred colours drifting slowly. Decoration. -->
+<div class="glow" aria-hidden="true">
+  <span class="orb violet"></span>
+  <span class="orb cyan"></span>
+  <span class="orb pink"></span>
+</div>
+
 <header class="top">
   <a class="brand" href="/">
     <app-brand-mark />
@@ -16,7 +23,6 @@
     type="button"
     severity="secondary"
     [outlined]="true"
-    [rounded]="true"
     [label]="'Sign in' | t"
     (click)="signIn('login')"
   ></button>
@@ -24,20 +30,17 @@
 
 <main id="main-content" tabindex="-1">
   <section class="hero" aria-labelledby="hero-title">
-    <!-- The picture: a grid, two stepped blocks of colour in the corners, and a badge on each, as in a room. All decoration. -->
     <div class="grid" aria-hidden="true"></div>
-    <div class="block forest" aria-hidden="true"></div>
-    <div class="block sand" aria-hidden="true"></div>
+    <div class="block one" aria-hidden="true"></div>
+    <div class="block two" aria-hidden="true"></div>
     <span class="badge mic" aria-hidden="true"><i class="pi pi-microphone"></i></span>
     <span class="badge hand" aria-hidden="true"><i class="pi pi-hand"></i></span>
 
     <div class="center">
-      <svg class="wave" viewBox="0 0 48 24" aria-hidden="true" focusable="false">
-        <path d="M2 14 C 7 2, 12 2, 17 12 S 27 22, 32 12 S 41 2, 46 10" />
-      </svg>
+      <p class="tag">#{{ 'Live audio' | t }}</p>
       <h1 id="hero-title">
         <span class="line paper">{{ 'Learn a language' | t }}</span
-        >&ngsp;<span class="line sand-line">{{ 'by talking.' | t }}</span>
+        >&ngsp;<span class="line lavender">{{ 'by talking.' | t }}</span>
       </h1>
       <p class="lead">
         {{
@@ -46,22 +49,16 @@
         }}
       </p>
       <div class="cta">
+        <button class="go" type="button" (click)="signIn('signup')">
+          <span class="arrow" aria-hidden="true"><i class="pi pi-arrow-right"></i></span>
+          <span class="label">{{ 'Get started' | t }}</span>
+        </button>
         <button
           pButton
+          class="have"
           type="button"
-          size="large"
-          icon="pi pi-arrow-right"
-          [rounded]="true"
-          [label]="'Get started' | t"
-          (click)="signIn('signup')"
-        ></button>
-        <button
-          pButton
-          type="button"
-          size="large"
           severity="secondary"
           [text]="true"
-          [rounded]="true"
           [label]="'I already have an account' | t"
           (click)="signIn('login')"
         ></button>

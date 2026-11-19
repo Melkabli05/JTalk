@@ -276,4 +276,5 @@ export const messages: Readonly<Record<string, string>> = {
   'by talking.': 'بالحديث.',
   'Audio only': 'صوت فقط',
   'No camera, no pressure': 'بلا كاميرا وبلا ضغط',
+  'Live audio': 'صوت مباشر',
 };

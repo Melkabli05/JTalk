@@ -68,26 +68,54 @@ describe('HomePageComponent (container)', () => {
     ]);
   });
 
-  it('draws the grid, the two stepped blocks with their badges and the squiggle as decoration only', () => {
-    for (const selector of ['.grid', '.block.forest', '.block.sand', '.wave']) {
+  it('draws the glow, the grid, the two stepped blocks and their glass badges as decoration only', () => {
+    for (const selector of [
+      '.glow',
+      '.grid',
+      '.block.one',
+      '.block.two',
+      '.badge.mic',
+      '.badge.hand',
+    ]) {
       expect(root().querySelector(selector)?.getAttribute('aria-hidden'), selector).toBe('true');
     }
+    expect(root().querySelectorAll('.glow .orb')).toHaveLength(3);
+    expect(root().querySelector('.badge.mic .pi-microphone')).not.toBeNull();
+    expect(root().querySelector('.badge.hand .pi-hand')).not.toBeNull();
     expect(
-      root().querySelector('.badge.mic .pi-microphone')?.closest('[aria-hidden="true"]'),
-    ).not.toBeNull();
-    expect(
-      root().querySelector('.badge.hand .pi-hand')?.closest('[aria-hidden="true"]'),
-    ).not.toBeNull();
-    expect(
-      root().querySelector('.grid, .block, .wave')?.querySelector('button, a, input'),
+      root().querySelector('.glow, .grid, .block')?.querySelector('button, a, input'),
     ).toBeNull();
   });
 
-  it('sets each line of the heading on its own block of colour', () => {
+  it('sets each line of the heading on its own block, under a small label', () => {
     const lines = [...root().querySelectorAll('h1 .line')];
 
+    expect(root().querySelector('.tag')?.textContent).toBe('#Live audio');
     expect(lines.map((line) => line.textContent)).toEqual(['Learn a language', 'by talking.']);
-    expect(lines.map((line) => line.className)).toEqual(['line paper', 'line sand-line']);
+    expect(lines.map((line) => line.className)).toEqual(['line paper', 'line lavender']);
+  });
+
+  it('has a main button that is a square arrow tile and a label, and starts an account', () => {
+    const go = root().querySelector<HTMLButtonElement>('button.go')!;
+
+    expect(go.querySelector('.arrow')?.getAttribute('aria-hidden')).toBe('true');
+    expect(go.textContent?.trim()).toBe('Get started');
+    go.click();
+    expect(loginWithRedirect).toHaveBeenLastCalledWith({
+      authorizationParams: { screen_hint: 'signup' },
+    });
+  });
+
+  it('leans towards the pointer, from the left and top (-1) to the right and bottom (1)', async () => {
+    const host = root();
+    Object.defineProperty(window, 'innerWidth', { value: 1000, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
+
+    host.dispatchEvent(new MouseEvent('pointermove', { clientX: 1000, clientY: 0, bubbles: true }));
+    await fixture.whenStable();
+
+    expect(host.style.getPropertyValue('--mx')).toBe('1');
+    expect(host.style.getPropertyValue('--my')).toBe('-1');
   });
 
   it('lists three small facts along the bottom, the greetings in the middle', () => {
