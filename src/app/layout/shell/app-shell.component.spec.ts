@@ -126,10 +126,10 @@ describe('AppShellComponent (container)', () => {
         ...root().querySelectorAll('nav.tabs .p-menubar-root-list > li > .p-menubar-item-content'),
       ].map((c) => c.querySelector('.p-menubar-item-label')?.textContent?.trim());
 
-    it('has the brand across the top, and the pages and one More menu along the bottom, with the profile, the dark theme and Sign out inside it', async () => {
+    it('has only the pages and one More menu, along the bottom, nothing across the top, with the profile, the dark theme and Sign out inside it', async () => {
       await render();
 
-      expect(root().querySelector('header.brandbar a.brand')?.textContent?.trim()).toBe('Jtalk');
+      expect(root().querySelector('header.brandbar')).toBeNull();
       expect(rootLabels()).toEqual(['Rooms', 'People', 'More']);
       expect(
         [...root().querySelectorAll('nav.tabs .p-menubar-submenu .p-menubar-item-label')].map((l) =>
@@ -285,7 +285,6 @@ describe('AppShellComponent (container)', () => {
       await router.navigateByUrl('/rooms/r-1');
       await fixture.whenStable();
       expect(root().querySelector('nav.tabs')).toBeNull();
-      expect(root().querySelector('header.brandbar')).toBeNull();
       expect(root().querySelector('main')?.classList.contains('with-tabs')).toBe(false);
 
       await router.navigateByUrl('/section');

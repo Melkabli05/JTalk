@@ -38,8 +38,8 @@
   z-index: 20;
 }
 
-// The sidebar is the library's own menu, with the Go live card and the account below it. Under 64rem it is replaced by a slim bar with the
-// brand across the top and the tabs at the bottom, where a thumb reaches. Only the layout is ours.
+// The sidebar is the library's own menu, with the Go live card and the account below it. Under 64rem it is replaced by tabs along the
+// bottom, where a thumb reaches, and nothing across the top. Only the layout is ours.
 .rail {
   grid-area: rail;
 }
@@ -60,20 +60,6 @@
 
 .rail .brand {
   padding: 0.25rem 0.75rem 1rem;
-}
-
-.brandbar {
-  grid-area: rail;
-  position: sticky;
-  inset-block-start: 0;
-  z-index: 5;
-  padding: 0.75rem t.$gutter;
-  border-block-end: 1px solid var(--p-content-border-color);
-  background: var(--p-content-background);
-
-  @media (min-width: 64rem) {
-    display: none;
-  }
 }
 
 .tabs {
@@ -107,7 +93,7 @@
   inline-size: 100%;
   max-inline-size: t.$content-width + 2 * t.$gutter;
   margin-inline: auto;
-  padding: 0.75rem t.$gutter 2rem;
+  padding: calc(0.75rem + env(safe-area-inset-top)) t.$gutter 2rem;
 
   @media (min-width: 48rem) {
     padding-block-start: 1.5rem;

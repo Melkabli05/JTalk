@@ -27,9 +27,6 @@
 </app-sidebar>
 
 @if (!onRoomAddress()) {
-  <header class="brandbar">
-    <ng-container [ngTemplateOutlet]="brand" />
-  </header>
   <nav class="tabs" aria-label="Primary" appAriaCurrent>
     <p-menubar breakpoint="0px" [model]="topItems()" ariaLabel="Primary" />
   </nav>
