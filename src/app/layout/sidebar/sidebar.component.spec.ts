@@ -52,6 +52,23 @@ describe('SidebarComponent (presentational)', () => {
     expect(asked).toHaveBeenCalledOnce();
   });
 
+  it('turns the Go live card into the way back while the person is in a room', async () => {
+    await render({ room: { title: 'Spanish coffee' } });
+    const back = vi.fn();
+    const start = vi.fn();
+    fixture.componentInstance.backToRoom.subscribe(back);
+    fixture.componentInstance.startRoom.subscribe(start);
+    const card = root().querySelector<HTMLElement>('.go-live')!;
+
+    expect(card.textContent).toContain('You are in a room');
+    expect(card.textContent).toContain('Spanish coffee');
+    expect(card.textContent).not.toContain('Start a room');
+    card.querySelector('button')!.click();
+
+    expect(back).toHaveBeenCalledOnce();
+    expect(start).not.toHaveBeenCalled();
+  });
+
   it('shows who is signed in and says where the account was pressed', async () => {
     await render({ name: 'Mona Hassan', languages: '🇦🇷 → 🇬🇧' });
     const pressed = vi.fn();

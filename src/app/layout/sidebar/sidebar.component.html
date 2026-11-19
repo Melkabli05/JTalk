@@ -4,18 +4,30 @@
   </p-menu>
 </nav>
 
-<p-card class="go-live" [attr.aria-label]="'Go live' | t">
-  <ng-template #title>{{ 'Go live' | t }}</ng-template>
-  <ng-template #subtitle>{{ 'Start a room and let people practise with you.' | t }}</ng-template>
+<p-card class="go-live" [attr.aria-label]="heading() | t">
+  <ng-template #title>{{ heading() | t }}</ng-template>
+  <ng-template #subtitle>
+    {{ room()?.title ?? ('Start a room and let people practise with you.' | t) }}
+  </ng-template>
   <ng-template #footer>
-    <button
-      pButton
-      type="button"
-      icon="pi pi-plus"
-      [fluid]="true"
-      [label]="'Start a room' | t"
-      (click)="startRoom.emit()"
-    ></button>
+    @if (room()) {
+      <button
+        pButton
+        type="button"
+        [fluid]="true"
+        [label]="'Back to the room' | t"
+        (click)="backToRoom.emit()"
+      ></button>
+    } @else {
+      <button
+        pButton
+        type="button"
+        icon="pi pi-plus"
+        [fluid]="true"
+        [label]="'Start a room' | t"
+        (click)="startRoom.emit()"
+      ></button>
+    }
   </ng-template>
 </p-card>
 

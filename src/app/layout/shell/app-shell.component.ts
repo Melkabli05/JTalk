@@ -37,7 +37,6 @@ import { msg } from '@shared/utils/i18n/msg';
 import { languageOf } from '@shared/utils/languages';
 import { saveRequest } from '@shared/utils/save-request';
 import { Popover } from '@openng/optimus-ui/popover';
-import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { ToggleSwitch } from '@openng/optimus-ui/toggleswitch';
 
 const NAV_ITEMS: MenuItem[] = [
@@ -85,7 +84,6 @@ function readRoute(root: ActivatedRouteSnapshot): { breadcrumbs: MenuItem[]; wid
     Breadcrumb,
     ButtonDirective,
     ProgressBar,
-    Tooltip,
     AriaCurrentDirective,
     BrandMarkComponent,
     NgTemplateOutlet,
@@ -118,8 +116,12 @@ export class AppShellComponent {
   protected readonly navItems = computed(() => this.translated(NAV_ITEMS));
   // Across the top (a phone) the words are enough, with no icons, so four fit on one row; there is no account card there, so the
   // settings are one more item.
-  protected readonly topItems = computed(() =>
-    [
+  protected readonly topItems = computed(() => {
+    const live = this.liveRoom();
+    return [
+      ...(live
+        ? this.translated([{ label: msg('Back to the room'), routerLink: ['/rooms', live.id] }])
+        : []),
       ...this.navItems(),
       ...this.translated([
         {
@@ -127,8 +129,8 @@ export class AppShellComponent {
           command: ({ originalEvent }) => this.settings().toggle(originalEvent),
         },
       ]),
-    ].map((item) => ({ ...item, icon: undefined })),
-  );
+    ].map((item) => ({ ...item, icon: undefined }));
+  });
   private readonly settings = viewChild.required(Popover);
 
   protected readonly navigating = computed(() => !!this.router.currentNavigation());
@@ -163,6 +165,13 @@ export class AppShellComponent {
 
   private translated(items: readonly MenuItem[]): MenuItem[] {
     return items.map((item) => ({ ...item, label: this.i18n.t(item.label ?? '') }));
+  }
+
+  protected backToRoom(): void {
+    const live = this.liveRoom();
+    if (live) {
+      void this.router.navigate(['/rooms', live.id]);
+    }
   }
 
   protected startRoom(): void {

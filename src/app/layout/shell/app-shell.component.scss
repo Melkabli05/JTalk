@@ -5,18 +5,15 @@
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
     'rail'
-    'bar'
     'main';
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto 1fr;
   min-height: 100dvh;
 
   // The sidebar takes a column of its own once there is room for it; below that it becomes a row across the top.
   @media (min-width: 64rem) {
     grid-template-columns: 15.5rem minmax(0, 1fr);
-    grid-template-areas:
-      'rail bar'
-      'rail main';
-    grid-template-rows: auto 1fr;
+    grid-template-areas: 'rail main';
+    grid-template-rows: 1fr;
   }
 }
 
@@ -66,18 +63,6 @@
 
   @media (min-width: 64rem) {
     display: none;
-  }
-}
-
-.bar {
-  grid-area: bar;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem t.$gutter 0;
-
-  @media (min-width: 64rem) {
-    padding-block-start: 1.5rem;
   }
 }
 
@@ -142,43 +127,4 @@
   justify-content: space-between;
   gap: 1rem;
   min-block-size: 2.75rem;
-}
-
-// The room they are still in while they look elsewhere. Forest means live, so the dot beats; the title is cut short, the full one is in
-// the label and the tooltip.
-.live-room {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  max-inline-size: 12rem;
-  margin-inline-end: 0.5rem;
-
-  @media (max-width: 40rem) {
-    max-inline-size: 7.5rem;
-  }
-}
-
-.live-dot {
-  flex: none;
-  inline-size: 0.5rem;
-  block-size: 0.5rem;
-  border-radius: 50%;
-  background: var(--p-jtalk-brand);
-
-  @media (prefers-reduced-motion: no-preference) {
-    animation: live-beat 1.2s ease-in-out infinite;
-  }
-}
-
-.live-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-@keyframes live-beat {
-  50% {
-    transform: scale(1.6);
-    opacity: 0.55;
-  }
 }

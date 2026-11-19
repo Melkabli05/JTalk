@@ -97,7 +97,7 @@ describe('AppShellComponent (container)', () => {
     expect(brand.getAttribute('href')).toBe('/');
   });
 
-  it('keeps the account in the sidebar: there is no top bar until there is a room to go back to', async () => {
+  it('keeps the account in the sidebar: there is no top bar at all', async () => {
     await render();
 
     expect(root().querySelector('header.bar')).toBeNull();
@@ -201,7 +201,12 @@ describe('AppShellComponent (container)', () => {
   });
 
   describe('the room the person is still in', () => {
-    const badge = () => root().querySelector<HTMLAnchorElement>('a.live-room');
+    const card = () => root().querySelector<HTMLElement>('app-sidebar .go-live')!;
+    const back = () => card().querySelector<HTMLButtonElement>('button')!;
+    const onThePhone = () =>
+      [...root().querySelectorAll<HTMLAnchorElement>('nav.top [role="menuitem"] a')].find((a) =>
+        a.textContent?.includes('Back to the room'),
+      );
 
     async function renderWithRoutes() {
       TestBed.resetTestingModule();
@@ -218,25 +223,41 @@ describe('AppShellComponent (container)', () => {
       return TestBed.inject(Router);
     }
 
-    it('offers a way back to it from any other page, and not on its own page', async () => {
+    it('turns the Go live card into the way back to it on any other page, and not on its own page', async () => {
       const router = await renderWithRoutes();
       const active = TestBed.inject(ActiveRoomService);
-      expect(badge()).toBeNull();
+      expect(card().textContent).toContain('Go live');
+      expect(back().textContent).toContain('Start a room');
 
       active.set({ id: 'r-1', title: 'Spanish coffee' });
       await router.navigateByUrl('/section');
       await fixture.whenStable();
-      expect(badge()?.textContent).toContain('Spanish coffee');
-      expect(badge()?.getAttribute('href')).toBe('/rooms/r-1');
-      expect(badge()?.getAttribute('aria-label')).toBe('Back to the room: Spanish coffee');
+      expect(card().textContent).toContain('You are in a room');
+      expect(card().textContent).toContain('Spanish coffee');
+      expect(back().textContent).toContain('Back to the room');
 
-      await router.navigateByUrl('/rooms/r-1');
+      back().click();
       await fixture.whenStable();
-      expect(badge()).toBeNull();
+      expect(router.url).toBe('/rooms/r-1');
+      expect(back().textContent).toContain('Start a room');
 
       await router.navigateByUrl('/section');
       await fixture.whenStable();
-      expect(badge()).not.toBeNull();
+      expect(back().textContent).toContain('Back to the room');
+    });
+
+    it('offers the same way back in the menubar across the top, on a phone', async () => {
+      const router = await renderWithRoutes();
+      expect(onThePhone()).toBeUndefined();
+
+      TestBed.inject(ActiveRoomService).set({ id: 'r-1', title: 'Spanish coffee' });
+      await router.navigateByUrl('/section');
+      await fixture.whenStable();
+
+      expect(onThePhone()?.getAttribute('href')).toBe('/rooms/r-1');
+      await router.navigateByUrl('/rooms/r-1');
+      await fixture.whenStable();
+      expect(onThePhone()).toBeUndefined();
     });
 
     it('is gone once the room is left', async () => {
@@ -245,23 +266,13 @@ describe('AppShellComponent (container)', () => {
       active.set({ id: 'r-1', title: 'Spanish coffee' });
       await router.navigateByUrl('/section');
       await fixture.whenStable();
-      expect(badge()).not.toBeNull();
+      expect(back().textContent).toContain('Back to the room');
 
       active.set(null);
       await fixture.whenStable();
 
-      expect(badge()).toBeNull();
-    });
-
-    it('is a link in the page, before the account button, that a keyboard reaches', async () => {
-      const router = await renderWithRoutes();
-      TestBed.inject(ActiveRoomService).set({ id: 'r-1', title: 'Spanish coffee' });
-      await router.navigateByUrl('/section');
-      await fixture.whenStable();
-
-      const bar = root().querySelector('header.bar')!;
-      expect([...bar.querySelectorAll('a, button')][0]).toBe(badge());
-      expect(badge()?.tabIndex).toBeGreaterThanOrEqual(0);
+      expect(back().textContent).toContain('Start a room');
+      expect(onThePhone()).toBeUndefined();
     });
   });
 

@@ -46,7 +46,11 @@ describe('Staying in a room while looking at other pages', () => {
   let sent: { method: string; url: string }[];
   let harness: RouterTestingHarness;
   const page = () => harness.routeNativeElement!;
-  const badge = () => page().querySelector<HTMLAnchorElement>('a.live-room');
+  /** The way back to the room: the sidebar's Go live card turns into it while the person is in a room elsewhere. */
+  const badge = () =>
+    [...page().querySelectorAll<HTMLButtonElement>('app-sidebar .go-live button')].find((b) =>
+      b.textContent?.includes('Back to the room'),
+    ) ?? null;
   const count = (method: string, suffix: string) =>
     sent.filter((r) => r.method === method && r.url.endsWith(suffix)).length;
 
@@ -117,7 +121,7 @@ describe('Staying in a room while looking at other pages', () => {
     harness = await RouterTestingHarness.create();
   });
 
-  it('keeps the room, its audio and the person in it when they go to another page, shows a way back in the header, and returns to the same room', async () => {
+  it('keeps the room, its audio and the person in it when they go to another page, shows a way back in the sidebar, and returns to the same room', async () => {
     await go('/rooms/r-1');
     expect(count('POST', '/participants/join')).toBe(1);
     expect(page().textContent).toContain('Spanish coffee');
@@ -128,7 +132,7 @@ describe('Staying in a room while looking at other pages', () => {
     expect(TestBed.inject(Router).url).toBe('/people');
     expect(count('POST', '/participants/leave'), 'nobody was told the person left').toBe(0);
     expect(link.last.disconnected, 'the audio is still connected').toBe(false);
-    expect(badge()?.textContent).toContain('Spanish coffee');
+    expect(page().querySelector('app-sidebar .go-live')?.textContent).toContain('Spanish coffee');
 
     await go('/profile');
     expect(badge(), 'and on every other page').not.toBeNull();

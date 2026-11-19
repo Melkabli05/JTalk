@@ -21,7 +21,9 @@
   [name]="identity.profile()?.name ?? ''"
   [languages]="myLanguages()"
   [picture]="myPicture()"
+  [room]="liveRoom()"
   (startRoom)="startRoom()"
+  (backToRoom)="backToRoom()"
   (settings)="settings.toggle($event)"
 >
   <ng-container ngProjectAs="[brand]" [ngTemplateOutlet]="brand" />
@@ -32,27 +34,6 @@
     <ng-template #start><ng-container [ngTemplateOutlet]="brand" /></ng-template>
   </p-menubar>
 </nav>
-
-@if (liveRoom(); as live) {
-  <header class="bar">
-    @let back = 'Back to the room: {title}' | t: { title: live.title };
-    <a
-      pButton
-      class="live-room"
-      size="small"
-      severity="primary"
-      [rounded]="true"
-      [outlined]="true"
-      [routerLink]="['/rooms', live.id]"
-      [attr.aria-label]="back"
-      [pTooltip]="back"
-      tooltipPosition="bottom"
-    >
-      <span class="live-dot" aria-hidden="true"></span>
-      <span class="live-title">{{ live.title }}</span>
-    </a>
-  </header>
-}
 
 <p-popover #settings appendTo="body" [ariaLabel]="'Profile and settings' | t">
   <div class="settings">
