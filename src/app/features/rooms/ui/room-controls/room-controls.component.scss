@@ -58,9 +58,11 @@
   background: var(--p-content-border-color);
 }
 
-button.hand {
-  min-inline-size: 9rem;
-  justify-content: center;
+@container dock (min-width: 30rem) {
+  button.hand {
+    min-inline-size: 9rem;
+    justify-content: center;
+  }
 }
 
 @keyframes note-in {
@@ -76,4 +78,31 @@ p-toolbar {
   justify-content: center;
   inline-size: fit-content;
   max-inline-size: 100%;
+}
+
+// On a phone the dock is five round buttons spread across the width, without a capsule around them, as the owner's picture has it.
+@container dock (max-width: 30rem) {
+  p-toolbar {
+    inline-size: 100%;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    --p-toolbar-padding: 0;
+  }
+
+  .controls {
+    inline-size: 100%;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .controls button:not(.hand):not(.leave) {
+    border-color: transparent;
+    background: var(--p-content-background);
+    box-shadow: var(--p-jtalk-elevation-1);
+  }
 }

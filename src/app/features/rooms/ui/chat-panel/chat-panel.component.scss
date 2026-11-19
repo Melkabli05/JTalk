@@ -220,9 +220,9 @@
   background: var(--p-jtalk-brand);
 }
 
-// On the page the discussion is a card of its own. Trimmed, it is the last few messages as tall as they are; otherwise it fills the
-// height it is given and the thread scrolls inside it.
-.framed {
+// Beside the room the discussion is a card of its own and fills the height it is given, the thread scrolling inside it. Under the room
+// (trimmed) it is the last few messages as tall as they are, each a card of its own, as the owner's picture has them.
+.framed:not(.trimmed) {
   padding: 1rem;
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-jtalk-radius-card);
@@ -232,22 +232,104 @@
 .trimmed {
   block-size: auto;
 
+  .head {
+    margin-block-end: 0.25rem;
+
+    h2 {
+      font-size: var(--p-jtalk-type-body);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .count {
+      font-size: var(--p-jtalk-type-metadata);
+      white-space: nowrap;
+    }
+
+    .expand {
+      border-color: var(--p-content-border-color);
+      color: var(--p-text-color);
+      font-weight: 600;
+    }
+  }
+
   .feed {
     flex: none;
   }
 
   .messages {
+    display: grid;
+    gap: 0.75rem;
     overflow: visible;
   }
-}
 
-.replying {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0;
-  color: var(--p-text-muted-color);
-  font-size: var(--p-jtalk-type-secondary);
+  .message-item {
+    padding: 0.75rem 0.875rem;
+    border: 1px solid var(--p-content-border-color);
+    border-radius: 1.25rem;
+    background: var(--p-content-background);
+  }
+
+  app-person-avatar {
+    padding: 0;
+    border: 0;
+  }
+
+  .bubble {
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    font-size: var(--p-jtalk-type-body);
+  }
+
+  .meta {
+    margin-block-end: 0.125rem;
+  }
+
+  .author {
+    font-size: var(--p-jtalk-type-body);
+  }
+
+  .chip,
+  .add-reaction {
+    min-block-size: 0;
+    block-size: 1.75rem;
+    font-size: var(--p-jtalk-type-secondary);
+  }
+
+  .chip {
+    padding-inline: 0.625rem;
+    border: 1px solid var(--p-content-border-color);
+    background: var(--p-content-background);
+    color: var(--p-text-color);
+  }
+
+  .add-reaction {
+    inline-size: 1.75rem;
+    min-inline-size: 0;
+    padding: 0;
+    border: 1px dashed var(--p-content-border-color);
+  }
+
+  .reply {
+    margin-inline-start: auto;
+    color: var(--p-text-muted-color);
+  }
+
+  .write {
+    padding: 0.25rem;
+    border: 1px solid var(--p-content-border-color);
+    border-radius: var(--p-jtalk-radius-pill);
+    background: var(--p-content-background);
+
+    app-textarea-field {
+      --p-textarea-background: transparent;
+      --p-textarea-border-color: transparent;
+      --p-textarea-hover-border-color: transparent;
+      --p-textarea-focus-border-color: transparent;
+      --p-textarea-shadow: none;
+    }
+  }
 }
 
 .chip {

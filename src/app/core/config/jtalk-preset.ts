@@ -535,7 +535,11 @@ export const JtalkPreset = definePreset(Aura, {
             display: none;
           }
           .p-button.hand {
-            min-inline-size: 0;
+            inline-size: 3rem;
+            padding-inline: 0;
+          }
+          .p-button.hand .p-button-label {
+            display: none;
           }
         }
       `,

@@ -17,6 +17,10 @@
   margin: 0;
   font-size: var(--p-jtalk-type-section);
   font-weight: 700;
+
+  @media (max-width: 40rem) {
+    font-size: var(--p-jtalk-type-card);
+  }
 }
 
 .hint {

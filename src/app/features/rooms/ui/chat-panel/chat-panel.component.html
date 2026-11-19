@@ -6,9 +6,11 @@
 >
   @if (framed()) {
     <header class="head">
-      <span class="dot" aria-hidden="true"></span>
       <h2>Live Discussion</h2>
-      <span class="count">{{ comments().length }} messages</span>
+      <span class="dot" aria-hidden="true"></span>
+      <p-tag class="count" severity="secondary" [rounded]="true"
+        >{{ comments().length }} messages</p-tag
+      >
       @if (compact()) {
         <button
           pButton
@@ -178,12 +180,12 @@
                   [attr.aria-label]="replyLabel"
                   (click)="reply(comment)"
                 ></button>
-                @if (comment.type === 'TEXT' && comment.authorId !== meId()) {
+                @if (!compact() && comment.type === 'TEXT' && comment.authorId !== meId()) {
                   @let correctLabel = `Correct ${nameOf(comment.authorId)}`;
                   <button
                     pButton
                     type="button"
-                    class="reply"
+                    class="correct"
                     size="small"
                     icon="pi pi-pencil"
                     label="Correct"
@@ -314,6 +316,7 @@
           type="submit"
           class="send"
           icon="pi pi-arrow-up"
+          [severity]="compact() ? 'secondary' : 'primary'"
           [rounded]="true"
           [disabled]="submitting()"
           aria-label="Send"

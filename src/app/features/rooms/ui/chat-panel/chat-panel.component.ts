@@ -15,6 +15,7 @@ import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Message } from '@openng/optimus-ui/message';
 import { Popover } from '@openng/optimus-ui/popover';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
+import { Tag } from '@openng/optimus-ui/tag';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import type { Person } from '@core/auth/identity.models';
 import { TextFieldComponent } from '@shared/ui/text-field/text-field.component';
@@ -58,6 +59,7 @@ const CLOCK_MS = 30_000;
     Popover,
     ReactionPickerComponent,
     Skeleton,
+    Tag,
     TextareaFieldComponent,
     TextFieldComponent,
     Tooltip,

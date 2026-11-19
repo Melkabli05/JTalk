@@ -129,6 +129,7 @@ let nextId = 0;
               [rounded]="true"
               [disabled]="busy()"
               label="Raise hand"
+              aria-label="Raise hand"
               [attr.aria-pressed]="handRaised()"
               (click)="handRaised() ? lowerHand.emit() : raiseHand.emit()"
             ></button>

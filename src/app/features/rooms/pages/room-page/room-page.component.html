@@ -104,12 +104,18 @@
       </section>
 
       <section class="stage" aria-labelledby="stage-heading">
-        <h2 id="stage-heading" class="section-head">
-          On stage
-          <p-tag severity="secondary" [rounded]="true">
-            {{ state.speakers().length }}/{{ current.maxStageSeats }}
+        <div class="stage-head">
+          <h2 id="stage-heading" class="section-head">
+            Stage
+            <p-tag severity="secondary" [rounded]="true"
+              >{{ state.speakers().length }} on stage</p-tag
+            >
+          </h2>
+          <p-tag class="live-tag" severity="danger" [rounded]="true">
+            <span class="live-dot" aria-hidden="true"></span>
+            Live
           </p-tag>
-        </h2>
+        </div>
         <app-stage-seats
           [speakers]="state.speakers()"
           [seats]="current.maxStageSeats"
