@@ -67,29 +67,6 @@ describe('RoomControlsComponent (presentational)', () => {
     expect(names()).toEqual(['Unmute', 'Chat', 'React', 'Leave quietly']);
   });
 
-  it('gives the host the room’s own tools, and nobody else', async () => {
-    const asked: string[] = [];
-    await render({ canSpeak: true, audio: 'connected', onStage: true, micOn: true, isHost: true });
-    fixture.componentInstance.editRoom.subscribe(() => asked.push('edit'));
-    fixture.componentInstance.endRoom.subscribe(() => asked.push('end'));
-
-    expect(names()).toEqual([
-      'Mute',
-      'Chat',
-      'React',
-      'Edit the room',
-      'End the room',
-      'Leave quietly',
-    ]);
-    click('Edit the room');
-    click('End the room');
-    expect(asked).toEqual(['edit', 'end']);
-
-    fixture.componentRef.setInput('isHost', false);
-    await fixture.whenStable();
-    expect(names()).toEqual(['Mute', 'Chat', 'React', 'Leave quietly']);
-  });
-
   it('asks for a tap to turn the sound on only while the browser blocks it', async () => {
     const enabled = vi.fn();
     await render({ soundBlocked: true });

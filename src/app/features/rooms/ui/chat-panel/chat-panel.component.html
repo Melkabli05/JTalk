@@ -199,11 +199,12 @@
                     class="correct"
                     size="small"
                     icon="pi pi-pencil"
-                    label="Correct"
                     severity="secondary"
                     [text]="true"
                     [rounded]="true"
                     [attr.aria-label]="correctLabel"
+                    [pTooltip]="correctLabel"
+                    tooltipPosition="top"
                     (click)="reply(comment, true)"
                   ></button>
                 }

@@ -173,38 +173,6 @@ let nextId = 0;
             tooltipPosition="top"
             (click)="picker.toggle($event)"
           ></button>
-          @if (isHost()) {
-            @let editLabel = 'Edit the room';
-            <button
-              pButton
-              type="button"
-              class="host-action room-edit"
-              size="large"
-              icon="pi pi-pencil"
-              severity="secondary"
-              [outlined]="true"
-              [rounded]="true"
-              [attr.aria-label]="editLabel"
-              [pTooltip]="editLabel"
-              tooltipPosition="top"
-              (click)="editRoom.emit()"
-            ></button>
-            @let endLabel = 'End the room';
-            <button
-              pButton
-              type="button"
-              class="host-action room-end"
-              size="large"
-              icon="pi pi-stop-circle"
-              severity="danger"
-              [outlined]="true"
-              [rounded]="true"
-              [attr.aria-label]="endLabel"
-              [pTooltip]="endLabel"
-              tooltipPosition="top"
-              (click)="endRoom.emit()"
-            ></button>
-          }
           <span class="divider" aria-hidden="true"></span>
           @let leaveLabel = 'Leave quietly';
           <button
@@ -242,12 +210,8 @@ export class RoomControlsComponent {
   readonly micRefused = input(false);
   readonly unread = input(0);
   readonly chatShown = input(true);
-  /** The host's own tools: on a phone, where the header has no room for them, they sit in the dock. */
-  readonly isHost = input(false);
 
   readonly leave = output<void>();
-  readonly editRoom = output<void>();
-  readonly endRoom = output<void>();
   readonly stepDown = output<void>();
   readonly raiseHand = output<void>();
   readonly lowerHand = output<void>();

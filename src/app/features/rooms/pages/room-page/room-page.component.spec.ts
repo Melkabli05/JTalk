@@ -69,7 +69,14 @@ describe('RoomPageComponent (container)', () => {
       .click();
   const controlNames = () =>
     [...root().querySelectorAll('app-room-controls button')].map((b) => nameOf(b));
-  const pressHostAction = (label: string) => press(label, root().querySelector('header')!);
+  // The host's tools are in the header's ⋮ menu.
+  const pressHostAction = async (label: string) => {
+    root().querySelector<HTMLButtonElement>('header .more')!.click();
+    await settle();
+    [...document.querySelectorAll<HTMLElement>('.p-menu-item-link')]
+      .find((item) => item.textContent?.includes(label))!
+      .click();
+  };
   // Blocking is in the card's safety section, closed until it is opened.
   const pressSafety = async (label: string) => {
     page().querySelector<HTMLElement>('.safety .p-accordionheader')!.click();
@@ -228,7 +235,7 @@ describe('RoomPageComponent (container)', () => {
     ]);
   });
 
-  it('puts the page actions behind a menu button too, which a phone shows instead of the buttons', async () => {
+  it('puts the page actions behind the menu button in the header', async () => {
     await open();
     const more = root().querySelector<HTMLButtonElement>('header .more')!;
 
@@ -643,11 +650,16 @@ describe('RoomPageComponent (container)', () => {
   describe('as the host', () => {
     const asHost = { me: 'h-1' };
 
-    it('puts Edit the room and End the room in the header, and an Invite for each raised hand', async () => {
+    it('puts Edit the room and End the room in the header menu, and an Invite for each raised hand', async () => {
       await open(asHost);
 
-      const tools = [...root().querySelectorAll('header .host-tools button')].map(nameOf);
-      expect(tools).toEqual(['Edit the room', 'End the room']);
+      root().querySelector<HTMLButtonElement>('header .more')!.click();
+      await settle();
+      const tools = [...document.querySelectorAll('.p-menu-item-link')].map((i) =>
+        i.textContent?.trim(),
+      );
+      expect(tools).toEqual(['Share', 'Edit the room', 'End the room']);
+      expect(root().querySelector('header .host-tools')).toBeNull();
       expect(root().querySelector('app-raised-hands button')?.getAttribute('aria-label')).toBe(
         'Invite b-1 to the stage',
       );
@@ -798,7 +810,7 @@ describe('RoomPageComponent (container)', () => {
     it('ends the room only after asking, and goes back to the hallway', async () => {
       await open(asHost);
 
-      pressHostAction('End the room');
+      await pressHostAction('End the room');
       await settle();
       expect(page().textContent).toContain('The room closes for everyone in it.');
       expect(sent('DELETE', BASE)).toBe(false);
@@ -813,7 +825,7 @@ describe('RoomPageComponent (container)', () => {
     it('edits the room', async () => {
       await open(asHost);
 
-      pressHostAction('Edit the room');
+      await pressHostAction('Edit the room');
       await settle();
       const title = page().querySelector<HTMLInputElement>('app-room-form input')!;
       expect(title.value).toBe('Spanish for beginners');

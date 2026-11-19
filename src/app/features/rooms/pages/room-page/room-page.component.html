@@ -32,32 +32,6 @@
             aria-label="Share"
             (click)="share()"
           ></button>
-          @if (state.isHost()) {
-            <div class="host-tools" role="group" aria-label="Host controls">
-              <button
-                pButton
-                type="button"
-                icon="pi pi-pencil"
-                severity="secondary"
-                [rounded]="true"
-                [outlined]="true"
-                label="Edit"
-                aria-label="Edit the room"
-                (click)="editing.set(true)"
-              ></button>
-              <button
-                pButton
-                type="button"
-                icon="pi pi-stop-circle"
-                severity="danger"
-                [rounded]="true"
-                [outlined]="true"
-                label="End"
-                aria-label="End the room"
-                (click)="end()"
-              ></button>
-            </div>
-          }
         </div>
         <button
           pButton
@@ -181,9 +155,6 @@
           [canSpeak]="facade.audio.canSpeak()"
           [canStepDown]="canStepDownFromDock()"
           [chatShown]="phone()"
-          [isHost]="state.isHost()"
-          (editRoom)="editing.set(true)"
-          (endRoom)="end()"
           [micOn]="facade.audio.micOn()"
           [micRefused]="facade.audio.micRefused()"
           [soundBlocked]="facade.audio.soundBlocked()"

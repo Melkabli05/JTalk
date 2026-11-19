@@ -664,6 +664,17 @@ export const JtalkPreset = definePreset(Aura, {
       border-block-start: 0.14em solid currentColor;
       transform: rotate(-45deg);
     }
+    .pi-microphone.pi-slashed::before {
+      content: '';
+      display: inline-block;
+      inline-size: 1em;
+      block-size: 1em;
+      background: currentColor;
+      mask: url('/icons/microphone-slash.svg') center / contain no-repeat;
+    }
+    .pi-microphone.pi-slashed::after {
+      display: none;
+    }
 
     .p-tag, .p-badge, time {
       font-variant-numeric: tabular-nums;
