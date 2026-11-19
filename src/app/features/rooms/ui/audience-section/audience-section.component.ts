@@ -18,7 +18,7 @@ let nextId = 0;
           {{ 'Audience' | t }}
           <p-tag severity="secondary" [rounded]="true">{{ ids().length }}</p-tag>
         </h2>
-        @if (swipeable()) {
+        @if (swipeable() && ids().length > 0) {
           <span class="hint" aria-hidden="true"
             >{{ 'Swipe' | t }} <i class="pi pi-arrow-right"></i
           ></span>

@@ -56,6 +56,13 @@ describe('AudienceSectionComponent (presentational)', () => {
     ]);
   });
 
+  it('has nothing to swipe through, and says so, when nobody is in the audience', async () => {
+    await render([], { swipeable: true });
+
+    expect(root().querySelector('.hint')).toBeNull();
+    expect(root().querySelector('.empty')?.textContent).toContain('Nobody is listening yet.');
+  });
+
   it('says which of them is you', async () => {
     await render(['a', 'b']);
 

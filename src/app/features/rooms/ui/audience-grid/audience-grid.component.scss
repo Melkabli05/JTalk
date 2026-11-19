@@ -20,6 +20,10 @@
     inline-size: 6rem;
     scroll-snap-align: start;
   }
+
+  li.empty {
+    inline-size: 100%;
+  }
 }
 
 app-person-avatar {

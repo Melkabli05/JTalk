@@ -93,11 +93,13 @@
 </p-popover>
 
 <main id="main-content" class="main" [class.wide]="wide()" tabindex="-1">
-  <p-breadcrumb
-    class="breadcrumb"
-    [model]="breadcrumbs()"
-    [pt]="{ root: { 'aria-label': 'Breadcrumb' | t } }"
-  />
+  @if (breadcrumbs().length > 0) {
+    <p-breadcrumb
+      class="breadcrumb"
+      [model]="breadcrumbs()"
+      [pt]="{ root: { 'aria-label': 'Breadcrumb' | t } }"
+    />
+  }
   @if (!identity.needsProfile()) {
     <router-outlet />
   }
