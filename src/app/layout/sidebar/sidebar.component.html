@@ -22,11 +22,24 @@
             {{ 'for {language} speakers' | t: { language: look.native.name | t } }}
           </span>
         }
-        @if (current.topic) {
-          <span class="detail topic">{{ current.topic }}</span>
-        }
-        @if (current.hostName) {
-          <span class="detail">{{ 'Hosted by {name}' | t: { name: current.hostName } }}</span>
+        @if (host(); as lead) {
+          <span class="host">
+            @if (lead.picture; as image) {
+              <p-avatar shape="circle" aria-hidden="true" [image]="image" />
+            } @else {
+              <p-avatar
+                shape="circle"
+                aria-hidden="true"
+                [label]="lead.name | initials"
+                [style]="lead.colors"
+              />
+            }
+            <span class="who">
+              <strong>{{ lead.name }}</strong>
+              <small>{{ 'Host' | t }}</small>
+            </span>
+            <i class="pi pi-crown" aria-hidden="true"></i>
+          </span>
         }
         <span class="detail counts">
           <span class="stat"

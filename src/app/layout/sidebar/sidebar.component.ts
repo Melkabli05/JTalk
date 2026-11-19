@@ -6,18 +6,22 @@ import { Card } from '@openng/optimus-ui/card';
 import { Menu } from '@openng/optimus-ui/menu';
 import { Tag } from '@openng/optimus-ui/tag';
 import { AriaCurrentDirective } from '@shared/directives/aria-current.directive';
+import { InitialsPipe } from '@shared/pipes/initials.pipe';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { LiveWavesComponent } from '@shared/ui/live-waves/live-waves.component';
+import { avatarColors, avatarUrl } from '@shared/utils/avatars';
 import { msg } from '@shared/utils/i18n/msg';
 import { languageOf } from '@shared/utils/languages';
 
 /** What the Go live card says about the room the person is in. */
 export interface SidebarRoom {
   readonly title: string;
-  readonly topic: string;
   readonly targetLanguage: string;
   readonly nativeLanguage: string;
+  readonly hostId: string;
   readonly hostName: string;
+  /** The id of the picture they chose, or empty. */
+  readonly hostAvatar: string;
   readonly participantCount: number;
   readonly speakers: number;
   readonly seats: number;
@@ -35,6 +39,7 @@ export interface SidebarRoom {
     AriaCurrentDirective,
     ButtonDirective,
     Card,
+    InitialsPipe,
     LiveWavesComponent,
     Menu,
     Tag,
@@ -62,6 +67,18 @@ export class SidebarComponent {
     return (
       room && { target: languageOf(room.targetLanguage), native: languageOf(room.nativeLanguage) }
     );
+  });
+
+  /** The host as a face and a name: their picture, or their initials in the colour they are always drawn in. */
+  protected readonly host = computed(() => {
+    const room = this.room();
+    return room?.hostName
+      ? {
+          name: room.hostName,
+          picture: avatarUrl(room.hostAvatar),
+          colors: avatarColors(room.hostId),
+        }
+      : null;
   });
 
   protected readonly heading = computed(() =>

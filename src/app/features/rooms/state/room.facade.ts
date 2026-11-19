@@ -69,10 +69,11 @@ export class RoomFacade {
         this.active.set({
           id: this.state.roomId(),
           title: room.title,
-          topic: room.topic,
           targetLanguage: room.targetLanguage,
           nativeLanguage: room.nativeLanguage,
+          hostId: room.hostId,
           hostName: this.state.members().get(room.hostId)?.name ?? '',
+          hostAvatar: this.state.members().get(room.hostId)?.avatar ?? '',
           participantCount: room.participantCount,
           speakers: this.state.speakers().length,
           seats: room.maxStageSeats,

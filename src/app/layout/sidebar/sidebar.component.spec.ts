@@ -6,10 +6,11 @@ import { SidebarComponent } from './sidebar.component';
 
 const ROOM = {
   title: 'Spanish coffee',
-  topic: 'Ordering food',
   targetLanguage: 'es',
   nativeLanguage: 'en',
+  hostId: 'h-1',
   hostName: 'Hana',
+  hostAvatar: '',
   participantCount: 9,
   speakers: 3,
   seats: 6,
@@ -92,15 +93,14 @@ describe('SidebarComponent (presentational)', () => {
     expect(start).not.toHaveBeenCalled();
   });
 
-  it('says what the room is: its languages, topic, host and how busy it is', async () => {
+  it('says what the room is: its languages, its host and how busy it is, and not its description', async () => {
     await render({ room: ROOM });
     const card = root().querySelector<HTMLElement>('.go-live')!;
     const text = card.textContent?.replace(/\s+/g, ' ') ?? '';
 
     expect(text).toContain('Spanish');
     expect(text).toContain('for English speakers');
-    expect(text).toContain('Ordering food');
-    expect(text).toContain('Hosted by Hana');
+    expect(card.querySelector('.topic')).toBeNull();
     expect([...card.querySelectorAll('.stat')].map((el) => el.textContent?.trim())).toEqual([
       '9',
       '3/6',
@@ -110,12 +110,28 @@ describe('SidebarComponent (presentational)', () => {
     );
   });
 
-  it('leaves out the topic and the host when it does not have them', async () => {
-    await render({ room: { ...ROOM, topic: '', hostName: '' } });
-    const text = root().querySelector('.go-live')?.textContent ?? '';
+  it('shows the host as a face with their name and the word Host', async () => {
+    await render({ room: ROOM });
+    const host = root().querySelector<HTMLElement>('.go-live .host')!;
 
-    expect(text).not.toContain('Hosted by');
-    expect(root().querySelector('.go-live .topic')).toBeNull();
+    expect(host.querySelector('.who strong')?.textContent).toBe('Hana');
+    expect(host.querySelector('.who small')?.textContent).toBe('Host');
+    expect(host.querySelector('p-avatar')?.textContent?.trim()).toBe('H');
+    expect(host.querySelector('.pi-crown')).not.toBeNull();
+  });
+
+  it("draws the host's own picture when they chose one", async () => {
+    await render({ room: { ...ROOM, hostAvatar: 'avatar-03' } });
+
+    expect(root().querySelector('.go-live .host img')?.getAttribute('src')).toBe(
+      'avatars/avatar-03.svg',
+    );
+  });
+
+  it('leaves out the host until their name is known', async () => {
+    await render({ room: { ...ROOM, hostName: '' } });
+
+    expect(root().querySelector('.go-live .host')).toBeNull();
   });
 
   it('shows who is signed in and says where the account was pressed', async () => {
