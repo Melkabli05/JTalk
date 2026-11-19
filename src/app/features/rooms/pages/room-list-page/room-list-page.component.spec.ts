@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import RoomListPageComponent, { partOfDay } from './room-list-page.component';
+import RoomListPageComponent from './room-list-page.component';
 import { RoomStartService } from '@core/rooms/room-start.service';
 import { fakeIdentity } from '@core/auth/auth-testing';
 import { failUntilGivenUp, openFeed } from '../../data-access/room-feed-testing';
@@ -169,7 +169,9 @@ describe('RoomListPageComponent (container)', () => {
     await render(withRooms());
 
     expect(root().querySelector('.empty button')).toBeNull();
-    expect(root().querySelector('.hero button.start')?.textContent).toContain('Start a room');
+    expect(root().querySelector('app-hallway-greeting button.start')?.textContent).toContain(
+      'Start a room',
+    );
   });
 
   it('lets the person try again when the rooms could not be loaded', async () => {
@@ -301,13 +303,5 @@ describe('RoomListPageComponent (container)', () => {
       expect(document.body.textContent).toContain('Could not open the room.');
       expect(TestBed.inject(Router).url).toBe('/');
     });
-  });
-});
-
-describe('partOfDay', () => {
-  it('splits the day at noon and at six in the evening', () => {
-    expect([0, 5, 11].map(partOfDay)).toEqual(['morning', 'morning', 'morning']);
-    expect([12, 17].map(partOfDay)).toEqual(['afternoon', 'afternoon']);
-    expect([18, 23].map(partOfDay)).toEqual(['evening', 'evening']);
   });
 });

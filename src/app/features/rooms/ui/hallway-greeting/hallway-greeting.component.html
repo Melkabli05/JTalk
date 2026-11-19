@@ -1,0 +1,56 @@
+<p-card role="region" aria-labelledby="greeting">
+  <ng-template #title>
+    <h1 id="greeting">{{ greeting() | t: { name: name() } }}</h1>
+  </ng-template>
+  <ng-template #subtitle>{{ 'Join a conversation to practise a language.' | t }}</ng-template>
+
+  @if (rooms().length > 0) {
+    <div class="stats">
+      <p-tag
+        severity="secondary"
+        icon="pi pi-microphone"
+        [rounded]="true"
+        [value]="'Rooms open: {count}' | t: { count: rooms().length }"
+      />
+      <p-tag
+        severity="secondary"
+        icon="pi pi-users"
+        [rounded]="true"
+        [value]="'People in rooms: {count}' | t: { count: people() }"
+      />
+    </div>
+  }
+
+  @if (items().length > 0) {
+    <div class="suggestions" role="group" [attr.aria-label]="'Suggested for you' | t">
+      @for (item of items(); track item.key) {
+        <button
+          pButton
+          type="button"
+          size="small"
+          severity="secondary"
+          [outlined]="true"
+          [rounded]="true"
+          [icon]="item.icon"
+          [label]="item.words | t: item.params"
+          (click)="choose(item)"
+        ></button>
+      }
+    </div>
+  }
+
+  @if (languages().length > 1) {
+    <app-language-filter [languages]="languages()" [(selected)]="filter" />
+  }
+
+  <ng-template #footer>
+    <button
+      pButton
+      type="button"
+      class="start"
+      icon="pi pi-plus"
+      [label]="'Start a room' | t"
+      (click)="start.emit()"
+    ></button>
+  </ng-template>
+</p-card>

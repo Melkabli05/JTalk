@@ -2,29 +2,8 @@
   max-inline-size: 76rem;
 }
 
-.hero {
+app-hallway-greeting {
   margin-block-end: 2rem;
-}
-
-// Two quiet counts above the filter.
-.stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-block-end: 0.75rem;
-}
-
-h1 {
-  margin: 0;
-  font-size: var(--p-jtalk-type-hero);
-  line-height: 1.15;
-}
-
-// On a phone the sidebar's Go live card is not there, so the greeting carries the way to start a room.
-.start {
-  @media (min-width: 64rem) {
-    display: none;
-  }
 }
 
 .group h2 {
