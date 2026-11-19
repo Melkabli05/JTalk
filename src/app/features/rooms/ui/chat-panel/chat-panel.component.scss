@@ -20,6 +20,7 @@
   --chip-ink: #57534e;
   --dashed: #d6d3d1;
   --ring: #e7e5e4;
+  --brand-20: color-mix(in srgb, var(--p-jtalk-brand) 20%, transparent);
   --host-bg: rgb(255 255 255 / 0.8);
   --write-bg: rgb(255 255 255 / 0.9);
   display: flex;
@@ -151,12 +152,12 @@
   background: var(--card-bg);
 
   &.host {
-    border-color: color-mix(in srgb, var(--p-jtalk-brand) 20%, transparent);
+    border-color: var(--brand-20);
     background: var(--host-bg);
   }
 
   &.mine {
-    border-color: color-mix(in srgb, var(--p-jtalk-brand) 20%, transparent);
+    border-color: var(--brand-20);
     background: color-mix(in srgb, var(--p-jtalk-brand) 5%, transparent);
   }
 
@@ -306,7 +307,7 @@
   }
 
   &.mine {
-    border-color: color-mix(in srgb, var(--p-jtalk-brand) 20%, transparent);
+    border-color: var(--brand-20);
     background: color-mix(in srgb, var(--p-jtalk-brand) 10%, transparent);
     color: var(--p-jtalk-brand);
     font-weight: 700;
@@ -358,10 +359,6 @@
   &:focus-visible {
     background: var(--chip-bg);
     color: var(--ink);
-  }
-
-  &.danger:hover:not(:disabled) {
-    color: var(--p-jtalk-danger);
   }
 }
 
@@ -430,10 +427,6 @@
     min-block-size: 0;
     padding: 0;
   }
-}
-
-.trimmed .message-item app-person-avatar {
-  margin-block-start: 0.125rem;
 }
 
 // In the drawer the discussion is the sheet's whole content: the pinned topic is a band across the top, the thread scrolls under it, and the
@@ -506,7 +499,6 @@
     border: 0;
     background: none;
     box-shadow: none;
-    gap: 0.75rem;
   }
 
   .author {
