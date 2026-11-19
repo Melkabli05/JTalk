@@ -1,7 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
 import type { MenuItem } from '@openng/optimus-ui/api';
 import { Tag } from '@openng/optimus-ui/tag';
-import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 import { memberOf } from '../../utils/members';
@@ -12,7 +11,7 @@ import type { FloatingReaction } from '../../models/reaction.model';
 
 @Component({
   selector: 'app-audience-grid',
-  imports: [ModerationMenuComponent, PersonAvatarComponent, Tag, Tooltip, TranslatePipe],
+  imports: [ModerationMenuComponent, PersonAvatarComponent, Tag, TranslatePipe],
   template: `
     <ul class="audience" [class.row]="layout() === 'row'" [attr.aria-label]="'In the audience' | t">
       @for (person of people(); track person.member.id) {
@@ -32,16 +31,12 @@ import type { FloatingReaction } from '../../models/reaction.model';
             >
               <app-person-avatar
                 size="large"
-                tooltipPosition="top"
                 [member]="person.member"
                 [reaction]="person.reaction"
-                [pTooltip]="person.member.name"
               />
-              @if (layout() === 'row') {
-                <span class="name" aria-hidden="true">{{ person.member.name }}</span>
-                @if (person.me) {
-                  <p-tag severity="info" aria-hidden="true" [value]="'You' | t" />
-                }
+              <span class="name" aria-hidden="true">{{ person.member.name }}</span>
+              @if (person.me) {
+                <p-tag severity="info" aria-hidden="true" [value]="'You' | t" />
               }
               @if (person.reconnecting) {
                 <p-tag severity="secondary" icon="pi pi-sync" [value]="'Reconnecting' | t" />
@@ -58,7 +53,7 @@ import type { FloatingReaction } from '../../models/reaction.model';
 })
 export class AudienceGridComponent {
   readonly ids = input.required<readonly string[]>();
-  /** Faces only, or a row to swipe through with the names under the faces. */
+  /** A grid that wraps, or a row to swipe through. */
   readonly layout = input<'grid' | 'row'>('grid');
   readonly members = input.required<ReadonlyMap<string, Person>>();
   readonly meId = input<string | null>(null);

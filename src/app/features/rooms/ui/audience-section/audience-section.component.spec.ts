@@ -33,15 +33,18 @@ describe('AudienceSectionComponent (presentational)', () => {
     expect(root().querySelectorAll('app-audience-grid .person')).toHaveLength(3);
   });
 
-  it('shows faces in a grid where there is room, with no hint to swipe', async () => {
+  it('wraps the people into a grid where there is room, with no hint to swipe, and their names', async () => {
     await render(['a', 'b']);
 
     expect(root().querySelector('.audience.row')).toBeNull();
     expect(root().querySelector('.hint')).toBeNull();
-    expect(root().querySelector('.name')).toBeNull();
+    expect([...root().querySelectorAll('.person .name')].map((n) => n.textContent)).toEqual([
+      'Person a',
+      'Person b',
+    ]);
   });
 
-  it('is a row to swipe through, with the names under the faces, on a phone', async () => {
+  it('is a row to swipe through on a phone', async () => {
     await render(['a', 'b'], { swipeable: true });
 
     expect(root().querySelector('.audience.row')).not.toBeNull();
@@ -53,8 +56,8 @@ describe('AudienceSectionComponent (presentational)', () => {
     ]);
   });
 
-  it('says which of them is you in the row', async () => {
-    await render(['a', 'b'], { swipeable: true });
+  it('says which of them is you', async () => {
+    await render(['a', 'b']);
 
     expect(root().querySelectorAll('.person p-tag')).toHaveLength(1);
     expect(root().querySelector('.person p-tag')?.textContent).toContain('You');

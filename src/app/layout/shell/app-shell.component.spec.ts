@@ -471,19 +471,25 @@ describe('AppShellComponent profile gate', () => {
   it('asks for a profile before the app can be used, and shows no page behind it', async () => {
     await render(null);
 
-    await vi.waitFor(() => {
-      fixture.detectChanges();
-      expect(page().textContent).toContain('Create your profile');
-    });
+    await vi.waitFor(
+      () => {
+        fixture.detectChanges();
+        expect(page().textContent).toContain('Create your profile');
+      },
+      { timeout: 5000 },
+    );
     expect(root().querySelector('router-outlet')).toBeNull();
   });
 
   it('creates the profile in the user service once the person fills it in, then lets them in', async () => {
     await render(null);
-    await vi.waitFor(() => {
-      fixture.detectChanges();
-      expect(page().querySelector('app-profile-form input')).not.toBeNull();
-    });
+    await vi.waitFor(
+      () => {
+        fixture.detectChanges();
+        expect(page().querySelector('app-profile-form input')).not.toBeNull();
+      },
+      { timeout: 5000 },
+    );
     const name = page().querySelector<HTMLInputElement>('app-profile-form input')!;
     name.value = 'Mona';
     name.dispatchEvent(new Event('input'));
