@@ -123,6 +123,36 @@ describe('SidebarComponent (presentational)', () => {
     expect(pressed).toHaveBeenCalledOnce();
   });
 
+  it('has a dark theme switch, named by the words beside it, that shows and asks for the theme', async () => {
+    await render({ dark: true });
+    const asked = vi.fn();
+    fixture.componentInstance.toggleDark.subscribe(asked);
+    const input = root().querySelector<HTMLInputElement>('.theme input')!;
+
+    expect(root().querySelector('.theme')?.textContent).toContain('Dark theme');
+    expect(input.getAttribute('aria-labelledby')).toBe('dark-label');
+    expect(input.checked).toBe(true);
+    input.click();
+
+    expect(asked).toHaveBeenCalledOnce();
+  });
+
+  it('has Sign out beside the account, one press away, named for screen readers', async () => {
+    await render({ name: 'Mona Hassan' });
+    const signOut = vi.fn();
+    const profile = vi.fn();
+    fixture.componentInstance.signOut.subscribe(signOut);
+    fixture.componentInstance.profile.subscribe(profile);
+    const button = root().querySelector<HTMLButtonElement>('button.sign-out')!;
+
+    expect(button.getAttribute('aria-label')).toBe('Sign out');
+    expect(button.closest('.me')?.querySelector('button.account')).not.toBeNull();
+    button.click();
+
+    expect(signOut).toHaveBeenCalledOnce();
+    expect(profile).not.toHaveBeenCalled();
+  });
+
   it('draws the picture they chose, or a plain icon when there is none', async () => {
     await render({ picture: 'avatars/avatar-06.svg' });
     expect(root().querySelector('button.account img')?.getAttribute('src')).toBe(

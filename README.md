@@ -2,7 +2,7 @@
 
 The web client for the `live-communication-service` backend (voice rooms, stage, hand raising). It starts from an empty
 Angular 22 skeleton: zoneless, signals, Signal Forms, lazy feature routes, functional guards and interceptors,
-[Optimus UI](https://optimus.openng.org) with a custom theme, Vitest, English with a right-to-left setting. What the skeleton keeps is
+[Optimus UI](https://optimus.openng.org) with a custom theme, Vitest, English only. What the skeleton keeps is
 the structure and its enforced rules (`CLAUDE.md`), the application shell, the Auth0 sign-in and the profile (`core/auth`), the theme
 `features/home` is a one-page placeholder for the first real page.
 
@@ -33,8 +33,7 @@ ask `IdentityService.resolve()` for the hosts, speakers and participants they ha
   pieces are the Signal Forms wrappers and the tiles.
 - **Accessible**: real heading structure, every control named (the Join button names its room, a seat is "Take free seat 3 of 4"), decorative avatars and
   flags hidden from screen readers, changes announced politely through the CDK `LiveAnnouncer` ("Maya joined the stage", "You raised your hand"),
-  focus moved to the room title on arrival, a sticky controls bar with large targets, status in words and not only dimming, and logical CSS so
-  right-to-left works.
+  focus moved to the room title on arrival, a sticky controls bar with large targets, status in words and not only dimming.
 - **Audio** (LiveKit): entering a room connects to its audio with the address and token the backend returns in the session. A
   speaker's microphone opens by itself (Mute/Unmute in the controls), listeners hear the stage, and the stage shows a ring around whoever is
   speaking. The server grants and takes away the right to speak while connected, so no token refresh is needed, and it pushes room events
@@ -284,21 +283,9 @@ and app code compiles with `noUncheckedIndexedAccess`. TypeScript stays on 6.0: 
 ## Notes
 
 - The initial-bundle warning is 800 kB raw (about 165 kB transferred): the Aura tokens and the Optimus shell components are bundled.
-- Not included: SSR (`ng add @angular/ssr`), translations (the app is English only; right-to-left is a setting, see below).
+- Not included: SSR (`ng add @angular/ssr`), translations or right-to-left (the app is English, left to right).
 
 ## Language
 
 English only: texts are written where they are shown, with no translation layer, and `<html lang="en">` is static. Dates, country
 names and numbers are formatted for English.
-
-## Right-to-left
-
-The `Right-to-left` switch on the profile page (in its Settings card, with dark theme and Sign out) switches the page between left-to-right and right-to-left. `DirectionService` (`core/config`) sets
-`<html dir>`, remembers the choice in `localStorage`, and a one-line script in `index.html` applies it before the first paint. Optimus follows `dir` by itself ([guide](https://optimus.openng.org/guides/rtl)); Galleria and
-Carousel are not supported there (not used here).
-
-- Use CSS logical properties (`margin-inline`, `padding-block`, `inset-inline`, `inline-size`), never `left`/`right`.
-- Text typed by users or written by the model gets `dir="auto"`; emails, phone numbers and codes get `<bdi>` or `dir="ltr"`.
-- Arrows and chevrons are mirrored by `:dir(rtl)` rules (the preset's `css` hook, and `styles.scss` for `pi-*` icons).
-- The CDK `Directionality` does not notice a runtime change of `<html dir>`, so the app does not use it.
-- English text in a right-to-left page keeps its punctuation on the wrong side: the setting is for people who read right to left, who also read mixed text.

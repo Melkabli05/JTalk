@@ -1,9 +1,12 @@
 import { Component, input, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MenuItem } from '@openng/optimus-ui/api';
 import { Avatar } from '@openng/optimus-ui/avatar';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
 import { Menu } from '@openng/optimus-ui/menu';
+import { ToggleSwitch } from '@openng/optimus-ui/toggleswitch';
+import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { AriaCurrentDirective } from '@shared/directives/aria-current.directive';
 import { LiveWavesComponent } from '@shared/ui/live-waves/live-waves.component';
 import {
@@ -24,8 +27,11 @@ import {
     ButtonDirective,
     Card,
     CurrentRoomCardComponent,
+    FormsModule,
     LiveWavesComponent,
     Menu,
+    ToggleSwitch,
+    Tooltip,
   ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
@@ -48,5 +54,10 @@ export class SidebarComponent {
   readonly startRoom = output<void>();
   readonly backToRoom = output<void>();
   /** The account at the foot was pressed: it opens the profile, which holds the settings too. */
+  /** Whether the page is in the dark theme, and the switch for it, in the rail so it is one press from any page. */
+  readonly dark = input(false);
+  readonly toggleDark = output<void>();
   readonly profile = output<void>();
+  /** Sign out was pressed, from anywhere: it is one press away beside the account. */
+  readonly signOut = output<void>();
 }

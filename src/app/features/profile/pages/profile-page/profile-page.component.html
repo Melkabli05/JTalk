@@ -23,36 +23,6 @@
     <app-profile-form [profile]="me" [busy]="saving.submitting()" (saved)="save($event)" />
   </p-card>
 
-  <p-card class="settings">
-    <h2>Settings</h2>
-    <div class="row">
-      <span id="dark-label">Dark theme</span>
-      <p-toggleswitch
-        ariaLabelledBy="dark-label"
-        [ngModel]="colorScheme.isDark()"
-        (ngModelChange)="colorScheme.toggle()"
-      />
-    </div>
-    <div class="row">
-      <span id="rtl-label">Right-to-left</span>
-      <p-toggleswitch
-        ariaLabelledBy="rtl-label"
-        [ngModel]="direction.isRtl()"
-        (ngModelChange)="direction.toggle()"
-      />
-    </div>
-    <button
-      pButton
-      type="button"
-      severity="secondary"
-      icon="pi pi-sign-out"
-      [outlined]="true"
-      [rounded]="true"
-      label="Sign out"
-      (click)="identity.signOut()"
-    ></button>
-  </p-card>
-
   <p-card class="danger">
     <h2>Delete your account</h2>
     <p class="lead">Remove your profile and everything that goes with it. This cannot be undone.</p>

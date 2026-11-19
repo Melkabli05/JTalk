@@ -22,6 +22,9 @@
   (startRoom)="startRoom()"
   (backToRoom)="backToRoom()"
   (profile)="openProfile()"
+  [dark]="colorScheme.isDark()"
+  (toggleDark)="colorScheme.toggle()"
+  (signOut)="identity.signOut()"
 >
   <ng-container ngProjectAs="[brand]" [ngTemplateOutlet]="brand" />
 </app-sidebar>

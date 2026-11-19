@@ -110,21 +110,6 @@
       0 26%
     );
 
-    &:dir(rtl) {
-      clip-path: polygon(
-        0 0,
-        100% 0,
-        100% 26%,
-        78% 26%,
-        78% 50%,
-        56% 50%,
-        56% 76%,
-        34% 76%,
-        34% 100%,
-        0 100%
-      );
-    }
-
     @media (prefers-reduced-motion: no-preference) {
       animation: arrive-top 1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
     }
@@ -147,21 +132,6 @@
       100% 100%,
       0 100%
     );
-
-    &:dir(rtl) {
-      clip-path: polygon(
-        66% 0,
-        100% 0,
-        100% 100%,
-        0 100%,
-        0 78%,
-        18% 78%,
-        18% 56%,
-        38% 56%,
-        38% 28%,
-        66% 28%
-      );
-    }
 
     @media (prefers-reduced-motion: no-preference) {
       animation: arrive-bottom 1s 0.15s cubic-bezier(0.2, 0.8, 0.2, 1) both;

@@ -40,9 +40,3 @@ a.p-button {
   justify-content: center;
   padding: 3rem 1rem;
 }
-
-.pi-send:dir(rtl),
-.pi-arrow-right:dir(rtl),
-.pi-arrow-left:dir(rtl) {
-  transform: scaleX(-1);
-}

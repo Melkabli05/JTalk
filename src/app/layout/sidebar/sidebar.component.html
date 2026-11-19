@@ -29,23 +29,47 @@
     </div>
   }
 
-  <button
-    pButton
-    type="button"
-    class="account"
-    severity="secondary"
-    [text]="true"
-    aria-label="Profile and settings"
-    (click)="profile.emit()"
-  >
-    @if (picture(); as image) {
-      <p-avatar shape="circle" size="normal" aria-hidden="true" [image]="image" />
-    } @else {
-      <p-avatar shape="circle" size="normal" aria-hidden="true" icon="pi pi-user" />
-    }
-    <span class="who" aria-hidden="true">
-      <strong>{{ name() }}</strong>
-      <small>{{ languages() }}</small>
-    </span>
-  </button>
+  <div class="theme">
+    <span id="dark-label">Dark theme</span>
+    <p-toggleswitch
+      ariaLabelledBy="dark-label"
+      [ngModel]="dark()"
+      (ngModelChange)="toggleDark.emit()"
+    />
+  </div>
+
+  <div class="me">
+    <button
+      pButton
+      type="button"
+      class="account"
+      severity="secondary"
+      [text]="true"
+      aria-label="Profile and settings"
+      (click)="profile.emit()"
+    >
+      @if (picture(); as image) {
+        <p-avatar shape="circle" size="normal" aria-hidden="true" [image]="image" />
+      } @else {
+        <p-avatar shape="circle" size="normal" aria-hidden="true" icon="pi pi-user" />
+      }
+      <span class="who" aria-hidden="true">
+        <strong>{{ name() }}</strong>
+        <small>{{ languages() }}</small>
+      </span>
+    </button>
+    <button
+      pButton
+      type="button"
+      class="sign-out"
+      icon="pi pi-sign-out"
+      severity="secondary"
+      pTooltip="Sign out"
+      tooltipPosition="top"
+      [text]="true"
+      [rounded]="true"
+      aria-label="Sign out"
+      (click)="signOut.emit()"
+    ></button>
+  </div>
 </div>

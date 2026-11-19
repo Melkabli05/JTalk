@@ -18,7 +18,6 @@ import { authHttpInterceptorFn, provideAuth0 } from '@auth0/auth0-angular';
 import { MessageService } from '@openng/optimus-ui/api';
 import { provideOptimus } from '@openng/optimus-ui/config';
 import { ColorSchemeService, DARK_CLASS } from '@core/config/color-scheme.service';
-import { DirectionService } from '@core/config/direction.service';
 import { JtalkPreset } from '@core/config/jtalk-preset';
 import { PageTitleStrategy } from '@core/config/page-title.strategy';
 import { GlobalErrorHandler } from '@core/error-handling/global-error-handler';
@@ -54,7 +53,6 @@ export const appConfig: ApplicationConfig = {
     MessageService,
     provideAppInitializer(() => {
       inject(ColorSchemeService);
-      inject(DirectionService);
     }),
     // A reload does not leave the room: the one this tab was in is joined again, without holding up the start of the app.
     provideAppInitializer(() => {

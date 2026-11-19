@@ -4,8 +4,6 @@ import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MessageService } from '@openng/optimus-ui/api';
 import { of } from 'rxjs';
 import { fakeAuth0 } from '@core/auth/auth-testing';
-import { ColorSchemeService } from '@core/config/color-scheme.service';
-import { DirectionService } from '@core/config/direction.service';
 import ProfilePageComponent from './profile-page.component';
 
 const profile = {
@@ -69,56 +67,6 @@ describe('ProfilePageComponent (container)', () => {
     expect(root().querySelector('p-progress-spinner')).toBeNull();
     expect(root().querySelector('app-profile-hero h1')?.textContent).toBe('Mona');
     expect(root().querySelector<HTMLInputElement>('app-profile-form input')?.value).toBe('Mona');
-  });
-
-  describe('the settings, which live on the profile', () => {
-    const toggle = (label: string) =>
-      [...root().querySelectorAll('.settings .row')]
-        .find((row) => row.textContent?.includes(label))!
-        .querySelector<HTMLInputElement>('input')!;
-
-    it('switches the color scheme from the dark theme switch', async () => {
-      await load();
-      const scheme = TestBed.inject(ColorSchemeService);
-      expect(toggle('Dark theme').checked).toBe(false);
-
-      toggle('Dark theme').click();
-      await settle();
-
-      expect(scheme.isDark()).toBe(true);
-      expect(toggle('Dark theme').checked).toBe(true);
-    });
-
-    it('switches the reading direction from the right-to-left switch', async () => {
-      await load();
-      const direction = TestBed.inject(DirectionService);
-
-      toggle('Right-to-left').click();
-      await settle();
-
-      expect(direction.isRtl()).toBe(true);
-      expect(document.documentElement.dir).toBe('rtl');
-      expect(toggle('Right-to-left').checked).toBe(true);
-      document.documentElement.dir = 'ltr';
-    });
-
-    it('names each switch for screen readers by the words beside it', async () => {
-      await load();
-
-      expect(toggle('Dark theme').getAttribute('aria-labelledby')).toBe('dark-label');
-      expect(toggle('Right-to-left').getAttribute('aria-labelledby')).toBe('rtl-label');
-    });
-
-    it('signs out through Auth0, which sends the person back to the app', async () => {
-      await load();
-
-      [...root().querySelectorAll<HTMLButtonElement>('.settings button')]
-        .find((b) => b.textContent?.includes('Sign out'))!
-        .click();
-      await settle();
-
-      expect(logout).toHaveBeenCalledTimes(1);
-    });
   });
 
   it('saves a change, shows the new profile and says so', async () => {

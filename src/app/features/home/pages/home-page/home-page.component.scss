@@ -64,10 +64,6 @@
   gap: 1rem;
   padding: 0 var(--edge) 0 0;
 
-  &:dir(rtl) {
-    padding: 0 0 0 var(--edge);
-  }
-
   .sign-in {
     justify-self: end;
     margin-block-start: 1.25rem;
@@ -95,11 +91,6 @@
   font-size: 1.0625rem;
   font-weight: 700;
   text-decoration: none;
-
-  &:dir(rtl) {
-    padding: 1rem var(--edge) 1.1rem 2.75rem;
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 14% 100%, 14% 72%, 8% 72%, 8% 46%, 0 46%);
-  }
 }
 
 main {
@@ -179,25 +170,12 @@ h1 {
     &.sand {
       animation-delay: 0.5s;
     }
-
-    &:dir(rtl) {
-      animation-name: wipe-rtl;
-    }
   }
 }
 
 @keyframes wipe {
   from {
     clip-path: inset(0 100% 0 0);
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-@keyframes wipe-rtl {
-  from {
-    clip-path: inset(0 0 0 100%);
   }
   to {
     clip-path: inset(0 0 0 0);

@@ -548,13 +548,6 @@ export const JtalkPreset = definePreset(Aura, {
       --p-jtalk-elevation-3: ${elevation.dark[2]};
     }
 
-    :is(
-      [data-p-icon='chevron-right'], [data-p-icon='chevron-left'],
-      [data-p-icon='angle-right'], [data-p-icon='angle-left'],
-      [data-p-icon='angle-double-right'], [data-p-icon='angle-double-left']
-    ):dir(rtl) {
-      transform: scaleX(-1);
-    }
 
     html {
       font-family: ${dt('jtalk.font.sans')};

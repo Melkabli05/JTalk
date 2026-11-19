@@ -10,8 +10,6 @@
     <script>
       (function () {
         try {
-          var direction = localStorage.getItem('jtalk:direction');
-          if (direction === 'rtl') document.documentElement.dir = 'rtl';
           var saved = localStorage.getItem('jtalk:color-scheme');
           var dark =
             saved === 'dark' ||

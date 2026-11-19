@@ -15,6 +15,7 @@ import { ProgressBar } from '@openng/optimus-ui/progressbar';
 import { filter, map } from 'rxjs';
 import type { ProfileDraft } from '@core/auth/identity.models';
 import { IdentityService } from '@core/auth/identity.service';
+import { ColorSchemeService } from '@core/config/color-scheme.service';
 import { ActiveRoomService } from '@core/rooms/active-room.service';
 import { RoomStartService } from '@core/rooms/room-start.service';
 import { ProfileDialogComponent } from '@core/auth/ui/profile-dialog/profile-dialog.component';
@@ -77,6 +78,7 @@ export class AppShellComponent {
 
   protected readonly identity = inject(IdentityService);
   private readonly activeRoom = inject(ActiveRoomService);
+  protected readonly colorScheme = inject(ColorSchemeService);
   private readonly roomStart = inject(RoomStartService);
   protected readonly appName = APP_NAME;
   protected readonly creating = saveRequest();
@@ -89,10 +91,11 @@ export class AppShellComponent {
     return me ? `${languageOf(me.nativeLanguage).flag} → ${languageOf(me.learning).flag}` : '';
   });
   protected readonly navItems = NAV_ITEMS;
-  // Across the top (a phone) the pages are icons, with their names kept for screen readers (Profile holds the settings), and the way
-  // back to a room you are in stands out in Forest.
-  protected readonly topItems = computed(() => {
+  // Across the top (a phone) the pages are icons, with their names kept for screen readers; there is no sidebar there, so the dark theme
+  // and Sign out are two more icons at the end, and the way back to a room you are in stands out in Forest.
+  protected readonly topItems = computed<MenuItem[]>(() => {
     const live = this.liveRoom();
+    const dark = this.colorScheme.isDark();
     return [
       ...(live
         ? [
@@ -105,6 +108,12 @@ export class AppShellComponent {
           ]
         : []),
       ...this.navItems,
+      {
+        label: dark ? 'Light theme' : 'Dark theme',
+        icon: dark ? 'pi pi-sun' : 'pi pi-moon',
+        command: () => this.colorScheme.toggle(),
+      },
+      { label: 'Sign out', icon: 'pi pi-sign-out', command: () => void this.identity.signOut() },
     ];
   });
 

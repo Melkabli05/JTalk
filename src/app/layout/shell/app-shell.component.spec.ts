@@ -8,6 +8,7 @@ import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { type Observable, of } from 'rxjs';
 import { fakeAuth0, fakeIdentity } from '@core/auth/auth-testing';
+import { ColorSchemeService } from '@core/config/color-scheme.service';
 import { layoutRoutes } from '../layout.routes';
 import { AppShellComponent } from './app-shell.component';
 
@@ -87,6 +88,47 @@ describe('AppShellComponent (container)', () => {
     expect(
       [...root().querySelectorAll('button')].map((b) => b.getAttribute('aria-label')),
     ).toContain('Profile and settings');
+  });
+
+  it('switches the color scheme from the sidebar', async () => {
+    await render();
+    const scheme = TestBed.inject(ColorSchemeService);
+    const dark = () => root().querySelector<HTMLInputElement>('app-sidebar .theme input')!;
+    expect(dark().checked).toBe(false);
+
+    dark().click();
+    await fixture.whenStable();
+
+    expect(scheme.isDark()).toBe(true);
+    expect(dark().checked).toBe(true);
+  });
+
+  describe('the bar across the top, on a phone', () => {
+    const item = (name: string) =>
+      [...root().querySelectorAll<HTMLElement>('nav.top [role="menuitem"]')].find((i) =>
+        i.textContent?.includes(name),
+      );
+
+    it('has the pages, then the dark theme and Sign out as icons, and no Settings', async () => {
+      await render();
+
+      expect(
+        [...root().querySelectorAll('nav.top [role="menuitem"]')].map((i) => i.textContent?.trim()),
+      ).toEqual(['Rooms', 'People', 'Profile', 'Dark theme', 'Sign out']);
+      expect(item('Dark theme')?.querySelector('.pi-moon')).not.toBeNull();
+      expect(item('Sign out')?.querySelector('.pi-sign-out')).not.toBeNull();
+    });
+
+    it('switches the color scheme, and the icon and the name follow', async () => {
+      await render();
+      const scheme = TestBed.inject(ColorSchemeService);
+
+      item('Dark theme')!.querySelector('a')!.click();
+      await fixture.whenStable();
+
+      expect(scheme.isDark()).toBe(true);
+      expect(item('Light theme')?.querySelector('.pi-sun')).not.toBeNull();
+    });
   });
 
   it('has a primary navigation landmark with real links', async () => {
@@ -503,5 +545,14 @@ describe('AppShellComponent profile gate', () => {
     await settle();
 
     expect(TestBed.inject(Router).url).toBe('/profile');
+  });
+
+  it('signs out through Auth0 from the sidebar, which sends the person back to the app', async () => {
+    await render(profile());
+
+    root().querySelector<HTMLButtonElement>('app-sidebar button.sign-out')!.click();
+    await settle();
+
+    expect(logout).toHaveBeenCalledTimes(1);
   });
 });
