@@ -89,6 +89,7 @@ let nextId = 0;
             <button
               pButton
               type="button"
+              class="mic"
               size="large"
               [icon]="micOn() ? 'pi pi-microphone' : 'pi pi-microphone pi-slashed'"
               [severity]="micOn() ? 'primary' : 'secondary'"
@@ -105,6 +106,7 @@ let nextId = 0;
             <button
               pButton
               type="button"
+              class="step"
               size="large"
               icon="pi pi-arrow-down"
               severity="secondary"
@@ -160,6 +162,7 @@ let nextId = 0;
           <button
             pButton
             type="button"
+            class="react"
             size="large"
             icon="pi pi-face-smile"
             severity="secondary"

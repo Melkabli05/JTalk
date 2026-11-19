@@ -80,7 +80,8 @@ p-toolbar {
   max-inline-size: 100%;
 }
 
-// On a phone the dock is five round buttons spread across the width, without a capsule around them, as the owner's picture has it.
+// On a phone the dock is round buttons spread across the width, without a capsule around them, as the owner's picture has it: the chat,
+// the reactions, the microphone, the hand (blue, the one thing to do) and leaving.
 @container dock (max-width: 30rem) {
   p-toolbar {
     inline-size: 100%;
@@ -94,15 +95,53 @@ p-toolbar {
     inline-size: 100%;
     flex-wrap: nowrap;
     justify-content: space-between;
-  }
 
-  .divider {
-    display: none;
-  }
+    button {
+      inline-size: 3rem;
+      block-size: 3rem;
+      padding: 0;
+    }
 
-  .controls button:not(.hand):not(.leave) {
-    border-color: transparent;
-    background: var(--p-content-background);
-    box-shadow: var(--p-jtalk-elevation-1);
+    button:not(.hand):not(.leave) {
+      border-color: var(--p-content-border-color);
+      background: var(--p-content-background);
+      box-shadow: var(--p-jtalk-elevation-1);
+    }
+
+    button.hand:not(.p-button-outlined) {
+      border-color: var(--p-jtalk-action);
+      background: var(--p-jtalk-action);
+      box-shadow: var(--p-jtalk-elevation-2);
+    }
+
+    button.hand.p-button-outlined {
+      border-color: var(--p-jtalk-action);
+      color: var(--p-jtalk-action);
+    }
+
+    p-overlay-badge {
+      order: 1;
+    }
+
+    .react {
+      order: 2;
+    }
+
+    .mic,
+    .step {
+      order: 3;
+    }
+
+    .hand {
+      order: 4;
+    }
+
+    .divider {
+      display: none;
+    }
+
+    .leave {
+      order: 5;
+    }
   }
 }

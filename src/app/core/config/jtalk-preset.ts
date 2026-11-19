@@ -8,6 +8,8 @@ const forest = '#477a5d';
 const sage = '#80b18d';
 const sand = '#dcc79e';
 const gold = '#c9af7e';
+const actionBlue = '#2f80ed';
+const actionBlueDark = '#5b9bf0';
 const terracotta = '#c9685e';
 const coral = '#df8277';
 const infoBlue = '#6389b5';
@@ -574,6 +576,7 @@ export const JtalkPreset = definePreset(Aura, {
     :root {
       --p-jtalk-brand: ${forest};
       --p-jtalk-moderator: ${sand};
+      --p-jtalk-action: ${actionBlue};
       --p-jtalk-danger: ${terracotta};
       --p-jtalk-elevation-1: ${elevation.light[0]};
       --p-jtalk-elevation-2: ${elevation.light[1]};
@@ -583,6 +586,7 @@ export const JtalkPreset = definePreset(Aura, {
     .app-dark {
       --p-jtalk-brand: ${sage};
       --p-jtalk-moderator: ${gold};
+      --p-jtalk-action: ${actionBlueDark};
       --p-jtalk-danger: ${coral};
       --p-jtalk-elevation-1: ${elevation.dark[0]};
       --p-jtalk-elevation-2: ${elevation.dark[1]};

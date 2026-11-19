@@ -21,8 +21,8 @@
 
   // On a phone the stage is one compact row, as many as fit, with the rest a swipe away.
   @media (max-width: 40rem) {
-    --tile: 5.5rem;
-    --avatar: 4rem;
+    --tile: 4.5rem;
+    --avatar: 3.5rem;
     flex-wrap: nowrap;
     justify-content: safe center;
     gap: 0.25rem;
@@ -33,13 +33,22 @@
     scrollbar-width: none;
 
     &[data-size] {
-      --tile: 5.5rem;
-      --avatar: 4rem;
+      --tile: 4.5rem;
+      --avatar: 3.5rem;
     }
 
     li {
       flex: none;
       scroll-snap-align: start;
+    }
+
+    .name {
+      font-size: 0.75rem;
+    }
+
+    .role,
+    .open {
+      font-size: 0.625rem;
     }
   }
 

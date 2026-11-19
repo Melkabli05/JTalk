@@ -15,7 +15,7 @@ let nextId = 0;
       <div class="head">
         <h2 class="heading" [id]="headingId">
           Audience
-          <p-tag severity="secondary" [rounded]="true">{{ ids().length }} listeners</p-tag>
+          <p-tag severity="secondary" [rounded]="true">{{ ids().length }} Listeners</p-tag>
         </h2>
         @if (swipeable() && ids().length > 0) {
           <span class="hint" aria-hidden="true">Swipe <i class="pi pi-arrow-right"></i></span>

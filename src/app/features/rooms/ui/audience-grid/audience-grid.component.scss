@@ -17,14 +17,18 @@
 
   li {
     flex: none;
-    inline-size: 5rem;
+    inline-size: 4rem;
     scroll-snap-align: start;
   }
 
   app-person-avatar {
-    --p-avatar-lg-width: 3.5rem;
-    --p-avatar-lg-height: 3.5rem;
-    --p-avatar-lg-font-size: 1.25rem;
+    --p-avatar-lg-width: 3rem;
+    --p-avatar-lg-height: 3rem;
+    --p-avatar-lg-font-size: 1.125rem;
+  }
+
+  .name {
+    font-size: 0.6875rem;
   }
 
   li.empty {

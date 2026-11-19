@@ -29,7 +29,7 @@ describe('AudienceSectionComponent (presentational)', () => {
     const section = root().querySelector('section')!;
 
     expect(root().querySelector('h2')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-      'Audience 3 listeners',
+      'Audience 3 Listeners',
     );
     expect(section.getAttribute('aria-labelledby')).toBe(root().querySelector('h2')?.id);
     expect(root().querySelectorAll('app-audience-grid .person')).toHaveLength(3);

@@ -20,7 +20,8 @@ textarea {
 :host(.pill) {
   textarea {
     border-radius: var(--p-jtalk-radius-pill);
-    padding-inline: 1rem;
+    padding-inline: var(--pill-padding-x, 1rem);
+    font-size: inherit;
     resize: none;
   }
 

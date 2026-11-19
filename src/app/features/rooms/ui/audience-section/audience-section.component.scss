@@ -19,12 +19,17 @@
   font-weight: 700;
 
   @media (max-width: 40rem) {
-    font-size: var(--p-jtalk-type-card);
+    font-size: 1rem;
+
+    p-tag {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
   }
 }
 
 .hint {
   color: var(--p-text-muted-color);
-  font-size: var(--p-jtalk-type-secondary);
+  font-size: 0.6875rem;
   font-weight: 600;
 }
