@@ -86,21 +86,34 @@ describe('AppShellComponent (container)', () => {
     expect(root().querySelector('header.bar')).toBeNull();
     expect(root().querySelector('app-sidebar button.account')).not.toBeNull();
     expect(
-      [...root().querySelectorAll('button')].map((b) => b.getAttribute('aria-label')),
-    ).toContain('Profile and settings');
+      [...root().querySelectorAll('button')].some((b) =>
+        b.getAttribute('aria-label')?.startsWith('Account menu'),
+      ),
+    ).toBe(true);
   });
 
-  it('switches the color scheme from the sidebar', async () => {
-    await render();
-    const scheme = TestBed.inject(ColorSchemeService);
-    const dark = () => root().querySelector<HTMLInputElement>('app-sidebar .theme input')!;
-    expect(dark().checked).toBe(false);
+  describe('the account menu in the sidebar', () => {
+    const menuItem = (name: string) =>
+      [...document.querySelectorAll<HTMLElement>('.p-menu-overlay .p-menu-item-link')].find((l) =>
+        l.textContent?.includes(name),
+      );
+    async function open() {
+      root().querySelector<HTMLButtonElement>('app-sidebar button.account')!.click();
+      await vi.waitFor(() => expect(menuItem('Sign out')).toBeDefined());
+    }
 
-    dark().click();
-    await fixture.whenStable();
+    it('switches the color scheme, and the item follows', async () => {
+      await render();
+      const scheme = TestBed.inject(ColorSchemeService);
+      await open();
 
-    expect(scheme.isDark()).toBe(true);
-    expect(dark().checked).toBe(true);
+      menuItem('Dark theme')!.click();
+      await fixture.whenStable();
+
+      expect(scheme.isDark()).toBe(true);
+      await open();
+      expect(menuItem('Light theme')).toBeDefined();
+    });
   });
 
   describe('the bar across the top, on a phone', () => {
@@ -538,34 +551,46 @@ describe('AppShellComponent profile gate', () => {
     );
   });
 
-  it('shows a plain icon on the account card in the sidebar of someone with no picture', async () => {
+  it('shows the initials of someone with no picture on the account card in the sidebar', async () => {
     await render(profile());
 
     expect(root().querySelector('app-sidebar button.account img')).toBeNull();
-    expect(root().querySelector('app-sidebar button.account .pi-user')).not.toBeNull();
+    expect(root().querySelector('app-sidebar button.account p-avatar')?.textContent?.trim()).toBe(
+      'M',
+    );
   });
 
-  it('names the person on the sidebar card, which opens their profile', async () => {
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({
-      providers: [...httpStack(logout), provideRouter([{ path: 'profile', children: [] }])],
+  describe('the account menu', () => {
+    const menuItem = (name: string) =>
+      [...document.querySelectorAll<HTMLElement>('.p-menu-overlay .p-menu-item-link')].find((l) =>
+        l.textContent?.includes(name),
+      );
+    async function open() {
+      root().querySelector<HTMLButtonElement>('app-sidebar button.account')!.click();
+      await vi.waitFor(() => expect(menuItem('Sign out')).toBeDefined());
+    }
+
+    it('names the person on the sidebar card, and its menu links to their profile', async () => {
+      await render(profile({ displayName: 'Mona Hassan' }));
+      expect(root().querySelector('app-sidebar button.account')?.textContent).toContain(
+        'Mona Hassan',
+      );
+      await open();
+
+      menuItem('Profile')!.click();
+      await settle();
+
+      expect(TestBed.inject(Router).url).toBe('/profile');
     });
-    await render(profile({ displayName: 'Mona Hassan' }));
-    const card = root().querySelector<HTMLButtonElement>('app-sidebar button.account')!;
-    expect(card.textContent).toContain('Mona Hassan');
 
-    card.click();
-    await settle();
+    it('signs out through Auth0 from the menu, which sends the person back to the app', async () => {
+      await render(profile());
+      await open();
 
-    expect(TestBed.inject(Router).url).toBe('/profile');
-  });
+      menuItem('Sign out')!.click();
+      await settle();
 
-  it('signs out through Auth0 from the sidebar, which sends the person back to the app', async () => {
-    await render(profile());
-
-    root().querySelector<HTMLButtonElement>('app-sidebar button.sign-out')!.click();
-    await settle();
-
-    expect(logout).toHaveBeenCalledTimes(1);
+      expect(logout).toHaveBeenCalledTimes(1);
+    });
   });
 });

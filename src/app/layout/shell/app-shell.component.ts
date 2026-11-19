@@ -93,11 +93,29 @@ export class AppShellComponent {
     return me ? `${languageOf(me.nativeLanguage).flag} → ${languageOf(me.learning).flag}` : '';
   });
   protected readonly navItems = NAV_ITEMS;
-  // Across the top (a phone) the pages are icons, with their names kept for screen readers; there is no sidebar there, so the profile,
-  // the dark theme and Sign out are one menu at the end, and the way back to a room you are in stands out in Forest.
+  /** The account menu, at the foot of the sidebar and as the More menu across the top of a phone. */
+  protected readonly accountItems = computed<MenuItem[]>(() => {
+    const dark = this.colorScheme.isDark();
+    return [
+      PROFILE_ITEM,
+      {
+        label: dark ? 'Light theme' : 'Dark theme',
+        icon: dark ? 'pi pi-sun' : 'pi pi-moon',
+        command: () => this.colorScheme.toggle(),
+      },
+      { separator: true },
+      {
+        label: 'Sign out',
+        icon: 'pi pi-sign-out',
+        linkClass: 'danger-item',
+        command: () => void this.identity.signOut(),
+      },
+    ];
+  });
+  // Across the top (a phone) the pages are icons, with their names kept for screen readers, and the account menu is the last of them;
+  // the way back to a room you are in stands out in Forest.
   protected readonly topItems = computed<MenuItem[]>(() => {
     const live = this.liveRoom();
-    const dark = this.colorScheme.isDark();
     return [
       ...(live
         ? [
@@ -110,24 +128,7 @@ export class AppShellComponent {
           ]
         : []),
       ...this.navItems.filter((item) => item !== PROFILE_ITEM),
-      {
-        label: 'More',
-        icon: 'pi pi-ellipsis-v',
-        items: [
-          PROFILE_ITEM,
-          {
-            label: dark ? 'Light theme' : 'Dark theme',
-            icon: dark ? 'pi pi-sun' : 'pi pi-moon',
-            command: () => this.colorScheme.toggle(),
-          },
-          {
-            label: 'Sign out',
-            icon: 'pi pi-sign-out',
-            linkClass: 'danger-item',
-            command: () => void this.identity.signOut(),
-          },
-        ],
-      },
+      { label: 'More', icon: 'pi pi-ellipsis-v', items: this.accountItems() },
     ];
   });
 
@@ -182,9 +183,5 @@ export class AppShellComponent {
       next: () => undefined,
       failure: 'Could not save your profile. Please try again.',
     });
-  }
-
-  protected openProfile(): void {
-    void this.router.navigate(['/profile']);
   }
 }

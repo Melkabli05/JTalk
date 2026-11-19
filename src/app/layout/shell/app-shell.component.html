@@ -14,6 +14,7 @@
 <app-sidebar
   class="rail"
   [items]="navItems"
+  [accountItems]="accountItems()"
   [name]="identity.profile()?.name ?? ''"
   [languages]="myLanguages()"
   [picture]="myPicture()"
@@ -21,10 +22,6 @@
   [viewing]="onRoomPage()"
   (startRoom)="startRoom()"
   (backToRoom)="backToRoom()"
-  (profile)="openProfile()"
-  [dark]="colorScheme.isDark()"
-  (toggleDark)="colorScheme.toggle()"
-  (signOut)="identity.signOut()"
 >
   <ng-container ngProjectAs="[brand]" [ngTemplateOutlet]="brand" />
 </app-sidebar>

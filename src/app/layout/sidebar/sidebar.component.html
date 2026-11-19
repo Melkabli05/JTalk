@@ -29,47 +29,28 @@
     </div>
   }
 
-  <div class="theme">
-    <span id="dark-label">Dark theme</span>
-    <p-toggleswitch
-      ariaLabelledBy="dark-label"
-      [ngModel]="dark()"
-      (ngModelChange)="toggleDark.emit()"
-    />
-  </div>
-
-  <div class="me">
-    <button
-      pButton
-      type="button"
-      class="account"
-      severity="secondary"
-      [text]="true"
-      aria-label="Profile and settings"
-      (click)="profile.emit()"
-    >
-      @if (picture(); as image) {
-        <p-avatar shape="circle" size="normal" aria-hidden="true" [image]="image" />
-      } @else {
-        <p-avatar shape="circle" size="normal" aria-hidden="true" icon="pi pi-user" />
-      }
-      <span class="who" aria-hidden="true">
-        <strong>{{ name() }}</strong>
-        <small>{{ languages() }}</small>
-      </span>
-    </button>
-    <button
-      pButton
-      type="button"
-      class="sign-out"
-      icon="pi pi-sign-out"
-      severity="secondary"
-      pTooltip="Sign out"
-      tooltipPosition="top"
-      [text]="true"
-      [rounded]="true"
-      aria-label="Sign out"
-      (click)="signOut.emit()"
-    ></button>
-  </div>
+  <button
+    pButton
+    type="button"
+    class="account"
+    severity="secondary"
+    aria-haspopup="menu"
+    [text]="true"
+    [attr.aria-label]="name() ? `Account menu, ${name()}` : 'Account menu'"
+    (click)="menu.toggle($event)"
+  >
+    @if (picture(); as image) {
+      <p-avatar shape="circle" aria-hidden="true" [image]="image" />
+    } @else if (name()) {
+      <p-avatar shape="circle" aria-hidden="true" [label]="name() | initials" />
+    } @else {
+      <p-avatar shape="circle" aria-hidden="true" icon="pi pi-user" />
+    }
+    <span class="who" aria-hidden="true">
+      <strong>{{ name() || 'Your account' }}</strong>
+      <small>{{ languages() }}</small>
+    </span>
+    <i class="pi pi-angle-up chevron" aria-hidden="true"></i>
+  </button>
+  <p-menu #menu appendTo="body" [popup]="true" [model]="[...accountItems()]" />
 </div>

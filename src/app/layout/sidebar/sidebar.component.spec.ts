@@ -16,6 +16,14 @@ const ROOM = {
   seats: 6,
 };
 
+const command = vi.fn();
+const ACCOUNT: MenuItem[] = [
+  { label: 'Profile', icon: 'pi pi-user', routerLink: '/profile' },
+  { label: 'Dark theme', icon: 'pi pi-moon', command },
+  { separator: true },
+  { label: 'Sign out', icon: 'pi pi-sign-out', linkClass: 'danger-item', command },
+];
+
 const ITEMS: MenuItem[] = [
   { label: 'Rooms', icon: 'pi pi-microphone', routerLink: '/' },
   { label: 'People', icon: 'pi pi-users', routerLink: '/people' },
@@ -24,7 +32,9 @@ const ITEMS: MenuItem[] = [
 @Component({
   selector: 'app-sidebar-host',
   imports: [SidebarComponent],
-  template: `<app-sidebar [items]="items"><a brand href="/">Jtalk</a></app-sidebar>`,
+  template: `<app-sidebar [items]="items" [accountItems]="[]"
+    ><a brand href="/">Jtalk</a></app-sidebar
+  >`,
 })
 class HostComponent {
   protected readonly items = ITEMS;
@@ -38,6 +48,7 @@ describe('SidebarComponent (presentational)', () => {
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
     fixture = TestBed.createComponent(SidebarComponent);
     fixture.componentRef.setInput('items', ITEMS);
+    fixture.componentRef.setInput('accountItems', ACCOUNT);
     for (const [name, value] of Object.entries(inputs)) {
       fixture.componentRef.setInput(name, value);
     }
@@ -110,59 +121,70 @@ describe('SidebarComponent (presentational)', () => {
     expect(root().querySelector('.go-live app-live-waves')).not.toBeNull();
   });
 
-  it('shows who is signed in and asks for their profile when the account is pressed', async () => {
-    await render({ name: 'Mona Hassan', languages: '🇦🇷 → 🇬🇧' });
-    const pressed = vi.fn();
-    fixture.componentInstance.profile.subscribe(pressed);
-    const account = root().querySelector<HTMLButtonElement>('button.account')!;
+  describe('the account at the foot', () => {
+    const menuLabels = () =>
+      [...document.querySelectorAll('.p-menu-overlay .p-menu-item-link')].map((l) =>
+        l.textContent?.trim(),
+      );
 
-    expect(account.textContent).toContain('Mona Hassan');
-    expect(account.textContent).toContain('🇦🇷 → 🇬🇧');
-    expect(account.getAttribute('aria-label')).toBe('Profile and settings');
-    account.click();
-    expect(pressed).toHaveBeenCalledOnce();
-  });
+    async function open() {
+      root().querySelector<HTMLButtonElement>('button.account')!.click();
+      await fixture.whenStable();
+      await vi.waitFor(() => expect(menuLabels().length).toBeGreaterThan(0));
+    }
 
-  it('has a dark theme switch, named by the words beside it, that shows and asks for the theme', async () => {
-    await render({ dark: true });
-    const asked = vi.fn();
-    fixture.componentInstance.toggleDark.subscribe(asked);
-    const input = root().querySelector<HTMLInputElement>('.theme input')!;
+    it('is one button with the person and a chevron, named as the account menu', async () => {
+      await render({ name: 'Mona Hassan', languages: '🇦🇷 → 🇬🇧' });
+      const account = root().querySelector<HTMLButtonElement>('button.account')!;
 
-    expect(root().querySelector('.theme')?.textContent).toContain('Dark theme');
-    expect(input.getAttribute('aria-labelledby')).toBe('dark-label');
-    expect(input.checked).toBe(true);
-    input.click();
+      expect(account.textContent).toContain('Mona Hassan');
+      expect(account.textContent).toContain('🇦🇷 → 🇬🇧');
+      expect(account.getAttribute('aria-label')).toBe('Account menu, Mona Hassan');
+      expect(account.getAttribute('aria-haspopup')).toBe('menu');
+      expect(account.querySelector('.chevron')).not.toBeNull();
+    });
 
-    expect(asked).toHaveBeenCalledOnce();
-  });
+    it('opens a menu with the profile, the theme and Sign out, which is set apart at the end', async () => {
+      await render({ name: 'Mona Hassan' });
+      await open();
 
-  it('has Sign out beside the account, one press away, named for screen readers', async () => {
-    await render({ name: 'Mona Hassan' });
-    const signOut = vi.fn();
-    const profile = vi.fn();
-    fixture.componentInstance.signOut.subscribe(signOut);
-    fixture.componentInstance.profile.subscribe(profile);
-    const button = root().querySelector<HTMLButtonElement>('button.sign-out')!;
+      expect(menuLabels()).toEqual(['Profile', 'Dark theme', 'Sign out']);
+      expect(document.querySelector('.p-menu-overlay .p-menu-separator')).not.toBeNull();
+      expect(
+        document
+          .querySelector('.p-menu-overlay .p-menu-item-link.danger-item')
+          ?.textContent?.trim(),
+      ).toBe('Sign out');
+    });
 
-    expect(button.getAttribute('aria-label')).toBe('Sign out');
-    expect(button.closest('.me')?.querySelector('button.account')).not.toBeNull();
-    button.click();
+    it('does what the shell says an item does', async () => {
+      command.mockClear();
+      await render({ name: 'Mona Hassan' });
+      await open();
 
-    expect(signOut).toHaveBeenCalledOnce();
-    expect(profile).not.toHaveBeenCalled();
-  });
+      [...document.querySelectorAll<HTMLElement>('.p-menu-overlay .p-menu-item-link')]
+        .find((l) => l.textContent?.includes('Sign out'))!
+        .click();
 
-  it('draws the picture they chose, or a plain icon when there is none', async () => {
-    await render({ picture: 'avatars/avatar-06.svg' });
-    expect(root().querySelector('button.account img')?.getAttribute('src')).toBe(
-      'avatars/avatar-06.svg',
-    );
+      expect(command).toHaveBeenCalledOnce();
+    });
 
-    fixture.componentRef.setInput('picture', null);
-    await fixture.whenStable();
-    expect(root().querySelector('button.account img')).toBeNull();
-    expect(root().querySelector('button.account .pi-user')).not.toBeNull();
+    it('draws the picture they chose, their initials without one, and an icon until the name is known', async () => {
+      await render({ picture: 'avatars/avatar-06.svg', name: 'Mona Hassan' });
+      expect(root().querySelector('button.account img')?.getAttribute('src')).toBe(
+        'avatars/avatar-06.svg',
+      );
+
+      fixture.componentRef.setInput('picture', null);
+      await fixture.whenStable();
+      expect(root().querySelector('button.account img')).toBeNull();
+      expect(root().querySelector('button.account p-avatar')?.textContent?.trim()).toBe('MH');
+
+      fixture.componentRef.setInput('name', '');
+      await fixture.whenStable();
+      expect(root().querySelector('button.account .pi-user')).not.toBeNull();
+      expect(root().querySelector('button.account')?.textContent).toContain('Your account');
+    });
   });
 
   it('puts the brand it is given at the top of the menu', async () => {

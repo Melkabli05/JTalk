@@ -30,31 +30,25 @@
   position: relative;
 }
 
-.theme {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  min-block-size: 2.75rem;
-  padding-inline: 0.75rem;
-}
-
-.me {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
+// The account at the foot: one button, avatar and name with a chevron, that opens the menu above it.
 .account {
-  flex: 1;
-  min-inline-size: 0;
+  inline-size: 100%;
   justify-content: flex-start;
   gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-jtalk-radius-card);
   text-align: start;
+}
+
+.chevron {
+  color: var(--p-text-muted-color);
+  font-size: 0.875rem;
 }
 
 .who {
   display: flex;
+  flex: 1;
   flex-direction: column;
   min-inline-size: 0;
 }
