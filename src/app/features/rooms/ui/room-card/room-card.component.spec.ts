@@ -45,7 +45,7 @@ describe('RoomCardComponent (presentational)', () => {
     const { fixture, root } = await render({ ...ROOM, speakers: ['s-2', 'h-1'] });
 
     expect(root.querySelector('.host .name')?.textContent).toBe('Alice Host');
-    expect(root.querySelectorAll('.pi-crown')).toHaveLength(1);
+    expect(root.querySelector('.pi-crown')).toBeNull();
     expect(root.querySelectorAll('.name')).toHaveLength(1);
     expect(root.querySelectorAll('p-avatargroup app-person-avatar')).toHaveLength(1);
     expect(
@@ -54,6 +54,16 @@ describe('RoomCardComponent (presentational)', () => {
         .map((el) => el.injector.get(Tooltip).content),
     ).toEqual(['Maya Speaker']);
     expect(root.textContent).not.toContain('Hosted by');
+  });
+
+  it('puts the host on the left and the others on the right', async () => {
+    const { root } = await render();
+    const speakers = root.querySelector('.speakers')!;
+    const children = [...speakers.children].map((el) => el.className);
+
+    expect(children).toEqual(['host', 'others']);
+    expect(speakers.querySelector('.host app-person-avatar')).not.toBeNull();
+    expect(speakers.querySelector('.others p-avatargroup')).not.toBeNull();
   });
 
   it('keeps every name for screen readers, since the tooltips are for the pointer', async () => {

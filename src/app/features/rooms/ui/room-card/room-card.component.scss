@@ -77,8 +77,17 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem 0.75rem;
   margin: 0.875rem 0 0;
+}
+
+// The host is on the left; the others are on the right.
+.others {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: auto;
 }
 
 .host {
@@ -93,11 +102,6 @@
     font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .pi-crown {
-    color: var(--p-jtalk-moderator);
-    font-size: 0.75rem;
   }
 }
 

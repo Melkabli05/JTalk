@@ -26,27 +26,28 @@
       <span class="host">
         <app-person-avatar size="normal" [member]="lead" />
         <span class="name">{{ lead.name }}</span>
-        <i class="pi pi-crown" aria-hidden="true"></i>
         <span class="cdk-visually-hidden">{{ 'Host' | t }}</span>
       </span>
     }
-    @if (others().length > 0) {
-      <p-avatargroup aria-hidden="true">
-        @for (other of others(); track other.id) {
-          <app-person-avatar
-            size="normal"
-            tooltipPosition="top"
-            [member]="other"
-            [pTooltip]="other.name"
-          />
-        }
-      </p-avatargroup>
-      <span class="cdk-visually-hidden">{{ otherNames() }}</span>
-    }
-    @if (more() > 0) {
-      <span class="more" aria-hidden="true">+{{ more() }}</span>
-      <span class="cdk-visually-hidden">{{ '+{count} more' | t: { count: more() } }}</span>
-    }
+    <span class="others">
+      @if (others().length > 0) {
+        <p-avatargroup aria-hidden="true">
+          @for (other of others(); track other.id) {
+            <app-person-avatar
+              size="normal"
+              tooltipPosition="top"
+              [member]="other"
+              [pTooltip]="other.name"
+            />
+          }
+        </p-avatargroup>
+        <span class="cdk-visually-hidden">{{ otherNames() }}</span>
+      }
+      @if (more() > 0) {
+        <span class="more" aria-hidden="true">+{{ more() }}</span>
+        <span class="cdk-visually-hidden">{{ '+{count} more' | t: { count: more() } }}</span>
+      }
+    </span>
   </div>
 
   <p class="counts">
