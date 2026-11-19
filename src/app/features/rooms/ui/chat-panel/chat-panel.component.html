@@ -144,6 +144,22 @@
                   [attr.aria-label]="replyLabel"
                   (click)="reply(comment)"
                 ></button>
+                @if (comment.type === 'TEXT' && comment.authorId !== meId()) {
+                  @let correctLabel = `Correct ${nameOf(comment.authorId)}`;
+                  <button
+                    pButton
+                    type="button"
+                    class="reply"
+                    size="small"
+                    icon="pi pi-pencil"
+                    label="Correct"
+                    severity="secondary"
+                    [text]="true"
+                    [rounded]="true"
+                    [attr.aria-label]="correctLabel"
+                    (click)="reply(comment, true)"
+                  ></button>
+                }
                 @if (isHost() && comment.authorId !== meId()) {
                   @let deleteLabel = `Delete the comment by ${nameOf(comment.authorId)}`;
                   <button
@@ -198,7 +214,7 @@
             </div>
           </li>
         } @empty {
-          <li class="empty">No messages yet. Say hello, or suggest a correction.</li>
+          <li class="empty">No messages yet. Say hello.</li>
         }
       </ul>
       @if (!stuck() && !compact()) {
@@ -234,7 +250,9 @@
       }
       @if (replyingTo(); as original) {
         <p class="replying">
-          <span>Replying to {{ nameOf(original.authorId) }}</span>
+          <span
+            >{{ correcting() ? 'Correcting' : 'Replying to' }} {{ nameOf(original.authorId) }}</span
+          >
           <button
             pButton
             type="button"
@@ -243,17 +261,17 @@
             severity="secondary"
             [text]="true"
             [rounded]="true"
-            aria-label="Cancel the reply"
-            (click)="replyingTo.set(null)"
+            aria-label="Cancel"
+            (click)="cancelReply()"
           ></button>
         </p>
       }
       <div class="write">
         <app-textarea-field
-          [label]="composer().correcting ? 'What was said' : 'Message'"
-          [labelHidden]="!composer().correcting"
-          [pill]="!composer().correcting"
-          placeholder="Say something in the room…"
+          label="Message"
+          [labelHidden]="true"
+          [pill]="true"
+          [placeholder]="correcting() ? 'Write how it should be…' : 'Say something in the room…'"
           [rows]="1"
           [formField]="composerForm.content"
         />
@@ -267,26 +285,6 @@
           aria-label="Send"
         ></button>
       </div>
-      @if (composer().correcting) {
-        <app-textarea-field
-          label="How it should be"
-          [rows]="1"
-          [formField]="composerForm.corrected"
-        />
-      }
-      <button
-        pButton
-        type="button"
-        class="correct"
-        size="small"
-        severity="secondary"
-        icon="pi pi-pencil"
-        label="Correct"
-        [text]="!composer().correcting"
-        [rounded]="true"
-        [attr.aria-pressed]="composer().correcting"
-        (click)="toggleCorrecting()"
-      ></button>
     </form>
   }
 </section>

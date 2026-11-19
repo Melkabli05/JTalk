@@ -29,9 +29,7 @@ import { memberOf } from '../../utils/members';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 
 interface ComposerModel {
-  correcting: boolean;
   content: string;
-  corrected: string;
 }
 
 interface TopicModel {
@@ -86,11 +84,8 @@ export class ChatPanelComponent {
   protected readonly log = viewChild<ElementRef<HTMLElement>>('log');
   protected readonly stuck = signal(true);
   protected readonly replyingTo = signal<RoomComment | null>(null);
-  protected readonly composer = signal<ComposerModel>({
-    correcting: false,
-    content: '',
-    corrected: '',
-  });
+  protected readonly correcting = signal(false);
+  protected readonly composer = signal<ComposerModel>({ content: '' });
   protected readonly topicDraft = signal<TopicModel>({ text: '' });
 
   protected readonly byId = computed(
@@ -108,22 +103,17 @@ export class ChatPanelComponent {
     (path) => {
       required(path.content, { message: 'Write something first.' });
       maxLength(path.content, COMMENT_MAX_LENGTH, { message: 'Use at most 500 characters.' });
-      required(path.corrected, {
-        message: 'Write how it should be.',
-        when: (field) => field.valueOf(path.correcting),
-      });
-      maxLength(path.corrected, COMMENT_MAX_LENGTH, { message: 'Use at most 500 characters.' });
     },
     {
       submission: formSubmission<ComposerModel>({
         busy: () => this.submitting() || this.muted(),
         submit: (value) => {
-          const content = value.content.trim();
-          const corrected = value.corrected.trim();
+          const original = this.replyingTo();
+          const text = value.content.trim();
           this.submitted.emit({
-            type: value.correcting ? 'CORRECTION' : 'TEXT',
-            content,
-            ...(value.correcting ? { correctedContent: corrected } : {}),
+            type: original && this.correcting() ? 'CORRECTION' : 'TEXT',
+            content: original && this.correcting() ? original.content : text,
+            ...(original && this.correcting() ? { correctedContent: text } : {}),
             ...(this.replyingTo() ? { replyTo: this.replyingTo()?.id } : {}),
           });
         },
@@ -154,8 +144,8 @@ export class ChatPanelComponent {
     effect(() => {
       const submitting = this.submitting();
       if (this.wasSubmitting && !submitting && this.error() === null) {
-        this.composer.update((model) => ({ ...model, content: '', corrected: '' }));
-        this.replyingTo.set(null);
+        this.composer.set({ content: '' });
+        this.cancelReply();
       }
       this.wasSubmitting = submitting;
     });
@@ -184,12 +174,14 @@ export class ChatPanelComponent {
     return comment.replyTo ? this.byId().get(comment.replyTo) : undefined;
   }
 
-  protected toggleCorrecting(): void {
-    this.composer.update((model) => ({ ...model, correcting: !model.correcting }));
+  protected reply(comment: RoomComment, correcting = false): void {
+    this.replyingTo.set(comment);
+    this.correcting.set(correcting);
   }
 
-  protected reply(comment: RoomComment): void {
-    this.replyingTo.set(comment);
+  protected cancelReply(): void {
+    this.replyingTo.set(null);
+    this.correcting.set(false);
   }
 
   protected scrolled(): void {

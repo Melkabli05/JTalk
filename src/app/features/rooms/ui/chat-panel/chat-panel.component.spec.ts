@@ -184,23 +184,41 @@ describe('ChatPanelComponent (presentational)', () => {
     expect(sent).toEqual([{ type: 'TEXT', content: 'Hola' }]);
   });
 
-  it('sends a correction with both phrases, and needs the corrected one', async () => {
-    await render();
+  it('corrects what someone else wrote: their words and the right ones, answering their message', async () => {
+    await render({
+      comments: [comment('c-1', 'b-1', 'I goed home'), comment('c-2', 'm-1', 'I am Mona')],
+    });
     const sent: CommentDraft[] = [];
     fixture.componentInstance.submitted.subscribe((draft) => sent.push(draft));
-    button('Correct')!.click();
+    expect(button('Correct Mona')).toBeUndefined();
+
+    button('Correct Bilal')!.click();
     await fixture.whenStable();
-    expect(button('Correct')!.getAttribute('aria-pressed')).toBe('true');
+    expect(root().querySelector('.replying')?.textContent).toContain('Correcting Bilal');
 
-    await type('What was said', 'I goed home');
-    await submit();
-    expect(sent).toEqual([]);
-
-    await type('How it should be', 'I went home');
+    await type('Message', 'I went home');
     await submit();
     expect(sent).toEqual([
-      { type: 'CORRECTION', content: 'I goed home', correctedContent: 'I went home' },
+      {
+        type: 'CORRECTION',
+        content: 'I goed home',
+        correctedContent: 'I went home',
+        replyTo: 'c-1',
+      },
     ]);
+  });
+
+  it('offers no correction of a correction', async () => {
+    await render({
+      comments: [
+        comment('c-1', 'b-1', 'I goed home', {
+          type: 'CORRECTION',
+          correctedContent: 'I went home',
+        }),
+      ],
+    });
+
+    expect(button('Correct Bilal')).toBeUndefined();
   });
 
   it('replies to a message, names who it answers, and lets the reply be dropped', async () => {
@@ -216,7 +234,7 @@ describe('ChatPanelComponent (presentational)', () => {
     await submit();
     expect(sent).toEqual([{ type: 'TEXT', content: 'Fine, thanks', replyTo: 'c-1' }]);
 
-    button('Cancel the reply')!.click();
+    button('Cancel')!.click();
     await fixture.whenStable();
     expect(root().querySelector('.replying')).toBeNull();
   });
