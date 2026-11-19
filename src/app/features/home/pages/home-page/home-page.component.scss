@@ -72,6 +72,7 @@
     font-size: 0.8125rem;
     letter-spacing: 0.05em;
     text-transform: uppercase;
+    white-space: nowrap;
   }
 }
 
@@ -440,14 +441,75 @@ h1 {
   }
 }
 
+// Very narrow phones (up to 384px: 320, 360, 375): the brand and Sign in share the first row, the language switch has the second, so
+// nothing is squeezed or wraps, and the shapes keep clear of the taller top.
+@media (max-width: 24rem) {
+  :host {
+    --top: 6.75rem;
+  }
+
+  .top {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'brand sign'
+      'lang lang';
+    row-gap: 0;
+
+    .brand {
+      grid-area: brand;
+    }
+
+    .sign-in {
+      grid-area: sign;
+    }
+
+    .language {
+      grid-area: lang;
+      justify-self: start;
+      margin-block: 0.5rem;
+      margin-inline-start: var(--edge);
+    }
+  }
+
+  // Three short lines, each centred, instead of two columns where the longer fact wraps.
+  .facts {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+
+    li:first-child,
+    li:last-child {
+      justify-self: center;
+      text-align: center;
+    }
+  }
+}
+
 // A phone on its side: little height, so the shapes shrink, the page may scroll, and nothing is pushed off the screen.
 @media (max-height: 32rem) and (orientation: landscape) {
   :host {
     --display: clamp(1.75rem, 6.4vw, 3rem);
   }
 
+  :host {
+    --top: 3.5rem;
+  }
+
+  .top .language,
+  .top .sign-in {
+    margin-block-start: 0.5rem;
+  }
+
+  .brand {
+    padding-block: 0.5rem 0.6rem;
+  }
+
   .hero {
-    min-block-size: 28rem;
+    min-block-size: 24rem;
+  }
+
+  .tag {
+    display: none;
   }
 
   .center {
