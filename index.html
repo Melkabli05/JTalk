@@ -1,0 +1,671 @@
+<!DOCTYPE html><html data-scribe-recorder-ready="true" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Live Session - Voice Room</title>
+<!-- Tailwind CSS v3 with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            porcelain: '#F7F5EF',
+            cardDark: '#18191E',
+            gatherGreen: '#477A5D',
+            liveRed: '#EB5757',
+            actionBlue: '#2F80ED',
+            micOffBg: '#3E424B',
+          },
+          fontFamily: {
+            sans: ['Manrope', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
+          borderRadius: {
+            '3xl': '1.75rem',
+            '4xl': '2.25rem',
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Styles -->
+<style data-purpose="typography">
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+<style data-purpose="layout-utilities">
+    /* Custom subtle scrollbar & touch optimization */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    /* Bottom Sheet animation classes */
+    #commentsDrawer {
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease-out;
+    }
+    #commentsDrawer.drawer-closed {
+      transform: translateY(100%);
+      pointer-events: none;
+    }
+    #commentsDrawer.drawer-open {
+      transform: translateY(0%);
+      pointer-events: auto;
+    }
+    #drawerBackdrop {
+      transition: opacity 0.3s ease-out;
+    }
+    #drawerBackdrop.backdrop-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #drawerBackdrop.backdrop-visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  </style>
+<!-- END: Custom Styles -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" data-snapdom="injected-import"></head>
+<body class="bg-[#ECEAE4] min-h-screen flex items-center justify-center p-0 sm:p-4 text-slate-800 antialiased selection:bg-slate-200">
+<!-- BEGIN: MobileDeviceContainer -->
+<!-- Constrained standard iPhone 14/15 size layout container -->
+<main class="w-full sm:max-w-[400px] h-[100dvh] sm:h-[844px] bg-porcelain flex flex-col justify-between sm:rounded-[42px] sm:shadow-2xl overflow-hidden relative border border-stone-200/60">
+<!-- BEGIN: iOSStatusBar -->
+<header class="w-full pt-3 px-7 pb-1 flex justify-between items-center text-xs font-semibold text-slate-900 z-20 shrink-0">
+<span class="tracking-tight text-[13px] font-bold">9:41</span>
+<!-- iOS Right Status Icons -->
+<div class="flex items-center space-x-2">
+<svg class="w-4 h-3.5 fill-current" viewBox="0 0 16 12">
+<path d="M1 9.5a1.5 1.5 0 011.5-1.5h1a1.5 1.5 0 011.5 1.5v1A1.5 1.5 0 013.5 12h-1A1.5 1.5 0 011 10.5v-1zm4.5-3a1.5 1.5 0 011.5-1.5h1A1.5 1.5 0 019.5 6.5v4A1.5 1.5 0 018 12h-1a1.5 1.5 0 01-1.5-1.5v-4zm4.5-3a1.5 1.5 0 011.5-1.5h1A1.5 1.5 0 0113.5 3.5v7a1.5 1.5 0 01-1.5 1.5h-1a1.5 1.5 0 01-1.5-1.5v-7z"></path>
+</svg>
+<svg class="w-4 h-3.5 fill-current" viewBox="0 0 16 12">
+<path d="M8 2.5c2.97 0 5.66 1.18 7.64 3.1a.75.75 0 01-.06 1.07l-1.3 1.15a.75.75 0 01-1.02-.04C11.83 6.4 10.02 5.5 8 5.5s-3.83.9-5.26 2.28a.75.75 0 01-1.02.04l-1.3-1.15a.75.75 0 01-.06-1.07C2.34 3.68 5.03 2.5 8 2.5zM8 7.5a4.23 4.23 0 012.98 1.22.75.75 0 01.02 1.06l-2.6 2.6a.55.55 0 01-.8 0l-2.6-2.6a.75.75 0 01.02-1.06A4.23 4.23 0 018 7.5z"></path>
+</svg>
+<div class="w-5 h-2.5 border border-slate-900 rounded-sm p-0.5 flex items-center">
+<div class="h-full w-full bg-slate-900 rounded-[1px]"></div>
+</div>
+</div>
+</header>
+<!-- END: iOSStatusBar -->
+<!-- BEGIN: TopNavigationBar -->
+<nav aria-label="Room navigation" class="px-5 py-2.5 flex items-center justify-between z-20 shrink-0">
+<!-- Left: Back Button & Title -->
+<button aria-label="Go back to live sessions" class="flex items-center space-x-3 text-slate-900 hover:opacity-75 transition active:scale-95" type="button"><svg class="w-5 h-5 stroke-[2.2] stroke-current fill-none shrink-0" viewBox="0 0 24 24"><path d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" stroke-linecap="round" stroke-linejoin="round"></path></svg><div class="flex flex-col text-left min-w-0 pr-2"><span class="text-sm font-bold tracking-tight text-slate-900 truncate">Creativity in the Digital World</span><span class="text-[10px] text-stone-500 font-medium truncate">Art, Design, and Entertainment</span></div></button>
+<!-- Right: More Options Button -->
+<button aria-label="More options" class="w-8 h-8 flex items-center justify-end text-slate-800 hover:text-black transition" type="button">
+<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+<path d="M12 7a2 2 0 100-4 2 2 0 000 4zm0 7a2 2 0 100-4 2 2 0 000 4zm0 7a2 2 0 100-4 2 2 0 000 4z"></path>
+</svg>
+</button>
+</nav>
+<!-- END: TopNavigationBar -->
+<!-- BEGIN: ScrollableContentArea -->
+<section class="flex-1 no-scrollbar px-4 flex flex-col justify-start overflow-hidden min-h-0">
+<!-- BEGIN: FeaturedHostBannerCard -->
+<div class="mt-1 mb-3 shrink-0" data-purpose="stage-section">
+<div class="flex items-center justify-between mb-3 px-1">
+<div class="flex items-center space-x-2">
+<h2 class="text-base font-bold text-slate-900 tracking-tight">Stage</h2>
+<span class="text-[11px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">3 on stage</span>
+</div>
+<div class="flex items-center space-x-1.5 bg-[#EB5757]/15 border border-[#EB5757]/30 px-2.5 py-0.5 rounded-full text-[#EB5757] text-[11px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#EB5757] animate-pulse"></span>
+<span>Live</span>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-3 text-center px-1 py-1">
+<!-- Stage Speaker 1: Jessica (Host, actively speaking) -->
+<div class="flex flex-col items-center">
+<div class="relative">
+<div class="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-primary to-emerald-400 animate-pulse">
+<img alt="Jessica (Host)" class="w-full h-full rounded-full object-cover border-2 border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCURmmCmNDmStoJncS88G9Xd5xpXbku8VeT51Qel2kArJ4v8OoLJCFK5IytQ1tVlq3HhtZYY6UWwYBpqr6ckK8Ay9JNXotJHavZ7x3dUWkmwlnnKLrg6fUeJNJWKpEWo7Hu9c8r9OIjY3nQp2bfzjnPxpBiu_uPz2mzr_1Dxfznfm_cE6qeXNa6lSNaQCbnZhY6ejm2fzeHBmkk8lQNQ4Tz60zB_Ma4-0e4yqn2OZ9N">
+</div>
+<!-- Host star pill -->
+<span class="absolute -top-1 -right-1 bg-amber-400 text-slate-900 text-[9px] font-bold px-1 rounded-full border border-white shadow-xs flex items-center justify-center">
+          ★
+        </span>
+<!-- Active mic indicator -->
+<span class="absolute bottom-0 right-0 w-4 h-4 bg-primary text-white rounded-full border-[1.5px] border-white flex items-center justify-center shadow-xs">
+<svg class="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24">
+<path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path>
+<path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path>
+</svg>
+</span>
+</div>
+<span class="mt-1.5 text-xs font-bold text-slate-900 truncate max-w-[70px]">Jessica</span>
+<span class="text-[10px] font-semibold text-primary">Host</span>
+</div>
+<!-- Stage Speaker 2: Samir (Co-Host) -->
+<div class="flex flex-col items-center">
+<div class="relative">
+<img alt="Samir" class="w-14 h-14 rounded-full object-cover border-2 border-stone-200/80 shadow-xs" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3Fy26PY_eJr7Va6rjqHVNv2qXhAFdfuNBuKzN6jKtoh_LDUIECl2PkrM4wrNcZJGeX7s01DYUfkT74gy_uhr5TapIIsJ_BK1nzRqIhfXRcyiOzeQV-MZ-YBx-uWsf0KAM3IhTRXcQ39u2ENoHBtvl_kduRT-bMvT6RF2hQKDCtRO2VMkd-TWAjTSYfAuvdk_CBSvqvjEmz3kmL4-RGHMhSLysRPYR0caDRmFR-4Qr">
+<!-- Mic muted indicator -->
+<span class="absolute bottom-0 right-0 w-4 h-4 bg-micOffBg text-white rounded-full border-[1.5px] border-white flex items-center justify-center shadow-xs">
+<svg class="w-2.5 h-2.5 stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
+<path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M3 3l18 18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</span>
+</div>
+<span class="mt-1.5 text-xs font-semibold text-slate-800 truncate max-w-[70px]">Samir</span>
+<span class="text-[10px] font-medium text-stone-500">Co-host</span>
+</div>
+<!-- Stage Speaker 3: Marco -->
+<div class="flex flex-col items-center">
+<div class="relative">
+<img alt="Marco" class="w-14 h-14 rounded-full object-cover border-2 border-stone-200/80 shadow-xs" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_bwNwjh9nJvJPvvpZnRIPjzxnLc2fm1b7b1bc7n946PgZMZPxFox3BIoQ7YxbkzUShlEMYuB28MEfvujI-K4OHePd9lSLexAAb7RMtzxftShaxHavrqzpPydSZtPln7jv2nvjntMJpebj6rwsZFUq7MWq6NVyeovq0s-axRfDb1HuHKNMJF-JG12uD-qqRf8dqy1uo329Os3Clr_nyIvPw3meKTPlpvV3X-r4qBQj">
+<!-- Mic muted indicator -->
+<span class="absolute bottom-0 right-0 w-4 h-4 bg-micOffBg text-white rounded-full border-[1.5px] border-white flex items-center justify-center shadow-xs">
+<svg class="w-2.5 h-2.5 stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
+<path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M3 3l18 18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</span>
+</div>
+<span class="mt-1.5 text-xs font-semibold text-slate-800 truncate max-w-[70px]">Marco</span>
+<span class="text-[10px] font-medium text-stone-500">Speaker</span>
+</div>
+<!-- Open Stage Slot: Invite -->
+<button aria-label="Invite to stage" class="flex flex-col items-center group cursor-pointer focus:outline-hidden" type="button">
+<div class="w-14 h-14 rounded-full border-2 border-dashed border-stone-300 hover:border-primary/60 flex items-center justify-center bg-stone-100/60 group-hover:bg-primary/5 transition text-stone-400 group-hover:text-primary">
+<svg class="w-5 h-5 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<span class="mt-1.5 text-xs font-medium text-stone-500 group-hover:text-primary transition truncate max-w-[70px]">Invite</span>
+<span class="text-[10px] font-medium text-stone-400">Open</span>
+</button>
+</div>
+</div>
+<!-- END: FeaturedHostBannerCard -->
+<!-- BEGIN: SheetHandleDivider -->
+<!-- Visual drawer sheet handle centered -->
+<div class="flex flex-col items-center justify-center my-2">
+<div class="w-10 h-1 rounded-full bg-stone-300"></div>
+</div>
+<!-- END: SheetHandleDivider -->
+<!-- BEGIN: AudienceGridSection -->
+<div class="flex-1 mt-1 flex flex-col min-h-0" data-purpose="audience-section">
+<!-- Section Title Header -->
+<div class="flex items-center justify-between mb-2.5 px-1 shrink-0">
+<div class="flex items-center space-x-2">
+<h2 class="text-base font-bold text-slate-900 tracking-tight">Audience</h2>
+<span class="text-xs font-semibold text-stone-500 bg-stone-200/70 px-2 py-0.5 rounded-full">18 Listeners</span>
+</div>
+<span class="text-[11px] font-medium text-stone-400">Swipe →</span>
+</div>
+<!-- Horizontal Scrollable Audience Row -->
+<div class="flex items-start gap-4 overflow-x-auto no-scrollbar pb-3 px-1 shrink-0">
+<!-- Listener 1: Dablo (you) -->
+<div class="flex flex-col items-center shrink-0">
+<div class="relative">
+<img alt="Dablo (you)" class="w-12 h-12 rounded-full object-cover shadow-xs bg-stone-200 border border-stone-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtL_7NZpbNavKflLY59BNs6xqaO47uiWaaHMUech7Q1rt2S3I61xkwu-0dA5f0lDYFI7aNuDQA3pvJjwpriJkY87fVG6IDy72hQJoiCb-DEzLrDEfasCpbHXTp-Sny1LuqjY5XTJnC68b8pydeI_JKHUBTG55AVpkGAZFJ-ChoEBCbvgDJ7jaAPN4XCZYfJAbv8RBQOUrd7FT204IFud80oE1iEswhJfigP5m3Wr9o">
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-micOffBg rounded-full border-[1.5px] border-porcelain flex items-center justify-center">
+<svg class="w-2 h-2 text-white stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
+<path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M3 3l18 18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</span>
+</div>
+<span class="mt-1 text-[11px] font-semibold text-slate-800 truncate max-w-[60px]">Dablo (you)</span>
+</div>
+<!-- Listener 2: Wendy -->
+<div class="flex flex-col items-center shrink-0">
+<div class="relative">
+<img alt="Wendy" class="w-12 h-12 rounded-full object-cover shadow-xs bg-stone-200 border border-stone-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtZ2PF_1LH2IFqPsPFg__NrH7XpHcTP3rXUbOZLLXzB5lqqQrq9PLCApa0jbY_7lQS8sqpn1YobjazAymzUYaxeDaj4M3tunUCw5TsLHpfxBwbUgliU1Euwh7IJBF2Q6V5Y_8idarCu8gYl2ndYYHd-BmmOS5Lm21eyYIrvUHP7kMKVpQV7Otcxh300EsZ4noObGiB1dYnlbuMnKxs7lRzhXpCXh_ge8c9uy7RmCig">
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-micOffBg rounded-full border-[1.5px] border-porcelain flex items-center justify-center">
+<svg class="w-2 h-2 text-white stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
+<path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M3 3l18 18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</span>
+</div>
+<span class="mt-1 text-[11px] font-semibold text-slate-800 truncate max-w-[56px]">Wendy</span>
+</div>
+<!-- Listener 3: Yolanda -->
+<div class="flex flex-col items-center shrink-0">
+<div class="relative">
+<img alt="Yolanda" class="w-12 h-12 rounded-full object-cover shadow-xs bg-stone-200 border border-stone-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtqVIMgOf_Z-QdYpCLUMzr65tR6__-lJrxT27h_lNvlo2Lgsy4PNTXm49PWEPsXhTNhcQAyaa19HjCAqzqkUwumrAokefKZ9B4yfXR-ZtBU2WRSbMX99HFfUwc7BLjMgBIMzjyNONFRlpj9dUsngBl-8bpmCJ_5eOAEiXbaAcs2BCCxudRugcqzN66jTcf7gUh22zDFfg4N7XcpACBBsDUolQRxtMHZF3KiTI1sfAw">
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-micOffBg rounded-full border-[1.5px] border-porcelain flex items-center justify-center">
+<svg class="w-2 h-2 text-white stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
+<path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M3 3l18 18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</span>
+</div>
+<span class="mt-1 text-[11px] font-semibold text-slate-800 truncate max-w-[56px]">Yolanda</span>
+</div>
+<!-- Listener 4: David -->
+<div class="flex flex-col items-center shrink-0">
+<div class="relative">
+<img alt="David" class="w-12 h-12 rounded-full object-cover shadow-xs bg-stone-200 border border-stone-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_bwNwjh9nJvJPvvpZnRIPjzxnLc2fm1b7b1bc7n946PgZMZPxFox3BIoQ7YxbkzUShlEMYuB28MEfvujI-K4OHePd9lSLexAAb7RMtzxftShaxHavrqzpPydSZtPln7jv2nvjntMJpebj6rwsZFUq7MWq6NVyeovq0s-axRfDb1HuHKNMJF-JG12uD-qqRf8dqy1uo329Os3Clr_nyIvPw3meKTPlpvV3X-r4qBQj">
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-micOffBg rounded-full border-[1.5px] border-porcelain flex items-center justify-center">
+<svg class="w-2 h-2 text-white stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
+<path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M3 3l18 18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</span>
+</div>
+<span class="mt-1 text-[11px] font-semibold text-slate-800 truncate max-w-[56px]">David</span>
+</div>
+<!-- Listener 5: Salma -->
+<div class="flex flex-col items-center shrink-0">
+<div class="relative">
+<img alt="Salma" class="w-12 h-12 rounded-full object-cover shadow-xs bg-stone-200 border border-stone-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVtFXqC5pKf5Lb6Ao0k91hZdYbMLFighIMJqPca8iHNLRB4LnhHbW7_tSbx5CJU-rGW1hnG_wBgrnxeY9XjQZfWaLGOU8xuA8jF4e7YPyYBunmHz3g4SredaSWe6c72i6f9BkJr1VQLqC-krQ9gdDfIdynYu82IKFKVTuVgGm5cvYM2_oig5_gK-5BZ_T0BnyK5bo7QBOgcZxWSZCLfcaQigURaNAwBpX0vkNS5-dz">
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-micOffBg rounded-full border-[1.5px] border-porcelain flex items-center justify-center">
+<svg class="w-2 h-2 text-white stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
+<path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M3 3l18 18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</span>
+</div>
+<span class="mt-1 text-[11px] font-semibold text-slate-800 truncate max-w-[56px]">Salma</span>
+</div>
+<!-- Listener 6: Rebecca -->
+<div class="flex flex-col items-center shrink-0">
+<div class="relative">
+<img alt="Rebecca" class="w-12 h-12 rounded-full object-cover shadow-xs bg-stone-200 border border-stone-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnEFQWrL92KGJEhoLPzfRj9v2sIP9Dl-vW10NfG879H24dIDx2fHGIfobsgiprQCdEtq_UqRffsljDyxxX4PzoZK73j2dSc1T-2_3hlic_I2DA7opFjlniOpgGRbr2Uq0scNIjfGjiEL6Li6WsHp-SOnLsICK-Gnpg29E8GRxQvkjacgzbUp6e2loHAVvRN9xYHMLBekTXz-WCMaqTzdP-ocFqxeMOGuy3uiv8vlnm">
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-micOffBg rounded-full border-[1.5px] border-porcelain flex items-center justify-center">
+<svg class="w-2 h-2 text-white stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
+<path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M3 3l18 18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</span>
+</div>
+<span class="mt-1 text-[11px] font-semibold text-slate-800 truncate max-w-[56px]">Rebecca</span>
+</div>
+<!-- Listener 7: Yunus -->
+<div class="flex flex-col items-center shrink-0">
+<div class="relative">
+<img alt="Yunus" class="w-12 h-12 rounded-full object-cover shadow-xs bg-stone-200 border border-stone-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3Fy26PY_eJr7Va6rjqHVNv2qXhAFdfuNBuKzN6jKtoh_LDUIECl2PkrM4wrNcZJGeX7s01DYUfkT74gy_uhr5TapIIsJ_BK1nzRqIhfXRcyiOzeQV-MZ-YBx-uWsf0KAM3IhTRXcQ39u2ENoHBtvl_kduRT-bMvT6RF2hQKDCtRO2VMkd-TWAjTSYfAuvdk_CBSvqvjEmz3kmL4-RGHMhSLysRPYR0caDRmFR-4Qr">
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-micOffBg rounded-full border-[1.5px] border-porcelain flex items-center justify-center">
+<svg class="w-2 h-2 text-white stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
+<path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M3 3l18 18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</span>
+</div>
+<span class="mt-1 text-[11px] font-semibold text-slate-800 truncate max-w-[56px]">Yunus</span>
+</div>
+<!-- Listener 8: +14 more -->
+<div class="flex flex-col items-center shrink-0">
+<div class="relative">
+<div class="w-12 h-12 rounded-full bg-stone-200/90 flex items-center justify-center p-1 border border-stone-300 shadow-xs relative overflow-hidden">
+<img alt="More member" class="w-5 h-5 rounded-full border border-white absolute top-0.5 left-1.5 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8fw-UtPi06IRU3Kzxfdgw-pSX2kdxSYAaOuSLGht2CWghyYean4ziJY1jImMlpZVdSPHDSwgS5-LgPnsrS2s7aRbvOtMULZBCg5t39wBhUWaoDmpM7nZooRvrcUmpYNsZ40PpGrPTVK5LjVJZ6wr-XL6FvSgUIyelo8rH8IixFhTps40OIBKQxqmYP3sKS3qyCS85lPwvkF-sxnd9c1SrzNsTv8Hux9LPszBo3iqU">
+<img alt="More member" class="w-5 h-5 rounded-full border border-white absolute bottom-0.5 right-1.5 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8KajFGtHOZX0azWB11iHKpk-vMvGzLj2bZ1ZcNCVohfSqFi53TSWSBmnGRWvp1hCrgjwZx_oYIM1B4dCAxp3Cf4eKQwyBlNxARd_rtGu8JDWEL1at9f1AcB1d_zuJK9650AptKJuooa8crJOCZb2qL_ZIlXKjziErkdxnkVoaztug89rM18mYdCAny0NC5Zbis35p9O6W4CGHfgoCgcUhbVQJQ0b_JpS2aRktlsU3">
+</div>
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-micOffBg rounded-full border-[1.5px] border-porcelain flex items-center justify-center">
+<svg class="w-2 h-2 text-white stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
+<path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M3 3l18 18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</span>
+</div>
+<span class="mt-1 text-[11px] font-semibold text-stone-600 truncate max-w-[56px]">+14 more</span>
+</div>
+</div>
+<!-- Live Room Discussion / Comments Feed -->
+<div class="mt-3 mb-2 flex-1 flex flex-col min-h-0 overflow-hidden" data-purpose="comments-section">
+<!-- Comments Header with Expand Button -->
+<div class="flex items-center justify-between mb-2.5 px-1 shrink-0">
+<div class="flex items-center space-x-2">
+<h3 class="text-xs font-bold text-slate-900 tracking-tight">Live Discussion</h3>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+<span class="text-[10px] font-semibold text-stone-500 bg-stone-200/70 px-1.5 py-0.5 rounded-full">24 messages</span>
+<!-- Expand Trigger Button -->
+
+</div>
+
+<button aria-label="Expand comments drawer" class="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary/80 bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full transition active:scale-95 ml-auto" id="openDrawerFromHeader" type="button">
+<span>Expand</span>
+<span class="text-xs leading-none">⤢</span>
+</button></div>
+<!-- Comments Stream List (Clicking opens drawer) -->
+<div class="flex flex-col space-y-2 pb-2 cursor-pointer group flex-1 overflow-y-auto no-scrollbar min-h-0" id="openDrawerFromPreview">
+<!-- Comment 1: Wendy -->
+<div class="flex items-start space-x-2.5 bg-white/70 border border-stone-200/70 rounded-2xl p-2.5 shadow-xs group-hover:bg-white transition"><img alt="Wendy" class="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtZ2PF_1LH2IFqPsPFg__NrH7XpHcTP3rXUbOZLLXzB5lqqQrq9PLCApa0jbY_7lQS8sqpn1YobjazAymzUYaxeDaj4M3tunUCw5TsLHpfxBwbUgliU1Euwh7IJBF2Q6V5Y_8idarCu8gYl2ndYYHd-BmmOS5Lm21eyYIrvUHP7kMKVpQV7Otcxh300EsZ4noObGiB1dYnlbuMnKxs7lRzhXpCXh_ge8c9uy7RmCig"><div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-0.5"><span class="text-xs font-bold text-slate-900">Wendy</span><span class="text-[10px] text-stone-400">1m ago</span></div><p class="text-xs text-slate-700 leading-snug">Love the point about tactile digital interactions! 🙌 Jessica's framework makes total sense.</p><div class="flex items-center gap-1.5 mt-2 flex-wrap"><button type="button" class="inline-flex items-center space-x-1 bg-primary/10 border border-primary/20 rounded-full px-2 py-0.5 text-[10px] font-bold text-primary transition hover:bg-primary/15"><span>🙌</span><span>5</span></button><button type="button" class="inline-flex items-center space-x-1 bg-stone-100 hover:bg-stone-200/70 border border-stone-200/80 rounded-full px-2 py-0.5 text-[10px] font-semibold text-stone-600 transition"><span>❤️</span><span>3</span></button><button type="button" class="inline-flex items-center space-x-1 bg-stone-100 hover:bg-stone-200/70 border border-stone-200/80 rounded-full px-2 py-0.5 text-[10px] font-semibold text-stone-600 transition"><span>💡</span><span>2</span></button><button type="button" aria-label="Add reaction" class="w-5 h-5 rounded-full border border-dashed border-stone-300 hover:border-primary/40 flex items-center justify-center text-stone-400 hover:text-primary text-[10px] transition">+</button><button type="button" aria-label="Reply to comment" class="inline-flex items-center gap-1 text-[10px] font-semibold text-stone-500 hover:text-slate-800 transition ml-auto px-1.5 py-0.5 rounded-full hover:bg-stone-100"><svg class="w-3 h-3 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24"><path d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Reply</span></button></div></div></div>
+<!-- Comment 2: David -->
+<div class="flex items-start space-x-2.5 bg-white/70 border border-stone-200/70 rounded-2xl p-2.5 shadow-xs group-hover:bg-white transition"><img alt="David" class="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_bwNwjh9nJvJPvvpZnRIPjzxnLc2fm1b7b1bc7n946PgZMZPxFox3BIoQ7YxbkzUShlEMYuB28MEfvujI-K4OHePd9lSLexAAb7RMtzxftShaxHavrqzpPydSZtPln7jv2nvjntMJpebj6rwsZFUq7MWq6NVyeovq0s-axRfDb1HuHKNMJF-JG12uD-qqRf8dqy1uo329Os3Clr_nyIvPw3meKTPlpvV3X-r4qBQj"><div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-0.5"><span class="text-xs font-bold text-slate-900">David</span><span class="text-[10px] text-stone-400">Just now</span></div><p class="text-xs text-slate-700 leading-snug">Can we ask about the Figma kit? Will the component tokens be published?</p><div class="flex items-center gap-1.5 mt-2 flex-wrap"><button type="button" class="inline-flex items-center space-x-1 bg-stone-100 hover:bg-stone-200/70 border border-stone-200/80 rounded-full px-2 py-0.5 text-[10px] font-semibold text-stone-600 transition"><span>👏</span><span>4</span></button><button type="button" class="inline-flex items-center space-x-1 bg-stone-100 hover:bg-stone-200/70 border border-stone-200/80 rounded-full px-2 py-0.5 text-[10px] font-semibold text-stone-600 transition"><span>🔥</span><span>2</span></button><button type="button" aria-label="Add reaction" class="w-5 h-5 rounded-full border border-dashed border-stone-300 hover:border-primary/40 flex items-center justify-center text-stone-400 hover:text-primary text-[10px] transition">+</button><button type="button" aria-label="Reply to comment" class="inline-flex items-center gap-1 text-[10px] font-semibold text-stone-500 hover:text-slate-800 transition ml-auto px-1.5 py-0.5 rounded-full hover:bg-stone-100"><svg class="w-3 h-3 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24"><path d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Reply</span></button></div></div></div>
+<!-- Comment 3: Salma -->
+<div class="flex items-start space-x-2.5 bg-white/70 border border-stone-200/70 rounded-2xl p-2.5 shadow-xs group-hover:bg-white transition"><img alt="Salma" class="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVtFXqC5pKf5Lb6Ao0k91hZdYbMLFighIMJqPca8iHNLRB4LnhHbW7_tSbx5CJU-rGW1hnG_wBgrnxeY9XjQZfWaLGOU8xuA8jF4e7YPyYBunmHz3g4SredaSWe6c72i6f9BkJr1VQLqC-krQ9gdDfIdynYu82IKFKVTuVgGm5cvYM2_oig5_gK-5BZ_T0BnyK5bo7QBOgcZxWSZCLfcaQigURaNAwBpX0vkNS5-dz"><div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-0.5"><span class="text-xs font-bold text-slate-900">Salma</span><span class="text-[10px] text-stone-400">Just now</span></div><p class="text-xs text-slate-700 leading-snug">Agreed, typography carries the emotional weight here ✨</p><div class="flex items-center gap-1.5 mt-2 flex-wrap"><button type="button" class="inline-flex items-center space-x-1 bg-primary/10 border border-primary/20 rounded-full px-2 py-0.5 text-[10px] font-bold text-primary transition hover:bg-primary/15"><span>✨</span><span>6</span></button><button type="button" class="inline-flex items-center space-x-1 bg-stone-100 hover:bg-stone-200/70 border border-stone-200/80 rounded-full px-2 py-0.5 text-[10px] font-semibold text-stone-600 transition"><span>💯</span><span>3</span></button><button type="button" aria-label="Add reaction" class="w-5 h-5 rounded-full border border-dashed border-stone-300 hover:border-primary/40 flex items-center justify-center text-stone-400 hover:text-primary text-[10px] transition">+</button><button type="button" aria-label="Reply to comment" class="inline-flex items-center gap-1 text-[10px] font-semibold text-stone-500 hover:text-slate-800 transition ml-auto px-1.5 py-0.5 rounded-full hover:bg-stone-100"><svg class="w-3 h-3 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24"><path d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Reply</span></button></div></div></div>
+</div>
+<!-- Quick Comment Input Bar (Clicking opens full drawer) -->
+<div class="mt-1 mb-2 bg-white/90 border border-stone-200 rounded-full px-3 py-1.5 flex items-center shadow-xs shrink-0 cursor-pointer hover:border-primary/40 transition z-20" id="openDrawerFromInputBar"><input aria-label="Say something in room chat" class="flex-1 bg-transparent text-xs text-slate-800 placeholder-stone-400 focus:outline-hidden px-1 cursor-pointer" placeholder="Say something in room..." readonly="" type="text"><div class="flex items-center space-x-1 shrink-0"><button aria-label="Add emoji" class="w-7 h-7 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-500 transition active:scale-95" type="button"><span class="text-sm leading-none">😊</span></button><button aria-label="Quick send message" class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center transition active:scale-95 shadow-sm hover:opacity-90 shrink-0 ml-0.5" type="button"><svg class="w-4 h-4 stroke-[2.2] stroke-current fill-none" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"></path></svg></button></div></div>
+</div>
+<!-- END: Live Room Discussion / Comments Feed -->
+</div>
+<!-- END: AudienceGridSection -->
+</section>
+<!-- END: ScrollableContentArea -->
+<!-- BEGIN: FloatingBottomActionDock -->
+<!-- Floating Bottom Control Dock with rounded-full pill buttons -->
+<footer class="w-full px-5 pb-7 pt-2 shrink-0 bg-porcelain/90 backdrop-blur-md relative z-20" data-purpose="floating-bottom-dock">
+<div class="flex items-center justify-between">
+<!-- Button 1: Room Layout / Grid View Switcher -->
+<button aria-label="Change layout" class="w-12 h-12 rounded-full bg-white border border-stone-200/80 shadow-sm flex items-center justify-center text-slate-700 active:scale-95 transition hover:bg-stone-50" type="button">
+<svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24">
+<rect height="16" rx="2" width="6" x="4" y="4"></rect>
+<rect height="16" rx="2" width="6" x="14" y="4"></rect>
+</svg>
+</button>
+<!-- Button 2: Chat Bubble (Triggers Expandable Comments Drawer) -->
+<button aria-label="Open session live chat drawer" class="w-12 h-12 rounded-full bg-white border border-stone-200/80 shadow-sm flex items-center justify-center text-slate-700 active:scale-95 transition hover:bg-stone-50 relative group" id="openDrawerFromDock" type="button">
+<svg class="w-5 h-5 stroke-current fill-none stroke-[1.8] group-hover:text-primary transition" viewBox="0 0 24 24">
+<path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary border-2 border-white"></span>
+</button>
+<!-- Button 3: Mic Mute / Unmute Toggle -->
+<button aria-label="Toggle microphone" class="w-12 h-12 rounded-full bg-white border border-stone-200/80 shadow-sm flex items-center justify-center text-slate-700 active:scale-95 transition hover:bg-stone-50" type="button">
+<svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24">
+<path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Button 4: Raise Hand (Prominent Blue Pill) -->
+<button aria-label="Raise hand to speak" class="w-12 h-12 rounded-full bg-actionBlue text-white shadow-md flex items-center justify-center active:scale-95 transition hover:bg-blue-600" type="button">
+<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+<path d="M10.5 4.5a1.5 1.5 0 00-3 0v7.6a.75.75 0 01-1.5 0v-4.1a1.5 1.5 0 00-3 0v6.75a8.25 8.25 0 0016.5 0V7.5a1.5 1.5 0 00-3 0v4.6a.75.75 0 01-1.5 0v-6.6a1.5 1.5 0 00-3 0v6.6a.75.75 0 01-1.5 0v-7.6z"></path>
+</svg>
+</button>
+<!-- Button 5: Leave Room (Terracotta/Red Circle) -->
+<button aria-label="Leave room" class="w-12 h-12 rounded-full bg-liveRed text-white shadow-md flex items-center justify-center active:scale-95 transition hover:bg-red-600" type="button">
+<svg class="w-5 h-5 stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+<!-- iOS Home Bar Indicator -->
+<div class="w-32 h-1 bg-stone-900/80 rounded-full mx-auto mt-4"></div>
+</footer>
+<!-- END: FloatingBottomActionDock -->
+<!-- BEGIN: FullScreenExpandableCommentsDrawer -->
+<!-- Backdrop overlay with blur -->
+<div class="fixed sm:absolute inset-0 bg-stone-900/40 backdrop-blur-xs z-40 backdrop-hidden" id="drawerBackdrop"></div>
+<!-- Slide-up Bottom Sheet Modal Container -->
+<div aria-labelledby="drawerTitle" aria-modal="true" class="fixed sm:absolute inset-x-0 bottom-0 top-12 z-50 bg-porcelain rounded-t-[32px] shadow-2xl flex flex-col border-t border-stone-200/90 overflow-hidden drawer-closed" id="commentsDrawer" role="dialog">
+<!-- Drag Handle Area -->
+<div class="w-full pt-3 pb-2 cursor-grab active:cursor-grabbing flex flex-col items-center justify-center select-none shrink-0 touch-none" id="drawerDragHandle">
+<div class="w-12 h-1.5 rounded-full bg-stone-300"></div>
+</div>
+<!-- Drawer Header -->
+<div class="px-5 py-2.5 flex items-center justify-between border-b border-stone-200/70 bg-porcelain/95 shrink-0">
+<div class="flex items-center space-x-2.5">
+<h3 class="text-base font-bold text-slate-900 tracking-tight" id="drawerTitle">Live Discussion</h3>
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<span class="text-[11px] font-semibold text-stone-600 bg-stone-200/70 px-2 py-0.5 rounded-full">24 in room</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<button aria-label="Filter messages" class="text-xs font-semibold text-primary hover:bg-primary/10 px-2.5 py-1 rounded-full transition" type="button">
+        Filter
+      </button>
+<button aria-label="Close discussion sheet" class="w-8 h-8 rounded-full bg-stone-200/70 hover:bg-stone-300 flex items-center justify-center text-slate-700 transition active:scale-95" id="closeDrawerBtn" type="button">
+<svg class="w-4 h-4 stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</div>
+<!-- Pinned Topic Highlight Card -->
+<div class="px-4 py-2.5 bg-primary/10 border-b border-primary/15 shrink-0 flex items-start space-x-2.5">
+<div class="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs shrink-0 mt-0.5">
+      📌
+    </div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-bold text-primary tracking-wide uppercase">Pinned Room Topic</span>
+<span class="text-[10px] text-primary/80 font-medium">By Jessica (Host)</span>
+</div>
+<p class="text-xs text-slate-800 font-medium leading-snug mt-0.5">
+        "Designing tactile micro-interactions: How haptics and natural motion ground user focus."
+      </p>
+</div>
+</div>
+<!-- Scrollable Full Chat History -->
+<div class="flex-1 overflow-y-auto no-scrollbar px-4 py-3 space-y-3">
+<!-- System Notice: Room opened -->
+<div class="flex items-center justify-center my-1">
+<span class="text-[10px] font-semibold text-stone-500 bg-stone-200/60 px-2.5 py-1 rounded-full">Session started 14 mins ago</span>
+</div>
+<!-- Message 1: Jessica (Host) -->
+<div class="flex items-start space-x-2.5 bg-white/80 border border-primary/20 rounded-2xl p-3 shadow-xs">
+<img alt="Jessica (Host)" class="w-8 h-8 rounded-full object-cover shrink-0 border border-primary/30" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCURmmCmNDmStoJncS88G9Xd5xpXbku8VeT51Qel2kArJ4v8OoLJCFK5IytQ1tVlq3HhtZYY6UWwYBpqr6ckK8Ay9JNXotJHavZ7x3dUWkmwlnnKLrg6fUeJNJWKpEWo7Hu9c8r9OIjY3nQp2bfzjnPxpBiu_uPz2mzr_1Dxfznfm_cE6qeXNa6lSNaQCbnZhY6ejm2fzeHBmkk8lQNQ4Tz60zB_Ma4-0e4yqn2OZ9N">
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center space-x-1.5">
+<span class="text-xs font-bold text-slate-900">Jessica</span>
+<span class="text-[9px] font-bold text-primary bg-primary/15 px-1.5 py-0.2 rounded">Host</span>
+</div>
+<span class="text-[10px] text-stone-400">12m ago</span>
+</div>
+<p class="text-xs text-slate-800 leading-snug">Welcome everyone! Feel free to drop questions here or tap Raise Hand to hop onto stage.</p>
+<div class="flex items-center space-x-1.5 mt-2"><button class="inline-flex items-center space-x-1 bg-primary/10 border border-primary/20 rounded-full px-2 py-0.5 text-[10px] font-bold text-primary transition"><span>👋</span><span>8</span></button><button class="inline-flex items-center space-x-1 bg-stone-100 hover:bg-stone-200/70 border border-stone-200/80 rounded-full px-2 py-0.5 text-[10px] font-semibold text-stone-600 transition"><span>🔥</span><span>5</span></button><button class="inline-flex items-center space-x-1 bg-stone-100 hover:bg-stone-200/70 border border-stone-200/80 rounded-full px-2 py-0.5 text-[10px] font-semibold text-stone-600 transition"><span>❤️</span><span>4</span></button><button aria-label="Add reaction" class="w-5 h-5 rounded-full border border-dashed border-stone-300 hover:border-primary/40 flex items-center justify-center text-stone-400 hover:text-primary text-[10px] transition">+</button><button type="button" aria-label="Reply to Jessica" class="inline-flex items-center gap-1 text-[10px] font-semibold text-stone-500 hover:text-slate-800 transition ml-auto px-1.5 py-0.5 rounded-full hover:bg-stone-100"><svg class="w-3 h-3 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24"><path d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Reply</span></button></div>
+</div>
+</div>
+<!-- Message 2: Samir (Co-host) -->
+<div class="flex items-start space-x-2.5 bg-white/70 border border-stone-200/70 rounded-2xl p-3 shadow-xs">
+<img alt="Samir" class="w-8 h-8 rounded-full object-cover shrink-0 border border-stone-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3Fy26PY_eJr7Va6rjqHVNv2qXhAFdfuNBuKzN6jKtoh_LDUIECl2PkrM4wrNcZJGeX7s01DYUfkT74gy_uhr5TapIIsJ_BK1nzRqIhfXRcyiOzeQV-MZ-YBx-uWsf0KAM3IhTRXcQ39u2ENoHBtvl_kduRT-bMvT6RF2hQKDCtRO2VMkd-TWAjTSYfAuvdk_CBSvqvjEmz3kmL4-RGHMhSLysRPYR0caDRmFR-4Qr">
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center space-x-1.5">
+<span class="text-xs font-bold text-slate-900">Samir</span>
+<span class="text-[9px] font-semibold text-stone-500 bg-stone-200/80 px-1.5 py-0.2 rounded">Co-host</span>
+</div>
+<span class="text-[10px] text-stone-400">8m ago</span>
+</div>
+<p class="text-xs text-slate-800 leading-snug">We just pushed live notes to the shared whiteboard channel as well!</p>
+<div class="flex items-center space-x-1.5 mt-2"><button class="inline-flex items-center space-x-1 bg-stone-100 hover:bg-stone-200/70 border border-stone-200/80 rounded-full px-2 py-0.5 text-[10px] font-semibold text-stone-600 transition"><span>🙌</span><span>3</span></button><button class="inline-flex items-center space-x-1 bg-primary/10 border border-primary/20 rounded-full px-2 py-0.5 text-[10px] font-bold text-primary transition"><span>📝</span><span>2</span></button><button aria-label="Add reaction" class="w-5 h-5 rounded-full border border-dashed border-stone-300 hover:border-primary/40 flex items-center justify-center text-stone-400 hover:text-primary text-[10px] transition">+</button><button type="button" aria-label="Reply to Samir" class="inline-flex items-center gap-1 text-[10px] font-semibold text-stone-500 hover:text-slate-800 transition ml-auto px-1.5 py-0.5 rounded-full hover:bg-stone-100"><svg class="w-3 h-3 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24"><path d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Reply</span></button></div>
+</div>
+</div>
+<!-- Message 3: Wendy -->
+<div class="flex items-start space-x-2.5 bg-white/70 border border-stone-200/70 rounded-2xl p-3 shadow-xs">
+<img alt="Wendy" class="w-8 h-8 rounded-full object-cover shrink-0 border border-stone-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtZ2PF_1LH2IFqPsPFg__NrH7XpHcTP3rXUbOZLLXzB5lqqQrq9PLCApa0jbY_7lQS8sqpn1YobjazAymzUYaxeDaj4M3tunUCw5TsLHpfxBwbUgliU1Euwh7IJBF2Q6V5Y_8idarCu8gYl2ndYYHd-BmmOS5Lm21eyYIrvUHP7kMKVpQV7Otcxh300EsZ4noObGiB1dYnlbuMnKxs7lRzhXpCXh_ge8c9uy7RmCig">
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-bold text-slate-900">Wendy</span>
+<span class="text-[10px] text-stone-400">1m ago</span>
+</div>
+<p class="text-xs text-slate-700 leading-snug">Love the point about tactile digital interactions! 🙌 Jessica's framework makes total sense.</p>
+<div class="flex items-center space-x-1.5 mt-2">
+<button class="inline-flex items-center space-x-1 bg-primary/10 border border-primary/20 rounded-full px-2 py-0.5 text-[10px] font-bold text-primary transition">
+<span>❤️</span>
+<span>4</span>
+</button>
+<button type="button" aria-label="Reply to Wendy" class="inline-flex items-center gap-1 text-[10px] font-semibold text-stone-500 hover:text-slate-800 transition ml-auto px-1.5 py-0.5 rounded-full hover:bg-stone-100"><svg class="w-3 h-3 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24"><path d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Reply</span></button></div>
+</div>
+</div>
+<!-- Message 4: David -->
+<div class="flex items-start space-x-2.5 bg-white/70 border border-stone-200/70 rounded-2xl p-3 shadow-xs">
+<img alt="David" class="w-8 h-8 rounded-full object-cover shrink-0 border border-stone-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_bwNwjh9nJvJPvvpZnRIPjzxnLc2fm1b7b1bc7n946PgZMZPxFox3BIoQ7YxbkzUShlEMYuB28MEfvujI-K4OHePd9lSLexAAb7RMtzxftShaxHavrqzpPydSZtPln7jv2nvjntMJpebj6rwsZFUq7MWq6NVyeovq0s-axRfDb1HuHKNMJF-JG12uD-qqRf8dqy1uo329Os3Clr_nyIvPw3meKTPlpvV3X-r4qBQj">
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-bold text-slate-900">David</span>
+<span class="text-[10px] text-stone-400">Just now</span>
+</div>
+<p class="text-xs text-slate-700 leading-snug">Can we ask about the Figma kit? Will the component tokens be published?</p><div class="flex items-center space-x-1.5 mt-2"><button class="inline-flex items-center space-x-1 bg-stone-100 hover:bg-stone-200/70 border border-stone-200/80 rounded-full px-2 py-0.5 text-[10px] font-semibold text-stone-600 transition"><span>👏</span><span>4</span></button><button class="inline-flex items-center space-x-1 bg-stone-100 hover:bg-stone-200/70 border border-stone-200/80 rounded-full px-2 py-0.5 text-[10px] font-semibold text-stone-600 transition"><span>🔥</span><span>2</span></button><button aria-label="Add reaction" class="w-5 h-5 rounded-full border border-dashed border-stone-300 hover:border-primary/40 flex items-center justify-center text-stone-400 hover:text-primary text-[10px] transition">+</button><button type="button" aria-label="Reply to David" class="inline-flex items-center gap-1 text-[10px] font-semibold text-stone-500 hover:text-slate-800 transition ml-auto px-1.5 py-0.5 rounded-full hover:bg-stone-100"><svg class="w-3 h-3 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24"><path d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Reply</span></button></div>
+</div>
+</div>
+<!-- Message 5: Salma -->
+<div class="flex items-start space-x-2.5 bg-white/70 border border-stone-200/70 rounded-2xl p-3 shadow-xs">
+<img alt="Salma" class="w-8 h-8 rounded-full object-cover shrink-0 border border-stone-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVtFXqC5pKf5Lb6Ao0k91hZdYbMLFighIMJqPca8iHNLRB4LnhHbW7_tSbx5CJU-rGW1hnG_wBgrnxeY9XjQZfWaLGOU8xuA8jF4e7YPyYBunmHz3g4SredaSWe6c72i6f9BkJr1VQLqC-krQ9gdDfIdynYu82IKFKVTuVgGm5cvYM2_oig5_gK-5BZ_T0BnyK5bo7QBOgcZxWSZCLfcaQigURaNAwBpX0vkNS5-dz">
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-bold text-slate-900">Salma</span>
+<span class="text-[10px] text-stone-400">Just now</span>
+</div>
+<p class="text-xs text-slate-700 leading-snug">Agreed, typography carries the emotional weight here ✨</p><div class="flex items-center space-x-1.5 mt-2"><button class="inline-flex items-center space-x-1 bg-primary/10 border border-primary/20 rounded-full px-2 py-0.5 text-[10px] font-bold text-primary transition"><span>✨</span><span>6</span></button><button class="inline-flex items-center space-x-1 bg-stone-100 hover:bg-stone-200/70 border border-stone-200/80 rounded-full px-2 py-0.5 text-[10px] font-semibold text-stone-600 transition"><span>💯</span><span>3</span></button><button aria-label="Add reaction" class="w-5 h-5 rounded-full border border-dashed border-stone-300 hover:border-primary/40 flex items-center justify-center text-stone-400 hover:text-primary text-[10px] transition">+</button><button type="button" aria-label="Reply to Salma" class="inline-flex items-center gap-1 text-[10px] font-semibold text-stone-500 hover:text-slate-800 transition ml-auto px-1.5 py-0.5 rounded-full hover:bg-stone-100"><svg class="w-3 h-3 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24"><path d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Reply</span></button></div>
+</div>
+</div>
+<!-- Message 6: Dablo (you) preview -->
+<div class="flex items-start space-x-2.5 bg-primary/5 border border-primary/20 rounded-2xl p-3 shadow-xs">
+<img alt="Dablo" class="w-8 h-8 rounded-full object-cover shrink-0 border border-primary/40" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtL_7NZpbNavKflLY59BNs6xqaO47uiWaaHMUech7Q1rt2S3I61xkwu-0dA5f0lDYFI7aNuDQA3pvJjwpriJkY87fVG6IDy72hQJoiCb-DEzLrDEfasCpbHXTp-Sny1LuqjY5XTJnC68b8pydeI_JKHUBTG55AVpkGAZFJ-ChoEBCbvgDJ7jaAPN4XCZYfJAbv8RBQOUrd7FT204IFud80oE1iEswhJfigP5m3Wr9o">
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center space-x-1.5">
+<span class="text-xs font-bold text-slate-900">Dablo (you)</span>
+<span class="text-[9px] font-semibold text-primary bg-primary/15 px-1 py-0.2 rounded">You</span>
+</div>
+<span class="text-[10px] text-stone-400">Draft</span>
+</div>
+<p class="text-xs text-slate-500 italic">Listening attentively...</p>
+</div>
+</div>
+</div>
+<!-- Fixed Bottom Input in Drawer -->
+<div class="p-3 bg-white/95 border-t border-stone-200/80 shrink-0"><div class="flex items-center gap-2"><div class="flex-1 bg-stone-100 border border-stone-200 rounded-full px-3.5 py-1.5 flex items-center shadow-inner"><input aria-label="Type message in room" class="w-full bg-transparent text-xs text-slate-900 placeholder-stone-400 focus:outline-hidden" id="drawerChatInput" placeholder="Comment or ask a question..." type="text"><button aria-label="Insert emoji" class="text-stone-400 hover:text-stone-700 ml-1 text-sm leading-none transition shrink-0" type="button">😊</button></div><button aria-label="Send message in room" class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center transition active:scale-95 shadow-sm hover:opacity-95 shrink-0" type="button"><svg class="w-4 h-4 stroke-[2.2] stroke-current fill-none" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"></path></svg></button></div><div class="w-28 h-1 bg-stone-900/60 rounded-full mx-auto mt-2.5"></div></div>
+</div>
+<!-- END: FullScreenExpandableCommentsDrawer -->
+</main>
+<!-- END: MobileDeviceContainer -->
+<!-- BEGIN: Interactive Drawer Script -->
+<script>
+  (function initCommentsDrawer() {
+    const drawer = document.getElementById('commentsDrawer');
+    const backdrop = document.getElementById('drawerBackdrop');
+    const closeBtn = document.getElementById('closeDrawerBtn');
+    const openFromHeader = document.getElementById('openDrawerFromHeader');
+    const openFromDock = document.getElementById('openDrawerFromDock');
+    const openFromInputBar = document.getElementById('openDrawerFromInputBar');
+    const openFromPreview = document.getElementById('openDrawerFromPreview');
+    const dragHandle = document.getElementById('drawerDragHandle');
+    const chatInput = document.getElementById('drawerChatInput');
+
+    function openDrawer() {
+      drawer.classList.remove('drawer-closed');
+      drawer.classList.add('drawer-open');
+      backdrop.classList.remove('backdrop-hidden');
+      backdrop.classList.add('backdrop-visible');
+      setTimeout(() => {
+        if (chatInput) chatInput.focus();
+      }, 350);
+    }
+
+    function closeDrawer() {
+      drawer.classList.remove('drawer-open');
+      drawer.classList.add('drawer-closed');
+      backdrop.classList.remove('backdrop-visible');
+      backdrop.classList.add('backdrop-hidden');
+    }
+
+    // Attach open triggers
+    if (openFromHeader) openFromHeader.addEventListener('click', openDrawer);
+    if (openFromDock) openFromDock.addEventListener('click', openDrawer);
+    if (openFromInputBar) openFromInputBar.addEventListener('click', openDrawer);
+    if (openFromPreview) openFromPreview.addEventListener('click', openDrawer);
+
+    // Attach close triggers
+    if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+    if (backdrop) backdrop.addEventListener('click', closeDrawer);
+
+    // Drag-down gesture handling on the handle
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+
+    if (dragHandle) {
+      dragHandle.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].clientY;
+        isDragging = true;
+      }, { passive: true });
+
+      dragHandle.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        currentY = e.touches[0].clientY;
+        const delta = currentY - startY;
+        if (delta > 0) {
+          drawer.style.transform = `translateY(${delta}px)`;
+        }
+      }, { passive: true });
+
+      dragHandle.addEventListener('touchend', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        const delta = currentY - startY;
+        drawer.style.transform = '';
+        if (delta > 80) {
+          closeDrawer();
+        }
+      });
+    }
+
+    // Keyboard ESC to close
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && drawer.classList.contains('drawer-open')) {
+        closeDrawer();
+      }
+    });
+  })();
+</script>
+<!-- END: Interactive Drawer Script -->
+<!-- BEGIN: Comment Reactions Script -->
+<script>
+  (function initCommentReactions() {
+    if (window.__commentReactionsBound) return;
+    window.__commentReactionsBound = true;
+
+    const MINE = ['bg-primary/10', 'border-primary/20', 'text-primary', 'font-bold'];
+    const NEUTRAL = ['bg-stone-100', 'border-stone-200/80', 'text-stone-600', 'font-semibold'];
+    const reactions = new Map();
+
+    const isChip = (button) => {
+      const spans = button.querySelectorAll(':scope > span');
+      return spans.length === 2 && /^\d+$/.test(spans[1].textContent.trim());
+    };
+
+    const keyOf = (button) => {
+      const card = button.closest('div.items-start');
+      const author = card?.querySelector('span.font-bold')?.textContent.trim() ?? '';
+      return author + '|' + button.querySelector(':scope > span').textContent.trim();
+    };
+
+    const chips = () => [...document.querySelectorAll('button')].filter(isChip);
+
+    function render(key, state) {
+      chips().filter((chip) => keyOf(chip) === key).forEach((chip) => {
+        chip.querySelectorAll(':scope > span')[1].textContent = String(state.count);
+        chip.classList.remove(...(state.mine ? NEUTRAL : MINE));
+        chip.classList.add(...(state.mine ? MINE : NEUTRAL));
+        chip.setAttribute('aria-pressed', String(state.mine));
+      });
+    }
+
+    chips().forEach((chip) => {
+      const key = keyOf(chip);
+      if (!reactions.has(key)) {
+        reactions.set(key, {
+          count: Number(chip.querySelectorAll(':scope > span')[1].textContent.trim()),
+          mine: chip.classList.contains('bg-primary/10'),
+        });
+      }
+      chip.setAttribute('aria-pressed', String(reactions.get(key).mine));
+    });
+
+    reactions.forEach((state, key) => render(key, state));
+
+    document.addEventListener('click', (event) => {
+      const chip = event.target.closest('button');
+      if (!chip || !isChip(chip)) return;
+      event.stopPropagation();
+      const key = keyOf(chip);
+      const state = reactions.get(key);
+      state.mine = !state.mine;
+      state.count += state.mine ? 1 : -1;
+      render(key, state);
+    }, true);
+  })();
+</script>
+<!-- END: Comment Reactions Script -->
+
+
+
+
+
+
+
+
+
+</body></html>
