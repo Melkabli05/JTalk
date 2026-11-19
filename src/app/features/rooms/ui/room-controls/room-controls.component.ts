@@ -2,6 +2,7 @@ import { NgOptimizedImage } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Message } from '@openng/optimus-ui/message';
+import { OverlayBadge } from '@openng/optimus-ui/overlaybadge';
 import { Popover } from '@openng/optimus-ui/popover';
 import { Toolbar } from '@openng/optimus-ui/toolbar';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
@@ -13,7 +14,7 @@ let nextId = 0;
 
 @Component({
   selector: 'app-room-controls',
-  imports: [ButtonDirective, Message, NgOptimizedImage, Popover, Toolbar, Tooltip],
+  imports: [ButtonDirective, Message, NgOptimizedImage, OverlayBadge, Popover, Toolbar, Tooltip],
   template: `
     <span class="cdk-visually-hidden" [id]="labelId">Room controls</span>
     <div class="notes">
@@ -125,6 +126,26 @@ let nextId = 0;
               (click)="handRaised() ? lowerHand.emit() : raiseHand.emit()"
             ></button>
           }
+          <p-overlay-badge
+            [value]="unread() > 0 ? unread() : null"
+            [badgeDisabled]="unread() === 0"
+            badgeSize="small"
+            severity="danger"
+          >
+            <button
+              pButton
+              type="button"
+              size="large"
+              icon="pi pi-comments"
+              severity="secondary"
+              [outlined]="true"
+              [rounded]="true"
+              [attr.aria-label]="chatLabel()"
+              [pTooltip]="chatLabel()"
+              tooltipPosition="top"
+              (click)="chat.emit()"
+            ></button>
+          </p-overlay-badge>
           @let reactLabel = 'React';
           <button
             pButton
@@ -192,6 +213,7 @@ export class RoomControlsComponent {
   readonly micOn = input(false);
   readonly soundBlocked = input(false);
   readonly micRefused = input(false);
+  readonly unread = input(0);
 
   readonly leave = output<void>();
   readonly stepDown = output<void>();
@@ -201,6 +223,7 @@ export class RoomControlsComponent {
   readonly enableSound = output<void>();
   readonly retryAudio = output<void>();
   readonly react = output<Reaction>();
+  readonly chat = output<void>();
 
   protected readonly looks = REACTIONS.map((reaction) => ({
     reaction,
@@ -208,5 +231,8 @@ export class RoomControlsComponent {
   }));
   /** The microphone is offered only to someone who may speak, and only while there is audio to speak into. */
   protected readonly micShown = computed(() => this.canSpeak() && this.audio() === 'connected');
+  protected readonly chatLabel = computed(() =>
+    this.unread() > 0 ? `Chat, ${this.unread()} unread` : 'Chat',
+  );
   protected readonly labelId = `app-room-controls-${nextId++}`;
 }

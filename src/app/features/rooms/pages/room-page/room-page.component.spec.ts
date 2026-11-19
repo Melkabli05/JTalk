@@ -117,7 +117,17 @@ describe('RoomPageComponent (container)', () => {
             ? server.stage
             : method === 'GET' && url.endsWith('/participants')
               ? server.people
-              : null);
+              : method === 'GET' && url.endsWith('/comments')
+                ? { comments: [], topic: null, muted: false, mutedUsers: [] }
+                : method === 'POST' && url.endsWith('/comments')
+                  ? {
+                      id: 'c-1',
+                      authorId: 'm-1',
+                      type: 'TEXT',
+                      content: 'Hola a todos',
+                      createdAt: '2026-11-19T10:00:00Z',
+                    }
+                  : null);
     return request.flush(
       answer,
       answer === null
@@ -296,6 +306,45 @@ describe('RoomPageComponent (container)', () => {
     expect(
       root().querySelector('app-room-controls button[aria-pressed]')?.getAttribute('aria-pressed'),
     ).toBe('true');
+  });
+
+  it('opens the chat from the dock, and a comment the person sends appears once the server has kept it', async () => {
+    await open();
+
+    press('Chat', root().querySelector('app-room-controls')!);
+    await settle();
+    const panel = document.body.querySelector('app-chat-panel')!;
+    expect(panel).not.toBeNull();
+    expect(sent('GET', `${BASE}/comments`)).toBe(true);
+
+    const message = panel.querySelector('textarea')!;
+    message.value = 'Hola a todos';
+    message.dispatchEvent(new Event('input'));
+    await settle();
+    expect(panel.textContent).not.toContain('Hola a todos'.concat(' '));
+    panel.querySelector('form.composer')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    await settle();
+
+    expect(sent('POST', `${BASE}/comments`)).toBe(true);
+    expect(panel.querySelector('.message-item .text')?.textContent).toBe('Hola a todos');
+  });
+
+  it('badges the chat button with what others said while it was closed', async () => {
+    await open();
+
+    link.last.listener.chatEvent({
+      type: 'COMMENT_POSTED',
+      comment: {
+        id: 'c-9',
+        authorId: 'b-1',
+        type: 'TEXT',
+        content: 'Hello',
+        createdAt: '2026-11-19T10:00:00Z',
+      },
+    });
+    await settle();
+
+    expect(controlNames()).toContain('Chat, 1 unread');
   });
 
   it('shows a reaction the server announces on the face of the person who sent it', async () => {

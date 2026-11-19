@@ -25,10 +25,12 @@ import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { Tag } from '@openng/optimus-ui/tag';
 import { Chip } from '@openng/optimus-ui/chip';
+import { Drawer } from '@openng/optimus-ui/drawer';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { PersonCardService } from '@core/people/person-card.service';
 import type { RoomRole, RoomEdit, Stage } from '../../models/room.model';
 import { RoomFacade } from '../../state/room.facade';
+import { ChatPanelComponent } from '../../ui/chat-panel/chat-panel.component';
 import { AudienceSectionComponent } from '../../ui/audience-section/audience-section.component';
 import { PersonDialogComponent } from '../../ui/person-dialog/person-dialog.component';
 import { RaisedHandsComponent } from '../../ui/raised-hands/raised-hands.component';
@@ -45,7 +47,9 @@ import { roomLook } from '../../utils/room-look';
     Badge,
     ButtonDirective,
     Card,
+    ChatPanelComponent,
     ConfirmDialog,
+    Drawer,
     Menu,
     Message,
     PersonDialogComponent,
@@ -117,6 +121,8 @@ export default class RoomPageComponent {
   ]);
   protected readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
   protected readonly editing = signal(false);
+  protected readonly chatOpen = signal(false);
+  protected readonly chat = this.facade.chat;
   protected readonly selectedId = signal<string | null>(null);
 
   protected readonly selected = computed(() => {
@@ -216,6 +222,11 @@ export default class RoomPageComponent {
       }
     });
     this.facade.exited.pipe(takeUntilDestroyed()).subscribe(() => this.leaveBecause());
+  }
+
+  protected toggleChat(open: boolean): void {
+    this.chatOpen.set(open);
+    this.chat.watch(open);
   }
 
   protected share(): void {

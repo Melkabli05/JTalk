@@ -1,13 +1,15 @@
 import type { Participant, TrackPublication } from 'livekit-client';
-import type { RealtimeConnection, RealtimeListener, RoomUpdate } from '../models/realtime.model';
+import type { RealtimeConnection, RealtimeListener } from '../models/realtime.model';
 import { filterNoise } from './noise-filter';
+import { parseChatEvent } from './parsers/chat.parser';
 import { parseRoomEvent } from './parsers/room-event.parser';
 
 export const ROOM_EVENTS_TOPIC = 'room-events';
+export const CHAT_TOPIC = 'room-chat';
 
-function readRoomEvent(payload: Uint8Array): RoomUpdate | undefined {
+function decode(payload: Uint8Array): unknown {
   try {
-    return parseRoomEvent(JSON.parse(new TextDecoder().decode(payload)));
+    return JSON.parse(new TextDecoder().decode(payload));
   } catch {
     return undefined;
   }
@@ -54,10 +56,18 @@ export async function connectLiveKit(
       listener.speakersChanged(active.map((participant) => participant.identity));
     })
     .on(RoomEvent.DataReceived, (payload, participant, _kind, topic) => {
-      if (participant === undefined && topic === ROOM_EVENTS_TOPIC) {
-        const event = readRoomEvent(payload);
+      if (participant !== undefined) {
+        return;
+      }
+      if (topic === ROOM_EVENTS_TOPIC) {
+        const event = parseRoomEvent(decode(payload));
         if (event !== undefined) {
           listener.roomEvent(event);
+        }
+      } else if (topic === CHAT_TOPIC) {
+        const event = parseChatEvent(decode(payload));
+        if (event !== undefined) {
+          listener.chatEvent(event);
         }
       }
     })

@@ -1,3 +1,4 @@
+import type { ChatUpdate } from './chat.model';
 import type { ReactionBurst } from './reaction.model';
 import type { Stage } from './room.model';
 
@@ -6,6 +7,7 @@ export type AudioStatus = 'idle' | 'connecting' | 'reconnecting' | 'connected' |
 export interface RealtimeListener {
   readonly speakersChanged: (ids: readonly string[]) => void;
   readonly roomEvent: (event: RoomUpdate) => void;
+  readonly chatEvent: (event: ChatUpdate) => void;
   readonly soundBlocked: (blocked: boolean) => void;
   readonly canPublishChanged: (canPublish: boolean) => void;
   readonly linkChanged: (up: boolean) => void;

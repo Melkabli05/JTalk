@@ -23,7 +23,7 @@ export class RoomStore {
   // The room is read from the server once the link to its live events is up, so nothing that happens after it is missed; from then on the
   // events keep it current, and it is read again only when the link comes back after a break.
   private readonly reading = signal(false);
-  private readonly readId = computed(() => (this.reading() ? this.id() : ''));
+  readonly readId = computed(() => (this.reading() ? this.id() : ''));
 
   readonly roomId = this.id.asReadonly();
   readonly joined = this.hasJoined.asReadonly();

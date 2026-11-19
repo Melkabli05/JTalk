@@ -1,5 +1,5 @@
 import type { RealtimeListener } from '../models/realtime.model';
-import { connectLiveKit, ROOM_EVENTS_TOPIC } from './livekit.connector';
+import { CHAT_TOPIC, connectLiveKit, ROOM_EVENTS_TOPIC } from './livekit.connector';
 
 const library = vi.hoisted(() => {
   type Handler = (...args: unknown[]) => void;
@@ -75,6 +75,7 @@ describe('connectLiveKit', () => {
   const listener = {
     speakersChanged: vi.fn(),
     roomEvent: vi.fn(),
+    chatEvent: vi.fn(),
     soundBlocked: vi.fn(),
     canPublishChanged: vi.fn(),
     linkChanged: vi.fn(),
@@ -113,6 +114,35 @@ describe('connectLiveKit', () => {
       at: Date.parse('2026-11-17T10:00:00.250Z'),
       stage: { speakers: ['h-1'], handRaiseQueue: ['b-1'] },
     });
+  });
+
+  it('hands a chat change the backend sends on the chat topic to the listener, and keeps the topics apart', async () => {
+    await connectLiveKit('wss://x', 't', listener);
+    const deletion = { type: 'COMMENT_DELETED', commentId: 'c-1' };
+
+    room().emit('dataReceived', message(deletion), undefined, undefined, CHAT_TOPIC);
+    room().emit('dataReceived', message(deletion), undefined, undefined, ROOM_EVENTS_TOPIC);
+    room().emit('dataReceived', message(stageEvent), undefined, undefined, CHAT_TOPIC);
+
+    expect(listener.chatEvent).toHaveBeenCalledExactlyOnceWith({
+      type: 'COMMENT_DELETED',
+      commentId: 'c-1',
+    });
+    expect(listener.roomEvent).not.toHaveBeenCalled();
+  });
+
+  it('does not trust a chat change that a participant sent', async () => {
+    await connectLiveKit('wss://x', 't', listener);
+
+    room().emit(
+      'dataReceived',
+      message({ type: 'COMMENT_DELETED', commentId: 'c-1' }),
+      { identity: 'someone' },
+      undefined,
+      CHAT_TOPIC,
+    );
+
+    expect(listener.chatEvent).not.toHaveBeenCalled();
   });
 
   it('ignores a backend message it cannot understand', async () => {

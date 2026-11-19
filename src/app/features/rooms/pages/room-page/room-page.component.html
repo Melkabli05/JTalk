@@ -167,6 +167,8 @@
         [micOn]="facade.audio.micOn()"
         [micRefused]="facade.audio.micRefused()"
         [soundBlocked]="facade.audio.soundBlocked()"
+        [unread]="chat.unread()"
+        (chat)="toggleChat(true)"
         (toggleMic)="facade.audio.toggleMicrophone()"
         (enableSound)="facade.audio.enableSound()"
         (retryAudio)="facade.reconnectAudio()"
@@ -223,5 +225,37 @@
   [error]="facade.saving.error()"
   (edited)="edit($event)"
 />
+
+<p-drawer
+  header="Chat"
+  position="right"
+  styleClass="chat-drawer"
+  [visible]="chatOpen()"
+  [modal]="false"
+  [dismissible]="false"
+  (visibleChange)="toggleChat($event)"
+>
+  <app-chat-panel
+    [comments]="chat.comments()"
+    [topic]="chat.topic()"
+    [ready]="chat.ready()"
+    [failed]="chat.failed()"
+    [muted]="chat.muted()"
+    [mutedUsers]="chat.mutedUsers()"
+    [members]="chat.members()"
+    [meId]="chat.meId()"
+    [isHost]="state.isHost()"
+    [submitting]="facade.commenting.submitting()"
+    [error]="facade.commenting.error()"
+    [moderating]="facade.moderating.submitting()"
+    (submitted)="facade.sendComment($event)"
+    (deleted)="facade.deleteComment($event)"
+    (muteRequested)="facade.muteInChat($event)"
+    (unmuteRequested)="facade.unmuteInChat($event)"
+    (pinned)="facade.pinTopic($event)"
+    (unpinned)="facade.clearTopic()"
+    (retry)="chat.reload()"
+  />
+</p-drawer>
 
 <p-confirmdialog />

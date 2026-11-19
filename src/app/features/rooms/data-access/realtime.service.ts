@@ -1,5 +1,6 @@
 import { DestroyRef, inject, Service, signal } from '@angular/core';
 import { Subject } from 'rxjs';
+import type { ChatUpdate } from '../models/chat.model';
 import type {
   AudioStatus,
   RealtimeConnection,
@@ -13,6 +14,7 @@ import { REALTIME_CONNECTOR } from './realtime-connector.token';
 export class RealtimeService {
   private readonly connector = inject(REALTIME_CONNECTOR);
   private readonly pushed = new Subject<RoomUpdate>();
+  private readonly chatPushed = new Subject<ChatUpdate>();
   private connection: RealtimeConnection | null = null;
   private generation = 0;
 
@@ -25,6 +27,7 @@ export class RealtimeService {
   /** Whose microphone is muted right now, as the media server reports it: their own button or the host. */
   readonly muted = signal<readonly string[]>([]);
   readonly roomEvents = this.pushed.asObservable();
+  readonly chatEvents = this.chatPushed.asObservable();
 
   constructor() {
     inject(DestroyRef).onDestroy(() => void this.disconnect());
@@ -113,6 +116,7 @@ export class RealtimeService {
     return {
       speakersChanged: live((ids) => this.speaking.set(ids)),
       roomEvent: live((event) => this.pushed.next(event)),
+      chatEvent: live((event) => this.chatPushed.next(event)),
       soundBlocked: live((blocked) => this.soundBlocked.set(blocked)),
       canPublishChanged: live((canPublish) => {
         this.canSpeak.set(canPublish);

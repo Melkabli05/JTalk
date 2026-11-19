@@ -22,7 +22,7 @@ describe('RoomControlsComponent (presentational)', () => {
   it('lets a listener leave or raise a hand', async () => {
     await render({});
 
-    expect(names()).toEqual(['Raise hand', 'React', 'Leave quietly']);
+    expect(names()).toEqual(['Raise hand', 'Chat', 'React', 'Leave quietly']);
   });
 
   it('says nothing while all is well, and before there is any audio', async () => {
@@ -58,13 +58,13 @@ describe('RoomControlsComponent (presentational)', () => {
     await render({ canSpeak: true, audio: 'connected', onStage: true, micOn: true });
     fixture.componentInstance.toggleMic.subscribe(toggled);
 
-    expect(names()).toEqual(['Mute', 'React', 'Leave quietly']);
+    expect(names()).toEqual(['Mute', 'Chat', 'React', 'Leave quietly']);
     click('Mute');
     expect(toggled).toHaveBeenCalledOnce();
 
     fixture.componentRef.setInput('micOn', false);
     await fixture.whenStable();
-    expect(names()).toEqual(['Unmute', 'React', 'Leave quietly']);
+    expect(names()).toEqual(['Unmute', 'Chat', 'React', 'Leave quietly']);
   });
 
   it('asks for a tap to turn the sound on only while the browser blocks it', async () => {
@@ -114,7 +114,7 @@ describe('RoomControlsComponent (presentational)', () => {
   it('has no hand to raise for someone already on stage', async () => {
     await render({ onStage: true });
 
-    expect(names()).toEqual(['React', 'Leave quietly']);
+    expect(names()).toEqual(['Chat', 'React', 'Leave quietly']);
   });
 
   it('disables the hand while a request is running', async () => {
@@ -139,7 +139,7 @@ describe('RoomControlsComponent (presentational)', () => {
   it('draws the small controls as circles, the main one as a labelled pill, and leaving apart', async () => {
     await render({ canSpeak: true, audio: 'connected', micOn: true });
 
-    for (const name of ['Mute', 'React']) {
+    for (const name of ['Mute', 'Chat', 'React']) {
       const circle = button(name);
       expect(circle.className).toContain('p-button-rounded');
       expect(circle.className).toContain('p-button-icon-only');
@@ -235,6 +235,7 @@ describe('RoomControlsComponent (presentational)', () => {
 
     expect([...root().querySelectorAll('.p-toolbar-center button')].map(nameOf)).toEqual([
       'Unmute',
+      'Chat',
       'React',
       'Leave quietly',
     ]);
@@ -248,19 +249,25 @@ describe('RoomControlsComponent (presentational)', () => {
     it('gives the audience a hand to raise, a reaction and a way out: no microphone, no stepping down', async () => {
       await render({ audio: 'connected' });
 
-      expect(shown()).toEqual(['Raise hand', 'React', 'Leave quietly']);
+      expect(shown()).toEqual(['Raise hand', 'Chat', 'React', 'Leave quietly']);
     });
 
     it('gives someone on the stage the microphone and a way down, and no hand to raise', async () => {
       await render({ onStage: true, canSpeak: true, canStepDown: true, audio: 'connected' });
 
-      expect(shown()).toEqual(['Unmute', 'Step down to the audience', 'React', 'Leave quietly']);
+      expect(shown()).toEqual([
+        'Unmute',
+        'Step down to the audience',
+        'Chat',
+        'React',
+        'Leave quietly',
+      ]);
     });
 
     it('gives the host the microphone but no way down: the host keeps the stage', async () => {
       await render({ onStage: true, canSpeak: true, canStepDown: false, audio: 'connected' });
 
-      expect(shown()).toEqual(['Unmute', 'React', 'Leave quietly']);
+      expect(shown()).toEqual(['Unmute', 'Chat', 'React', 'Leave quietly']);
     });
 
     it('steps down when asked to', async () => {
@@ -289,6 +296,32 @@ describe('RoomControlsComponent (presentational)', () => {
       await render({ onStage: true, canSpeak: true, audio: 'connected', micRefused: true });
 
       expect(names()).toContain('Unmute');
+    });
+  });
+
+  describe('the chat button', () => {
+    it('opens the chat', async () => {
+      await render({});
+      let opened = 0;
+      fixture.componentInstance.chat.subscribe(() => opened++);
+
+      click('Chat');
+
+      expect(opened).toBe(1);
+    });
+
+    it('says how many messages are waiting, in words and in a badge', async () => {
+      await render({ unread: 3 });
+
+      expect(names()).toContain('Chat, 3 unread');
+      expect(root().querySelector('.p-overlaybadge .p-badge')?.textContent?.trim()).toBe('3');
+    });
+
+    it('shows no badge when nothing is waiting', async () => {
+      await render({ unread: 0 });
+
+      expect(root().querySelector('p-badge')?.textContent?.trim() ?? '').toBe('');
+      expect(names()).toContain('Chat');
     });
   });
 });

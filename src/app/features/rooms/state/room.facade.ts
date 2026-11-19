@@ -5,13 +5,16 @@ import { MessageService } from '@openng/optimus-ui/api';
 import { ActiveRoomService } from '@core/rooms/active-room.service';
 import { httpStatus } from '@shared/utils/http-status';
 import { saveRequest } from '@shared/utils/save-request';
+import { ChatApiService } from '../data-access/chat-api.service';
 import { ParticipantsApiService } from '../data-access/participants-api.service';
 import { RealtimeService } from '../data-access/realtime.service';
 import { ReactionsApiService } from '../data-access/reactions-api.service';
 import { RoomsApiService } from '../data-access/rooms-api.service';
 import { StageApiService } from '../data-access/stage-api.service';
+import type { CommentDraft } from '../models/chat.model';
 import type { Reaction, ReactionBurst } from '../models/reaction.model';
 import type { RoomEdit } from '../models/room.model';
+import { RoomChatStore } from './room-chat.store';
 import { RoomStore } from './room.store';
 
 const RECOVER_MS = 3000;
@@ -39,10 +42,12 @@ export class RoomFacade {
   private readonly participants = inject(ParticipantsApiService);
   private readonly stages = inject(StageApiService);
   private readonly reactions = inject(ReactionsApiService);
+  private readonly chats = inject(ChatApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly active = inject(ActiveRoomService);
   private readonly toast = inject(MessageService);
   readonly state = inject(RoomStore);
+  readonly chat = inject(RoomChatStore);
   readonly audio = inject(RealtimeService);
   private readonly pushedOut = new Subject<RoomExit>();
   private left = false;
@@ -54,6 +59,8 @@ export class RoomFacade {
   readonly joining = saveRequest();
   readonly action = saveRequest();
   readonly saving = saveRequest();
+  readonly commenting = saveRequest();
+  readonly moderating = saveRequest();
   readonly exited = this.pushedOut.asObservable();
 
   constructor() {
@@ -99,6 +106,7 @@ export class RoomFacade {
           this.recoveries = 0;
         }
         this.state.sync();
+        this.chat.reload();
       });
     // A read that failed is tried again, since nothing else would: the events only keep a room current once it has been read.
     toObservable(this.state.readFailed)
@@ -126,6 +134,7 @@ export class RoomFacade {
           ? this.showReactions(update.reactions)
           : this.state.apply(update),
       );
+    this.audio.chatEvents.pipe(takeUntilDestroyed()).subscribe((update) => this.chat.apply(update));
     inject(DestroyRef).onDestroy(() => this.leave());
   }
 
@@ -172,6 +181,57 @@ export class RoomFacade {
     }
     this.lastReactionAt = now;
     this.reactions.react(this.state.roomId(), reaction).subscribe({ error: () => undefined });
+  }
+
+  sendComment(draft: CommentDraft): void {
+    this.commenting.run(this.chats.post(this.state.roomId(), draft), {
+      next: (comment) => this.chat.posted(comment),
+      failure: (error) => {
+        const status = httpStatus(error);
+        return status === 429
+          ? 'Wait a moment before commenting again.'
+          : status === 403
+            ? 'You cannot comment right now.'
+            : status === 400
+              ? 'That comment cannot be sent.'
+              : 'Could not send the comment. Please try again.';
+      },
+    });
+  }
+
+  deleteComment(commentId: string): void {
+    this.moderating.run(this.chats.remove(this.state.roomId(), commentId), {
+      next: () => this.chat.removed(commentId),
+      failure: 'Could not delete the comment. Please try again.',
+    });
+  }
+
+  muteInChat(userId: string): void {
+    this.moderating.run(this.chats.mute(this.state.roomId(), userId), {
+      next: () => undefined,
+      failure: 'Could not mute them in the chat. Please try again.',
+    });
+  }
+
+  unmuteInChat(userId: string): void {
+    this.moderating.run(this.chats.unmute(this.state.roomId(), userId), {
+      next: () => undefined,
+      failure: 'Could not unmute them in the chat. Please try again.',
+    });
+  }
+
+  pinTopic(text: string): void {
+    this.moderating.run(this.chats.pinTopic(this.state.roomId(), text), {
+      next: () => undefined,
+      failure: 'Could not pin the topic. Please try again.',
+    });
+  }
+
+  clearTopic(): void {
+    this.moderating.run(this.chats.clearTopic(this.state.roomId()), {
+      next: () => undefined,
+      failure: 'Could not clear the topic. Please try again.',
+    });
   }
 
   raiseHand(): void {

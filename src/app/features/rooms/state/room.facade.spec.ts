@@ -26,6 +26,14 @@ const ROOM = {
   participantCount: 1,
   handRaiseCount: 0,
 };
+const COMMENT = {
+  id: 'c-1',
+  authorId: 'm-1',
+  type: 'TEXT' as const,
+  content: 'Hola',
+  createdAt: '2026-11-19T10:00:00Z',
+};
+const CHAT = { comments: [], topic: null, muted: false, mutedUsers: [] };
 const SESSION = {
   room: ROOM,
   role: 'LISTENER',
@@ -53,8 +61,11 @@ describe('RoomFacade', () => {
     if (status) {
       return request.flush('error', { status, statusText: 'Error' });
     }
-    const body =
-      method === 'POST' && url.endsWith('/participants/join')
+    const body = url.endsWith('/comments')
+      ? method === 'GET'
+        ? CHAT
+        : COMMENT
+      : method === 'POST' && url.endsWith('/participants/join')
         ? SESSION
         : method === 'PATCH'
           ? { ...ROOM, title: 'New' }
@@ -633,6 +644,96 @@ describe('RoomFacade', () => {
       facade.react('HEART');
 
       expect(count('POST', `${BASE}/reactions`)).toBe(0);
+    });
+  });
+
+  describe('the chat', () => {
+    it('is read once the room is read, and again when the link comes back', async () => {
+      await enter();
+      expect(count('GET', `${BASE}/comments`)).toBe(1);
+      sent.length = 0;
+
+      link.last.listener.linkChanged(false);
+      link.last.listener.linkChanged(true);
+      await settle();
+
+      expect(count('GET', `${BASE}/comments`)).toBe(1);
+    });
+
+    it('shows a comment once the server has kept it, and says nothing about it before', async () => {
+      await enter();
+      sent.length = 0;
+
+      facade.sendComment({ type: 'TEXT', content: 'Hola' });
+      expect(facade.chat.comments()).toEqual([]);
+      expect(facade.commenting.submitting()).toBe(true);
+      await settle();
+
+      expect(sent.find((r) => r.method === 'POST')?.body).toEqual({
+        type: 'TEXT',
+        content: 'Hola',
+      });
+      expect(facade.chat.comments().map((c) => c.id)).toEqual(['c-1']);
+      expect(facade.commenting.error()).toBeNull();
+    });
+
+    it.each([
+      [429, 'Wait a moment before commenting again.'],
+      [403, 'You cannot comment right now.'],
+      [400, 'That comment cannot be sent.'],
+      [500, 'Could not send the comment. Please try again.'],
+    ])('says why a comment was refused with %s', async (status, message) => {
+      await enter();
+      failing[`POST ${BASE}/comments`] = status;
+
+      facade.sendComment({ type: 'TEXT', content: 'Hola' });
+      await settle();
+
+      expect(facade.commenting.error()).toBe(message);
+      expect(facade.chat.comments()).toEqual([]);
+    });
+
+    it('shows what the server announces, and counts what others say while the chat is closed', async () => {
+      await enter();
+
+      link.last.listener.chatEvent({
+        type: 'COMMENT_POSTED',
+        comment: { ...COMMENT, id: 'c-2', authorId: 'b-1' },
+      });
+      await settle();
+
+      expect(facade.chat.comments().map((c) => c.id)).toEqual(['c-2']);
+      expect(facade.chat.unread()).toBe(1);
+    });
+
+    it.each([
+      ['deletes a comment', () => facade.deleteComment('c-1'), 'DELETE', `${BASE}/comments/c-1`],
+      ['mutes someone', () => facade.muteInChat('b-1'), 'POST', `${BASE}/comments/mute/b-1`],
+      ['unmutes someone', () => facade.unmuteInChat('b-1'), 'DELETE', `${BASE}/comments/mute/b-1`],
+      ['pins a topic', () => facade.pinTopic('Weekend'), 'PUT', `${BASE}/comments/topic`],
+      ['clears the topic', () => facade.clearTopic(), 'DELETE', `${BASE}/comments/topic`],
+    ])(
+      '%s for the host, and leaves the room to hear the result',
+      async (_name, act, method, url) => {
+        await enter();
+        sent.length = 0;
+
+        act();
+        await settle();
+
+        expect(sent.map((r) => `${r.method} ${r.url}`)).toEqual([`${method} ${url}`]);
+        expect(facade.moderating.error()).toBeNull();
+      },
+    );
+
+    it('says so when moderating fails', async () => {
+      await enter();
+      failing[`DELETE ${BASE}/comments/c-1`] = 500;
+
+      facade.deleteComment('c-1');
+      await settle();
+
+      expect(facade.moderating.error()).toBe('Could not delete the comment. Please try again.');
     });
   });
 });
