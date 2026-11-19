@@ -1,75 +1,31 @@
-import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import type { MenuItem } from '@openng/optimus-ui/api';
-import { AvatarGroup } from '@openng/optimus-ui/avatargroup';
-import { Panel } from '@openng/optimus-ui/panel';
+import { Tag } from '@openng/optimus-ui/tag';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import { memberOf } from '../../utils/members';
 import { AudienceGridComponent } from '../audience-grid/audience-grid.component';
-import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 import type { Person } from '@core/auth/identity.models';
 import type { FloatingReaction } from '../../models/reaction.model';
 
-const PREVIEW = 5;
 let nextId = 0;
 
 @Component({
   selector: 'app-audience-section',
-  imports: [
-    AudienceGridComponent,
-    AvatarGroup,
-    NgTemplateOutlet,
-    Panel,
-    PersonAvatarComponent,
-    TranslatePipe,
-  ],
+  imports: [AudienceGridComponent, Tag, TranslatePipe],
   template: `
-    @if (collapsible()) {
-      <p-panel
-        toggler="header"
-        [id]="panelId"
-        [toggleable]="true"
-        [(collapsed)]="closed"
-        [toggleButtonProps]="{ ariaLabel: 'Listeners' | t }"
-      >
-        <ng-template #header>
-          <div class="summary">
-            <h2 class="heading">
-              <span class="title">{{ 'Listeners' | t }}</span>
-              <span class="count">{{ ids().length }}</span>
-            </h2>
-            @if (closed() && preview().length > 0) {
-              <p-avatargroup aria-hidden="true">
-                @for (member of preview(); track member.id) {
-                  <app-person-avatar
-                    size="normal"
-                    [member]="member"
-                    [reaction]="reactions().get(member.id) ?? null"
-                  />
-                }
-              </p-avatargroup>
-              @if (more() > 0) {
-                <span class="more" aria-hidden="true">+{{ more() }}</span>
-              }
-            }
-          </div>
-        </ng-template>
-        @if (!closed()) {
-          <ng-container *ngTemplateOutlet="list" />
-        }
-      </p-panel>
-    } @else {
-      <section [attr.aria-labelledby]="panelId">
-        <h2 class="heading" [id]="panelId">
-          <span class="title">{{ 'Listeners' | t }}</span>
-          <span class="count">{{ ids().length }}</span>
+    <section [attr.aria-labelledby]="headingId">
+      <div class="head">
+        <h2 class="heading" [id]="headingId">
+          {{ 'Listeners' | t }}
+          <p-tag severity="secondary" [rounded]="true">{{ ids().length }}</p-tag>
         </h2>
-        <ng-container *ngTemplateOutlet="list" />
-      </section>
-    }
-
-    <ng-template #list>
+        @if (swipeable()) {
+          <span class="hint" aria-hidden="true"
+            >{{ 'Swipe' | t }} <i class="pi pi-arrow-right"></i
+          ></span>
+        }
+      </div>
       <app-audience-grid
+        [layout]="swipeable() ? 'row' : 'grid'"
         [ids]="ids()"
         [members]="members()"
         [meId]="meId()"
@@ -78,7 +34,7 @@ let nextId = 0;
         [moderation]="moderation()"
         (memberSelected)="memberSelected.emit($event)"
       />
-    </ng-template>
+    </section>
   `,
   styleUrl: './audience-section.component.scss',
 })
@@ -87,19 +43,12 @@ export class AudienceSectionComponent {
   readonly members = input.required<ReadonlyMap<string, Person>>();
   readonly meId = input<string | null>(null);
   readonly reconnecting = input<readonly string[]>([]);
-  readonly collapsible = input(true);
+  /** On a phone the listeners are a row to swipe through, with their names; elsewhere a grid of faces. */
+  readonly swipeable = input(false);
   readonly reactions = input<ReadonlyMap<string, FloatingReaction>>(new Map());
   readonly moderation = input<ReadonlyMap<string, readonly MenuItem[]>>(new Map());
 
   readonly memberSelected = output<string>();
 
-  protected readonly closed = signal(true);
-  protected readonly panelId = `app-audience-${nextId++}`;
-  protected readonly preview = computed(() =>
-    this.ids()
-      .toSorted((a, b) => Number(this.reactions().has(b)) - Number(this.reactions().has(a)))
-      .slice(0, PREVIEW)
-      .map((id) => memberOf(this.members(), id)),
-  );
-  protected readonly more = computed(() => Math.max(0, this.ids().length - PREVIEW));
+  protected readonly headingId = `app-audience-${nextId++}`;
 }

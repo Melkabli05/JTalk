@@ -7,6 +7,42 @@
   list-style: none;
 }
 
+.audience.row {
+  display: flex;
+  gap: 0.75rem;
+  margin-inline: -1rem;
+  padding-inline: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+
+  li {
+    flex: none;
+    inline-size: 5.5rem;
+    scroll-snap-align: start;
+  }
+
+  .person {
+    min-height: 0;
+    padding: 0.25rem 0;
+  }
+
+  app-person-avatar {
+    --p-avatar-lg-width: 4.5rem;
+    --p-avatar-lg-height: 4.5rem;
+    --p-avatar-lg-font-size: 1.5rem;
+  }
+}
+
+.name {
+  max-inline-size: 100%;
+  overflow: hidden;
+  font-size: var(--p-jtalk-type-secondary);
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .person {
   display: flex;
   flex-direction: column;

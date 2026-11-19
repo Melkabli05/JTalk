@@ -26,7 +26,6 @@
         <span>{{ 'Live' | t }}</span>
       </p>
       <div class="actions">
-        @let shareLabel = 'Share' | t;
         <button
           pButton
           type="button"
@@ -34,12 +33,11 @@
           severity="secondary"
           [rounded]="true"
           [outlined]="true"
-          [label]="shareLabel"
+          [label]="'Share' | t"
           (click)="share()"
         ></button>
         @if (state.isHost()) {
           <div class="host-tools" role="group" [attr.aria-label]="'Host controls' | t">
-            @let editLabel = 'Edit the room' | t;
             <button
               pButton
               type="button"
@@ -47,11 +45,10 @@
               severity="secondary"
               [rounded]="true"
               [outlined]="true"
-              [attr.aria-label]="editLabel"
-              [pTooltip]="editLabel"
+              [label]="'Edit' | t"
+              [attr.aria-label]="'Edit the room' | t"
               (click)="editing.set(true)"
             ></button>
-            @let endLabel = 'End the room' | t;
             <button
               pButton
               type="button"
@@ -59,8 +56,8 @@
               severity="danger"
               [rounded]="true"
               [outlined]="true"
-              [attr.aria-label]="endLabel"
-              [pTooltip]="endLabel"
+              [label]="'End' | t"
+              [attr.aria-label]="'End the room' | t"
               (click)="end()"
             ></button>
           </div>
@@ -136,7 +133,7 @@
     }
 
     <app-audience-section
-      [collapsible]="!wide()"
+      [swipeable]="!wide()"
       [ids]="state.audience()"
       [members]="state.members()"
       [meId]="state.meId()"

@@ -180,12 +180,7 @@ describe('RoomPageComponent (container)', () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  async function openAudience() {
-    root().querySelector<HTMLButtonElement>('app-audience-section [aria-expanded]')!.click();
-    await settle();
-  }
-
-  it('joins the room and shows what it is, who is on stage and who is listening, once the list is opened', async () => {
+  it('joins the room and shows what it is, who is on stage and who is listening', async () => {
     await open();
 
     expect(sent('POST', `${BASE}/participants/join`)).toBe(true);
@@ -193,9 +188,6 @@ describe('RoomPageComponent (container)', () => {
     expect(root().textContent).toContain('Ordering food');
     expect(root().querySelectorAll('app-stage-seats .person')).toHaveLength(1);
     expect(root().querySelectorAll('app-stage-seats .seat')).toHaveLength(1);
-    expect(root().querySelector('app-audience-grid')).toBeNull();
-
-    await openAudience();
     expect(
       root().querySelector('app-audience-grid [aria-label="Mona (you), Listener"]'),
     ).not.toBeNull();
@@ -261,7 +253,7 @@ describe('RoomPageComponent (container)', () => {
     expect(headings).toHaveLength(2);
     expect(headings[0]).toBe('On stage');
     expect(headings[1]).toContain('Listeners');
-    expect(root().querySelectorAll('section[aria-labelledby]')).toHaveLength(1);
+    expect(root().querySelectorAll('section[aria-labelledby]')).toHaveLength(2);
     expect(root().querySelectorAll('p-card[aria-labelledby]')).toHaveLength(0);
   });
 
@@ -343,7 +335,6 @@ describe('RoomPageComponent (container)', () => {
 
     async function openBilal() {
       await open();
-      await openAudience();
       [...root().querySelectorAll<HTMLButtonElement>('app-audience-grid .person')]
         .find((person) => person.getAttribute('aria-label')?.includes('b-1'))!
         .click();
@@ -535,7 +526,6 @@ describe('RoomPageComponent (container)', () => {
       await open(asHost);
 
       expect(root().querySelector('app-raised-hands button')).toBeNull();
-      await openAudience();
       const listener = root().querySelector<HTMLElement>('app-audience-grid .person')!;
       listener.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
       await settle();
@@ -565,7 +555,6 @@ describe('RoomPageComponent (container)', () => {
 
     it('removes someone only after asking', async () => {
       await open(asHost);
-      await openAudience();
       [...root().querySelectorAll<HTMLButtonElement>('app-audience-grid .person')]
         .find((p) => p.getAttribute('aria-label')?.includes('b-1'))!
         .click();
@@ -622,7 +611,6 @@ describe('RoomPageComponent (container)', () => {
       it('offers it to nobody when you are not the host', async () => {
         server.stage = { speakers: ['h-1', 'b-1'], handRaiseQueue: [] };
         await open();
-        await openAudience();
 
         await openMenu(seats('app-audience-grid')[0]);
         expect(menuItems()).toHaveLength(0);
@@ -653,7 +641,6 @@ describe('RoomPageComponent (container)', () => {
 
       it('removes a listener only after asking', async () => {
         await open(asHost);
-        await openAudience();
 
         await pressSeatItem('app-audience-grid', 'Remove from the room');
         await settle();
@@ -667,7 +654,6 @@ describe('RoomPageComponent (container)', () => {
 
       it('invites a listener to the stage', async () => {
         await open(asHost);
-        await openAudience();
 
         await pressSeatItem('app-audience-grid', 'Invite to the stage');
         await settle();

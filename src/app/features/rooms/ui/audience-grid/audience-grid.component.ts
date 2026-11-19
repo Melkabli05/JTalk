@@ -14,7 +14,7 @@ import type { FloatingReaction } from '../../models/reaction.model';
   selector: 'app-audience-grid',
   imports: [ModerationMenuComponent, PersonAvatarComponent, Tag, Tooltip, TranslatePipe],
   template: `
-    <ul class="audience" [attr.aria-label]="'In the audience' | t">
+    <ul class="audience" [class.row]="layout() === 'row'" [attr.aria-label]="'In the audience' | t">
       @for (person of people(); track person.member.id) {
         <li>
           <app-moderation-menu [name]="person.member.name" [items]="person.actions">
@@ -37,6 +37,12 @@ import type { FloatingReaction } from '../../models/reaction.model';
                 [reaction]="person.reaction"
                 [pTooltip]="person.member.name"
               />
+              @if (layout() === 'row') {
+                <span class="name" aria-hidden="true">{{ person.member.name }}</span>
+                @if (person.me) {
+                  <p-tag severity="info" aria-hidden="true" [value]="'You' | t" />
+                }
+              }
               @if (person.reconnecting) {
                 <p-tag severity="secondary" icon="pi pi-sync" [value]="'Reconnecting' | t" />
               }
@@ -52,6 +58,8 @@ import type { FloatingReaction } from '../../models/reaction.model';
 })
 export class AudienceGridComponent {
   readonly ids = input.required<readonly string[]>();
+  /** Faces only, or a row to swipe through with the names under the faces. */
+  readonly layout = input<'grid' | 'row'>('grid');
   readonly members = input.required<ReadonlyMap<string, Person>>();
   readonly meId = input<string | null>(null);
   readonly reconnecting = input<readonly string[]>([]);

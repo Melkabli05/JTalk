@@ -2,12 +2,12 @@
   display: block;
 }
 
-.summary {
+.head {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 0.75rem;
-  min-inline-size: 0;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-block-end: 1rem;
 }
 
 .heading {
@@ -15,20 +15,12 @@
   align-items: center;
   gap: 0.75rem;
   margin: 0;
-}
-
-.title {
   font-size: var(--p-jtalk-type-section);
-  font-weight: 650;
+  font-weight: 700;
 }
 
-.count,
-.more {
+.hint {
   color: var(--p-text-muted-color);
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-}
-
-.more {
   font-size: var(--p-jtalk-type-secondary);
+  font-weight: 600;
 }
