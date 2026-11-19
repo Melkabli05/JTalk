@@ -1,5 +1,6 @@
 .stage {
   --tile: 9.5rem;
+  --avatar: 5.5rem;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -10,10 +11,36 @@
 
   &[data-size='hero'] {
     --tile: 14rem;
+    --avatar: 7.5rem;
   }
 
   &[data-size='large'] {
     --tile: 7rem;
+    --avatar: 4rem;
+  }
+
+  // On a phone the stage is one compact row, as many as fit, with the rest a swipe away.
+  @media (max-width: 40rem) {
+    --tile: 5.5rem;
+    --avatar: 4rem;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 0.25rem;
+    margin-inline: -1rem;
+    padding-inline: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+
+    &[data-size] {
+      --tile: 5.5rem;
+      --avatar: 4rem;
+    }
+
+    li {
+      flex: none;
+      scroll-snap-align: start;
+    }
   }
 
   &.scrolls {
@@ -27,8 +54,14 @@ li {
   inline-size: var(--tile);
 
   &:has(.seat) {
-    inline-size: 7rem;
+    inline-size: min(var(--tile), 7rem);
   }
+}
+
+app-person-avatar {
+  --p-avatar-xl-width: var(--avatar);
+  --p-avatar-xl-height: var(--avatar);
+  --p-avatar-xl-font-size: calc(var(--avatar) * 0.36);
 }
 
 .tile {
@@ -86,6 +119,34 @@ li {
     background: var(--p-surface-800, #3a3e37);
     color: #ffffff;
   }
+
+  @media (max-width: 40rem) {
+    inline-size: 1.375rem;
+    block-size: 1.375rem;
+    font-size: 0.6875rem;
+  }
+}
+
+// The host wears a star in Sand, the colour of elevated permissions.
+.star {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  display: grid;
+  place-items: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border: 2px solid var(--p-content-background);
+  border-radius: 50%;
+  background: var(--p-jtalk-moderator);
+  color: #20251f;
+  font-size: 0.6875rem;
+
+  @media (max-width: 40rem) {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    font-size: 0.5625rem;
+  }
 }
 
 .name {
@@ -111,8 +172,8 @@ li {
   .ring {
     display: grid;
     place-items: center;
-    inline-size: 3.5rem;
-    block-size: 3.5rem;
+    inline-size: var(--avatar);
+    block-size: var(--avatar);
     border: 1px dashed var(--p-form-field-border-color);
     border-radius: 50%;
   }

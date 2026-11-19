@@ -25,11 +25,14 @@
         >
           <span class="portrait">
             <app-person-avatar
-              [size]="avatarSize()"
+              size="xlarge"
               [member]="speaker.member"
               [speaking]="speaker.speaking"
               [reaction]="speaker.reaction"
             />
+            @if (speaker.host) {
+              <span class="star" aria-hidden="true"><i class="pi pi-star-fill"></i></span>
+            }
             <span class="mic" [class.off]="speaker.muted" aria-hidden="true"
               ><i class="pi pi-microphone" [class.pi-slashed]="speaker.muted"></i
             ></span>
@@ -44,16 +47,12 @@
             }}</span>
           }
           <span class="name" aria-hidden="true">{{ speaker.member.name }}</span>
-          @if (speaker.host || speaker.me) {
-            <span class="role" aria-hidden="true">
-              @if (speaker.host) {
-                <p-tag severity="success" [rounded]="true" [value]="'Host' | t" />
-              }
-              @if (speaker.me) {
-                {{ 'You' | t }}
-              }
-            </span>
-          }
+          <span class="role" aria-hidden="true">
+            {{ speaker.host ? ('Host' | t) : ('Speaker' | t) }}
+            @if (speaker.me) {
+              · {{ 'You' | t }}
+            }
+          </span>
         </button>
       </app-moderation-menu>
     </li>

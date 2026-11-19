@@ -251,7 +251,7 @@ describe('RoomPageComponent (container)', () => {
       h.textContent?.replace(/\s+/g, ' ').trim(),
     );
     expect(headings).toHaveLength(2);
-    expect(headings[0]).toBe('On stage');
+    expect(headings[0]).toBe('On stage 1/4');
     expect(headings[1]).toContain('Audience');
     expect(root().querySelectorAll('section[aria-labelledby]')).toHaveLength(2);
     expect(root().querySelectorAll('p-card[aria-labelledby]')).toHaveLength(0);

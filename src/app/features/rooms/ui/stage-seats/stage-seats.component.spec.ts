@@ -40,11 +40,15 @@ describe('StageSeatsComponent (presentational)', () => {
     expect(people[1].textContent).toContain('You');
   });
 
-  it('marks the host with a Host tag, not a crown', async () => {
+  it('marks the host with a star on the portrait and the word Host under the name, and everyone else a Speaker', async () => {
     await render();
+    const roles = [...root().querySelectorAll('.person .role')].map((r) =>
+      r.textContent?.replace(/\s+/g, ' ').trim(),
+    );
 
-    expect(root().querySelectorAll('p-tag')).toHaveLength(1);
-    expect(root().querySelector('p-tag')?.textContent).toContain('Host');
+    expect(roles).toEqual(['Host', 'Speaker · You']);
+    expect(root().querySelectorAll('.star')).toHaveLength(1);
+    expect(root().querySelector('.person .star .pi-star-fill')).not.toBeNull();
     expect(root().querySelector('.pi-crown')).toBeNull();
   });
 

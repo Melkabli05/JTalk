@@ -1,6 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
 import type { MenuItem } from '@openng/optimus-ui/api';
-import { Tag } from '@openng/optimus-ui/tag';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { msg } from '@shared/utils/i18n/msg';
 import { memberOf } from '../../utils/members';
@@ -11,7 +10,7 @@ import type { FloatingReaction } from '../../models/reaction.model';
 
 @Component({
   selector: 'app-stage-seats',
-  imports: [ModerationMenuComponent, PersonAvatarComponent, Tag, TranslatePipe],
+  imports: [ModerationMenuComponent, PersonAvatarComponent, TranslatePipe],
   templateUrl: './stage-seats.component.html',
   styleUrl: './stage-seats.component.scss',
 })

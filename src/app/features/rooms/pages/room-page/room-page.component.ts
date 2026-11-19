@@ -22,6 +22,7 @@ import { Card } from '@openng/optimus-ui/card';
 import { ConfirmDialog } from '@openng/optimus-ui/confirmdialog';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
+import { Tag } from '@openng/optimus-ui/tag';
 import { Chip } from '@openng/optimus-ui/chip';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -55,6 +56,7 @@ import { roomLook } from '../../utils/room-look';
     RouterLink,
     Skeleton,
     StageSeatsComponent,
+    Tag,
     Chip,
     Tooltip,
     TranslatePipe,
