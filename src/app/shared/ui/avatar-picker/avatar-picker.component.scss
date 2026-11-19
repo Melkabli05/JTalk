@@ -52,6 +52,40 @@ legend {
   border-radius: 50%;
 }
 
+.own {
+  display: block;
+  background-position: center;
+  background-size: cover;
+}
+
+.add {
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--p-form-field-border-color);
+  color: var(--p-text-muted-color);
+  font-size: 1.25rem;
+}
+
+.upload:hover .add,
+.upload:has(input:focus-visible) .add {
+  border-color: var(--p-primary-color);
+  color: var(--p-primary-color);
+}
+
+.hint,
+.problem {
+  margin: 0.5rem 0 0;
+  font-size: var(--p-jtalk-type-secondary);
+}
+
+.hint {
+  color: var(--p-text-muted-color);
+}
+
+.problem {
+  color: var(--p-jtalk-danger);
+}
+
 .mark {
   position: absolute;
   inset-block-end: -0.125rem;

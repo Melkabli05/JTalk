@@ -5,6 +5,7 @@ import {
   avatarOrDefault,
   avatarPath,
   avatarUrl,
+  isUploadedAvatar,
 } from './avatars';
 
 describe('avatars', () => {
@@ -56,5 +57,33 @@ describe('avatar paths', () => {
     );
     expect([...backgrounds].every((value) => /tone-(green|gold|coral)/.test(value))).toBe(true);
     expect(backgrounds.size).toBeGreaterThan(1);
+  });
+});
+
+describe('uploaded pictures', () => {
+  const uploaded = '/api/v1/users/6f1c2b9e-1a2b-4c3d-8e9f-0a1b2c3d4e5f/avatar/1763560000000';
+
+  it('knows the address of an upload, and nothing that merely looks like one', () => {
+    expect(isUploadedAvatar(uploaded)).toBe(true);
+    for (const other of [
+      null,
+      undefined,
+      '',
+      'avatar-03',
+      '/avatars/avatar-03.svg',
+      '/api/v1/users/x/avatar/1',
+      `${uploaded}/../x`,
+      `https://evil.example${uploaded}`,
+      `${uploaded}?x=1`,
+    ]) {
+      expect(isUploadedAvatar(other), String(other)).toBe(false);
+    }
+  });
+
+  it('shows an upload from its own address, and keeps it when it is stored and read back', () => {
+    expect(avatarUrl(uploaded)).toBe(uploaded);
+    expect(avatarPath(uploaded)).toBe(uploaded);
+    expect(avatarIdOf(uploaded)).toBe(uploaded);
+    expect(avatarOrDefault(uploaded)).toBe(uploaded);
   });
 });

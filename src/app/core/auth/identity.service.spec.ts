@@ -98,6 +98,7 @@ describe('IdentityService', () => {
       nativeLanguage: 'ar',
       learning: 'en',
       avatar: 'avatar-06',
+      username: 'mona_1a2b3c',
       languages: { native: ['ar'], learning: [{ code: 'en', level: 'BEGINNER' }] },
     });
     expect(identity.userId()).toBe('m-1');
@@ -289,6 +290,28 @@ describe('IdentityService', () => {
       });
     });
 
+    it('sends a new username only when it is not the one they have', async () => {
+      await known('fr');
+
+      save({ ...DRAFT, username: 'mona.new' });
+      const changed = await answer('PATCH', ME, full(['fr'], { username: 'mona.new' }));
+
+      expect(changed).toMatchObject({ username: 'mona.new' });
+      expect(identity.profile()?.username).toBe('mona.new');
+    });
+
+    it('does not send the username they already have, or none at all', async () => {
+      await known('fr');
+
+      save({ ...DRAFT, username: 'mona_1a2b3c' });
+      const same = (await answer('PATCH', ME, full(['fr']))) as Record<string, unknown>;
+      expect('username' in same).toBe(false);
+
+      save(DRAFT);
+      const none = (await answer('PATCH', ME, full(['fr']))) as Record<string, unknown>;
+      expect('username' in none).toBe(false);
+    });
+
     it('keeps the profile it had when the change failed', async () => {
       await known('en');
 
@@ -298,6 +321,73 @@ describe('IdentityService', () => {
       expect(outcome.failure).toMatchObject({ status: 422 });
       expect(identity.profile()?.name).toBe('Mona');
       expect(identity.profile()?.learning).toBe('en');
+    });
+  });
+
+  describe('uploading a picture', () => {
+    const UPLOAD = '/api/v1/users/me/avatar';
+    const address = '/api/v1/users/6f1c2b9e-1a2b-4c3d-8e9f-0a1b2c3d4e5f/avatar/1763560000000';
+    const jpeg = () => new Blob(['jpeg'], { type: 'image/jpeg' });
+
+    async function uploadedBody() {
+      let sent: unknown;
+      let type: string | null = null;
+      await vi.waitFor(() => {
+        const [request] = http.match((r) => r.method === 'PUT' && r.url === UPLOAD);
+        expect(request, 'PUT avatar').toBeDefined();
+        sent = request?.request.body;
+        type = request?.request.headers.get('Content-Type') ?? null;
+        request?.flush(full(['fr'], { avatarUrl: address }), { status: 200, statusText: 'OK' });
+      });
+      await settle();
+      return { sent, type };
+    }
+
+    it('sends the picture after a new profile is made, and the profile it answers with is the one shown', async () => {
+      setup();
+      await settle();
+      await answer('GET', ME, { status: 404 }, 404);
+
+      const picture = jpeg();
+      const outcome = save({ ...DRAFT, upload: picture });
+      await answer('POST', ME, full(['fr']), 201);
+      const { sent, type } = await uploadedBody();
+
+      expect(sent).toBe(picture);
+      expect(type).toBe('image/jpeg');
+      expect(outcome.saved?.avatar).toBe(address);
+      expect(identity.profile()?.avatar).toBe(address);
+    });
+
+    it('sends the picture after an existing profile is changed', async () => {
+      await known('fr');
+
+      const outcome = save({ ...DRAFT, upload: jpeg() });
+      await answer('PATCH', ME, full(['fr']));
+      await uploadedBody();
+
+      expect(outcome.saved?.avatar).toBe(address);
+      http.expectNone(() => true);
+    });
+
+    it('sends no picture when none was chosen', async () => {
+      await known('fr');
+
+      save(DRAFT);
+      await answer('PATCH', ME, full(['fr']));
+
+      http.expectNone((r) => r.method === 'PUT');
+    });
+
+    it('keeps the saved profile when the picture could not be sent, and says it failed', async () => {
+      await known('fr');
+
+      const outcome = save({ ...DRAFT, name: 'Mona B', upload: jpeg() });
+      await answer('PATCH', ME, full(['fr'], { displayName: 'Mona B' }));
+      await answer('PUT', UPLOAD, { status: 422 }, 422);
+
+      expect(outcome.failure).toMatchObject({ status: 422 });
+      expect(identity.profile()?.name).toBe('Mona B');
     });
   });
 

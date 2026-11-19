@@ -21,7 +21,7 @@ export interface NewProfile {
 }
 
 /** A partial change: `learningLanguages` replaces the whole list when it is present, and leaves it alone when it is not. */
-export type ProfileChange = Partial<Omit<NewProfile, 'username'>> &
+export type ProfileChange = Partial<NewProfile> &
   Pick<NewProfile, 'displayName' | 'avatarUrl' | 'nativeLanguage'>;
 
 /** The user service: who people are (name, picture, languages). The access token is added by the Auth0 interceptor. */
@@ -41,6 +41,13 @@ export class UsersApiService {
 
   update(change: ProfileChange): Observable<Person> {
     return this.http.patch<unknown>(`${this.url}/me`, change).pipe(map(parsePerson));
+  }
+
+  /** Sets the caller's own picture, a small JPEG or PNG; the answer is the profile with its new address. */
+  uploadAvatar(image: Blob): Observable<Person> {
+    return this.http
+      .put<unknown>(`${this.url}/me/avatar`, image, { headers: { 'Content-Type': image.type } })
+      .pipe(map(parsePerson));
   }
 
   /** Deletes the caller's account: the profile, their languages, their follows and blocks. */

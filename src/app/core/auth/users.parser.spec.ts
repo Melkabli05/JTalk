@@ -19,7 +19,16 @@ describe('users parser', () => {
       nativeLanguage: 'ar',
       learning: '',
       avatar: 'avatar-06',
+      username: 'mona_1a2b3c',
     });
+  });
+
+  it('reads the address of an uploaded picture as it is, and leaves the username out of a summary that has none', () => {
+    const address = '/api/v1/users/6f1c2b9e-1a2b-4c3d-8e9f-0a1b2c3d4e5f/avatar/1763560000000';
+    const person = parsePerson({ ...PROFILE, avatarUrl: address, username: undefined });
+
+    expect(person.avatar).toBe(address);
+    expect('username' in person).toBe(false);
   });
 
   it('shows initials, not a broken picture, for a picture that is not bundled', () => {

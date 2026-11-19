@@ -97,13 +97,22 @@ export class IdentityService {
 
   /**
    * Creates the profile on the first save, and changes it after that: one request either way, the languages included, so a save either
-   * happens whole or not at all. The answer is the saved profile, which becomes the one shown (no second round trip to read it back).
+   * happens whole or not at all (a chosen picture is a second request, after it). The answer is the saved profile, which becomes the one shown (no second round trip to read it back).
    */
   saveProfile(draft: ProfileDraft): Observable<Person> {
     const current = this.mine();
-    return (
+    const saved$ = (
       current === undefined ? this.createProfile(draft) : this.changeProfile(draft, current)
     ).pipe(tap((saved) => this.meResource.set(saved)));
+    // A chosen picture follows the profile: the server keeps it beside the profile, so there must be one, and its answer is the profile
+    // as it is then.
+    const { upload } = draft;
+    return upload
+      ? saved$.pipe(
+          switchMap(() => this.api.uploadAvatar(upload)),
+          tap((saved) => this.meResource.set(saved)),
+        )
+      : saved$;
   }
 
   /**
@@ -160,6 +169,9 @@ export class IdentityService {
 
   private changeProfile(draft: ProfileDraft, current: Person): Observable<Person> {
     return this.api.update({
+      ...(draft.username && draft.username !== current.username
+        ? { username: draft.username }
+        : {}),
       displayName: draft.name.trim(),
       avatarUrl: avatarPath(draft.avatar),
       nativeLanguage: draft.nativeLanguage,

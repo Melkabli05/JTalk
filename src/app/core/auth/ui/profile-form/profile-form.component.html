@@ -1,6 +1,17 @@
 <form class="form" [formRoot]="profileForm">
   <app-text-field label="Your name" autocomplete="nickname" [formField]="profileForm.name" />
-  <app-avatar-picker label="Choose your picture" [formField]="profileForm.avatar" />
+  @if (profile()) {
+    <div class="username">
+      <app-text-field label="Username" autocomplete="username" [formField]="profileForm.username" />
+      <p class="hint">Your handle, like &#64;mona. You can change it once every 30 days.</p>
+    </div>
+  }
+  <app-avatar-picker
+    label="Choose your picture"
+    [custom]="custom()"
+    [formField]="profileForm.avatar"
+    (picked)="choose($event)"
+  />
 
   <div class="pair">
     <app-select-field

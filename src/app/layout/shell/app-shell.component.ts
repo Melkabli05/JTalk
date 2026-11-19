@@ -25,6 +25,7 @@ import { AriaCurrentDirective } from '@shared/directives/aria-current.directive'
 import { BrandMarkComponent } from '@shared/ui/brand-mark/brand-mark.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { languageOf } from '@shared/utils/languages';
+import { problemDetail } from '@shared/utils/problem-detail';
 import { saveRequest } from '@shared/utils/save-request';
 
 const PROFILE_ITEM: MenuItem = { label: 'Profile', icon: 'pi pi-user', routerLink: '/profile' };
@@ -181,7 +182,7 @@ export class AppShellComponent {
   protected saveProfile(draft: ProfileDraft): void {
     this.creating.run(this.identity.saveProfile(draft), {
       next: () => undefined,
-      failure: 'Could not save your profile. Please try again.',
+      failure: (error) => problemDetail(error, 'Could not save your profile. Please try again.'),
     });
   }
 }

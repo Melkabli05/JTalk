@@ -10,22 +10,36 @@ export const AVATARS: readonly Avatar[] = Array.from({ length: COUNT }, (_, inde
   return { id, url: `avatars/${id}.svg` };
 });
 
-export function avatarUrl(id: string | null | undefined): string | null {
-  return AVATARS.find((avatar) => avatar.id === id)?.url ?? null;
+/** The address of a picture a person uploaded: the user service serves it, and the version in it changes with every upload. */
+const UPLOADED = /^\/api\/v1\/users\/[0-9a-f-]{36}\/avatar\/\d+$/;
+
+/** An avatar is the id of one of our pictures, or the address of one the person uploaded. Anything else has no picture. */
+export function isUploadedAvatar(avatar: string | null | undefined): boolean {
+  return uploadedAddress(avatar) !== null;
 }
 
-export function avatarOrDefault(id: string | null | undefined): string {
-  return avatarUrl(id) === null ? (AVATARS[0]?.id ?? '') : (id ?? '');
+function uploadedAddress(avatar: string | null | undefined): string | null {
+  return typeof avatar === 'string' && UPLOADED.test(avatar) ? avatar : null;
 }
 
-/** What the user service stores as a person's picture: the app's own path to the bundled image, valid on whichever origin shows it. */
-export function avatarPath(id: string): string {
-  return `/${avatarUrl(avatarOrDefault(id)) ?? ''}`;
+export function avatarUrl(avatar: string | null | undefined): string | null {
+  return (
+    uploadedAddress(avatar) ?? AVATARS.find((candidate) => candidate.id === avatar)?.url ?? null
+  );
 }
 
-/** The bundled picture a stored path names, or an empty id (initials are shown) for anything else. */
+export function avatarOrDefault(avatar: string | null | undefined): string {
+  return avatarUrl(avatar) === null ? (AVATARS[0]?.id ?? '') : (avatar ?? '');
+}
+
+/** What the user service stores as a person's picture: the address of their upload, or the app's own path to a bundled image. */
+export function avatarPath(avatar: string): string {
+  return uploadedAddress(avatar) ?? `/${avatarUrl(avatarOrDefault(avatar)) ?? ''}`;
+}
+
+/** The avatar a stored path stands for: a bundled picture's id, an upload's address, or empty (initials are shown) for anything else. */
 export function avatarIdOf(path: string | null | undefined): string {
-  return AVATARS.find((avatar) => path === `/${avatar.url}`)?.id ?? '';
+  return uploadedAddress(path) ?? AVATARS.find((avatar) => path === `/${avatar.url}`)?.id ?? '';
 }
 
 /** The three tones a person without a picture is drawn in (Forest, Sand, Coral): the same person always gets the same one. */

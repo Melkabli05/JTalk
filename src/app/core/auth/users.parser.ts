@@ -22,6 +22,7 @@ function readPerson(raw: unknown): Person | undefined {
     nativeLanguage: user['nativeLanguage'],
     learning: languages?.learning[0]?.code ?? '',
     avatar: avatarIdOf(typeof picture === 'string' ? picture : null),
+    ...(typeof user['username'] === 'string' ? { username: user['username'] } : {}),
     ...(typeof user['bio'] === 'string' ? { bio: user['bio'] } : {}),
     ...(typeof user['countryCode'] === 'string' ? { countryCode: user['countryCode'] } : {}),
     ...(languages ? { languages } : {}),

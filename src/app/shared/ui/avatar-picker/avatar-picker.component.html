@@ -22,6 +22,41 @@
         <i class="pi pi-check mark" aria-hidden="true"></i>
       </label>
     }
+    @if (custom(); as picture) {
+      <label class="option" [class.selected]="value() === customValue">
+        <input
+          #radio
+          type="radio"
+          class="cdk-visually-hidden"
+          [name]="group"
+          [value]="customValue"
+          [checked]="value() === customValue"
+          aria-label="Your own picture"
+          (change)="value.set(customValue)"
+          (blur)="touch.emit()"
+        />
+        <span
+          class="picture own"
+          aria-hidden="true"
+          [style.background-image]="`url(${picture})`"
+        ></span>
+        <i class="pi pi-check mark" aria-hidden="true"></i>
+      </label>
+    }
+    <label class="option upload">
+      <input
+        type="file"
+        class="cdk-visually-hidden"
+        accept="image/jpeg,image/png,image/webp"
+        aria-label="Upload your own picture"
+        (change)="choose($event)"
+      />
+      <span class="picture add" aria-hidden="true"><i class="pi pi-camera"></i></span>
+    </label>
   </div>
+  <p class="hint">Or upload your own: it is cropped to a square and made small.</p>
+  @if (problem(); as text) {
+    <p class="problem" role="alert">{{ text }}</p>
+  }
   <app-field-errors [attr.id]="errorsId" [errors]="errors()" [visible]="showErrors()" />
 </fieldset>

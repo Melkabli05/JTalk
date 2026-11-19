@@ -9,6 +9,7 @@ import { IdentityService } from '@core/auth/identity.service';
 import { ProfileFormComponent } from '@core/auth/ui/profile-form/profile-form.component';
 import { PersonCardService } from '@core/people/person-card.service';
 import { SocialStatsComponent } from '@shared/ui/social-stats/social-stats.component';
+import { problemDetail } from '@shared/utils/problem-detail';
 import { saveRequest } from '@shared/utils/save-request';
 import { DeleteAccountDialogComponent } from '../../ui/delete-account-dialog/delete-account-dialog.component';
 import { ProfileAboutComponent } from '../../ui/profile-about/profile-about.component';
@@ -60,7 +61,7 @@ export default class ProfilePageComponent {
         this.cards.reload();
         this.toast.add({ severity: 'success', summary: 'Profile saved.' });
       },
-      failure: 'Could not save your profile. Please try again.',
+      failure: (error) => problemDetail(error, 'Could not save your profile. Please try again.'),
     });
   }
 }
