@@ -293,6 +293,7 @@ export const messages: Readonly<Record<string, string>> = {
   Share: 'مشاركة',
   'Link copied.': 'تم نسخ الرابط.',
   'Could not copy the link.': 'تعذّر نسخ الرابط.',
+  'Room actions': 'إجراءات الغرفة',
   Swipe: 'اسحب',
   Edit: 'تعديل',
   End: 'إنهاء',

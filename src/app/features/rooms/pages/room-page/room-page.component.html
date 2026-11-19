@@ -33,7 +33,7 @@
           severity="secondary"
           [rounded]="true"
           [outlined]="true"
-          [label]="wide() ? ('Share' | t) : ''"
+          [label]="'Share' | t"
           [attr.aria-label]="'Share' | t"
           (click)="share()"
         ></button>
@@ -46,7 +46,7 @@
               severity="secondary"
               [rounded]="true"
               [outlined]="true"
-              [label]="wide() ? ('Edit' | t) : ''"
+              [label]="'Edit' | t"
               [attr.aria-label]="'Edit the room' | t"
               (click)="editing.set(true)"
             ></button>
@@ -57,13 +57,26 @@
               severity="danger"
               [rounded]="true"
               [outlined]="true"
-              [label]="wide() ? ('End' | t) : ''"
+              [label]="'End' | t"
               [attr.aria-label]="'End the room' | t"
               (click)="end()"
             ></button>
           </div>
         }
       </div>
+      <button
+        pButton
+        type="button"
+        class="more"
+        icon="pi pi-ellipsis-v"
+        severity="secondary"
+        aria-haspopup="menu"
+        [text]="true"
+        [rounded]="true"
+        [attr.aria-label]="'Room actions' | t"
+        (click)="menu.toggle($event)"
+      ></button>
+      <p-menu #menu appendTo="body" [popup]="true" [model]="pageMenu()" />
     </header>
 
     <section class="hero">

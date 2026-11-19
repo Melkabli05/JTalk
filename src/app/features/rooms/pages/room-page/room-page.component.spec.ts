@@ -213,6 +213,19 @@ describe('RoomPageComponent (container)', () => {
     ]);
   });
 
+  it('puts the page actions behind a menu button too, which a phone shows instead of the buttons', async () => {
+    await open();
+    const more = root().querySelector<HTMLButtonElement>('header .more')!;
+
+    expect(more.getAttribute('aria-label')).toBe('Room actions');
+    expect(more.getAttribute('aria-haspopup')).toBe('menu');
+    more.click();
+    await settle();
+    expect(
+      [...document.querySelectorAll('.p-menu-item-link')].map((i) => i.textContent?.trim()),
+    ).toEqual(['Share']);
+  });
+
   it('copies the address of the room when Share is pressed, and says so', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });

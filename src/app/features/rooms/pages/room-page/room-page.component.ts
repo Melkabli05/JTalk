@@ -20,6 +20,7 @@ import { Badge } from '@openng/optimus-ui/badge';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
 import { ConfirmDialog } from '@openng/optimus-ui/confirmdialog';
+import { Menu } from '@openng/optimus-ui/menu';
 import { Message } from '@openng/optimus-ui/message';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
 import { Tag } from '@openng/optimus-ui/tag';
@@ -48,6 +49,7 @@ import { roomLook } from '../../utils/room-look';
     ButtonDirective,
     Card,
     ConfirmDialog,
+    Menu,
     Message,
     PersonDialogComponent,
     RaisedHandsComponent,
@@ -100,6 +102,25 @@ export default class RoomPageComponent {
       !audio.micOn();
     return mine && !audio.muted().includes(me) ? [...audio.muted(), me] : audio.muted();
   });
+  /** The page's actions behind the ⋯ button, which is what a phone shows instead of the buttons in the header. */
+  protected readonly pageMenu = computed<MenuItem[]>(() => [
+    { label: this.i18n.t('Share'), icon: 'pi pi-share-alt', command: () => this.share() },
+    ...(this.state.isHost()
+      ? [
+          {
+            label: this.i18n.t('Edit the room'),
+            icon: 'pi pi-pencil',
+            command: () => this.editing.set(true),
+          },
+          {
+            label: this.i18n.t('End the room'),
+            icon: 'pi pi-stop-circle',
+            linkClass: 'danger-item',
+            command: () => this.end(),
+          },
+        ]
+      : []),
+  ]);
   protected readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
   protected readonly editing = signal(false);
   protected readonly selectedId = signal<string | null>(null);
