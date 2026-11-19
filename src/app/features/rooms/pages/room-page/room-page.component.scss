@@ -69,6 +69,33 @@
   margin-inline-start: auto;
 }
 
+// Responsive visibility utilities
+.desktop-only {
+  display: none;
+
+  @media (min-width: 48rem) {
+    display: inline-flex;
+  }
+}
+
+.mobile-only {
+  @media (min-width: 48rem) {
+    display: none;
+  }
+}
+
+// Danger button styling for End the room
+button.danger {
+  &:hover:not(:disabled) {
+    color: var(--p-red-500);
+  }
+
+  &:focus-visible,
+  &:focus {
+    color: var(--p-red-600);
+  }
+}
+
 .hero {
   display: flex;
   flex-direction: column;

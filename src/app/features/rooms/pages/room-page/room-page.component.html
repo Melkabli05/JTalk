@@ -31,12 +31,41 @@
             label="Share"
             aria-label="Share"
             (click)="share()"
+            class="desktop-only"
           ></button>
+          @if (state.isHost()) {
+            <button
+              pButton
+              type="button"
+              icon="pi pi-pencil"
+              severity="secondary"
+              [rounded]="true"
+              [text]="true"
+              aria-label="Edit the room"
+              (click)="editing.set(true)"
+              class="desktop-only"
+              pTooltip="Edit the room"
+              tooltipPosition="bottom"
+            ></button>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-stop-circle"
+              severity="secondary"
+              [rounded]="true"
+              [text]="true"
+              aria-label="End the room"
+              (click)="end()"
+              class="desktop-only danger"
+              pTooltip="End the room"
+              tooltipPosition="bottom"
+            ></button>
+          }
         </div>
         <button
           pButton
           type="button"
-          class="more"
+          class="more mobile-only"
           icon="pi pi-ellipsis-v"
           severity="secondary"
           aria-haspopup="menu"
