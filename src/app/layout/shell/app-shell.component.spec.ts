@@ -283,6 +283,21 @@ describe('AppShellComponent (container)', () => {
       expect(onThePhone()).toBeUndefined();
     });
 
+    it("draws no menubar across the top on the room's own page, which has its own header, even before it is joined", async () => {
+      const router = await renderWithRoutes();
+      await router.navigateByUrl('/section');
+      await fixture.whenStable();
+      expect(root().querySelector('nav.top')).not.toBeNull();
+
+      await router.navigateByUrl('/rooms/r-1');
+      await fixture.whenStable();
+      expect(root().querySelector('nav.top')).toBeNull();
+
+      await router.navigateByUrl('/section');
+      await fixture.whenStable();
+      expect(root().querySelector('nav.top')).not.toBeNull();
+    });
+
     it('is gone once the room is left', async () => {
       const router = await renderWithRoutes();
       const active = TestBed.inject(ActiveRoomService);

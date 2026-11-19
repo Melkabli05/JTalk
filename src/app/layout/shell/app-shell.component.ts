@@ -154,6 +154,10 @@ export class AppShellComponent {
 
   /** The room they are in, while they are somewhere else: the header offers a way back to it. */
   protected readonly inRoom = this.activeRoom.room;
+  /** On a room's own page, which has its own header: from the first moment, before the room has been joined. */
+  protected readonly onRoomAddress = computed(() =>
+    (this.url().split(/[?#]/)[0] ?? '').startsWith('/rooms/'),
+  );
   protected readonly onRoomPage = computed(() => {
     const room = this.inRoom();
     return !!room && (this.url().split(/[?#]/)[0] ?? '').startsWith(`/rooms/${room.id}`);

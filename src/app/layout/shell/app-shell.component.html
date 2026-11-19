@@ -30,11 +30,13 @@
   <ng-container ngProjectAs="[brand]" [ngTemplateOutlet]="brand" />
 </app-sidebar>
 
-<nav class="top" [attr.aria-label]="'Primary' | t" appAriaCurrent>
-  <p-menubar breakpoint="0px" [model]="topItems()" [ariaLabel]="'Primary' | t">
-    <ng-template #start><ng-container [ngTemplateOutlet]="brand" /></ng-template>
-  </p-menubar>
-</nav>
+@if (!onRoomAddress()) {
+  <nav class="top" [attr.aria-label]="'Primary' | t" appAriaCurrent>
+    <p-menubar breakpoint="0px" [model]="topItems()" [ariaLabel]="'Primary' | t">
+      <ng-template #start><ng-container [ngTemplateOutlet]="brand" /></ng-template>
+    </p-menubar>
+  </nav>
+}
 
 <p-popover #settings appendTo="body" [ariaLabel]="'Profile and settings' | t">
   <div class="settings">
