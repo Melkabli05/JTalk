@@ -1,0 +1,83 @@
+:host {
+  --speed: 3.6s;
+  --strength: 26%;
+
+  position: relative;
+  display: grid;
+  place-items: center;
+  block-size: 6rem;
+  overflow: hidden;
+  color: var(--p-primary-color);
+}
+
+:host(.live) {
+  --speed: 2.2s;
+  --strength: 42%;
+}
+
+.core {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border-radius: 50%;
+  background: var(--p-primary-color);
+  box-shadow: 0 0 1.5rem color-mix(in srgb, var(--p-primary-color) var(--strength), transparent);
+  color: var(--p-primary-contrast-color);
+  font-size: 1.125rem;
+}
+
+// Each wave is a ring that grows from the microphone and fades, one after another.
+.wave {
+  position: absolute;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border: 2px solid color-mix(in srgb, var(--p-primary-color) var(--strength), transparent);
+  border-radius: 50%;
+  box-shadow:
+    0 0 1rem color-mix(in srgb, var(--p-primary-color) var(--strength), transparent),
+    inset 0 0 1rem color-mix(in srgb, var(--p-primary-color) var(--strength), transparent);
+  opacity: 0;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: spread var(--speed) ease-out infinite;
+
+    &.two {
+      animation-delay: calc(var(--speed) / 3);
+    }
+
+    &.three {
+      animation-delay: calc(var(--speed) * 2 / 3);
+    }
+  }
+
+  // Still, the rings are a soft halo.
+  @media (prefers-reduced-motion: reduce) {
+    opacity: 0.6;
+
+    &.two {
+      scale: 1.5;
+    }
+
+    &.three {
+      scale: 1.9;
+    }
+  }
+}
+
+@keyframes spread {
+  0% {
+    opacity: 0.85;
+    scale: 1;
+  }
+  // The ring is gone before it reaches the edge of the box, so nothing is ever cut off.
+  70% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+    scale: 2.1;
+  }
+}

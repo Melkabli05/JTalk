@@ -5,6 +5,7 @@
 </nav>
 
 <p-card class="go-live" [attr.aria-label]="heading() | t">
+  <ng-template #header><app-live-waves [live]="room() !== null" /></ng-template>
   <ng-template #title>{{ heading() | t }}</ng-template>
   <ng-template #subtitle>
     @if (room(); as current) {
@@ -49,9 +50,9 @@
   (click)="settings.emit($event)"
 >
   @if (picture(); as image) {
-    <p-avatar shape="circle" size="large" aria-hidden="true" [image]="image" />
+    <p-avatar shape="circle" size="normal" aria-hidden="true" [image]="image" />
   } @else {
-    <p-avatar shape="circle" size="large" aria-hidden="true" icon="pi pi-user" />
+    <p-avatar shape="circle" size="normal" aria-hidden="true" icon="pi pi-user" />
   }
   <span class="who" aria-hidden="true">
     <strong>{{ name() }}</strong>

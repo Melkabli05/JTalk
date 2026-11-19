@@ -7,6 +7,7 @@ import { Menu } from '@openng/optimus-ui/menu';
 import { Tag } from '@openng/optimus-ui/tag';
 import { AriaCurrentDirective } from '@shared/directives/aria-current.directive';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
+import { LiveWavesComponent } from '@shared/ui/live-waves/live-waves.component';
 import { msg } from '@shared/utils/i18n/msg';
 
 /**
@@ -16,7 +17,16 @@ import { msg } from '@shared/utils/i18n/msg';
  */
 @Component({
   selector: 'app-sidebar',
-  imports: [Avatar, AriaCurrentDirective, ButtonDirective, Card, Menu, Tag, TranslatePipe],
+  imports: [
+    Avatar,
+    AriaCurrentDirective,
+    ButtonDirective,
+    Card,
+    LiveWavesComponent,
+    Menu,
+    Tag,
+    TranslatePipe,
+  ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
   host: { role: 'complementary' },

@@ -52,6 +52,17 @@ describe('SidebarComponent (presentational)', () => {
     expect(asked).toHaveBeenCalledOnce();
   });
 
+  it('draws glow waves above the card, calmer when idle and live while the person is in a room', async () => {
+    await render();
+    const waves = () => root().querySelector<HTMLElement>('.go-live app-live-waves')!;
+    expect(waves()).not.toBeNull();
+    expect(waves().classList.contains('live')).toBe(false);
+
+    fixture.componentRef.setInput('room', { title: 'Spanish coffee' });
+    await fixture.whenStable();
+    expect(waves().classList.contains('live')).toBe(true);
+  });
+
   it('turns the Go live card into the way back while the person is in a room', async () => {
     await render({ room: { title: 'Spanish coffee' } });
     const back = vi.fn();
