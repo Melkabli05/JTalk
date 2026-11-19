@@ -15,7 +15,7 @@ let nextId = 0;
     <section [attr.aria-labelledby]="headingId">
       <div class="head">
         <h2 class="heading" [id]="headingId">
-          {{ 'Listeners' | t }}
+          {{ 'Audience' | t }}
           <p-tag severity="secondary" [rounded]="true">{{ ids().length }}</p-tag>
         </h2>
         @if (swipeable()) {

@@ -69,7 +69,7 @@ export const messages: Readonly<Record<string, string>> = {
   'Leave quietly': 'المغادرة بهدوء',
   Live: 'مباشر',
   '{count} in the room': '{count} في الغرفة',
-  Listeners: 'المستمعون',
+  Audience: 'الجمهور',
   Speaking: 'يتحدث',
   Muted: 'مكتوم الصوت',
   'Reconnecting… trying to restore your connection.': 'جارٍ إعادة الاتصال… نحاول استعادة اتصالك.',

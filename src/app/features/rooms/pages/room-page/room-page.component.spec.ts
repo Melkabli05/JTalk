@@ -252,7 +252,7 @@ describe('RoomPageComponent (container)', () => {
     );
     expect(headings).toHaveLength(2);
     expect(headings[0]).toBe('On stage');
-    expect(headings[1]).toContain('Listeners');
+    expect(headings[1]).toContain('Audience');
     expect(root().querySelectorAll('section[aria-labelledby]')).toHaveLength(2);
     expect(root().querySelectorAll('p-card[aria-labelledby]')).toHaveLength(0);
   });

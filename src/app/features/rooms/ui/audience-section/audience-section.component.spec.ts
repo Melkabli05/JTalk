@@ -24,13 +24,11 @@ describe('AudienceSectionComponent (presentational)', () => {
     await fixture.whenStable();
   }
 
-  it('is a labelled section: Listeners, and how many, over everyone at once', async () => {
+  it('is a labelled section: Audience, and how many, over everyone at once', async () => {
     await render(['a', 'b', 'c']);
     const section = root().querySelector('section')!;
 
-    expect(root().querySelector('h2')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-      'Listeners 3',
-    );
+    expect(root().querySelector('h2')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Audience 3');
     expect(section.getAttribute('aria-labelledby')).toBe(root().querySelector('h2')?.id);
     expect(root().querySelectorAll('app-audience-grid .person')).toHaveLength(3);
   });
