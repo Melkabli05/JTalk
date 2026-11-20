@@ -196,13 +196,25 @@
   gap: 0.5rem;
 }
 
+// Who is being answered or corrected, above the field.
 .replying {
+  inline-size: 100%;
+}
+
+.replying-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0;
-  color: var(--p-text-muted-color);
-  font-size: var(--p-jtalk-type-secondary);
+  gap: 0.5rem;
+  inline-size: 100%;
+}
+
+.replying-text {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .write {
@@ -211,8 +223,13 @@
   gap: 0.5rem;
 
   app-textarea-field {
+    --p-form-field-border-radius: var(--p-jtalk-radius-card);
     flex: 1;
     min-inline-size: 0;
+  }
+
+  button.send {
+    flex: none;
   }
 }
 

@@ -2,6 +2,8 @@
 <textarea
   #control
   pTextarea
+  [autoResize]="autoResize()"
+  [style.resize]="autoResize() ? 'none' : null"
   dir="auto"
   [id]="inputId"
   [rows]="rows()"
@@ -16,7 +18,9 @@
   (input)="updateValue($event)"
   (blur)="touch.emit()"
 ></textarea>
-@if (maxLength(); as limit) {
-  <p class="count" aria-hidden="true">{{ value().length }}/{{ limit }}</p>
+@if (counted()) {
+  @if (maxLength(); as limit) {
+    <p class="count" aria-hidden="true">{{ value().length }}/{{ limit }}</p>
+  }
 }
 <app-field-errors [attr.id]="errorsId" [errors]="errors()" [visible]="showErrors()" />

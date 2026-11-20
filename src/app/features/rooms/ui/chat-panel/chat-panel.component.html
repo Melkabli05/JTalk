@@ -255,22 +255,29 @@
         <p-message severity="error" size="small">{{ message }}</p-message>
       }
       @if (replyingTo(); as original) {
-        <p class="replying">
-          <span
-            >{{ correcting() ? 'Correcting' : 'Replying to' }} {{ nameOf(original.authorId) }}</span
-          >
-          <button
-            pButton
-            type="button"
-            class="compact"
-            icon="pi pi-times"
-            severity="secondary"
-            [text]="true"
-            [rounded]="true"
-            aria-label="Cancel"
-            (click)="cancelReply()"
-          ></button>
-        </p>
+        <p-message
+          class="replying"
+          size="small"
+          severity="secondary"
+          [icon]="correcting() ? 'pi pi-pencil' : 'pi pi-reply'"
+        >
+          <span class="replying-row">
+            <span class="replying-text">
+              {{ correcting() ? 'Correcting' : 'Replying to' }} {{ nameOf(original.authorId) }}
+            </span>
+            <button
+              pButton
+              type="button"
+              size="small"
+              icon="pi pi-times"
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
+              aria-label="Cancel"
+              (click)="cancelReply()"
+            ></button>
+          </span>
+        </p-message>
       }
       <div class="write">
         <app-textarea-field
@@ -278,6 +285,8 @@
           [labelHidden]="true"
           [placeholder]="correcting() ? 'Write how it should be…' : 'Say something in the room…'"
           [rows]="1"
+          [autoResize]="true"
+          [counted]="false"
           [formField]="composerForm.content"
           (keydown)="typing($event, composerEl)"
         />

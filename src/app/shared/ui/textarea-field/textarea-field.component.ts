@@ -12,6 +12,10 @@ import { FieldErrorsComponent } from '../field-errors/field-errors.component';
 export class TextareaFieldComponent extends FieldControlDirective<string> {
   readonly rows = input(3);
   readonly labelHidden = input(false);
+  /** Whether the number of characters used, out of the most allowed, is shown under the field. */
+  readonly counted = input(true);
+  /** Whether the field grows with what is written, up to a few lines. */
+  readonly autoResize = input(false);
   readonly placeholder = input('');
   readonly maxLength = input<number>();
 
