@@ -9,11 +9,14 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { CommonModule, SlicePipe } from '@angular/common';
 import { FormField, FormRoot, form, maxLength, required } from '@angular/forms/signals';
+import { NgOptimizedImage } from '@angular/common';
 import { ButtonDirective } from '@openng/optimus-ui/button';
+import { Message } from '@openng/optimus-ui/message';
 import { Popover } from '@openng/optimus-ui/popover';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
+import { Tag } from '@openng/optimus-ui/tag';
+import { Tooltip } from '@openng/optimus-ui/tooltip';
 import type { Person } from '@core/auth/identity.models';
 import { TextareaFieldComponent } from '@shared/ui/textarea-field/textarea-field.component';
 import { formSubmission } from '@shared/utils/form-submission';
@@ -41,21 +44,23 @@ interface TopicModel {
 
 const NEAR_BOTTOM_PX = 48;
 const CLOCK_MS = 30_000;
+const LONG_PRESS_MS = 500;
 
 @Component({
   selector: 'app-chat-panel',
-  standalone: true,
   imports: [
-    CommonModule,
-    SlicePipe,
     ButtonDirective,
     FormField,
     FormRoot,
+    Message,
+    NgOptimizedImage,
+    PersonAvatarComponent,
     Popover,
     ReactionPickerComponent,
-    PersonAvatarComponent,
     Skeleton,
+    Tag,
     TextareaFieldComponent,
+    Tooltip,
   ],
   templateUrl: './chat-panel.component.html',
   styleUrl: './chat-panel.component.scss',
@@ -76,10 +81,10 @@ export class ChatPanelComponent {
   readonly moderating = input(false);
   readonly reactions = input<ReadonlyMap<string, CommentTally>>(new Map());
   readonly compact = input(false);
+  /** Whether the whole thread can be opened in the sheet (on a phone): the Expand button. */
   readonly expandable = input(false);
-  readonly framed = input(true);
+  readonly framed = input(false);
 
-  // Outputs
   readonly submitted = output<CommentDraft>();
   readonly deleted = output<string>();
   readonly muteRequested = output<string>();
@@ -92,15 +97,13 @@ export class ChatPanelComponent {
   readonly expand = output<void>();
   readonly reacted = output<{ commentId: string; reaction: Reaction }>();
 
-  // Element & UI signals
   protected readonly log = viewChild<ElementRef<HTMLElement>>('log');
   protected readonly stuck = signal(true);
-  protected readonly unreadCount = signal(0);
   protected readonly replyingTo = signal<RoomComment | null>(null);
   protected readonly correcting = signal(false);
   protected readonly composer = signal<ComposerModel>({ content: '' });
   protected readonly topicDraft = signal<TopicModel>({ text: '' });
-  protected readonly selectedComment = signal<RoomComment | null>(null);
+  private longPressTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   protected readonly byId = computed(
     () => new Map(this.comments().map((comment) => [comment.id, comment])),
@@ -115,13 +118,14 @@ export class ChatPanelComponent {
             reaction,
             count: tally.counts[reaction] ?? 0,
             mine: tally.mine === reaction,
-            label: REACTION_LOOKS[reaction]?.label ?? '',
-            image: REACTION_LOOKS[reaction]?.image ?? '',
+            label: REACTION_LOOKS[reaction].label,
+            image: REACTION_LOOKS[reaction].image,
           })),
         ]),
       ),
   );
   private pickingFor: string | null = null;
+  /** The column beside the room: messages are bubbles there, and cards under the room and in the sheet. */
   protected readonly side = computed(() => this.framed() && !this.compact());
   protected readonly composerValid = computed(() => this.composer().content.trim().length > 0);
   protected readonly now = signal(Date.now());
@@ -150,8 +154,24 @@ export class ChatPanelComponent {
     },
   );
 
+  protected readonly topicForm = form(
+    this.topicDraft,
+    (path) => {
+      required(path.text, { message: 'Write the topic first.' });
+      maxLength(path.text, TOPIC_MAX_LENGTH, { message: 'Use at most 200 characters.' });
+    },
+    {
+      submission: formSubmission<TopicModel>({
+        busy: () => this.moderating(),
+        submit: (value) => {
+          this.topicPinned.emit(value.text.trim());
+          this.topicDraft.set({ text: '' });
+        },
+      }),
+    },
+  );
+
   private wasSubmitting = false;
-  private prevCount = 0;
 
   constructor() {
     effect(() => {
@@ -162,24 +182,16 @@ export class ChatPanelComponent {
       }
       this.wasSubmitting = submitting;
     });
-
     effect((onCleanup) => {
       const tick = setInterval(() => this.now.set(Date.now()), CLOCK_MS);
       onCleanup(() => clearInterval(tick));
     });
-
     afterRenderEffect(() => {
-      const currentList = this.comments();
+      this.comments();
       const element = this.log()?.nativeElement;
-      if (element) {
-        if (this.stuck()) {
-          element.scrollTop = element.scrollHeight;
-          this.unreadCount.set(0);
-        } else if (currentList.length > this.prevCount) {
-          this.unreadCount.update((c) => c + (currentList.length - this.prevCount));
-        }
+      if (element && this.stuck()) {
+        element.scrollTop = element.scrollHeight;
       }
-      this.prevCount = currentList.length;
     });
   }
 
@@ -199,18 +211,6 @@ export class ChatPanelComponent {
     return !!comment.pinnedAt;
   }
 
-  protected reactionGlyph(reaction: Reaction): string {
-    const glyphs: Record<string, string> = {
-      CLAP: '👏',
-      HEART: '❤️',
-      FIRE: '🔥',
-      IDEA: '💡',
-      SPARKLES: '✨',
-      LAUGH: '😂',
-    };
-    return glyphs[reaction as string] || '👍';
-  }
-
   protected reply(comment: RoomComment, correcting = false): void {
     this.replyingTo.set(comment);
     this.correcting.set(correcting);
@@ -224,37 +224,60 @@ export class ChatPanelComponent {
   protected scrolled(): void {
     const element = this.log()?.nativeElement;
     if (element) {
-      const isAtBottom =
-        element.scrollHeight - element.scrollTop - element.clientHeight <= NEAR_BOTTOM_PX;
-      this.stuck.set(isAtBottom);
-      if (isAtBottom) {
-        this.unreadCount.set(0);
-      }
+      this.stuck.set(
+        element.scrollHeight - element.scrollTop - element.clientHeight <= NEAR_BOTTOM_PX,
+      );
     }
+  }
+
+  protected pick(comment: RoomComment, event: Event, picker: Popover): void {
+    this.pickingFor = comment.id;
+    picker.toggle(event);
+  }
+
+  protected choose(reaction: Reaction, picker: Popover): void {
+    if (this.pickingFor !== null) {
+      this.reacted.emit({ commentId: this.pickingFor, reaction });
+    }
+    picker.hide();
   }
 
   protected jumpToLatest(): void {
     const element = this.log()?.nativeElement;
     if (element) {
-      element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' });
+      element.scrollTop = element.scrollHeight;
     }
     this.stuck.set(true);
-    this.unreadCount.set(0);
   }
 
-  // --- Context Popover Menu Handlers ---
-  protected openCommentActions(comment: RoomComment, event: Event, popover: Popover): void {
-    this.selectedComment.set(comment);
-    popover.toggle(event);
+  protected onCommentMouseDown(comment: RoomComment, event: MouseEvent | TouchEvent): void {
+    if (!this.isHost()) return;
+
+    const timer = setTimeout(() => {
+      this.showPinOption(comment);
+    }, LONG_PRESS_MS);
+
+    this.longPressTimers.set(comment.id, timer);
   }
 
-  protected onMenuReply(comment: RoomComment, popover: Popover): void {
-    popover.hide();
-    this.reply(comment);
+  protected onCommentMouseUp(commentId: string): void {
+    const timer = this.longPressTimers.get(commentId);
+    if (timer) {
+      clearTimeout(timer);
+      this.longPressTimers.delete(commentId);
+    }
   }
 
-  protected onMenuTogglePin(comment: RoomComment, popover: Popover): void {
-    popover.hide();
+  protected onCommentMouseLeave(commentId: string): void {
+    const timer = this.longPressTimers.get(commentId);
+    if (timer) {
+      clearTimeout(timer);
+      this.longPressTimers.delete(commentId);
+    }
+  }
+
+  protected togglePin(comment: RoomComment, event: Event): void {
+    event.stopPropagation();
     if (comment.pinnedAt) {
       this.commentUnpinned.emit(comment.id);
     } else {
@@ -262,51 +285,7 @@ export class ChatPanelComponent {
     }
   }
 
-  protected onMenuCopyText(comment: RoomComment, popover: Popover): void {
-    popover.hide();
-    if (navigator?.clipboard) {
-      navigator.clipboard.writeText(comment.content);
-    }
-  }
-
-  protected onMenuTranslate(comment: RoomComment, popover: Popover): void {
-    popover.hide();
-    // Hook into room translation service or emit translation action
-  }
-
-  protected onMenuToggleMute(comment: RoomComment, popover: Popover): void {
-    popover.hide();
-    if (this.muteIds().has(comment.authorId)) {
-      this.unmuteRequested.emit(comment.authorId);
-    } else {
-      this.muteRequested.emit(comment.authorId);
-    }
-  }
-
-  protected onMenuDelete(comment: RoomComment, popover: Popover): void {
-    popover.hide();
-    this.deleted.emit(comment.id);
-  }
-
-  // --- Emoji Picker ---
-  protected pick(comment: RoomComment, event: Event, picker: Popover): void {
-    this.pickingFor = comment.id;
-    picker.toggle(event);
-  }
-
-  protected pickForComposer(event: Event, picker: Popover): void {
-    this.pickingFor = null;
-    picker.toggle(event);
-  }
-
-  protected choose(reaction: Reaction, picker: Popover): void {
-    if (this.pickingFor !== null) {
-      this.reacted.emit({ commentId: this.pickingFor, reaction });
-    } else {
-      // Append emoji directly to composer content
-      const glyph = this.reactionGlyph(reaction);
-      this.composer.update((m) => ({ content: m.content + glyph }));
-    }
-    picker.hide();
+  private showPinOption(comment: RoomComment): void {
+    this.togglePin(comment, new Event('longpress'));
   }
 }

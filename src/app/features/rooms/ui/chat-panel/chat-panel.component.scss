@@ -1,727 +1,563 @@
-// Gather UI 2.0 Design System & Tokens
-// Warm paper surfaces, Forest Green brand accents, Terracotta alerts, and Manrope typography
 :host {
   display: block;
   block-size: 100%;
-  font-family: 'Manrope', system-ui, -apple-system, sans-serif;
-  color: #1F2937;
 }
 
-.gather-chat-panel {
-  --gather-bg: #F7F5EF;
-  --gather-card-bg: #FFFFFF;
-  --gather-card-border: #E8E5DC;
-  --gather-card-hover: #F2EFE8;
-  --gather-forest: #477A5D;
-  --gather-forest-soft: rgba(71, 122, 93, 0.1);
-  --gather-sand: #EBE8DF;
-  --gather-terracotta: #C9685E;
-  --gather-terracotta-soft: rgba(201, 104, 94, 0.1);
-  --gather-ink: #191E1B;
-  --gather-ink-muted: #6B7280;
-  --gather-ink-light: #9CA3AF;
-  
+// Each message is a card, as in the owner's mock: small type, hairlines, the stone and slate colours (the dark theme uses the app's own).
+// Beside the room (`.side`) the messages are bubbles instead, and in the drawer (not `.framed`) the card is a little roomier.
+.chat {
+  --pad: 0.625rem;
+  --avatar: 1.75rem;
+  --card-bg: rgb(255 255 255 / 0.7);
+  --card-border: rgb(231 229 228 / 0.7);
+  --ink: #0f172a;
+  --ink-soft: #334155;
+  --ink-strong: #1e293b;
+  --quiet: #a8a29e;
+  --muted: #78716c;
+  --chip-bg: #f5f5f4;
+  --chip-border: rgb(231 229 228 / 0.8);
+  --chip-ink: #57534e;
+  --dashed: #d6d3d1;
+  --ring: #e7e5e4;
+  --brand-20: color-mix(in srgb, var(--p-jtalk-brand) 20%, transparent);
+  --host-bg: rgb(255 255 255 / 0.8);
+  --write-bg: rgb(255 255 255 / 0.9);
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
   block-size: 100%;
   min-block-size: 0;
-  background: var(--gather-bg);
-  box-sizing: border-box;
 
-  &.framed {
-    border-left: 1px solid var(--gather-card-border);
-    padding: 1.25rem 1rem 1rem;
+  :host-context(.app-dark) & {
+    --card-bg: color-mix(in srgb, var(--p-content-background) 70%, transparent);
+    --card-border: var(--p-content-border-color);
+    --ink: var(--p-text-color);
+    --ink-soft: var(--p-text-color);
+    --ink-strong: var(--p-text-color);
+    --quiet: var(--p-text-muted-color);
+    --muted: var(--p-text-muted-color);
+    --chip-bg: var(--p-content-hover-background);
+    --chip-border: var(--p-content-border-color);
+    --chip-ink: var(--p-text-muted-color);
+    --dashed: var(--p-content-border-color);
+    --ring: var(--p-content-border-color);
+    --host-bg: var(--p-content-background);
+    --write-bg: var(--p-content-background);
   }
 }
 
-// 1. Header
-.chat-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.875rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(232, 229, 220, 0.8);
-
-  .chat-header-title {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-
-    .live-dot {
-      width: 0.5rem;
-      height: 0.5rem;
-      border-radius: 50%;
-      background: #10B981;
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-    }
-
-    h2 {
-      margin: 0;
-      font-size: 0.9375rem;
-      font-weight: 700;
-      color: var(--gather-ink);
-      letter-spacing: -0.01em;
-    }
-
-    .comment-count-chip {
-      font-size: 0.6875rem;
-      font-weight: 600;
-      padding: 0.125rem 0.5rem;
-      border-radius: 9999px;
-      background: var(--gather-sand);
-      color: #4B5563;
-    }
-
-    .active-thread-hint {
-      font-size: 0.6875rem;
-      color: var(--gather-ink-muted);
-    }
-  }
-
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-
-    .header-icon-btn {
-      width: 1.875rem;
-      height: 1.875rem;
-      padding: 0;
-      color: var(--gather-ink-muted);
-      &:hover {
-        background: var(--gather-card-hover);
-        color: var(--gather-ink);
-      }
-    }
-
-    .expand-btn {
-      padding: 0.25rem 0.625rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border-radius: 9999px;
-      border: 1px solid var(--gather-card-border);
-      background: var(--gather-card-bg);
-      color: var(--gather-ink);
-    }
-  }
-}
-
-// 2. Pinned Topic Card
-.pinned-topic-card {
+.topic {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem 0.875rem;
-  margin-bottom: 0.75rem;
-  background: var(--gather-card-bg);
-  border: 1px solid var(--gather-card-border);
-  border-radius: 0.875rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-jtalk-radius-card);
+  background: var(--p-content-hover-background);
 
-  .topic-icon-wrap {
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: 0.5rem;
-    background: var(--gather-forest-soft);
-    color: var(--gather-forest);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    font-size: 0.8125rem;
-  }
-
-  .topic-content {
+  .topic-text {
     flex: 1;
-    min-width: 0;
-
-    .topic-kicker {
-      display: block;
-      font-size: 0.625rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: var(--gather-forest);
-      margin-bottom: 0.125rem;
-    }
-
-    .topic-quote {
-      margin: 0;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: var(--gather-ink);
-      line-height: 1.35;
-    }
+    min-inline-size: 0;
   }
 
-  .topic-clear-btn {
-    width: 1.5rem;
-    height: 1.5rem;
-    padding: 0;
-    color: var(--gather-ink-light);
-    &:hover {
-      color: var(--gather-terracotta);
-    }
-  }
-}
-
-// 3. Messages Feed
-.chat-feed-container {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-feed-list {
-  flex: 1;
-  overflow-y: auto;
-  margin: 0;
-  padding: 0 0.25rem 1rem 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  overscroll-behavior: contain;
-
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: var(--gather-sand);
-    border-radius: 4px;
-  }
-}
-
-// Comment Card Item
-.comment-card {
-  display: flex;
-  gap: 0.75rem;
-  padding: 0.875rem 1rem;
-  background: var(--gather-card-bg);
-  border: 1px solid var(--gather-card-border);
-  border-radius: 1rem;
-  transition: all 0.15s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-
-  &:hover {
-    border-color: #DCD8CD;
-  }
-
-  &.is-host {
-    border-left: 3px solid var(--gather-forest);
-  }
-
-  &.is-pinned {
-    border: 1.5px solid var(--gather-forest);
-    background: #FAF9F5;
-  }
-
-  .avatar-wrap {
-    position: relative;
-    flex-shrink: 0;
-
-    .avatar-host-badge {
-      position: absolute;
-      bottom: -0.125rem;
-      right: -0.125rem;
-      width: 0.875rem;
-      height: 0.875rem;
-      border-radius: 50%;
-      background: #EAB308;
-      color: white;
-      font-size: 0.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1.5px solid white;
-    }
-  }
-
-  .comment-main {
-    flex: 1;
-    min-width: 0;
-  }
-}
-
-// Meta bar
-.comment-meta-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.375rem;
-
-  .author-info {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.375rem;
-
-    .author-name {
-      font-size: 0.8125rem;
-      font-weight: 700;
-      color: var(--gather-ink);
-    }
-
-    .role-pill {
-      font-size: 0.625rem;
-      font-weight: 700;
-      padding: 0.0625rem 0.375rem;
-      border-radius: 0.25rem;
-
-      &.host-role {
-        background: var(--gather-forest-soft);
-        color: var(--gather-forest);
-      }
-      &.pinned-role {
-        background: #FEF3C7;
-        color: #B45309;
-      }
-      &.you-role {
-        background: #EEF2FF;
-        color: #4F46E5;
-      }
-      &.muted-role {
-        background: #FEE2E2;
-        color: #DC2626;
-      }
-    }
-
-    .comment-time {
-      font-size: 0.6875rem;
-      color: var(--gather-ink-light);
-      margin-left: 0.125rem;
-    }
-  }
-
-  .comment-overflow-btn {
-    width: 1.375rem;
-    height: 1.375rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    border-radius: 0.25rem;
-    color: var(--gather-ink-light);
-    cursor: pointer;
-    font-size: 0.75rem;
-
-    &:hover {
-      background: var(--gather-card-hover);
-      color: var(--gather-ink);
-    }
-  }
-}
-
-// Comment Body
-.comment-body {
-  .comment-text {
-    margin: 0;
-    font-size: 0.8125rem;
-    line-height: 1.45;
-    color: #374151;
-    word-break: break-word;
-  }
-
-  .quote-snippet {
-    margin-bottom: 0.5rem;
-    padding: 0.375rem 0.625rem;
-    border-left: 2px solid var(--gather-forest);
-    border-radius: 0 0.375rem 0.375rem 0;
-    background: #F3F1E9;
-
-    .quote-author {
-      display: block;
-      font-size: 0.6875rem;
-      font-weight: 700;
-      color: var(--gather-forest);
-    }
-    .quote-text {
-      margin: 0;
-      font-size: 0.75rem;
-      color: #4B5563;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  }
-
-  .correction-card {
-    padding: 0.5rem 0.625rem;
-    background: #F9F8F5;
-    border: 1px dashed var(--gather-card-border);
-    border-radius: 0.5rem;
-    font-size: 0.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-
-    .wrong-line {
-      margin: 0;
-      color: #9CA3AF;
-      text-decoration: line-through;
-    }
-    .right-line {
-      margin: 0;
-      color: var(--gather-forest);
-      font-weight: 600;
-    }
-    .correction-label {
-      font-size: 0.625rem;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-  }
-}
-
-// Comment Footer (Reactions & Reply)
-.comment-footer-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 0.625rem;
-  padding-top: 0.375rem;
-
-  .reaction-strip {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.375rem;
-
-    .reaction-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      padding: 0.125rem 0.4375rem;
-      border: 1px solid var(--gather-card-border);
-      border-radius: 9999px;
-      background: #F9F8F5;
-      cursor: pointer;
-      font-size: 0.6875rem;
-      font-weight: 600;
-      color: #4B5563;
-      transition: all 0.1s ease;
-
-      &:hover:not(:disabled) {
-        background: #ECE9DF;
-        border-color: #D3CEBF;
-      }
-
-      &.has-reacted {
-        background: var(--gather-forest-soft);
-        border-color: rgba(71, 122, 93, 0.4);
-        color: var(--gather-forest);
-      }
-    }
-
-    .add-reaction-btn {
-      width: 1.25rem;
-      height: 1.25rem;
-      border-radius: 50%;
-      border: 1px dashed #D3CEBF;
-      background: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--gather-ink-light);
-      cursor: pointer;
-
-      &:hover {
-        border-color: var(--gather-forest);
-        color: var(--gather-forest);
-      }
-    }
-  }
-
-  .quick-reply-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.125rem 0.375rem;
-    border: none;
-    background: transparent;
-    color: var(--gather-ink-muted);
-    font-size: 0.6875rem;
+  .topic-label {
+    color: var(--p-text-muted-color);
+    font-size: var(--p-jtalk-type-metadata);
     font-weight: 600;
-    cursor: pointer;
-    border-radius: 0.25rem;
+  }
 
-    i {
-      font-size: 0.625rem;
-    }
-
-    &:hover {
-      color: var(--gather-forest);
-      background: var(--gather-forest-soft);
-    }
+  p {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-weight: 600;
   }
 }
 
-// 4. Floating Scroll Pill ("↓ 3 new messages")
-.floating-scroll-pill {
+.pin {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+
+  app-text-field {
+    flex: 1;
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-block-end: 0.625rem;
+  padding-inline: 0.25rem;
+
+  h2 {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .count {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .expand {
+    min-block-size: 0;
+    margin-inline-start: auto;
+    padding: 0.125rem 0.5rem;
+    border-color: var(--p-content-border-color);
+    color: var(--p-text-color);
+    font-size: 0.6875rem;
+    font-weight: 700;
+  }
+}
+
+.dot {
+  inline-size: 0.375rem;
+  block-size: 0.375rem;
+  border-radius: 50%;
+  background: var(--p-jtalk-brand);
+}
+
+.feed {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 8rem;
+}
+
+.messages {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  overscroll-behavior: contain;
+}
+
+.message-item {
+  display: flex;
+  gap: 0.625rem;
+  padding: var(--pad);
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
+  background: var(--card-bg);
+  position: relative;
+
+  &.host {
+    border-color: var(--brand-20);
+    background: var(--host-bg);
+  }
+
+  &.mine {
+    border-color: var(--brand-20);
+    background: color-mix(in srgb, var(--p-jtalk-brand) 5%, transparent);
+  }
+
+  &.pinned {
+    border: 2px solid var(--p-jtalk-brand);
+    background: color-mix(in srgb, var(--p-jtalk-brand) 10%, transparent);
+  }
+
+  app-person-avatar {
+    --p-avatar-width: calc(var(--avatar) - 2px);
+    --p-avatar-height: calc(var(--avatar) - 2px);
+    --p-avatar-font-size: 0.75rem;
+    align-self: flex-start;
+    border: 1px solid var(--ring);
+    border-radius: 50%;
+  }
+
+  &.host app-person-avatar {
+    border-color: color-mix(in srgb, var(--p-jtalk-brand) 30%, transparent);
+  }
+
+  &.mine app-person-avatar {
+    border-color: color-mix(in srgb, var(--p-jtalk-brand) 40%, transparent);
+  }
+}
+
+.pin-badge {
   position: absolute;
-  bottom: 0.75rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: inline-flex;
+  top: -0.5rem;
+  right: -0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: var(--p-jtalk-brand);
+  border-radius: 50%;
+  color: white;
+  font-size: 0.75rem;
+
+  i {
+    color: white;
+  }
+}
+
+.body {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 0.25rem;
+}
+
+.who {
+  display: flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.375rem 0.875rem;
-  background: var(--gather-forest);
-  color: #FFFFFF;
-  border: none;
-  border-radius: 9999px;
+  min-inline-size: 0;
+}
+
+.author {
+  color: var(--ink);
   font-size: 0.75rem;
   font-weight: 700;
-  box-shadow: 0 4px 12px rgba(71, 122, 93, 0.35);
-  cursor: pointer;
-  z-index: 10;
-  transition: transform 0.15s ease, background 0.15s ease;
+  line-height: 1rem;
+}
 
-  &:hover {
-    background: #3B664D;
-    transform: translateX(-50%) translateY(-1px);
+.when {
+  color: var(--quiet);
+  font-size: 0.625rem;
+  line-height: 1.5;
+}
+
+.badge {
+  padding: 0 0.375rem;
+  border-radius: 0.25rem;
+  background: var(--chip-border);
+  color: var(--muted);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.host .badge,
+.mine .badge {
+  background: color-mix(in srgb, var(--p-jtalk-brand) 15%, transparent);
+  color: var(--p-jtalk-brand);
+}
+
+.host .bubble,
+.mine .bubble {
+  color: var(--ink-strong);
+}
+
+.bubble {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  line-height: 1.375;
+}
+
+.text,
+.quote,
+.wrong,
+.right {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.quote {
+  margin-block-end: 0.375rem;
+  padding-inline-start: 0.625rem;
+  border-inline-start: 2px solid var(--p-content-border-color);
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-secondary);
+}
+
+.correction {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.wrong {
+  color: var(--p-text-muted-color);
+  text-decoration: line-through;
+}
+
+.right {
+  font-weight: 650;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  margin-block-start: 0.5rem;
+}
+
+.chip,
+.add-reaction,
+.act {
+  font: inherit;
+  font-size: 0.625rem;
+  line-height: 1.5;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
   }
 }
 
-// 5. Fixed Message Composer
-.composer-container {
-  margin-top: auto;
-  padding-top: 0.5rem;
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--chip-border);
+  border-radius: 9999px;
+  background: var(--chip-bg);
+  color: var(--chip-ink);
+  font-weight: 600;
 
-  .reply-context-banner {
-    display: flex;
+  &:hover:not(:disabled) {
+    background: rgb(231 229 228 / 0.7);
+  }
+
+  &.mine {
+    border-color: var(--brand-20);
+    background: color-mix(in srgb, var(--p-jtalk-brand) 10%, transparent);
+    color: var(--p-jtalk-brand);
+    font-weight: 700;
+  }
+
+  img {
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+  }
+}
+
+.add-reaction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  padding: 0;
+  border: 1px dashed var(--dashed);
+  border-radius: 50%;
+  background: none;
+  color: var(--quiet);
+}
+
+.act {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: var(--muted);
+  font-weight: 600;
+
+  svg {
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+
+  .pi {
+    font-size: 0.75rem;
+  }
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background: var(--chip-bg);
+    color: var(--ink);
+  }
+
+  &.pinned {
+    color: var(--p-jtalk-brand);
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--p-jtalk-brand) 10%, transparent);
+    }
+  }
+}
+
+.reply {
+  margin-inline-start: auto;
+}
+
+.empty {
+  padding: 2rem 0.5rem;
+  color: var(--p-text-muted-color);
+  text-align: center;
+}
+
+.latest {
+  position: absolute;
+  inset-block-end: 0.5rem;
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  box-shadow: var(--p-jtalk-elevation-1);
+}
+
+.loading {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 0.25rem;
+}
+
+.composer {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.replying {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0 0.5rem;
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-secondary);
+}
+
+.write {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.375rem 0.375rem 0.75rem;
+  border: 1px solid var(--ring);
+  border-radius: var(--p-jtalk-radius-pill);
+  background: var(--write-bg);
+
+  app-textarea-field {
+    --p-textarea-background: transparent;
+    --p-textarea-border-color: transparent;
+    --p-textarea-hover-border-color: transparent;
+    --p-textarea-focus-border-color: transparent;
+    --p-textarea-shadow: none;
+    --pill-padding-x: 0.25rem;
+    flex: 1;
+    min-inline-size: 0;
+    font-size: 0.75rem;
+  }
+
+  .send {
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
+    min-block-size: 0;
+    padding: 0;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--p-jtalk-brand);
+    color: white;
+
+    &:disabled {
+      opacity: 0.5;
+      background: var(--p-text-muted-color);
+    }
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.1);
+    }
+  }
+}
+
+// In the drawer the discussion is the sheet's whole content: the pinned topic is a band across the top, the thread scrolls under it, and the
+// composer is a bar across the bottom.
+.chat:not(.framed) {
+  --pad: 0.75rem;
+  --avatar: 2rem;
+  gap: 0;
+
+  .topic {
     align-items: center;
-    justify-content: space-between;
-    padding: 0.375rem 0.75rem;
-    margin-bottom: 0.375rem;
-    border-radius: 0.625rem;
-    background: var(--gather-card-bg);
-    border: 1px solid var(--gather-card-border);
+    padding: 0.625rem 1rem;
+    border: 0;
+    border-block-end: 1px solid color-mix(in srgb, var(--p-jtalk-brand) 15%, transparent);
+    border-radius: 0;
+    background: color-mix(in srgb, var(--p-jtalk-brand) 10%, transparent);
     font-size: 0.75rem;
 
-    .reply-context-left {
-      display: flex;
-      align-items: center;
-      gap: 0.375rem;
-      color: #374151;
+    .pi,
+    .topic-label {
+      color: var(--p-jtalk-brand);
     }
 
-    .cancel-reply-btn {
-      background: transparent;
-      border: none;
-      color: var(--gather-ink-light);
-      cursor: pointer;
-      &:hover { color: var(--gather-terracotta); }
-    }
-  }
-
-  .composer-pill-card {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.375rem 0.5rem 0.375rem 0.875rem;
-    background: var(--gather-card-bg);
-    border: 1px solid var(--gather-card-border);
-    border-radius: 9999px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-
-    &:focus-within {
-      border-color: var(--gather-forest);
-      box-shadow: 0 0 0 3px rgba(71, 122, 93, 0.15);
+    .topic-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
 
-    .composer-tool-btn {
-      background: transparent;
-      border: none;
-      color: var(--gather-ink-muted);
-      cursor: pointer;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      padding: 0;
-
-      &:hover {
-        color: var(--gather-forest);
-      }
-    }
-
-    .composer-textarea {
-      flex: 1;
-      font-size: 0.8125rem;
-    }
-
-    .composer-send-btn {
-      width: 2rem;
-      height: 2rem;
-      min-width: 2rem;
-      border-radius: 50%;
-      background: var(--gather-forest) !important;
-      border: none !important;
-      color: white !important;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-
-      &:hover:not(:disabled) {
-        filter: brightness(1.1);
-      }
-      &:disabled {
-        opacity: 0.45;
-        background: #9CA3AF !important;
-      }
+    p {
+      font-weight: 500;
+      line-height: 1.375;
     }
   }
 
-  .composer-sub-hint {
-    margin-top: 0.375rem;
-    font-size: 0.625rem;
-    color: var(--gather-ink-light);
-    text-align: center;
+  .pin {
+    padding: 0.75rem 1rem 0;
+  }
+
+  .feed {
+    padding: 0.75rem 1rem;
+  }
+
+  .messages {
+    gap: 0.75rem;
+  }
+
+  .composer {
+    padding: 0.75rem;
+    border-block-start: 1px solid var(--p-content-border-color);
+    background: var(--p-content-background);
+  }
+
+  .write {
+    background: var(--p-content-hover-background);
   }
 }
 
-// 6. Gather UI Popover Menu Overrides (Global / Scoped via styleClass)
-:host ::ng-deep .gather-actions-popover {
-  .p-popover {
-    background: #FFFFFF;
-    border: 1px solid #E8E5DC;
-    border-radius: 1rem;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-    padding: 0;
-    overflow: hidden;
+// Beside the room: a card of its own that fills the height it is given, the thread scrolling inside it, and bubbles, not cards, for the
+// messages.
+.side {
+  --pad: 0.5rem 0;
+  padding: 1rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-jtalk-radius-card);
+  background: var(--p-content-background);
+
+  .message-item {
+    border: 0;
+    background: none;
+    box-shadow: none;
   }
 
-  .actions-popover-content {
-    width: 17.5rem;
+  .author {
+    font-size: var(--p-jtalk-type-card);
+    font-weight: 600;
+  }
 
-    .popover-header {
-      padding: 0.75rem 1rem 0.625rem;
-      border-bottom: 1px solid #F3F1E9;
-      background: #FDFCF9;
-
-      .popover-title-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-
-        .popover-title {
-          display: flex;
-          align-items: center;
-          gap: 0.375rem;
-          font-size: 0.8125rem;
-          font-weight: 700;
-          color: #191E1B;
-        }
-
-        .popover-close-btn {
-          border: none;
-          background: transparent;
-          color: #9CA3AF;
-          cursor: pointer;
-          font-size: 0.75rem;
-          &:hover { color: #191E1B; }
-        }
-      }
-
-      .popover-quote-preview {
-        margin: 0.25rem 0 0;
-        font-size: 0.6875rem;
-        font-style: italic;
-        color: #6B7280;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    }
-
-    .popover-menu-list {
-      padding: 0.375rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.125rem;
-
-      .popover-menu-item {
-        display: flex;
-        align-items: center;
-        gap: 0.625rem;
-        width: 100%;
-        padding: 0.5rem 0.625rem;
-        border: none;
-        border-radius: 0.5rem;
-        background: transparent;
-        color: #374151;
-        font-size: 0.8125rem;
-        font-weight: 600;
-        text-align: left;
-        cursor: pointer;
-        transition: background 0.1s ease;
-
-        &:hover {
-          background: #F7F5EF;
-          color: #191E1B;
-        }
-
-        .menu-item-icon {
-          width: 1rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #6B7280;
-          font-size: 0.8125rem;
-        }
-
-        .menu-item-label {
-          flex: 1;
-        }
-
-        .shortcut-tag {
-          font-size: 0.625rem;
-          font-family: inherit;
-          color: #9CA3AF;
-          background: #F3F1E9;
-          padding: 0.125rem 0.375rem;
-          border-radius: 0.25rem;
-        }
-
-        .badge-pill {
-          font-size: 0.625rem;
-          font-weight: 700;
-          padding: 0.0625rem 0.375rem;
-          border-radius: 0.25rem;
-
-          &.host-badge {
-            background: rgba(71, 122, 93, 0.12);
-            color: #477A5D;
-          }
-          &.mod-badge {
-            background: #FEE2E2;
-            color: #DC2626;
-          }
-        }
-
-        &.danger-item {
-          color: #C9685E;
-          .menu-item-icon { color: #C9685E; }
-          &:hover {
-            background: rgba(201, 104, 94, 0.08);
-            color: #B91C1C;
-          }
-        }
-      }
-
-      .popover-divider {
-        height: 1px;
-        background: #F3F1E9;
-        margin: 0.25rem 0;
-      }
-    }
+  .bubble {
+    padding: 0.875rem 1.25rem;
+    border-radius: 1.25rem;
+    background: color-mix(in srgb, var(--p-jtalk-brand) 7%, var(--p-content-background));
+    font-size: var(--p-jtalk-type-card);
+    line-height: 1.45;
   }
 }
