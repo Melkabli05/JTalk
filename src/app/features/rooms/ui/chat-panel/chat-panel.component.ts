@@ -10,7 +10,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormField, FormRoot, form, maxLength, required } from '@angular/forms/signals';
-import { NgOptimizedImage } from '@angular/common';
+import { NgOptimizedImage, NgTemplateOutlet } from '@angular/common';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
 import { Divider } from '@openng/optimus-ui/divider';
@@ -40,6 +40,9 @@ import { REACTION_LOOKS } from '../../utils/reactions';
 import { PersonAvatarComponent } from '../person-avatar/person-avatar.component';
 import { ReactionPickerComponent } from '../reaction-picker/reaction-picker.component';
 
+/** A menu item with a quiet word at its end (a shortcut, whom it is for). */
+type ActionItem = MenuItem & { readonly hint?: string };
+
 interface ComposerModel {
   content: string;
 }
@@ -66,6 +69,7 @@ const LONG_PRESS_MS = 500;
     FormRoot,
     Message,
     NgOptimizedImage,
+    NgTemplateOutlet,
     PersonAvatarComponent,
     Popover,
     ReactionPickerComponent,
@@ -108,6 +112,10 @@ export class ChatPanelComponent {
   readonly retry = output<void>();
   readonly expand = output<void>();
   readonly reacted = output<{ commentId: string; reaction: Reaction }>();
+  /** On a phone the actions are a sheet; elsewhere a popover at the message. */
+  readonly phone = input(false);
+  /** The language Translate goes into: the reader's. */
+  readonly language = input('en');
   readonly textCopied = output<string>();
   readonly translateRequested = output<string>();
 
@@ -121,7 +129,7 @@ export class ChatPanelComponent {
 
   /** The message whose actions are open in the sheet. */
   protected readonly actionsFor = signal<RoomComment | null>(null);
-  protected readonly actions = computed(() => {
+  protected readonly actions = computed<ActionItem[]>(() => {
     const comment = this.actionsFor();
     return comment === null ? [] : this.menuOf(comment);
   });
@@ -341,19 +349,22 @@ export class ChatPanelComponent {
    * What can be done to a message, in the order of the owner's picture: reply, correct and pin (the host), copy, then (the host) mute and
    * delete. Choosing one closes the sheet.
    */
-  protected menuOf(comment: RoomComment): MenuItem[] {
+  protected menuOf(comment: RoomComment): ActionItem[] {
     const others = comment.authorId !== this.meId();
     const host = this.isHost() && others;
     const busy = this.moderating();
     const muted = this.muteIds().has(comment.authorId);
+    const phone = this.phone();
+    const name = this.nameOf(comment.authorId);
     const then = (action: () => void) => () => {
-      this.actionsFor.set(null);
+      this.close();
       action();
     };
-    const items: (MenuItem | false)[] = [
+    const items: (ActionItem | false)[] = [
       {
         label: 'Reply in thread',
         icon: 'pi pi-reply',
+        hint: phone ? undefined : '⌘R',
         command: then(() => this.reply(comment)),
       },
       !this.compact() &&
@@ -376,14 +387,16 @@ export class ChatPanelComponent {
         command: then(() => this.textCopied.emit(comment.content)),
       },
       {
-        label: 'Translate',
+        label: phone ? 'Translate' : `Translate to ${this.language().toUpperCase()}`,
         icon: 'pi pi-language',
         command: then(() => this.translateRequested.emit(comment.content)),
       },
       host && { separator: true },
       host && {
-        label: muted ? 'Unmute participant in room' : 'Mute participant in room',
-        icon: 'pi pi-shield',
+        label: phone
+          ? `${muted ? 'Unmute' : 'Mute'} participant in room`
+          : `${muted ? 'Unmute' : 'Mute'} ${name} in the chat`,
+        icon: phone ? 'pi pi-shield' : 'pi pi-volume-off',
         disabled: busy,
         command: then(() =>
           muted
@@ -395,11 +408,41 @@ export class ChatPanelComponent {
         label: 'Delete comment',
         icon: 'pi pi-trash',
         linkClass: 'danger-item',
+        hint: phone ? undefined : 'Moderator',
         disabled: busy,
         command: then(() => this.deleted.emit(comment.id)),
       },
     ];
-    return items.filter((item): item is MenuItem => item !== false);
+    return items.filter((item): item is ActionItem => item !== false);
+  }
+
+  protected openActions(comment: RoomComment, event: Event, popover: Popover): void {
+    this.actionsFor.set(comment);
+    if (!this.phone()) {
+      popover.toggle(event, event.currentTarget);
+    }
+  }
+
+  /** Command-R (or Control-R) answers the message while its actions are open, as the first one says. */
+  protected shortcut(event: KeyboardEvent, comment: RoomComment): void {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'r') {
+      event.preventDefault();
+      this.close();
+      this.reply(comment);
+    }
+  }
+
+  protected closed(): void {
+    if (!this.phone()) {
+      this.actionsFor.set(null);
+    }
+  }
+
+  private readonly popover = viewChild<Popover>('actionsPopover');
+
+  private close(): void {
+    this.actionsFor.set(null);
+    this.popover()?.hide();
   }
 
   protected excerpt(comment: RoomComment): string {

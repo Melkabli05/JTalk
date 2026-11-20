@@ -89,6 +89,8 @@ export default class RoomPageComponent {
   protected readonly wide = this.matching('(min-width: 1024px)');
   protected readonly beside = this.matching('(min-width: 80rem)');
   protected readonly phone = this.matching('(max-width: 40rem)');
+  protected readonly language =
+    (this.document.defaultView?.navigator.language ?? 'en').split('-')[0] ?? 'en';
   protected readonly look = computed(() => roomLook(this.state.room()));
   protected readonly host = computed(() => memberOf(this.state.members(), this.state.hostId()));
   protected readonly mutedIds = computed(() => {
@@ -246,11 +248,7 @@ export default class RoomPageComponent {
 
   protected translateText(text: string): void {
     const window = this.document.defaultView;
-    void translate(
-      text,
-      window?.navigator.language.split('-')[0] ?? 'en',
-      window ?? undefined,
-    ).then((translated) =>
+    void translate(text, this.language, window ?? undefined).then((translated) =>
       this.toast.add(
         translated === undefined
           ? { severity: 'warn', summary: 'This browser cannot translate that.' }

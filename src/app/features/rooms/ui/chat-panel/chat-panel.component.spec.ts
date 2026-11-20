@@ -57,6 +57,7 @@ describe('ChatPanelComponent (presentational)', () => {
       members,
       meId: 'm-1',
       ready: true,
+      phone: true,
       ...inputs,
     };
     for (const [name, value] of Object.entries(defaults)) {
@@ -536,6 +537,62 @@ describe('ChatPanelComponent (presentational)', () => {
       .click();
     await fixture.whenStable();
     expect(document.body.querySelector('.comment-actions')).toBeNull();
+  });
+
+  describe('on a larger screen', () => {
+    const popoverItems = () => [
+      ...document.body.querySelectorAll<HTMLElement>(
+        '.comment-actions-popover .p-menu-item-content',
+      ),
+    ];
+
+    it('opens the actions as a card at the message: its title, the start of the message, plain icons and quiet hints', async () => {
+      await render({
+        phone: false,
+        isHost: true,
+        language: 'en',
+        comments: [comment('c-1', 'b-1', 'Hello there')],
+      });
+
+      button('Actions for Bilal')!.click();
+      await fixture.whenStable();
+
+      const card = document.body.querySelector('.comment-actions-popover');
+      expect(card?.querySelector('.pop-head h2')?.textContent).toBe('Comment actions');
+      expect(card?.querySelector('.pop-excerpt')?.textContent).toBe('“Hello there”');
+      expect(
+        popoverItems().map((item) => item.querySelector('.action-label')?.textContent),
+      ).toEqual([
+        'Reply in thread',
+        'Correct',
+        'Pin to Stage',
+        'Copy text',
+        'Translate to EN',
+        'Mute Bilal in the chat',
+        'Delete comment',
+      ]);
+      expect(popoverItems()[0].querySelector('.hint')?.textContent).toBe('⌘R');
+      expect(popoverItems().at(-1)?.querySelector('.hint')?.textContent).toBe('Moderator');
+      expect(document.body.querySelector('p-drawer.comment-actions')).toBeNull();
+    });
+
+    it('answers the message with Command-R while the actions are open', async () => {
+      await render({ phone: false, comments: [comment('c-1', 'b-1', 'Hello')] });
+      button('Actions for Bilal')!.click();
+      await fixture.whenStable();
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'r',
+        metaKey: true,
+        bubbles: true,
+        cancelable: true,
+      });
+      document.body.querySelector('.pop')!.dispatchEvent(event);
+      await fixture.whenStable();
+
+      expect(event.defaultPrevented).toBe(true);
+      expect(root().querySelector('.replying')?.textContent).toContain('Replying to Bilal');
+    });
   });
 
   it('gives a listener no moderation', async () => {

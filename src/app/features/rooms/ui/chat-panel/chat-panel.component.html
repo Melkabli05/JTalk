@@ -129,7 +129,7 @@
                       [attr.aria-label]="menuLabel"
                       [pTooltip]="menuLabel"
                       tooltipPosition="top"
-                      (click)="actionsFor.set(comment)"
+                      (click)="openActions(comment, $event, actionsPopover)"
                     ></button>
                   </div>
                   @if (quoted(comment); as original) {
@@ -300,6 +300,24 @@
   <app-reaction-picker (chosen)="choose($event, picker)" />
 </p-popover>
 
+<ng-template #actionList>
+  <p-menu class="actions-menu" [model]="actions()" ariaLabel="Comment actions">
+    <ng-template #item let-item>
+      <span class="action" [class.danger]="item.linkClass === 'danger-item'">
+        <p-avatar class="round" [icon]="item.icon" shape="circle" aria-hidden="true" />
+        <i class="plain" [class]="item.icon" aria-hidden="true"></i>
+        <span class="action-label">{{ item.label }}</span>
+        @if (item.badge) {
+          <p-tag severity="success" [value]="item.badge" />
+        }
+        @if (item.hint) {
+          <span class="hint">{{ item.hint }}</span>
+        }
+      </span>
+    </ng-template>
+  </p-menu>
+</ng-template>
+
 <p-drawer
   position="bottom"
   styleClass="comment-actions"
@@ -307,7 +325,7 @@
   [style]="{ height: 'auto', maxHeight: '90dvh' }"
   ariaCloseLabel="Close"
   [closeButtonProps]="{ severity: 'secondary', rounded: true }"
-  [visible]="actionsFor() !== null"
+  [visible]="phone() && actionsFor() !== null"
   [modal]="true"
   [dismissible]="true"
   (visibleChange)="$event || actionsFor.set(null)"
@@ -320,17 +338,9 @@
       </div>
     }
   </ng-template>
-  <p-menu class="sheet-menu" [model]="actions()" ariaLabel="Comment actions">
-    <ng-template #item let-item>
-      <span class="action" [class.danger]="item.linkClass === 'danger-item'">
-        <p-avatar [icon]="item.icon" shape="circle" aria-hidden="true" />
-        <span class="action-label">{{ item.label }}</span>
-        @if (item.badge) {
-          <p-tag severity="success" [value]="item.badge" />
-        }
-      </span>
-    </ng-template>
-  </p-menu>
+  <div class="sheet-body">
+    <ng-container [ngTemplateOutlet]="actionList" />
+  </div>
   <div class="sheet-footer">
     <button
       pButton
@@ -343,3 +353,34 @@
     ></button>
   </div>
 </p-drawer>
+
+<p-popover
+  #actionsPopover
+  appendTo="body"
+  styleClass="comment-actions-popover"
+  ariaLabel="Comment actions"
+  (onHide)="closed()"
+>
+  @if (actionsFor(); as comment) {
+    <div class="pop" role="group" tabindex="-1" (keydown)="shortcut($event, comment)">
+      <div class="pop-head">
+        <i class="pi pi-hand" aria-hidden="true"></i>
+        <h2>Comment actions</h2>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-times"
+          severity="secondary"
+          [text]="true"
+          [rounded]="true"
+          aria-label="Close"
+          (click)="actionsPopover.hide()"
+        ></button>
+      </div>
+      <p class="pop-excerpt">“{{ excerpt(comment) }}”</p>
+      <div class="pop-body">
+        <ng-container [ngTemplateOutlet]="actionList" />
+      </div>
+    </div>
+  }
+</p-popover>

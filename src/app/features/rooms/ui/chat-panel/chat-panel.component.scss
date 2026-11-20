@@ -282,3 +282,61 @@
 .sheet-footer {
   padding: 0.75rem 1rem 1rem;
 }
+
+// Beside a message (not on a phone) the actions are a small card: its title and close, the start of the message in a pill, plain icons.
+.pop {
+  inline-size: 19rem;
+}
+
+.pop-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .pi-hand {
+    color: var(--p-jtalk-brand);
+  }
+
+  h2 {
+    flex: 1;
+    margin: 0;
+    font-size: var(--p-jtalk-type-body);
+    font-weight: 650;
+  }
+}
+
+.pop-excerpt {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--p-jtalk-radius-pill);
+  background: var(--p-content-hover-background);
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-secondary);
+  font-style: italic;
+}
+
+.sheet-body .plain,
+.pop-body .round {
+  display: none;
+}
+
+.pop-body .action {
+  padding-block: 0;
+  min-block-size: 2.5rem;
+
+  .plain {
+    inline-size: 1.25rem;
+    color: var(--p-text-muted-color);
+    text-align: center;
+  }
+
+  &.danger .plain {
+    color: var(--p-jtalk-danger);
+  }
+}
+
+.hint {
+  margin-inline-start: auto;
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-metadata);
+}

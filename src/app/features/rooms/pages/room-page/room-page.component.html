@@ -280,6 +280,8 @@
     (reacted)="facade.reactToComment($event.commentId, $event.reaction)"
     (textCopied)="copyText($event)"
     (translateRequested)="translateText($event)"
+    [phone]="phone()"
+    [language]="language"
     (muteRequested)="facade.muteInChat($event)"
     (unmuteRequested)="facade.unmuteInChat($event)"
     (topicPinned)="facade.pinTopic($event)"
