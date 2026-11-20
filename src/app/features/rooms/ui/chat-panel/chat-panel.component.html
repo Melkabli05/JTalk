@@ -5,43 +5,36 @@
   [class.side]="side()"
   aria-label="Live discussion"
 >
-  <header class="head" [class.drawer-head]="!framed()">
-    @if (!framed()) {
-      <div class="drawer-handle" aria-hidden="true"><span></span></div>
-    }
-
-    <div class="head-main">
-      <div class="head-title">
-        <h2>Live Discussion</h2>
-        <span class="dot" aria-hidden="true"></span>
-      </div>
-      <p-tag class="count" severity="secondary" [rounded]="true">
-        {{ comments().length }} messages
-      </p-tag>
-    </div>
-
-    @if (compact() && expandable()) {
-      <button
-        pButton
-        type="button"
-        class="expand"
-        size="small"
-        icon="pi pi-window-maximize"
-        severity="secondary"
-        [rounded]="true"
-        [outlined]="true"
-        label="Expand"
-        (click)="expand.emit()"
-      ></button>
-    }
-  </header>
+  @if (framed()) {
+    <header class="head">
+      <h2>Live Discussion</h2>
+      <span class="dot" aria-hidden="true"></span>
+      <p-tag class="count" severity="secondary" [rounded]="true"
+        >{{ comments().length }} messages</p-tag
+      >
+      @if (compact() && expandable()) {
+        <button
+          pButton
+          type="button"
+          class="expand"
+          size="small"
+          icon="pi pi-window-maximize"
+          severity="secondary"
+          [rounded]="true"
+          [outlined]="true"
+          label="Expand"
+          (click)="expand.emit()"
+        ></button>
+      }
+    </header>
+  }
 
   @if (topic(); as pinnedTopic) {
     <div class="topic">
-      <i class="pi pi-bookmark-fill" aria-hidden="true"></i>
+      <i class="pi pi-bookmark" aria-hidden="true"></i>
       <div class="topic-text">
         <span class="topic-label">Pinned room topic</span>
-        <p>{{ pinnedTopic }}</p>
+        <p>“{{ pinnedTopic }}”</p>
       </div>
       @if (isHost()) {
         @let clearLabel = 'Clear the topic';
@@ -105,13 +98,12 @@
             (touchcancel)="onCommentMouseLeave(comment.id)"
           >
             @if (isPinned(comment)) {
-              <span class="pin-badge" aria-label="Pinned comment">
+              <div class="pin-badge">
                 <i class="pi pi-bookmark-fill" aria-hidden="true"></i>
-              </span>
+                <span class="cdk-visually-hidden">Pinned</span>
+              </div>
             }
-
             <app-person-avatar size="normal" [member]="personOf(comment.authorId)" />
-
             <div class="body">
               <div class="meta">
                 <div class="who">
@@ -123,14 +115,13 @@
                     <span class="badge">You</span>
                   }
                   @if (muteIds().has(comment.authorId)) {
-                    <span class="badge muted-badge">Muted</span>
+                    <span class="badge">Muted</span>
                   }
                 </div>
-                <time class="when" [attr.datetime]="comment.createdAt">
-                  {{ timeAgo(comment.createdAt, now()) }}
-                </time>
+                <time class="when" [attr.datetime]="comment.createdAt">{{
+                  timeAgo(comment.createdAt, now())
+                }}</time>
               </div>
-
               <div class="bubble">
                 @if (quoted(comment); as original) {
                   <p class="quote">
@@ -138,21 +129,20 @@
                     {{ nameOf(original.authorId) }}: {{ original.content }}
                   </p>
                 }
-
                 @if (comment.type === 'CORRECTION' && comment.correctedContent) {
                   <div class="correction">
                     <p class="wrong">
                       <span class="cdk-visually-hidden">Said: </span>{{ comment.content }}
                     </p>
                     <p class="right">
-                      <span class="cdk-visually-hidden">Should be: </span>{{ comment.correctedContent }}
+                      <span class="cdk-visually-hidden">Should be: </span
+                      >{{ comment.correctedContent }}
                     </p>
                   </div>
                 } @else {
                   <p class="text">{{ comment.content }}</p>
                 }
               </div>
-
               <div class="actions">
                 @for (chip of chips().get(comment.id) ?? []; track chip.reaction) {
                   @let chipLabel = `${chip.label}, ${chip.count}`;
@@ -169,7 +159,6 @@
                     <span>{{ chip.count }}</span>
                   </button>
                 }
-
                 @if (!muted()) {
                   <button
                     type="button"
@@ -178,10 +167,9 @@
                     aria-haspopup="true"
                     (click)="pick(comment, $event, picker)"
                   >
-                    <i class="pi pi-plus" aria-hidden="true"></i>
+                    +
                   </button>
                 }
-
                 @let replyLabel = `Reply to ${nameOf(comment.authorId)}`;
                 <button
                   type="button"
@@ -189,10 +177,15 @@
                   [attr.aria-label]="replyLabel"
                   (click)="reply(comment)"
                 >
-                  <i class="pi pi-reply" aria-hidden="true"></i>
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
                   <span>Reply</span>
                 </button>
-
                 @if (!compact() && comment.type === 'TEXT' && comment.authorId !== meId()) {
                   @let correctLabel = `Correct ${nameOf(comment.authorId)}`;
                   <button
@@ -206,7 +199,6 @@
                     <i class="pi pi-pencil" aria-hidden="true"></i>
                   </button>
                 }
-
                 @if (isHost() && comment.authorId !== meId()) {
                   @let deleteLabel = `Delete the comment by ${nameOf(comment.authorId)}`;
                   <button
@@ -220,8 +212,7 @@
                   >
                     <i class="pi pi-trash" aria-hidden="true"></i>
                   </button>
-
-                  @let pinLabel = isPinned(comment) ? 'Unpin this comment' : 'Pin this comment';
+                  @let pinLabel = isPinned(comment) ? `Unpin this comment` : `Pin this comment`;
                   <button
                     type="button"
                     class="act"
@@ -232,14 +223,8 @@
                     tooltipPosition="top"
                     (click)="togglePin(comment, $event)"
                   >
-                    <i
-                      class="pi"
-                      [class.pi-bookmark-fill]="isPinned(comment)"
-                      [class.pi-bookmark]="!isPinned(comment)"
-                      aria-hidden="true"
-                    ></i>
+                    <i class="pi" [class.pi-bookmark-fill]="isPinned(comment)" [class.pi-bookmark]="!isPinned(comment)" aria-hidden="true"></i>
                   </button>
-
                   @if (muteIds().has(comment.authorId)) {
                     @let unmuteLabel = `Unmute ${nameOf(comment.authorId)} in the chat`;
                     <button
@@ -275,7 +260,6 @@
           <li class="empty">No messages yet. Say hello.</li>
         }
       </ul>
-
       @if (!stuck()) {
         <button
           pButton
@@ -300,13 +284,15 @@
 
   @if (muted()) {
     <p-message severity="warn" size="small" icon="pi pi-microphone-slash">
-      You have been muted in the chat. You can still listen and speak.
+      The host muted you in the chat. You can still listen and speak.
     </p-message>
   } @else {
     <form class="composer" [formRoot]="composerForm">
       @if (replyingTo(); as original) {
         <p class="replying">
-          <span>{{ correcting() ? 'Correcting' : 'Replying to' }} {{ nameOf(original.authorId) }}</span>
+          <span
+            >{{ correcting() ? 'Correcting' : 'Replying to' }} {{ nameOf(original.authorId) }}</span
+          >
           <button
             pButton
             type="button"
@@ -320,7 +306,6 @@
           ></button>
         </p>
       }
-
       <div class="write">
         <app-textarea-field
           label="Message"
