@@ -145,13 +145,23 @@
 
 .actions {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   margin-block-start: 0.625rem;
 }
 
+// The reactions wrap among themselves; Reply stays on the first line, at the end.
+.reactions {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  min-inline-size: 0;
+}
+
 .reply {
+  flex: none;
   margin-inline-start: auto;
 }
 

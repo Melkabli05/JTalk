@@ -552,8 +552,8 @@ export const JtalkPreset = definePreset(Aura, {
           min-height: 0;
           min-width: 0;
           block-size: 1.5rem;
-          padding-inline: 0.625rem;
-          gap: 0.375rem;
+          padding-inline: 0.5rem;
+          gap: 0.25rem;
           border: 1px solid ${dt('content.border.color')};
           background: ${dt('content.hover.background')};
           color: ${dt('text.color')};
