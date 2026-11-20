@@ -41,7 +41,11 @@ import { PersonAvatarComponent } from '../person-avatar/person-avatar.component'
 import { ReactionPickerComponent } from '../reaction-picker/reaction-picker.component';
 
 /** A menu item with a quiet word at its end (a shortcut, whom it is for). */
-type ActionItem = MenuItem & { readonly hint?: string };
+type ActionItem = MenuItem & {
+  readonly hint?: string;
+  /** The colour of its icon: Forest to answer, blue to understand, Sand for the host's powers, terracotta for danger. */
+  readonly tone?: 'brand' | 'info' | 'sand' | 'danger';
+};
 
 interface ComposerModel {
   content: string;
@@ -364,6 +368,7 @@ export class ChatPanelComponent {
       {
         label: 'Reply in thread',
         icon: 'pi pi-reply',
+        tone: 'brand',
         hint: phone ? undefined : '⌘R',
         command: then(() => this.reply(comment)),
       },
@@ -372,11 +377,13 @@ export class ChatPanelComponent {
         others && {
           label: 'Correct',
           icon: 'pi pi-pencil',
+          tone: 'info',
           command: then(() => this.reply(comment, true)),
         },
       host && {
         label: this.isPinned(comment) ? 'Unpin from Stage' : 'Pin to Stage',
         icon: 'pi pi-thumbtack',
+        tone: 'sand',
         badge: 'Host',
         disabled: busy,
         command: then(() => this.togglePin(comment)),
@@ -389,6 +396,7 @@ export class ChatPanelComponent {
       {
         label: phone ? 'Translate' : `Translate to ${this.language().toUpperCase()}`,
         icon: 'pi pi-language',
+        tone: 'info',
         command: then(() => this.translateRequested.emit(comment.content)),
       },
       host && { separator: true },
@@ -397,6 +405,7 @@ export class ChatPanelComponent {
           ? `${muted ? 'Unmute' : 'Mute'} participant in room`
           : `${muted ? 'Unmute' : 'Mute'} ${name} in the chat`,
         icon: phone ? 'pi pi-shield' : 'pi pi-volume-off',
+        tone: 'sand',
         disabled: busy,
         command: then(() =>
           muted
@@ -407,6 +416,7 @@ export class ChatPanelComponent {
       host && {
         label: 'Delete comment',
         icon: 'pi pi-trash',
+        tone: 'danger',
         linkClass: 'danger-item',
         hint: phone ? undefined : 'Moderator',
         disabled: busy,

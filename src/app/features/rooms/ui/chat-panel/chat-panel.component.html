@@ -303,7 +303,7 @@
 <ng-template #actionList>
   <p-menu class="actions-menu" [model]="actions()" ariaLabel="Comment actions">
     <ng-template #item let-item>
-      <span class="action" [class.danger]="item.linkClass === 'danger-item'">
+      <span class="action" [attr.data-tone]="item.tone">
         <p-avatar class="round" [icon]="item.icon" shape="circle" aria-hidden="true" />
         <i class="plain" [class]="item.icon" aria-hidden="true"></i>
         <span class="action-label">{{ item.label }}</span>
@@ -346,6 +346,7 @@
       pButton
       type="button"
       label="Cancel"
+      size="large"
       severity="secondary"
       [rounded]="true"
       [fluid]="true"
