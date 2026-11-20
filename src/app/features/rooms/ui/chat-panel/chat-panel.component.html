@@ -1,335 +1,436 @@
 <section
-  class="chat"
+  class="gather-chat-panel"
   [class.framed]="framed()"
-  [class.trimmed]="compact()"
+  [class.compact]="compact()"
   [class.side]="side()"
   aria-label="Live discussion"
 >
+  <!-- Header / Live Discussion status -->
   @if (framed()) {
-    <header class="head">
-      <h2>Live Discussion</h2>
-      <span class="dot" aria-hidden="true"></span>
-      <p-tag class="count" severity="secondary" [rounded]="true"
-        >{{ comments().length }} messages</p-tag
-      >
-      @if (compact() && expandable()) {
+    <header class="chat-header">
+      <div class="chat-header-title">
+        <span class="live-dot" aria-hidden="true"></span>
+        <h2>Live Discussion</h2>
+        <span class="comment-count-chip">{{ comments().length }} comments</span>
+        <span class="active-thread-hint hidden sm:inline-block">• Active conversational thread</span>
+      </div>
+
+      <div class="header-actions">
+        <!-- Quick search & filter triggers -->
         <button
           pButton
           type="button"
-          class="expand"
-          size="small"
-          icon="pi pi-window-maximize"
-          severity="secondary"
+          class="header-icon-btn"
+          icon="pi pi-search"
+          [text]="true"
           [rounded]="true"
-          [outlined]="true"
-          label="Expand"
-          (click)="expand.emit()"
+          aria-label="Search comments"
         ></button>
-      }
+        <button
+          pButton
+          type="button"
+          class="header-icon-btn"
+          icon="pi pi-sliders-h"
+          [text]="true"
+          [rounded]="true"
+          aria-label="Filter discussion"
+        ></button>
+
+        @if (compact() && expandable()) {
+          <button
+            pButton
+            type="button"
+            class="expand-btn"
+            size="small"
+            icon="pi pi-window-maximize"
+            label="Expand"
+            (click)="expand.emit()"
+          ></button>
+        }
+      </div>
     </header>
   }
 
+  <!-- Pinned Room Topic / Goal -->
   @if (topic(); as pinnedTopic) {
-    <div class="topic">
-      <i class="pi pi-bookmark" aria-hidden="true"></i>
-      <div class="topic-text">
-        <span class="topic-label">Pinned room topic</span>
-        <p>“{{ pinnedTopic }}”</p>
+    <div class="pinned-topic-card">
+      <div class="topic-icon-wrap">
+        <i class="pi pi-bookmark-fill" aria-hidden="true"></i>
+      </div>
+      <div class="topic-content">
+        <span class="topic-kicker">Pinned room topic</span>
+        <p class="topic-quote">“{{ pinnedTopic }}”</p>
       </div>
       @if (isHost()) {
-        @let clearLabel = 'Clear the topic';
         <button
           pButton
           type="button"
-          class="compact"
+          class="topic-clear-btn"
           icon="pi pi-times"
-          severity="secondary"
           [text]="true"
           [rounded]="true"
           [disabled]="moderating()"
-          [attr.aria-label]="clearLabel"
-          [pTooltip]="clearLabel"
-          tooltipPosition="left"
+          aria-label="Clear pinned topic"
           (click)="topicUnpinned.emit()"
         ></button>
       }
     </div>
   }
 
+  <!-- Error notice -->
   @if (failed()) {
-    <p-message severity="error" size="small" icon="pi pi-exclamation-triangle">
-      <span class="message">
-        Could not load the chat.
-        <button
-          pButton
-          type="button"
-          size="small"
-          icon="pi pi-refresh"
-          severity="danger"
-          [text]="true"
-          label="Try again"
-          (click)="retry.emit()"
-        ></button>
-      </span>
-    </p-message>
+    <div class="chat-error-banner" role="alert">
+      <i class="pi pi-exclamation-circle text-terracotta"></i>
+      <span>Could not connect to live room chat.</span>
+      <button
+        type="button"
+        class="retry-btn"
+        (click)="retry.emit()"
+      >Try reconnecting</button>
+    </div>
   }
 
-  <div class="feed">
+  <!-- Scrollable Messages Feed -->
+  <div class="chat-feed-container">
     @if (ready() || comments().length > 0) {
       <ul
         #log
-        class="messages"
+        class="chat-feed-list"
         role="log"
-        aria-label="Messages"
+        aria-label="Live room comments"
         aria-live="polite"
         (scroll)="scrolled()"
       >
         @for (comment of comments(); track comment.id) {
           <li
-            class="message-item"
-            [class.host]="comment.authorId === hostId()"
-            [class.mine]="comment.authorId === meId()"
-            [class.pinned]="isPinned(comment)"
-            (mousedown)="onCommentMouseDown(comment, $event)"
-            (touchstart)="onCommentMouseDown(comment, $event)"
-            (mouseup)="onCommentMouseUp(comment.id)"
-            (touchend)="onCommentMouseUp(comment.id)"
-            (mouseleave)="onCommentMouseLeave(comment.id)"
-            (touchcancel)="onCommentMouseLeave(comment.id)"
+            class="comment-card"
+            [class.is-host]="comment.authorId === hostId()"
+            [class.is-mine]="comment.authorId === meId()"
+            [class.is-pinned]="isPinned(comment)"
           >
-            @if (isPinned(comment)) {
-              <div class="pin-badge">
-                <i class="pi pi-bookmark-fill" aria-hidden="true"></i>
-                <span class="cdk-visually-hidden">Pinned</span>
-              </div>
-            }
-            <app-person-avatar size="normal" [member]="personOf(comment.authorId)" />
-            <div class="body">
-              <div class="meta">
-                <div class="who">
-                  <span class="author">{{ nameOf(comment.authorId) }}</span>
+            <!-- Author Avatar -->
+            <div class="avatar-wrap">
+              <app-person-avatar size="normal" [member]="personOf(comment.authorId)" />
+              @if (comment.authorId === hostId()) {
+                <span class="avatar-host-badge" title="Host">★</span>
+              }
+            </div>
+
+            <!-- Comment Details -->
+            <div class="comment-main">
+              <!-- Meta Header (Name, Roles, Timestamp, Context Action ...) -->
+              <div class="comment-meta-bar">
+                <div class="author-info">
+                  <span class="author-name">{{ nameOf(comment.authorId) }}</span>
+                  
                   @if (comment.authorId === hostId()) {
-                    <span class="badge">Host</span>
+                    <span class="role-pill host-role">Host</span>
+                  }
+                  @if (isPinned(comment)) {
+                    <span class="role-pill pinned-role">📌 Pinned</span>
                   }
                   @if (comment.authorId === meId()) {
-                    <span class="badge">You</span>
+                    <span class="role-pill you-role">You</span>
                   }
                   @if (muteIds().has(comment.authorId)) {
-                    <span class="badge">Muted</span>
+                    <span class="role-pill muted-role">Muted</span>
                   }
+
+                  <time class="comment-time" [attr.datetime]="comment.createdAt">
+                    {{ timeAgo(comment.createdAt, now()) }}
+                  </time>
                 </div>
-                <time class="when" [attr.datetime]="comment.createdAt">{{
-                  timeAgo(comment.createdAt, now())
-                }}</time>
+
+                <!-- Contextual Action Trigger (...) -->
+                <button
+                  type="button"
+                  class="comment-overflow-btn"
+                  aria-label="Comment actions"
+                  (click)="openCommentActions(comment, $event, actionsPopover)"
+                >
+                  <i class="pi pi-ellipsis-h" aria-hidden="true"></i>
+                </button>
               </div>
-              <div class="bubble">
+
+              <!-- Message Body / Bubble -->
+              <div class="comment-body">
+                <!-- Inline Replying/Quote Preview -->
                 @if (quoted(comment); as original) {
-                  <p class="quote">
-                    <i class="pi pi-reply" aria-hidden="true"></i>
-                    {{ nameOf(original.authorId) }}: {{ original.content }}
-                  </p>
+                  <div class="quote-snippet">
+                    <span class="quote-author">{{ nameOf(original.authorId) }}</span>
+                    <p class="quote-text">{{ original.content }}</p>
+                  </div>
                 }
+
+                <!-- Correction Mode or Standard Text -->
                 @if (comment.type === 'CORRECTION' && comment.correctedContent) {
-                  <div class="correction">
-                    <p class="wrong">
-                      <span class="cdk-visually-hidden">Said: </span>{{ comment.content }}
+                  <div class="correction-card">
+                    <p class="wrong-line">
+                      <span class="correction-label">Original:</span> {{ comment.content }}
                     </p>
-                    <p class="right">
-                      <span class="cdk-visually-hidden">Should be: </span
-                      >{{ comment.correctedContent }}
+                    <p class="right-line">
+                      <span class="correction-label">Suggested:</span> {{ comment.correctedContent }}
                     </p>
                   </div>
                 } @else {
-                  <p class="text">{{ comment.content }}</p>
+                  <p class="comment-text">{{ comment.content }}</p>
                 }
               </div>
-              <div class="actions">
-                @for (chip of chips().get(comment.id) ?? []; track chip.reaction) {
-                  @let chipLabel = `${chip.label}, ${chip.count}`;
-                  <button
-                    type="button"
-                    class="chip"
-                    [class.mine]="chip.mine"
-                    [disabled]="muted()"
-                    [attr.aria-pressed]="chip.mine"
-                    [attr.aria-label]="chipLabel"
-                    (click)="reacted.emit({ commentId: comment.id, reaction: chip.reaction })"
-                  >
-                    <img [ngSrc]="chip.image" width="12" height="12" alt="" />
-                    <span>{{ chip.count }}</span>
-                  </button>
-                }
-                @if (!muted()) {
-                  <button
-                    type="button"
-                    class="add-reaction"
-                    aria-label="Add a reaction"
-                    aria-haspopup="true"
-                    (click)="pick(comment, $event, picker)"
-                  >
-                    +
-                  </button>
-                }
-                @let replyLabel = `Reply to ${nameOf(comment.authorId)}`;
-                <button
-                  type="button"
-                  class="act reply"
-                  [attr.aria-label]="replyLabel"
-                  (click)="reply(comment)"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                  <span>Reply</span>
-                </button>
-                @if (!compact() && comment.type === 'TEXT' && comment.authorId !== meId()) {
-                  @let correctLabel = `Correct ${nameOf(comment.authorId)}`;
-                  <button
-                    type="button"
-                    class="act"
-                    [attr.aria-label]="correctLabel"
-                    [pTooltip]="correctLabel"
-                    tooltipPosition="top"
-                    (click)="reply(comment, true)"
-                  >
-                    <i class="pi pi-pencil" aria-hidden="true"></i>
-                  </button>
-                }
-                @if (isHost() && comment.authorId !== meId()) {
-                  @let deleteLabel = `Delete the comment by ${nameOf(comment.authorId)}`;
-                  <button
-                    type="button"
-                    class="act danger"
-                    [disabled]="moderating()"
-                    [attr.aria-label]="deleteLabel"
-                    [pTooltip]="deleteLabel"
-                    tooltipPosition="top"
-                    (click)="deleted.emit(comment.id)"
-                  >
-                    <i class="pi pi-trash" aria-hidden="true"></i>
-                  </button>
-                  @let pinLabel = isPinned(comment) ? `Unpin this comment` : `Pin this comment`;
-                  <button
-                    type="button"
-                    class="act"
-                    [class.pinned]="isPinned(comment)"
-                    [disabled]="moderating()"
-                    [attr.aria-label]="pinLabel"
-                    [pTooltip]="pinLabel"
-                    tooltipPosition="top"
-                    (click)="togglePin(comment, $event)"
-                  >
-                    <i class="pi" [class.pi-bookmark-fill]="isPinned(comment)" [class.pi-bookmark]="!isPinned(comment)" aria-hidden="true"></i>
-                  </button>
-                  @if (muteIds().has(comment.authorId)) {
-                    @let unmuteLabel = `Unmute ${nameOf(comment.authorId)} in the chat`;
+
+              <!-- Reactions & Quick Reply Action Footer -->
+              <div class="comment-footer-bar">
+                <div class="reaction-strip">
+                  @for (chip of chips().get(comment.id) ?? []; track chip.reaction) {
                     <button
                       type="button"
-                      class="act"
-                      [disabled]="moderating()"
-                      [attr.aria-label]="unmuteLabel"
-                      [pTooltip]="unmuteLabel"
-                      tooltipPosition="top"
-                      (click)="unmuteRequested.emit(comment.authorId)"
+                      class="reaction-pill"
+                      [class.has-reacted]="chip.mine"
+                      [disabled]="muted()"
+                      [attr.aria-pressed]="chip.mine"
+                      (click)="reacted.emit({ commentId: comment.id, reaction: chip.reaction })"
                     >
-                      <i class="pi pi-microphone" aria-hidden="true"></i>
-                    </button>
-                  } @else {
-                    @let muteLabel = `Mute ${nameOf(comment.authorId)} in the chat`;
-                    <button
-                      type="button"
-                      class="act"
-                      [disabled]="moderating()"
-                      [attr.aria-label]="muteLabel"
-                      [pTooltip]="muteLabel"
-                      tooltipPosition="top"
-                      (click)="muteRequested.emit(comment.authorId)"
-                    >
-                      <i class="pi pi-microphone-slash" aria-hidden="true"></i>
+                      <span class="reaction-emoji">{{ reactionGlyph(chip.reaction) }}</span>
+                      <span class="reaction-count">{{ chip.count }}</span>
                     </button>
                   }
-                }
+
+                  <!-- Add Reaction Button (+) -->
+                  @if (!muted()) {
+                    <button
+                      type="button"
+                      class="add-reaction-btn"
+                      aria-label="Add reaction"
+                      (click)="pick(comment, $event, picker)"
+                    >
+                      <i class="pi pi-plus" style="font-size: 0.625rem;"></i>
+                    </button>
+                  }
+                </div>
+
+                <!-- Quick Inline Reply trigger -->
+                <button
+                  type="button"
+                  class="quick-reply-btn"
+                  (click)="reply(comment)"
+                >
+                  <i class="pi pi-reply" aria-hidden="true"></i>
+                  <span>Reply</span>
+                </button>
               </div>
             </div>
           </li>
         } @empty {
-          <li class="empty">No messages yet. Say hello.</li>
+          <li class="empty-state">
+            <div class="empty-icon-circle">
+              <i class="pi pi-comments"></i>
+            </div>
+            <p class="empty-headline">Quiet in the discussion thread</p>
+            <p class="empty-sub">Share thoughts, ask speakers questions, or post language notes.</p>
+          </li>
         }
       </ul>
+
+      <!-- Floating Smart Scroll Pill ("↓ 3 new messages") -->
       @if (!stuck()) {
         <button
-          pButton
           type="button"
-          class="latest"
-          size="small"
-          icon="pi pi-arrow-down"
-          severity="secondary"
-          [rounded]="true"
-          label="Latest messages"
+          class="floating-scroll-pill"
           (click)="jumpToLatest()"
-        ></button>
+        >
+          <i class="pi pi-arrow-down" aria-hidden="true"></i>
+          <span>{{ unreadCount() > 0 ? unreadCount() + ' new messages' : 'Latest messages' }}</span>
+        </button>
       }
     } @else if (!failed()) {
-      <div class="loading" role="status" aria-busy="true">
-        <p-skeleton width="70%" height="1rem" />
-        <p-skeleton width="90%" height="1rem" />
-        <p-skeleton width="55%" height="1rem" />
+      <!-- Polished Skeleton Loading -->
+      <div class="skeleton-feed" role="status" aria-busy="true">
+        <div class="skeleton-item">
+          <p-skeleton shape="circle" size="2rem" />
+          <div class="skeleton-lines">
+            <p-skeleton width="30%" height="0.75rem" />
+            <p-skeleton width="80%" height="1rem" />
+          </div>
+        </div>
+        <div class="skeleton-item">
+          <p-skeleton shape="circle" size="2rem" />
+          <div class="skeleton-lines">
+            <p-skeleton width="45%" height="0.75rem" />
+            <p-skeleton width="95%" height="1rem" />
+          </div>
+        </div>
       </div>
     }
   </div>
 
+  <!-- Bottom Message Composer -->
   @if (muted()) {
-    <p-message severity="warn" size="small" icon="pi pi-microphone-slash">
-      The host muted you in the chat. You can still listen and speak.
-    </p-message>
+    <div class="muted-composer-banner">
+      <i class="pi pi-microphone-slash"></i>
+      <span>You have been muted in this room's text discussion by moderators.</span>
+    </div>
   } @else {
-    <form class="composer" [formRoot]="composerForm">
+    <footer class="composer-container">
+      <!-- Replying Banner if active -->
       @if (replyingTo(); as original) {
-        <p class="replying">
-          <span
-            >{{ correcting() ? 'Correcting' : 'Replying to' }} {{ nameOf(original.authorId) }}</span
+        <div class="reply-context-banner">
+          <div class="reply-context-left">
+            <i class="pi pi-reply text-forest"></i>
+            <span>{{ correcting() ? 'Suggesting correction for' : 'Replying to' }} <strong>{{ nameOf(original.authorId) }}</strong></span>
+          </div>
+          <button
+            type="button"
+            class="cancel-reply-btn"
+            aria-label="Cancel reply"
+            (click)="cancelReply()"
           >
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+      }
+
+      <!-- Pill Input Row -->
+      <form class="composer-form" [formRoot]="composerForm">
+        <div class="composer-pill-card">
+          <!-- Emoji / Reaction shortcut -->
+          <button
+            type="button"
+            class="composer-tool-btn"
+            aria-label="Insert reaction"
+            (click)="pickForComposer($event, picker)"
+          >
+            <i class="pi pi-face-smile"></i>
+          </button>
+
+          <!-- Textarea Field -->
+          <app-textarea-field
+            class="composer-textarea"
+            label="Message"
+            [labelHidden]="true"
+            [pill]="true"
+            [placeholder]="correcting() ? 'Write how it should be phrased…' : 'Say something in room…'"
+            [rows]="1"
+            [formField]="composerForm.content"
+          />
+
+          <!-- Quick Send Action -->
           <button
             pButton
-            type="button"
-            class="compact"
-            icon="pi pi-times"
-            severity="secondary"
-            [text]="true"
+            type="submit"
+            class="composer-send-btn"
+            icon="pi pi-arrow-up"
             [rounded]="true"
-            aria-label="Cancel"
-            (click)="cancelReply()"
+            [disabled]="submitting() || !composerValid()"
+            aria-label="Send comment"
           ></button>
-        </p>
-      }
-      <div class="write">
-        <app-textarea-field
-          label="Message"
-          [labelHidden]="true"
-          [pill]="true"
-          [placeholder]="correcting() ? 'Write how it should be…' : 'Say something in the room…'"
-          [rows]="1"
-          [formField]="composerForm.content"
-        />
-        <button
-          pButton
-          type="submit"
-          class="send"
-          icon="pi pi-arrow-up"
-          severity="primary"
-          [rounded]="true"
-          [disabled]="submitting() || !composerValid()"
-          aria-label="Send message"
-        ></button>
-      </div>
-    </form>
+        </div>
+      </form>
+      <div class="composer-sub-hint">Press Enter to send • End-to-end encrypted room thread</div>
+    </footer>
   }
 </section>
 
-<p-popover #picker appendTo="body" ariaLabel="React to the comment">
+<!-- Desktop Contextual Comment Actions Popover (Exact Gather UI 2.0 pattern from SCREEN_8) -->
+<p-popover #actionsPopover styleClass="gather-actions-popover" appendTo="body">
+  @if (selectedComment(); as comment) {
+    <div class="actions-popover-content">
+      <div class="popover-header">
+        <div class="popover-title-row">
+          <div class="popover-title">
+            <i class="pi pi-comment text-forest"></i>
+            <span>Comment actions</span>
+          </div>
+          <button
+            type="button"
+            class="popover-close-btn"
+            (click)="actionsPopover.hide()"
+          >✕</button>
+        </div>
+        <p class="popover-quote-preview">
+          “{{ comment.content.length > 55 ? (comment.content | slice:0:55) + '…' : comment.content }}”
+        </p>
+      </div>
+
+      <div class="popover-menu-list">
+        <!-- Reply in thread -->
+        <button
+          type="button"
+          class="popover-menu-item"
+          (click)="onMenuReply(comment, actionsPopover)"
+        >
+          <div class="menu-item-icon"><i class="pi pi-reply"></i></div>
+          <span class="menu-item-label">Reply in thread</span>
+          <kbd class="shortcut-tag">⌘R</kbd>
+        </button>
+
+        <!-- Pin to Stage (Host / Mod only) -->
+        @if (isHost()) {
+          <button
+            type="button"
+            class="popover-menu-item"
+            (click)="onMenuTogglePin(comment, actionsPopover)"
+          >
+            <div class="menu-item-icon"><i class="pi pi-bookmark"></i></div>
+            <span class="menu-item-label">{{ isPinned(comment) ? 'Unpin from Stage' : 'Pin to Stage' }}</span>
+            <span class="badge-pill host-badge">Host</span>
+          </button>
+        }
+
+        <!-- Copy text -->
+        <button
+          type="button"
+          class="popover-menu-item"
+          (click)="onMenuCopyText(comment, actionsPopover)"
+        >
+          <div class="menu-item-icon"><i class="pi pi-copy"></i></div>
+          <span class="menu-item-label">Copy text</span>
+        </button>
+
+        <!-- Translate -->
+        <button
+          type="button"
+          class="popover-menu-item"
+          (click)="onMenuTranslate(comment, actionsPopover)"
+        >
+          <div class="menu-item-icon"><i class="pi pi-globe"></i></div>
+          <span class="menu-item-label">Translate to EN</span>
+        </button>
+
+        <!-- Mute participant for current user / room -->
+        @if (comment.authorId !== meId()) {
+          <button
+            type="button"
+            class="popover-menu-item"
+            (click)="onMenuToggleMute(comment, actionsPopover)"
+          >
+            <div class="menu-item-icon">
+              <i class="pi" [class.pi-volume-off]="!muteIds().has(comment.authorId)" [class.pi-volume-up]="muteIds().has(comment.authorId)"></i>
+            </div>
+            <span class="menu-item-label">
+              {{ muteIds().has(comment.authorId) ? 'Unmute ' + nameOf(comment.authorId) : 'Mute ' + nameOf(comment.authorId) + ' for me' }}
+            </span>
+          </button>
+        }
+
+        <!-- Delete comment (Host / Mod) -->
+        @if ((isHost() || comment.authorId === meId()) && comment.authorId !== meId()) {
+          <div class="popover-divider"></div>
+          <button
+            type="button"
+            class="popover-menu-item danger-item"
+            [disabled]="moderating()"
+            (click)="onMenuDelete(comment, actionsPopover)"
+          >
+            <div class="menu-item-icon"><i class="pi pi-trash"></i></div>
+            <span class="menu-item-label">Delete comment</span>
+            <span class="badge-pill mod-badge">Moderator</span>
+          </button>
+        }
+      </div>
+    </div>
+  }
+</p-popover>
+
+<!-- Emoji Reaction Popover -->
+<p-popover #picker styleClass="gather-reaction-popover" appendTo="body" ariaLabel="Pick a reaction">
   <app-reaction-picker (chosen)="choose($event, picker)" />
 </p-popover>
