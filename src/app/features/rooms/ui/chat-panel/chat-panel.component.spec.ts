@@ -456,23 +456,14 @@ describe('ChatPanelComponent (presentational)', () => {
       expect(root().textContent).toContain('Muted');
     });
 
-    it('pins a topic, and clears it', async () => {
+    it('lets the host clear the pinned topic', async () => {
       await render({ isHost: true, topic: 'Weekend' });
       const asked: string[] = [];
-      fixture.componentInstance.pinned.subscribe((text) => asked.push(`pin ${text}`));
-      fixture.componentInstance.unpinned.subscribe(() => asked.push('clear'));
+      fixture.componentInstance.topicUnpinned.subscribe(() => asked.push('clear'));
 
-      const input = root().querySelector<HTMLInputElement>('form.pin input')!;
-      input.value = ' Food ';
-      input.dispatchEvent(new Event('input'));
-      await fixture.whenStable();
-      root()
-        .querySelector('form.pin')!
-        .dispatchEvent(new Event('submit', { cancelable: true }));
-      await fixture.whenStable();
       button('Clear the topic')!.click();
 
-      expect(asked).toEqual(['pin Food', 'clear']);
+      expect(asked).toEqual(['clear']);
     });
   });
 

@@ -90,8 +90,8 @@
             [class.host]="comment.authorId === hostId()"
             [class.mine]="comment.authorId === meId()"
             [class.pinned]="isPinned(comment)"
-            (mousedown)="onCommentMouseDown(comment, $event)"
-            (touchstart)="onCommentMouseDown(comment, $event)"
+            (mousedown)="onCommentMouseDown(comment)"
+            (touchstart)="onCommentMouseDown(comment)"
             (mouseup)="onCommentMouseUp(comment.id)"
             (touchend)="onCommentMouseUp(comment.id)"
             (mouseleave)="onCommentMouseLeave(comment.id)"
@@ -293,6 +293,9 @@
     </p-message>
   } @else {
     <form #composerEl class="composer" [formRoot]="composerForm">
+      @if (error(); as message) {
+        <p-message severity="error" size="small">{{ message }}</p-message>
+      }
       @if (replyingTo(); as original) {
         <p class="replying">
           <span

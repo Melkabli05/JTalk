@@ -269,7 +269,7 @@ export class ChatPanelComponent {
     this.stuck.set(true);
   }
 
-  protected onCommentMouseDown(comment: RoomComment, event: MouseEvent | TouchEvent): void {
+  protected onCommentMouseDown(comment: RoomComment): void {
     if (!this.isHost()) return;
 
     const timer = setTimeout(() => {
