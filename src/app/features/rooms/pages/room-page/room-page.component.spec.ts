@@ -354,7 +354,7 @@ describe('RoomPageComponent (container)', () => {
     expect(root().querySelector('app-chat-panel section.framed.trimmed')).not.toBeNull();
     expect(root().querySelector('.expand')).toBeNull();
     expect(controlNames().some((name) => name.startsWith('Chat'))).toBe(false);
-    expect(document.body.querySelector('p-drawer')).toBeNull();
+    expect(document.body.querySelector('.sheet-title')).toBeNull();
     observe.mockRestore();
   });
 
