@@ -13,6 +13,9 @@ import { FormField, FormRoot, form, maxLength, required } from '@angular/forms/s
 import { NgOptimizedImage } from '@angular/common';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
+import { Divider } from '@openng/optimus-ui/divider';
+import { Menu } from '@openng/optimus-ui/menu';
+import type { MenuItem } from '@openng/optimus-ui/api';
 import { Message } from '@openng/optimus-ui/message';
 import { Popover } from '@openng/optimus-ui/popover';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
@@ -52,6 +55,8 @@ const LONG_PRESS_MS = 500;
   imports: [
     ButtonDirective,
     Card,
+    Divider,
+    Menu,
     FormField,
     FormRoot,
     Message,
@@ -106,6 +111,17 @@ export class ChatPanelComponent {
   protected readonly composer = signal<ComposerModel>({ content: '' });
   protected readonly topicDraft = signal<TopicModel>({ text: '' });
   private longPressTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+  protected readonly actions = signal<MenuItem[]>([]);
+  protected readonly replies = computed(() => {
+    const answers = new Map<string, RoomComment[]>();
+    for (const comment of this.comments()) {
+      if (comment.replyTo !== undefined && this.byId().has(comment.replyTo)) {
+        answers.set(comment.replyTo, [...(answers.get(comment.replyTo) ?? []), comment]);
+      }
+    }
+    return answers;
+  });
 
   protected readonly byId = computed(
     () => new Map(this.comments().map((comment) => [comment.id, comment])),
@@ -297,8 +313,7 @@ export class ChatPanelComponent {
     }
   }
 
-  protected togglePin(comment: RoomComment, event: Event): void {
-    event.stopPropagation();
+  protected togglePin(comment: RoomComment): void {
     if (comment.pinnedAt) {
       this.commentUnpinned.emit(comment.id);
     } else {
@@ -307,6 +322,73 @@ export class ChatPanelComponent {
   }
 
   private showPinOption(comment: RoomComment): void {
-    this.togglePin(comment, new Event('longpress'));
+    this.togglePin(comment);
+  }
+
+  /** What can be done to this message from its ⋯ menu: correct it, and for the host pin, mute and delete. */
+  protected menuOf(comment: RoomComment): MenuItem[] {
+    const name = this.nameOf(comment.authorId);
+    const items: MenuItem[] = [];
+    const others = comment.authorId !== this.meId();
+    if (!this.compact() && comment.type === 'TEXT' && others) {
+      items.push({
+        label: `Correct ${name}`,
+        icon: 'pi pi-pencil',
+        command: () => this.reply(comment, true),
+      });
+    }
+    if (this.isHost() && others) {
+      const busy = this.moderating();
+      const muted = this.muteIds().has(comment.authorId);
+      items.push(
+        {
+          label: this.isPinned(comment) ? 'Unpin this comment' : 'Pin this comment',
+          icon: this.isPinned(comment) ? 'pi pi-bookmark-fill' : 'pi pi-bookmark',
+          disabled: busy,
+          command: () => this.togglePin(comment),
+        },
+        {
+          label: muted ? `Unmute ${name} in the chat` : `Mute ${name} in the chat`,
+          icon: muted ? 'pi pi-microphone' : 'pi pi-microphone pi-slashed',
+          disabled: busy,
+          command: () =>
+            muted
+              ? this.unmuteRequested.emit(comment.authorId)
+              : this.muteRequested.emit(comment.authorId),
+        },
+        { separator: true },
+        {
+          label: `Delete the comment by ${name}`,
+          icon: 'pi pi-trash',
+          linkClass: 'danger-item',
+          disabled: busy,
+          command: () => this.deleted.emit(comment.id),
+        },
+      );
+    }
+    return items;
+  }
+
+  protected hasMenu(comment: RoomComment): boolean {
+    return this.menuOf(comment).length > 0;
+  }
+
+  protected openMenu(comment: RoomComment, event: Event, menu: Menu): void {
+    this.actions.set(this.menuOf(comment));
+    menu.toggle(event);
+  }
+
+  protected repliesLabel(count: number): string {
+    return count === 1 ? '1 reply' : `${count} replies`;
+  }
+
+  /** Takes the reader to the first answer to a message. */
+  protected showReplies(answers: readonly RoomComment[]): void {
+    const [first] = answers;
+    if (first) {
+      this.log()
+        ?.nativeElement.querySelector(`[data-id="${first.id}"]`)
+        ?.scrollIntoView?.({ block: 'center' });
+    }
   }
 }

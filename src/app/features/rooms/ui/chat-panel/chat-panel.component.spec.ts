@@ -31,6 +31,13 @@ describe('ChatPanelComponent (presentational)', () => {
     button.getAttribute('aria-label') ?? button.textContent?.trim() ?? '';
   const button = (name: string) =>
     [...root().querySelectorAll('button')].find((b) => nameOf(b) === name);
+  /** Opens a message's ⋯ menu and gives its items, which the menu draws on the page. */
+  const actionsOf = async (name: string) => {
+    button(`Actions for ${name}`)!.click();
+    await fixture.whenStable();
+    return [...document.body.querySelectorAll<HTMLElement>('.p-menu-item-link')];
+  };
+  const labelsOf = (items: HTMLElement[]) => items.map((item) => item.textContent?.trim());
   const field = (label: string) =>
     [...root().querySelectorAll('app-textarea-field')]
       .find((f) => f.querySelector('label')?.textContent?.trim() === label)
@@ -277,9 +284,9 @@ describe('ChatPanelComponent (presentational)', () => {
     });
     const sent: CommentDraft[] = [];
     fixture.componentInstance.submitted.subscribe((draft) => sent.push(draft));
-    expect(button('Correct Mona')).toBeUndefined();
+    expect(button('Actions for Mona')).toBeUndefined();
 
-    button('Correct Bilal')!.click();
+    (await actionsOf('Bilal')).find((item) => item.textContent?.includes('Correct Bilal'))!.click();
     await fixture.whenStable();
     expect(root().querySelector('.replying')?.textContent).toContain('Correcting Bilal');
 
@@ -305,7 +312,7 @@ describe('ChatPanelComponent (presentational)', () => {
       ],
     });
 
-    expect(button('Correct Bilal')).toBeUndefined();
+    expect(button('Actions for Bilal')).toBeUndefined();
   });
 
   describe('writing from the keyboard', () => {
@@ -431,12 +438,19 @@ describe('ChatPanelComponent (presentational)', () => {
   describe('for the host', () => {
     const comments = [comment('c-1', 'b-1', 'Hello'), comment('c-2', 'm-1', 'Welcome')];
 
-    it('can delete and mute what others wrote, and not what they wrote themselves', async () => {
+    it('can pin, mute and delete what others wrote, and not what they wrote themselves', async () => {
       await render({ isHost: true, comments });
 
-      expect(button('Delete the comment by Bilal')).toBeDefined();
-      expect(button('Mute Bilal in the chat')).toBeDefined();
-      expect(button('Delete the comment by Mona')).toBeUndefined();
+      expect(labelsOf(await actionsOf('Bilal'))).toEqual(
+        [
+          'Correct Bilal',
+          'Pin this comment',
+          'Mute Bilal in the chat',
+          undefined,
+          'Delete the comment by Bilal',
+        ].filter((label) => label !== undefined),
+      );
+      expect(button('Actions for Mona')).toBeUndefined();
     });
 
     it('asks to delete, mute and unmute', async () => {
@@ -445,12 +459,14 @@ describe('ChatPanelComponent (presentational)', () => {
       fixture.componentInstance.deleted.subscribe((id) => asked.push(`delete ${id}`));
       fixture.componentInstance.muteRequested.subscribe((id) => asked.push(`mute ${id}`));
       fixture.componentInstance.unmuteRequested.subscribe((id) => asked.push(`unmute ${id}`));
+      const choose = async (label: string) =>
+        (await actionsOf('Bilal')).find((item) => item.textContent?.includes(label))!.click();
 
-      button('Delete the comment by Bilal')!.click();
-      button('Mute Bilal in the chat')!.click();
+      await choose('Delete the comment by Bilal');
+      await choose('Mute Bilal in the chat');
       fixture.componentRef.setInput('mutedUsers', ['b-1']);
       await fixture.whenStable();
-      button('Unmute Bilal in the chat')!.click();
+      await choose('Unmute Bilal in the chat');
 
       expect(asked).toEqual(['delete c-1', 'mute b-1', 'unmute b-1']);
       expect(root().textContent).toContain('Muted');
@@ -467,11 +483,33 @@ describe('ChatPanelComponent (presentational)', () => {
     });
   });
 
+  it('says how many answered a message, and takes the reader to the first answer', async () => {
+    await render({
+      comments: [
+        comment('c-1', 'b-1', 'Question?'),
+        comment('c-2', 'm-1', 'Answer', { replyTo: 'c-1' }),
+        comment('c-3', 'm-1', 'Another', { replyTo: 'c-1' }),
+        comment('c-4', 'm-1', 'One answer', { replyTo: 'c-3' }),
+      ],
+    });
+    const items = [...root().querySelectorAll<HTMLElement>('.message-item')];
+    const scroll = vi.fn();
+    items[1].scrollIntoView = scroll;
+    expect(items[0].textContent).toContain('2 replies');
+    expect(items[2].textContent).toContain('1 reply');
+    expect(items[1].textContent).not.toMatch(/\d replies?/);
+
+    [...items[0].querySelectorAll('button')]
+      .find((b) => b.textContent?.includes('2 replies'))!
+      .click();
+
+    expect(scroll).toHaveBeenCalled();
+  });
+
   it('gives a listener no moderation', async () => {
     await render({ comments: [comment('c-1', 'b-1', 'Hello')] });
 
-    expect(button('Delete the comment by Bilal')).toBeUndefined();
-    expect(button('Mute Bilal in the chat')).toBeUndefined();
+    expect(labelsOf(await actionsOf('Bilal'))).toEqual(['Correct Bilal']);
     expect(button('Reply to Bilal')).toBeDefined();
   });
 });
