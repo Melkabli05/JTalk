@@ -120,7 +120,7 @@
                     <button
                       pButton
                       type="button"
-                      size="small"
+                      class="quiet"
                       icon="pi pi-ellipsis-h"
                       severity="secondary"
                       [text]="true"
@@ -157,7 +157,7 @@
                       <button
                         pButton
                         type="button"
-                        size="small"
+                        class="reaction"
                         severity="secondary"
                         [rounded]="true"
                         [outlined]="chip.mine"
@@ -175,8 +175,7 @@
                       <button
                         pButton
                         type="button"
-                        class="add-reaction"
-                        size="small"
+                        class="reaction-add"
                         icon="pi pi-plus"
                         severity="secondary"
                         [text]="true"
@@ -192,8 +191,7 @@
                     <button
                       pButton
                       type="button"
-                      class="reply"
-                      size="small"
+                      class="quiet reply"
                       icon="pi pi-reply"
                       label="Reply"
                       severity="secondary"
@@ -203,21 +201,20 @@
                       (click)="reply(comment)"
                     ></button>
                   </div>
+                  @if (replies().get(comment.id); as answers) {
+                    <p-divider />
+                    <button
+                      pButton
+                      type="button"
+                      class="quiet replies"
+                      icon="pi pi-arrow-down-right"
+                      [label]="repliesLabel(answers.length)"
+                      [text]="true"
+                      (click)="showReplies(answers)"
+                    ></button>
+                  }
                 </div>
               </div>
-              @if (replies().get(comment.id); as answers) {
-                <p-divider />
-                <button
-                  pButton
-                  type="button"
-                  class="replies"
-                  size="small"
-                  icon="pi pi-arrow-down-right"
-                  [label]="repliesLabel(answers.length)"
-                  [text]="true"
-                  (click)="showReplies(answers)"
-                ></button>
-              }
             </p-card>
           </li>
         } @empty {

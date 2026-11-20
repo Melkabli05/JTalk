@@ -521,7 +521,7 @@ export const JtalkPreset = definePreset(Aura, {
         sm: { iconOnlyWidth: '2.75rem' },
         lg: { iconOnlyWidth: '3rem' },
       },
-      css: () => `
+      css: ({ dt }) => `
         .p-button {
           min-height: 2.75rem;
           transition-duration: var(--p-jtalk-motion-fast);
@@ -545,6 +545,64 @@ export const JtalkPreset = definePreset(Aura, {
           content: '';
           position: absolute;
           inset: -0.25rem;
+        }
+        /* The reactions on a message: a small hairline pill with the picture and the count (the person's own in Forest), and a dashed circle to add one. They are small to look at and keep a larger target. */
+        .p-button.reaction {
+          position: relative;
+          min-height: 0;
+          min-width: 0;
+          block-size: 1.5rem;
+          padding-inline: 0.625rem;
+          gap: 0.375rem;
+          border: 1px solid ${dt('content.border.color')};
+          background: ${dt('content.hover.background')};
+          color: ${dt('text.color')};
+          font-size: ${dt('jtalk.type.secondary')};
+          font-weight: 650;
+        }
+        .p-button.reaction.p-button-outlined {
+          border-color: ${dt('primary.color')};
+          background: color-mix(in srgb, ${dt('primary.color')} 10%, transparent);
+          color: ${dt('primary.color')};
+        }
+        .p-button.reaction-add .p-button-icon {
+          font-size: 0.625rem;
+        }
+        .p-button.reaction img {
+          inline-size: 1rem;
+          block-size: 1rem;
+        }
+        .p-button.reaction-add {
+          position: relative;
+          min-height: 0;
+          min-width: 0;
+          inline-size: 1.5rem;
+          block-size: 1.5rem;
+          padding: 0;
+          border: 1px dashed ${dt('content.border.color')};
+          color: ${dt('text.muted.color')};
+          font-size: ${dt('jtalk.type.secondary')};
+        }
+        /* The quiet buttons of a message (its menu, Reply, the replies): text-sized, with the same larger target. */
+        .p-button.quiet {
+          position: relative;
+          min-height: 0;
+          min-width: 0;
+          block-size: 1.5rem;
+          padding-inline: 0.5rem;
+          font-size: ${dt('jtalk.type.secondary')};
+          font-weight: 650;
+        }
+        .p-button.quiet.p-button-icon-only {
+          inline-size: 1.5rem;
+          padding: 0;
+        }
+        .p-button.reaction::after,
+        .p-button.reaction-add::after,
+        .p-button.quiet::after {
+          content: '';
+          position: absolute;
+          inset: -0.375rem;
         }
         @container dock (max-width: 30rem) {
           .p-button.leave-compact {
