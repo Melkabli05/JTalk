@@ -306,6 +306,7 @@
   appendTo="body"
   [style]="{ height: 'auto', maxHeight: '90dvh' }"
   ariaCloseLabel="Close"
+  [closeButtonProps]="{ severity: 'secondary', rounded: true }"
   [visible]="actionsFor() !== null"
   [modal]="true"
   [dismissible]="true"
@@ -325,7 +326,7 @@
         <p-avatar [icon]="item.icon" shape="circle" aria-hidden="true" />
         <span class="action-label">{{ item.label }}</span>
         @if (item.badge) {
-          <p-tag severity="warn" [value]="item.badge" />
+          <p-tag severity="success" [value]="item.badge" />
         }
       </span>
     </ng-template>

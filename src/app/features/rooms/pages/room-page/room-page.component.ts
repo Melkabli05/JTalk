@@ -29,6 +29,7 @@ import { Chip } from '@openng/optimus-ui/chip';
 import { Drawer } from '@openng/optimus-ui/drawer';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import { PersonCardService } from '@core/people/person-card.service';
+import { translate } from '@shared/utils/translate';
 import type { RoomRole, RoomEdit, Stage } from '../../models/room.model';
 import { RoomFacade } from '../../state/room.facade';
 import { ChatPanelComponent } from '../../ui/chat-panel/chat-panel.component';
@@ -240,6 +241,21 @@ export default class RoomPageComponent {
     void this.document.defaultView?.navigator.clipboard.writeText(text).then(
       () => this.toast.add({ severity: 'success', summary: 'Copied.' }),
       () => this.toast.add({ severity: 'warn', summary: 'Could not copy the text.' }),
+    );
+  }
+
+  protected translateText(text: string): void {
+    const window = this.document.defaultView;
+    void translate(
+      text,
+      window?.navigator.language.split('-')[0] ?? 'en',
+      window ?? undefined,
+    ).then((translated) =>
+      this.toast.add(
+        translated === undefined
+          ? { severity: 'warn', summary: 'This browser cannot translate that.' }
+          : { severity: 'info', summary: 'Translation', detail: translated, life: 10000 },
+      ),
     );
   }
 

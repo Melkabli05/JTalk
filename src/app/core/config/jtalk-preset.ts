@@ -478,6 +478,20 @@ export const JtalkPreset = definePreset(Aura, {
           flex-direction: column;
           min-block-size: 0;
         }
+        .p-drawer.comment-actions .p-drawer-header {
+          border-block-end: 1px solid var(--p-content-border-color);
+        }
+        .p-drawer.comment-actions::before {
+          content: '';
+          position: absolute;
+          inset-block-start: 0.5rem;
+          inset-inline-start: 50%;
+          translate: -50% 0;
+          inline-size: 3rem;
+          block-size: 0.375rem;
+          border-radius: var(--p-jtalk-radius-pill);
+          background: var(--p-content-border-color);
+        }
         .p-drawer.chat-drawer.p-drawer-bottom,
         .p-drawer.comment-actions.p-drawer-bottom {
           border-start-start-radius: var(--p-jtalk-radius-sheet);

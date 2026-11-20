@@ -279,6 +279,7 @@
     (deleted)="facade.deleteComment($event)"
     (reacted)="facade.reactToComment($event.commentId, $event.reaction)"
     (textCopied)="copyText($event)"
+    (translateRequested)="translateText($event)"
     (muteRequested)="facade.muteInChat($event)"
     (unmuteRequested)="facade.unmuteInChat($event)"
     (topicPinned)="facade.pinTopic($event)"

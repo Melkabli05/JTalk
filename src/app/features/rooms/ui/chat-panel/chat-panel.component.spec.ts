@@ -450,12 +450,17 @@ describe('ChatPanelComponent (presentational)', () => {
       expect(labelsOf(await actionsOf('Bilal'))).toEqual([
         'Reply in thread',
         'Correct',
-        'Pin this comment',
+        'Pin to Stage',
         'Copy text',
+        'Translate',
         'Mute participant in room',
         'Delete comment',
       ]);
-      expect(labelsOf(await actionsOf('Mona'))).toEqual(['Reply in thread', 'Copy text']);
+      expect(labelsOf(await actionsOf('Mona'))).toEqual([
+        'Reply in thread',
+        'Copy text',
+        'Translate',
+      ]);
     });
 
     it('asks to delete, mute and unmute', async () => {
@@ -512,7 +517,9 @@ describe('ChatPanelComponent (presentational)', () => {
   it('opens a sheet for a message, titled with the start of it, which Cancel closes', async () => {
     await render({ comments: [comment('c-1', 'b-1', 'x'.repeat(80))] });
     const copied: string[] = [];
+    const translating: string[] = [];
     fixture.componentInstance.textCopied.subscribe((text) => copied.push(text));
+    fixture.componentInstance.translateRequested.subscribe((text) => translating.push(text));
 
     await actionsOf('Bilal');
     expect(document.body.querySelector('.sheet-heading h2')?.textContent).toBe('Comment actions');
@@ -520,6 +527,8 @@ describe('ChatPanelComponent (presentational)', () => {
 
     await pick('Bilal', 'Copy text');
     expect(copied).toEqual(['x'.repeat(80)]);
+    await pick('Bilal', 'Translate');
+    expect(translating).toEqual(['x'.repeat(80)]);
 
     await actionsOf('Bilal');
     document.body
@@ -532,7 +541,12 @@ describe('ChatPanelComponent (presentational)', () => {
   it('gives a listener no moderation', async () => {
     await render({ comments: [comment('c-1', 'b-1', 'Hello')] });
 
-    expect(labelsOf(await actionsOf('Bilal'))).toEqual(['Reply in thread', 'Correct', 'Copy text']);
+    expect(labelsOf(await actionsOf('Bilal'))).toEqual([
+      'Reply in thread',
+      'Correct',
+      'Copy text',
+      'Translate',
+    ]);
     expect(button('Reply to Bilal')).toBeDefined();
   });
 });

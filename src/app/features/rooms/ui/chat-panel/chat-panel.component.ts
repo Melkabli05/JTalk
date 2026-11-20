@@ -109,6 +109,7 @@ export class ChatPanelComponent {
   readonly expand = output<void>();
   readonly reacted = output<{ commentId: string; reaction: Reaction }>();
   readonly textCopied = output<string>();
+  readonly translateRequested = output<string>();
 
   protected readonly log = viewChild<ElementRef<HTMLElement>>('log');
   protected readonly stuck = signal(true);
@@ -363,8 +364,8 @@ export class ChatPanelComponent {
           command: then(() => this.reply(comment, true)),
         },
       host && {
-        label: this.isPinned(comment) ? 'Unpin this comment' : 'Pin this comment',
-        icon: this.isPinned(comment) ? 'pi pi-bookmark-fill' : 'pi pi-bookmark',
+        label: this.isPinned(comment) ? 'Unpin from Stage' : 'Pin to Stage',
+        icon: 'pi pi-thumbtack',
         badge: 'Host',
         disabled: busy,
         command: then(() => this.togglePin(comment)),
@@ -374,10 +375,15 @@ export class ChatPanelComponent {
         icon: 'pi pi-copy',
         command: then(() => this.textCopied.emit(comment.content)),
       },
+      {
+        label: 'Translate',
+        icon: 'pi pi-language',
+        command: then(() => this.translateRequested.emit(comment.content)),
+      },
       host && { separator: true },
       host && {
         label: muted ? 'Unmute participant in room' : 'Mute participant in room',
-        icon: muted ? 'pi pi-microphone' : 'pi pi-microphone pi-slashed',
+        icon: 'pi pi-shield',
         disabled: busy,
         command: then(() =>
           muted
