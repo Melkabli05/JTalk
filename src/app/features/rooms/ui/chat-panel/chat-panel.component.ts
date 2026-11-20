@@ -131,10 +131,11 @@ export class ChatPanelComponent {
   protected readonly now = signal(Date.now());
   protected readonly timeAgo = timeAgo;
 
+  private readonly field = viewChild(TextareaFieldComponent);
+
   protected readonly composerForm = form(
     this.composer,
     (path) => {
-      required(path.content, { message: 'Write something first.' });
       maxLength(path.content, COMMENT_MAX_LENGTH, { message: 'Use at most 500 characters.' });
     },
     {
@@ -143,6 +144,9 @@ export class ChatPanelComponent {
         submit: (value) => {
           const original = this.replyingTo();
           const text = value.content.trim();
+          if (text === '') {
+            return;
+          }
           this.submitted.emit({
             type: original && this.correcting() ? 'CORRECTION' : 'TEXT',
             content: original && this.correcting() ? original.content : text,
@@ -214,11 +218,26 @@ export class ChatPanelComponent {
   protected reply(comment: RoomComment, correcting = false): void {
     this.replyingTo.set(comment);
     this.correcting.set(correcting);
+    this.field()?.focus();
   }
 
   protected cancelReply(): void {
     this.replyingTo.set(null);
     this.correcting.set(false);
+    this.field()?.focus();
+  }
+
+  /** Enter sends and Shift+Enter starts a new line; Escape drops a reply or a correction in the making. */
+  protected typing(event: KeyboardEvent, form: HTMLFormElement): void {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      if (this.composerValid()) {
+        form.requestSubmit();
+      }
+    } else if (event.key === 'Escape' && this.replyingTo() !== null) {
+      event.stopPropagation();
+      this.cancelReply();
+    }
   }
 
   protected scrolled(): void {

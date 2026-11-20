@@ -308,6 +308,73 @@ describe('ChatPanelComponent (presentational)', () => {
     expect(button('Correct Bilal')).toBeUndefined();
   });
 
+  describe('writing from the keyboard', () => {
+    const send = () => root().querySelector<HTMLButtonElement>('button[type="submit"].send')!;
+    const keydown = (key: string, shiftKey = false) => {
+      const event = new KeyboardEvent('keydown', {
+        key,
+        shiftKey,
+        bubbles: true,
+        cancelable: true,
+      });
+      field('Message')!.dispatchEvent(event);
+      return event;
+    };
+
+    it('has the send button off, and says nothing about it, until something is written', async () => {
+      await render();
+
+      expect(send().disabled).toBe(true);
+      expect(root().querySelector('app-field-errors')?.textContent?.trim() ?? '').toBe('');
+
+      await type('Message', '   ');
+      expect(send().disabled).toBe(true);
+
+      await type('Message', 'Hola');
+      expect(send().disabled).toBe(false);
+    });
+
+    it('sends with Enter, and starts a new line with Shift+Enter', async () => {
+      await render();
+      const sent: CommentDraft[] = [];
+      fixture.componentInstance.submitted.subscribe((draft) => sent.push(draft));
+      await type('Message', 'Hola');
+
+      expect(keydown('Enter', true).defaultPrevented).toBe(false);
+      expect(sent).toEqual([]);
+
+      expect(keydown('Enter').defaultPrevented).toBe(true);
+      await fixture.whenStable();
+      expect(sent).toEqual([{ type: 'TEXT', content: 'Hola' }]);
+    });
+
+    it('does nothing on Enter while there is nothing to send', async () => {
+      await render();
+      const sent: CommentDraft[] = [];
+      fixture.componentInstance.submitted.subscribe((draft) => sent.push(draft));
+
+      keydown('Enter');
+      await fixture.whenStable();
+
+      expect(sent).toEqual([]);
+    });
+
+    it('puts the cursor in the message when replying, and drops the reply with Escape', async () => {
+      await render({ comments: [comment('c-1', 'b-1', 'How are you?')] });
+      document.body.append(root());
+
+      button('Reply to Bilal')!.click();
+      await fixture.whenStable();
+      expect(root().querySelector('.replying')?.textContent).toContain('Replying to Bilal');
+      expect(document.activeElement).toBe(field('Message'));
+
+      expect(keydown('Escape').defaultPrevented).toBe(false);
+      await fixture.whenStable();
+      expect(root().querySelector('.replying')).toBeNull();
+      root().remove();
+    });
+  });
+
   it('replies to a message, names who it answers, and lets the reply be dropped', async () => {
     await render({ comments: [comment('c-1', 'b-1', 'How are you?')] });
     const sent: CommentDraft[] = [];

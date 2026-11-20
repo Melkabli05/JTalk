@@ -1,16 +1,24 @@
+import { CdkListbox, CdkOption } from '@angular/cdk/listbox';
 import { NgOptimizedImage } from '@angular/common';
-import { Component, output } from '@angular/core';
+import { Component, output, viewChild } from '@angular/core';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
-import { REACTIONS, type Reaction } from '../../models/reaction.model';
+import { isReaction, REACTIONS, type Reaction } from '../../models/reaction.model';
 import { REACTION_LOOKS } from '../../utils/reactions';
 
 /** The ten reactions as icon buttons in two rows, for a popover: one is chosen by pressing it. */
 @Component({
   selector: 'app-reaction-picker',
-  imports: [ButtonDirective, NgOptimizedImage, Tooltip],
+  imports: [ButtonDirective, CdkListbox, CdkOption, NgOptimizedImage, Tooltip],
   template: `
-    <div class="reactions">
+    <div
+      #listbox="cdkListbox"
+      class="reactions"
+      cdkListbox
+      cdkListboxOrientation="horizontal"
+      aria-label="Reactions"
+      (cdkListboxValueChange)="choose($event.value)"
+    >
       @for (item of looks; track item.reaction) {
         @let label = item.label;
         <button
@@ -18,12 +26,12 @@ import { REACTION_LOOKS } from '../../utils/reactions';
           type="button"
           size="large"
           class="reaction-choice"
+          [cdkOption]="item.reaction"
           [text]="true"
           [rounded]="true"
           [attr.aria-label]="label"
           [pTooltip]="label"
           tooltipPosition="top"
-          (click)="chosen.emit(item.reaction)"
         >
           <img [ngSrc]="item.image" width="28" height="28" alt="" />
         </button>
@@ -52,8 +60,19 @@ import { REACTION_LOOKS } from '../../utils/reactions';
 export class ReactionPickerComponent {
   readonly chosen = output<Reaction>();
 
+  private readonly listbox = viewChild.required<CdkListbox<unknown>>('listbox');
+
   protected readonly looks = REACTIONS.map((reaction) => ({
     reaction,
     ...REACTION_LOOKS[reaction],
   }));
+
+  /** The listbox keeps what was chosen; this picker only hands it on and starts again, so the same one can be chosen twice. */
+  protected choose(chosen: readonly unknown[]): void {
+    const [reaction] = chosen;
+    if (isReaction(reaction)) {
+      this.chosen.emit(reaction);
+      this.listbox().value = [];
+    }
+  }
 }

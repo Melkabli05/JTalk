@@ -7,6 +7,7 @@ import { Toolbar } from '@openng/optimus-ui/toolbar';
 import { Tooltip } from '@openng/optimus-ui/tooltip';
 import type { Reaction } from '../../models/reaction.model';
 import type { AudioStatus } from '../../models/realtime.model';
+import { ArrowKeysDirective } from '@shared/ui/arrow-keys.directive';
 import { ReactionPickerComponent } from '../reaction-picker/reaction-picker.component';
 
 let nextId = 0;
@@ -14,6 +15,7 @@ let nextId = 0;
 @Component({
   selector: 'app-room-controls',
   imports: [
+    ArrowKeysDirective,
     ButtonDirective,
     Message,
     OverlayBadge,
@@ -81,7 +83,12 @@ let nextId = 0;
         </p>
       }
     </div>
-    <p-toolbar [ariaLabelledBy]="labelId" [attr.aria-busy]="busy()">
+    <p-toolbar
+      appArrowKeys
+      aria-orientation="horizontal"
+      [ariaLabelledBy]="labelId"
+      [attr.aria-busy]="busy()"
+    >
       <ng-template #center>
         <div class="controls">
           @if (micShown()) {

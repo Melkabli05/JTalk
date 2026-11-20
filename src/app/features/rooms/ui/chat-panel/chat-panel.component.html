@@ -223,7 +223,12 @@
                     tooltipPosition="top"
                     (click)="togglePin(comment, $event)"
                   >
-                    <i class="pi" [class.pi-bookmark-fill]="isPinned(comment)" [class.pi-bookmark]="!isPinned(comment)" aria-hidden="true"></i>
+                    <i
+                      class="pi"
+                      [class.pi-bookmark-fill]="isPinned(comment)"
+                      [class.pi-bookmark]="!isPinned(comment)"
+                      aria-hidden="true"
+                    ></i>
                   </button>
                   @if (muteIds().has(comment.authorId)) {
                     @let unmuteLabel = `Unmute ${nameOf(comment.authorId)} in the chat`;
@@ -287,7 +292,7 @@
       The host muted you in the chat. You can still listen and speak.
     </p-message>
   } @else {
-    <form class="composer" [formRoot]="composerForm">
+    <form #composerEl class="composer" [formRoot]="composerForm">
       @if (replyingTo(); as original) {
         <p class="replying">
           <span
@@ -314,6 +319,7 @@
           [placeholder]="correcting() ? 'Write how it should be…' : 'Say something in the room…'"
           [rows]="1"
           [formField]="composerForm.content"
+          (keydown)="typing($event, composerEl)"
         />
         <button
           pButton
