@@ -576,6 +576,37 @@ describe('ChatPanelComponent (presentational)', () => {
       expect(document.body.querySelector('p-drawer.comment-actions')).toBeNull();
     });
 
+    it('shows the key of the shortcut as the reader’s keyboard has it', async () => {
+      await render({
+        phone: false,
+        modifier: 'Ctrl',
+        comments: [comment('c-1', 'b-1', 'Hello')],
+      });
+
+      button('Actions for Bilal')!.click();
+      await fixture.whenStable();
+
+      expect(popoverItems()[0].querySelector('.hint')?.textContent).toBe('Ctrl+R');
+    });
+
+    it('puts the reader back on the message’s menu button once an action is chosen', async () => {
+      await render({ phone: false, comments: [comment('c-1', 'b-1', 'Hello')] });
+      document.body.append(root());
+      const opener = button('Actions for Bilal')!;
+      opener.focus();
+
+      opener.click();
+      await fixture.whenStable();
+      popoverItems()
+        .find((item) => item.querySelector('.action-label')?.textContent === 'Copy text')!
+        .click();
+      await fixture.whenStable();
+      await Promise.resolve();
+
+      expect(document.activeElement).toBe(opener);
+      root().remove();
+    });
+
     it('answers the message with Command-R while the actions are open', async () => {
       await render({ phone: false, comments: [comment('c-1', 'b-1', 'Hello')] });
       button('Actions for Bilal')!.click();

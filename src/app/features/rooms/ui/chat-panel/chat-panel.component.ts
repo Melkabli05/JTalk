@@ -8,6 +8,7 @@ import {
   output,
   signal,
   viewChild,
+  viewChildren,
 } from '@angular/core';
 import { FormField, FormRoot, form, maxLength, required } from '@angular/forms/signals';
 import { NgOptimizedImage, NgTemplateOutlet } from '@angular/common';
@@ -120,6 +121,8 @@ export class ChatPanelComponent {
   readonly phone = input(false);
   /** The language Translate goes into: the reader's. */
   readonly language = input('en');
+  /** The key the shortcut for replying is shown with: ⌘ on a Mac, Ctrl elsewhere. */
+  readonly modifier = input('⌘');
   readonly textCopied = output<string>();
   readonly translateRequested = output<string>();
 
@@ -369,7 +372,7 @@ export class ChatPanelComponent {
         label: 'Reply in thread',
         icon: 'pi pi-reply',
         tone: 'brand',
-        hint: phone ? undefined : '⌘R',
+        hint: phone ? undefined : `${this.modifier()}${this.modifier() === '⌘' ? '' : '+'}R`,
         command: then(() => this.reply(comment)),
       },
       !this.compact() &&
@@ -427,6 +430,7 @@ export class ChatPanelComponent {
   }
 
   protected openActions(comment: RoomComment, event: Event, popover: Popover): void {
+    this.opener = event.currentTarget as HTMLElement | null;
     this.actionsFor.set(comment);
     if (!this.phone()) {
       popover.toggle(event, event.currentTarget);
@@ -446,13 +450,38 @@ export class ChatPanelComponent {
     if (!this.phone()) {
       this.actionsFor.set(null);
     }
+    this.giveFocusBack();
+  }
+
+  /** Once the actions are shown the keyboard is in them: the arrows go from one to the next, Enter does it. */
+  protected focusActions(): void {
+    // After the menu has drawn itself inside the card or the sheet.
+    setTimeout(() => {
+      const lists = this.menus().map(
+        (menu) => menu.listViewChild()?.nativeElement as HTMLElement | undefined,
+      );
+      lists.find((list) => (list?.getClientRects().length ?? 0) > 0)?.focus();
+    });
   }
 
   private readonly popover = viewChild<Popover>('actionsPopover');
+  /** The card and the sheet each draw the menu; the one on screen is the one to focus. */
+  private readonly menus = viewChildren(Menu);
+  private opener: HTMLElement | null = null;
 
   private close(): void {
     this.actionsFor.set(null);
     this.popover()?.hide();
+    this.giveFocusBack();
+  }
+
+  /** Closing the actions puts the reader back on the message's ⋯, where they were. */
+  private giveFocusBack(): void {
+    const opener = this.opener;
+    this.opener = null;
+    if (opener?.isConnected) {
+      queueMicrotask(() => opener.focus());
+    }
   }
 
   protected excerpt(comment: RoomComment): string {

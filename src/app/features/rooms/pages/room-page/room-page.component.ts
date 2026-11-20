@@ -89,6 +89,11 @@ export default class RoomPageComponent {
   protected readonly wide = this.matching('(min-width: 1024px)');
   protected readonly beside = this.matching('(min-width: 80rem)');
   protected readonly phone = this.matching('(max-width: 40rem)');
+  protected readonly modifier = /Mac|iPhone|iPad/.test(
+    this.document.defaultView?.navigator.platform ?? '',
+  )
+    ? '⌘'
+    : 'Ctrl';
   protected readonly language =
     (this.document.defaultView?.navigator.language ?? 'en').split('-')[0] ?? 'en';
   protected readonly look = computed(() => roomLook(this.state.room()));

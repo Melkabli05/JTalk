@@ -275,3 +275,5 @@ The room page ends with **Live Discussion** (`app-chat-panel` with `compact`): i
 
 **The actions are colour-coded** (the item's `tone`, drawn as `data-tone` on `.action`, which sets `--tone`): Forest for `Reply in thread`, blue (`--p-blue-600`) for `Correct` and `Translate`, Sand for the host's powers (`Pin to Stage`, `Mute`; the icon is Sand mixed with the text colour so it reads), terracotta for `Delete comment`, and the muted grey for `Copy text`. On a sheet the colour is the icon and a round tint behind it; on the popover only the icon. Rows are 3rem on a sheet and 2.75rem on the popover, labels the body size, `Cancel` large with the bottom safe area under it.
 
+**Keyboard in the actions** (card and sheet): when they open, focus goes to the menu (`focusActions()`, the menu on screen: both containers draw one), so the arrows move between the actions and Enter does one; Escape closes, and closing, by an action or not, puts focus back on the message's `⋯` (`giveFocusBack()`). The shortcut shown is `⌘R` on a Mac and `Ctrl+R` elsewhere (the page's `modifier`); both Command-R and Control-R work while the card is open.
+

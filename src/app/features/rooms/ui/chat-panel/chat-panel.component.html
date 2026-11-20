@@ -328,6 +328,8 @@
   [visible]="phone() && actionsFor() !== null"
   [modal]="true"
   [dismissible]="true"
+  (onShow)="focusActions()"
+  (onHide)="closed()"
   (visibleChange)="$event || actionsFor.set(null)"
 >
   <ng-template #header>
@@ -360,6 +362,7 @@
   appendTo="body"
   styleClass="comment-actions-popover"
   ariaLabel="Comment actions"
+  (onShow)="focusActions()"
   (onHide)="closed()"
 >
   @if (actionsFor(); as comment) {
