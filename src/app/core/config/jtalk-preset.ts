@@ -468,36 +468,19 @@ export const JtalkPreset = definePreset(Aura, {
       `,
     },
     drawer: {
-      // The discussion fills the drawer edge to edge (a pinned band across the top, a bar across the bottom), so the drawer keeps no padding
-      // of its own. On a phone it is a sheet that rises from the bottom edge to just under the status bar, with a handle on top.
+      // The discussion fills the drawer edge to edge, so the drawer keeps no padding of its own. On a phone it is a sheet that rises from the
+      // bottom edge with the sheet radius.
+      header: { padding: '1rem 1.25rem' },
+      content: { padding: '0' },
       css: () => `
         .p-drawer.chat-drawer .p-drawer-content {
           display: flex;
           flex-direction: column;
           min-block-size: 0;
-          padding: 0;
         }
-        @media (max-width: 40rem) {
-          .p-drawer.chat-drawer {
-            block-size: calc(100dvh - 3rem);
-            border-start-start-radius: 2rem;
-            border-start-end-radius: 2rem;
-          }
-          .p-drawer.chat-drawer::before {
-            content: '';
-            position: absolute;
-            inset-block-start: 0.5rem;
-            inset-inline-start: 50%;
-            translate: -50% 0;
-            inline-size: 3rem;
-            block-size: 0.375rem;
-            border-radius: var(--p-jtalk-radius-pill);
-            background: var(--p-content-border-color);
-          }
-          .p-drawer.chat-drawer .p-drawer-header {
-            padding: 1.5rem 1.25rem 0.75rem;
-            border-block-end: 1px solid var(--p-content-border-color);
-          }
+        .p-drawer.chat-drawer.p-drawer-bottom {
+          border-start-start-radius: var(--p-jtalk-radius-sheet);
+          border-start-end-radius: var(--p-jtalk-radius-sheet);
         }
       `,
     },
