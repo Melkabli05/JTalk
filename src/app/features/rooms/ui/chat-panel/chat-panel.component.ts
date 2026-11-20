@@ -12,6 +12,7 @@ import {
 import { FormField, FormRoot, form, maxLength, required } from '@angular/forms/signals';
 import { NgOptimizedImage } from '@angular/common';
 import { ButtonDirective } from '@openng/optimus-ui/button';
+import { Card } from '@openng/optimus-ui/card';
 import { Message } from '@openng/optimus-ui/message';
 import { Popover } from '@openng/optimus-ui/popover';
 import { Skeleton } from '@openng/optimus-ui/skeleton';
@@ -50,6 +51,7 @@ const LONG_PRESS_MS = 500;
   selector: 'app-chat-panel',
   imports: [
     ButtonDirective,
+    Card,
     FormField,
     FormRoot,
     Message,

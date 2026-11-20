@@ -15,17 +15,3 @@ textarea {
   font-size: var(--p-jtalk-type-secondary);
   font-variant-numeric: tabular-nums;
 }
-
-// One line to write a message in, not a box to fill: round, fixed in size, and without the count.
-:host(.pill) {
-  textarea {
-    border-radius: var(--p-jtalk-radius-pill);
-    padding-inline: var(--pill-padding-x, 1rem);
-    font-size: inherit;
-    resize: none;
-  }
-
-  .count {
-    display: none;
-  }
-}

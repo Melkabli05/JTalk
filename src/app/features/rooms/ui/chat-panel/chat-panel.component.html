@@ -87,9 +87,6 @@
         @for (comment of comments(); track comment.id) {
           <li
             class="message-item"
-            [class.host]="comment.authorId === hostId()"
-            [class.mine]="comment.authorId === meId()"
-            [class.pinned]="isPinned(comment)"
             (mousedown)="onCommentMouseDown(comment)"
             (touchstart)="onCommentMouseDown(comment)"
             (mouseup)="onCommentMouseUp(comment.id)"
@@ -97,169 +94,184 @@
             (mouseleave)="onCommentMouseLeave(comment.id)"
             (touchcancel)="onCommentMouseLeave(comment.id)"
           >
-            @if (isPinned(comment)) {
-              <div class="pin-badge">
-                <i class="pi pi-bookmark-fill" aria-hidden="true"></i>
-                <span class="cdk-visually-hidden">Pinned</span>
-              </div>
-            }
-            <app-person-avatar size="normal" [member]="personOf(comment.authorId)" />
-            <div class="body">
-              <div class="meta">
-                <div class="who">
-                  <span class="author">{{ nameOf(comment.authorId) }}</span>
-                  @if (comment.authorId === hostId()) {
-                    <span class="badge">Host</span>
-                  }
-                  @if (comment.authorId === meId()) {
-                    <span class="badge">You</span>
-                  }
-                  @if (muteIds().has(comment.authorId)) {
-                    <span class="badge">Muted</span>
-                  }
-                </div>
-                <time class="when" [attr.datetime]="comment.createdAt">{{
-                  timeAgo(comment.createdAt, now())
-                }}</time>
-              </div>
-              <div class="bubble">
-                @if (quoted(comment); as original) {
-                  <p class="quote">
-                    <i class="pi pi-reply" aria-hidden="true"></i>
-                    {{ nameOf(original.authorId) }}: {{ original.content }}
-                  </p>
-                }
-                @if (comment.type === 'CORRECTION' && comment.correctedContent) {
-                  <div class="correction">
-                    <p class="wrong">
-                      <span class="cdk-visually-hidden">Said: </span>{{ comment.content }}
-                    </p>
-                    <p class="right">
-                      <span class="cdk-visually-hidden">Should be: </span
-                      >{{ comment.correctedContent }}
-                    </p>
+            <p-card class="message" [class.pinned]="isPinned(comment)">
+              <div class="row">
+                <app-person-avatar size="normal" [member]="personOf(comment.authorId)" />
+                <div class="body">
+                  <div class="meta">
+                    <div class="who">
+                      <span class="author">{{ nameOf(comment.authorId) }}</span>
+                      @if (comment.authorId === hostId()) {
+                        <p-tag severity="warn" value="Host" />
+                      }
+                      @if (comment.authorId === meId()) {
+                        <p-tag severity="secondary" value="You" />
+                      }
+                      @if (muteIds().has(comment.authorId)) {
+                        <p-tag severity="secondary" value="Muted" />
+                      }
+                      @if (isPinned(comment)) {
+                        <p-tag severity="info" icon="pi pi-bookmark-fill" value="Pinned" />
+                      }
+                    </div>
+                    <time class="when" [attr.datetime]="comment.createdAt">{{
+                      timeAgo(comment.createdAt, now())
+                    }}</time>
                   </div>
-                } @else {
-                  <p class="text">{{ comment.content }}</p>
-                }
-              </div>
-              <div class="actions">
-                @for (chip of chips().get(comment.id) ?? []; track chip.reaction) {
-                  @let chipLabel = `${chip.label}, ${chip.count}`;
-                  <button
-                    type="button"
-                    class="chip"
-                    [class.mine]="chip.mine"
-                    [disabled]="muted()"
-                    [attr.aria-pressed]="chip.mine"
-                    [attr.aria-label]="chipLabel"
-                    (click)="reacted.emit({ commentId: comment.id, reaction: chip.reaction })"
-                  >
-                    <img [ngSrc]="chip.image" width="12" height="12" alt="" />
-                    <span>{{ chip.count }}</span>
-                  </button>
-                }
-                @if (!muted()) {
-                  <button
-                    type="button"
-                    class="add-reaction"
-                    aria-label="Add a reaction"
-                    aria-haspopup="true"
-                    (click)="pick(comment, $event, picker)"
-                  >
-                    +
-                  </button>
-                }
-                @let replyLabel = `Reply to ${nameOf(comment.authorId)}`;
-                <button
-                  type="button"
-                  class="act reply"
-                  [attr.aria-label]="replyLabel"
-                  (click)="reply(comment)"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                  <span>Reply</span>
-                </button>
-                @if (!compact() && comment.type === 'TEXT' && comment.authorId !== meId()) {
-                  @let correctLabel = `Correct ${nameOf(comment.authorId)}`;
-                  <button
-                    type="button"
-                    class="act"
-                    [attr.aria-label]="correctLabel"
-                    [pTooltip]="correctLabel"
-                    tooltipPosition="top"
-                    (click)="reply(comment, true)"
-                  >
-                    <i class="pi pi-pencil" aria-hidden="true"></i>
-                  </button>
-                }
-                @if (isHost() && comment.authorId !== meId()) {
-                  @let deleteLabel = `Delete the comment by ${nameOf(comment.authorId)}`;
-                  <button
-                    type="button"
-                    class="act danger"
-                    [disabled]="moderating()"
-                    [attr.aria-label]="deleteLabel"
-                    [pTooltip]="deleteLabel"
-                    tooltipPosition="top"
-                    (click)="deleted.emit(comment.id)"
-                  >
-                    <i class="pi pi-trash" aria-hidden="true"></i>
-                  </button>
-                  @let pinLabel = isPinned(comment) ? `Unpin this comment` : `Pin this comment`;
-                  <button
-                    type="button"
-                    class="act"
-                    [class.pinned]="isPinned(comment)"
-                    [disabled]="moderating()"
-                    [attr.aria-label]="pinLabel"
-                    [pTooltip]="pinLabel"
-                    tooltipPosition="top"
-                    (click)="togglePin(comment, $event)"
-                  >
-                    <i
-                      class="pi"
-                      [class.pi-bookmark-fill]="isPinned(comment)"
-                      [class.pi-bookmark]="!isPinned(comment)"
-                      aria-hidden="true"
-                    ></i>
-                  </button>
-                  @if (muteIds().has(comment.authorId)) {
-                    @let unmuteLabel = `Unmute ${nameOf(comment.authorId)} in the chat`;
-                    <button
-                      type="button"
-                      class="act"
-                      [disabled]="moderating()"
-                      [attr.aria-label]="unmuteLabel"
-                      [pTooltip]="unmuteLabel"
-                      tooltipPosition="top"
-                      (click)="unmuteRequested.emit(comment.authorId)"
-                    >
-                      <i class="pi pi-microphone" aria-hidden="true"></i>
-                    </button>
-                  } @else {
-                    @let muteLabel = `Mute ${nameOf(comment.authorId)} in the chat`;
-                    <button
-                      type="button"
-                      class="act"
-                      [disabled]="moderating()"
-                      [attr.aria-label]="muteLabel"
-                      [pTooltip]="muteLabel"
-                      tooltipPosition="top"
-                      (click)="muteRequested.emit(comment.authorId)"
-                    >
-                      <i class="pi pi-microphone-slash" aria-hidden="true"></i>
-                    </button>
+                  @if (quoted(comment); as original) {
+                    <p class="quote">
+                      <i class="pi pi-reply" aria-hidden="true"></i>
+                      {{ nameOf(original.authorId) }}: {{ original.content }}
+                    </p>
                   }
-                }
+                  @if (comment.type === 'CORRECTION' && comment.correctedContent) {
+                    <div class="correction">
+                      <p class="wrong">
+                        <span class="cdk-visually-hidden">Said: </span>{{ comment.content }}
+                      </p>
+                      <p class="right">
+                        <span class="cdk-visually-hidden">Should be: </span
+                        >{{ comment.correctedContent }}
+                      </p>
+                    </div>
+                  } @else {
+                    <p class="text">{{ comment.content }}</p>
+                  }
+                  <div class="actions">
+                    @for (chip of chips().get(comment.id) ?? []; track chip.reaction) {
+                      @let chipLabel = `${chip.label}, ${chip.count}`;
+                      <button
+                        pButton
+                        type="button"
+                        size="small"
+                        severity="secondary"
+                        [rounded]="true"
+                        [outlined]="chip.mine"
+                        [disabled]="muted()"
+                        [attr.aria-pressed]="chip.mine"
+                        [attr.aria-label]="chipLabel"
+                        (click)="reacted.emit({ commentId: comment.id, reaction: chip.reaction })"
+                      >
+                        <img [ngSrc]="chip.image" width="16" height="16" alt="" />
+                        {{ chip.count }}
+                      </button>
+                    }
+                    @if (!muted()) {
+                      @let addLabel = 'Add a reaction';
+                      <button
+                        pButton
+                        type="button"
+                        size="small"
+                        icon="pi pi-plus"
+                        severity="secondary"
+                        [text]="true"
+                        [rounded]="true"
+                        aria-haspopup="true"
+                        [attr.aria-label]="addLabel"
+                        [pTooltip]="addLabel"
+                        tooltipPosition="top"
+                        (click)="pick(comment, $event, picker)"
+                      ></button>
+                    }
+                    @let replyLabel = `Reply to ${nameOf(comment.authorId)}`;
+                    <button
+                      pButton
+                      type="button"
+                      class="reply"
+                      size="small"
+                      icon="pi pi-reply"
+                      label="Reply"
+                      severity="secondary"
+                      [text]="true"
+                      [rounded]="true"
+                      [attr.aria-label]="replyLabel"
+                      (click)="reply(comment)"
+                    ></button>
+                    @if (!compact() && comment.type === 'TEXT' && comment.authorId !== meId()) {
+                      @let correctLabel = `Correct ${nameOf(comment.authorId)}`;
+                      <button
+                        pButton
+                        type="button"
+                        size="small"
+                        icon="pi pi-pencil"
+                        severity="secondary"
+                        [text]="true"
+                        [rounded]="true"
+                        [attr.aria-label]="correctLabel"
+                        [pTooltip]="correctLabel"
+                        tooltipPosition="top"
+                        (click)="reply(comment, true)"
+                      ></button>
+                    }
+                    @if (isHost() && comment.authorId !== meId()) {
+                      @let deleteLabel = `Delete the comment by ${nameOf(comment.authorId)}`;
+                      <button
+                        pButton
+                        type="button"
+                        size="small"
+                        icon="pi pi-trash"
+                        severity="danger"
+                        [text]="true"
+                        [rounded]="true"
+                        [disabled]="moderating()"
+                        [attr.aria-label]="deleteLabel"
+                        [pTooltip]="deleteLabel"
+                        tooltipPosition="top"
+                        (click)="deleted.emit(comment.id)"
+                      ></button>
+                      @let pinLabel = isPinned(comment) ? 'Unpin this comment' : 'Pin this comment';
+                      <button
+                        pButton
+                        type="button"
+                        size="small"
+                        severity="secondary"
+                        [icon]="isPinned(comment) ? 'pi pi-bookmark-fill' : 'pi pi-bookmark'"
+                        [text]="true"
+                        [rounded]="true"
+                        [disabled]="moderating()"
+                        [attr.aria-label]="pinLabel"
+                        [pTooltip]="pinLabel"
+                        tooltipPosition="top"
+                        (click)="togglePin(comment, $event)"
+                      ></button>
+                      @if (muteIds().has(comment.authorId)) {
+                        @let unmuteLabel = `Unmute ${nameOf(comment.authorId)} in the chat`;
+                        <button
+                          pButton
+                          type="button"
+                          size="small"
+                          icon="pi pi-microphone"
+                          severity="secondary"
+                          [text]="true"
+                          [rounded]="true"
+                          [disabled]="moderating()"
+                          [attr.aria-label]="unmuteLabel"
+                          [pTooltip]="unmuteLabel"
+                          tooltipPosition="top"
+                          (click)="unmuteRequested.emit(comment.authorId)"
+                        ></button>
+                      } @else {
+                        @let muteLabel = `Mute ${nameOf(comment.authorId)} in the chat`;
+                        <button
+                          pButton
+                          type="button"
+                          size="small"
+                          icon="pi pi-microphone pi-slashed"
+                          severity="secondary"
+                          [text]="true"
+                          [rounded]="true"
+                          [disabled]="moderating()"
+                          [attr.aria-label]="muteLabel"
+                          [pTooltip]="muteLabel"
+                          tooltipPosition="top"
+                          (click)="muteRequested.emit(comment.authorId)"
+                        ></button>
+                      }
+                    }
+                  </div>
+                </div>
               </div>
-            </div>
+            </p-card>
           </li>
         } @empty {
           <li class="empty">No messages yet. Say hello.</li>
@@ -288,7 +300,7 @@
   </div>
 
   @if (muted()) {
-    <p-message severity="warn" size="small" icon="pi pi-microphone-slash">
+    <p-message severity="warn" size="small" icon="pi pi-microphone pi-slashed">
       The host muted you in the chat. You can still listen and speak.
     </p-message>
   } @else {
@@ -318,7 +330,6 @@
         <app-textarea-field
           label="Message"
           [labelHidden]="true"
-          [pill]="true"
           [placeholder]="correcting() ? 'Write how it should be…' : 'Say something in the room…'"
           [rows]="1"
           [formField]="composerForm.content"

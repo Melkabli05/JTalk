@@ -132,7 +132,7 @@ describe('ChatPanelComponent (presentational)', () => {
 
   describe('reactions to a message', () => {
     const tallies = new Map([['c-1', { counts: { CLAP: 4, FIRE: 2 }, mine: 'FIRE' as const }]]);
-    const chips = () => [...root().querySelectorAll<HTMLButtonElement>('.chip')];
+    const chips = () => [...root().querySelectorAll<HTMLButtonElement>('button[aria-pressed]')];
 
     it('shows what each message was reacted to with, and which is mine', async () => {
       await render({
@@ -146,7 +146,9 @@ describe('ChatPanelComponent (presentational)', () => {
       ]);
       expect(chips().map((chip) => chip.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
       expect(chips().map((chip) => chip.textContent?.trim())).toEqual(['4', '2']);
-      expect(root().querySelectorAll('.message-item')[1].querySelector('.chip')).toBeNull();
+      expect(
+        root().querySelectorAll('.message-item')[1].querySelector('button[aria-pressed]'),
+      ).toBeNull();
     });
 
     it('reacts, or takes it back, by pressing a chip', async () => {
@@ -193,7 +195,7 @@ describe('ChatPanelComponent (presentational)', () => {
     expect(root().querySelector('section.side')).not.toBeNull();
   });
 
-  it('marks the host’s messages and the reader’s own', async () => {
+  it('marks the host’s messages and the reader’s own with a tag', async () => {
     await render({
       hostId: 'b-1',
       comments: [
@@ -203,12 +205,10 @@ describe('ChatPanelComponent (presentational)', () => {
       ],
     });
 
-    const badges = [...root().querySelectorAll('.message-item')].map((item) =>
-      item.querySelector('.badge')?.textContent?.trim(),
+    const tags = [...root().querySelectorAll('.message-item')].map((item) =>
+      item.querySelector('p-tag')?.textContent?.trim(),
     );
-    expect(badges).toEqual(['Host', 'You', undefined]);
-    expect(root().querySelectorAll('.message-item.host')).toHaveLength(1);
-    expect(root().querySelectorAll('.message-item.mine')).toHaveLength(1);
+    expect(tags).toEqual(['Host', 'You', undefined]);
   });
 
   it('is a log, so a screen reader hears new messages politely', async () => {
