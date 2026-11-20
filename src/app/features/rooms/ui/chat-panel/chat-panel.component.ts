@@ -59,6 +59,7 @@ interface TopicModel {
 const NEAR_BOTTOM_PX = 48;
 const CLOCK_MS = 30_000;
 const EXCERPT_LENGTH = 48;
+const COPIED_MS = 900;
 const LONG_PRESS_MS = 500;
 
 @Component({
@@ -119,12 +120,9 @@ export class ChatPanelComponent {
   readonly reacted = output<{ commentId: string; reaction: Reaction }>();
   /** On a phone the actions are a sheet; elsewhere a popover at the message. */
   readonly phone = input(false);
-  /** The language Translate goes into: the reader's. */
-  readonly language = input('en');
   /** The key the shortcut for replying is shown with: ⌘ on a Mac, Ctrl elsewhere. */
   readonly modifier = input('⌘');
   readonly textCopied = output<string>();
-  readonly translateRequested = output<string>();
 
   protected readonly log = viewChild<ElementRef<HTMLElement>>('log');
   protected readonly stuck = signal(true);
@@ -136,6 +134,8 @@ export class ChatPanelComponent {
 
   /** The message whose actions are open in the sheet. */
   protected readonly actionsFor = signal<RoomComment | null>(null);
+  /** Copy text says Copied for a moment, then the actions close: that is all the answer it gives. */
+  protected readonly copied = signal(false);
   protected readonly actions = computed<ActionItem[]>(() => {
     const comment = this.actionsFor();
     return comment === null ? [] : this.menuOf(comment);
@@ -392,15 +392,10 @@ export class ChatPanelComponent {
         command: then(() => this.togglePin(comment)),
       },
       {
-        label: 'Copy text',
-        icon: 'pi pi-copy',
-        command: then(() => this.textCopied.emit(comment.content)),
-      },
-      {
-        label: phone ? 'Translate' : `Translate to ${this.language().toUpperCase()}`,
-        icon: 'pi pi-language',
-        tone: 'info',
-        command: then(() => this.translateRequested.emit(comment.content)),
+        label: this.copied() ? 'Copied' : 'Copy text',
+        icon: this.copied() ? 'pi pi-check' : 'pi pi-copy',
+        tone: this.copied() ? 'brand' : undefined,
+        command: () => this.copyText(comment),
       },
       host && { separator: true },
       host && {
@@ -468,8 +463,17 @@ export class ChatPanelComponent {
   /** The card and the sheet each draw the menu; the one on screen is the one to focus. */
   private readonly menus = viewChildren(Menu);
   private opener: HTMLElement | null = null;
+  private copiedTimer: ReturnType<typeof setTimeout> | undefined;
+
+  private copyText(comment: RoomComment): void {
+    this.textCopied.emit(comment.content);
+    this.copied.set(true);
+    this.copiedTimer = setTimeout(() => this.close(), COPIED_MS);
+  }
 
   private close(): void {
+    clearTimeout(this.copiedTimer);
+    this.copied.set(false);
     this.actionsFor.set(null);
     this.popover()?.hide();
     this.giveFocusBack();

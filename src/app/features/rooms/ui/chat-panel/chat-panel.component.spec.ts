@@ -453,15 +453,10 @@ describe('ChatPanelComponent (presentational)', () => {
         'Correct',
         'Pin to Stage',
         'Copy text',
-        'Translate',
         'Mute participant in room',
         'Delete comment',
       ]);
-      expect(labelsOf(await actionsOf('Mona'))).toEqual([
-        'Reply in thread',
-        'Copy text',
-        'Translate',
-      ]);
+      expect(labelsOf(await actionsOf('Mona'))).toEqual(['Reply in thread', 'Copy text']);
     });
 
     it('asks to delete, mute and unmute', async () => {
@@ -518,23 +513,37 @@ describe('ChatPanelComponent (presentational)', () => {
   it('opens a sheet for a message, titled with the start of it, which Cancel closes', async () => {
     await render({ comments: [comment('c-1', 'b-1', 'x'.repeat(80))] });
     const copied: string[] = [];
-    const translating: string[] = [];
     fixture.componentInstance.textCopied.subscribe((text) => copied.push(text));
-    fixture.componentInstance.translateRequested.subscribe((text) => translating.push(text));
 
     await actionsOf('Bilal');
     expect(document.body.querySelector('.sheet-heading h2')?.textContent).toBe('Comment actions');
     expect(document.body.querySelector('.excerpt')?.textContent).toBe(`“${'x'.repeat(48)}…”`);
 
-    await pick('Bilal', 'Copy text');
-    expect(copied).toEqual(['x'.repeat(80)]);
-    await pick('Bilal', 'Translate');
-    expect(translating).toEqual(['x'.repeat(80)]);
-
     await actionsOf('Bilal');
     document.body
       .querySelector<HTMLButtonElement>('.comment-actions .sheet-footer button')!
       .click();
+    await fixture.whenStable();
+    expect(document.body.querySelector('.comment-actions')).toBeNull();
+  });
+
+  it('says Copied on the item for a moment after Copy text, and then closes, with no word from anywhere else', async () => {
+    await render({ comments: [comment('c-1', 'b-1', 'Copy me')] });
+    const copied: string[] = [];
+    fixture.componentInstance.textCopied.subscribe((text) => copied.push(text));
+
+    await pick('Bilal', 'Copy text');
+    await fixture.whenStable();
+
+    expect(copied).toEqual(['Copy me']);
+    const labels = [
+      ...document.body.querySelectorAll('.comment-actions .p-menu-item-content .action-label'),
+    ].map((label) => label.textContent);
+    expect(labels).toContain('Copied');
+    expect(labels).not.toContain('Copy text');
+    expect(document.body.querySelector('.comment-actions')).not.toBeNull();
+
+    await new Promise((resolve) => setTimeout(resolve, 1100));
     await fixture.whenStable();
     expect(document.body.querySelector('.comment-actions')).toBeNull();
   });
@@ -550,7 +559,6 @@ describe('ChatPanelComponent (presentational)', () => {
       await render({
         phone: false,
         isHost: true,
-        language: 'en',
         comments: [comment('c-1', 'b-1', 'Hello there')],
       });
 
@@ -567,7 +575,6 @@ describe('ChatPanelComponent (presentational)', () => {
         'Correct',
         'Pin to Stage',
         'Copy text',
-        'Translate to EN',
         'Mute Bilal in the chat',
         'Delete comment',
       ]);
@@ -629,12 +636,7 @@ describe('ChatPanelComponent (presentational)', () => {
   it('gives a listener no moderation', async () => {
     await render({ comments: [comment('c-1', 'b-1', 'Hello')] });
 
-    expect(labelsOf(await actionsOf('Bilal'))).toEqual([
-      'Reply in thread',
-      'Correct',
-      'Copy text',
-      'Translate',
-    ]);
+    expect(labelsOf(await actionsOf('Bilal'))).toEqual(['Reply in thread', 'Correct', 'Copy text']);
     expect(button('Reply to Bilal')).toBeDefined();
   });
 });
