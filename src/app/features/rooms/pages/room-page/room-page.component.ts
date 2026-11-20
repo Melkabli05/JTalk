@@ -217,16 +217,6 @@ export default class RoomPageComponent {
       const on = this.facade.audio.micOn();
       untracked(() => this.announceMicrophone(on));
     });
-    effect(() => {
-      if (this.facade.audio.micRefused()) {
-        untracked(() =>
-          this.toast.add({
-            severity: 'warn',
-            summary: 'Your microphone is blocked. Allow it in your browser, then press Unmute.',
-          }),
-        );
-      }
-    });
     this.facade.exited.pipe(takeUntilDestroyed()).subscribe(() => this.leaveBecause());
   }
 
@@ -247,10 +237,7 @@ export default class RoomPageComponent {
 
   protected share(): void {
     const link = new URL(`/rooms/${this.id()}`, this.document.location.origin).href;
-    void this.document.defaultView?.navigator.clipboard.writeText(link).then(
-      () => this.toast.add({ severity: 'success', summary: 'Link copied.' }),
-      () => this.toast.add({ severity: 'warn', summary: 'Could not copy the link.' }),
-    );
+    void this.document.defaultView?.navigator.clipboard.writeText(link);
   }
 
   protected leave(): void {
@@ -311,14 +298,7 @@ export default class RoomPageComponent {
       acceptLabel: 'Block',
       rejectLabel: 'Cancel',
       acceptButtonProps: { severity: 'danger' },
-      accept: () =>
-        this.cards.block(() => {
-          this.selectedId.set(null);
-          this.toast.add({
-            severity: 'success',
-            summary: `${name} is blocked.`,
-          });
-        }, id),
+      accept: () => this.cards.block(() => this.selectedId.set(null), id),
     });
   }
 
@@ -390,10 +370,7 @@ export default class RoomPageComponent {
   }
 
   protected edit(change: RoomEdit): void {
-    this.facade.edit(change, () => {
-      this.editing.set(false);
-      this.toast.add({ severity: 'success', summary: 'The room was updated.' });
-    });
+    this.facade.edit(change, () => this.editing.set(false));
   }
 
   /** Pushed out while looking at the room: back to the hallway. (The person is told why by the facade, wherever they are.) */

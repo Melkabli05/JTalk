@@ -207,11 +207,7 @@ export class RoomFacade {
       : this.chats.react(this.state.roomId(), commentId, reaction);
     request.subscribe({
       next: () => this.chat.chose(commentId, taking ? null : reaction),
-      error: (error: unknown) => {
-        if (httpStatus(error) !== 429) {
-          this.toast.add({ severity: 'warn', summary: 'Could not react to that comment.' });
-        }
-      },
+      error: () => undefined,
     });
   }
 

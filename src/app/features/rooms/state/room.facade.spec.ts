@@ -766,7 +766,7 @@ describe('RoomFacade', () => {
         expect(reactions()).toEqual({ counts: { FIRE: 1 }, mine: 'FIRE' });
       });
 
-      it('says nothing when it is only too fast, and says so when it is refused', async () => {
+      it('says nothing when it is too fast or refused, and shows nothing', async () => {
         await enter();
 
         failing[`PUT ${BASE}/comments/c-1/reaction`] = 429;
@@ -777,9 +777,7 @@ describe('RoomFacade', () => {
         failing[`PUT ${BASE}/comments/c-1/reaction`] = 403;
         facade.reactToComment('c-1', 'CLAP');
         await settle();
-        expect(toast.add).toHaveBeenCalledExactlyOnceWith(
-          expect.objectContaining({ summary: 'Could not react to that comment.' }),
-        );
+        expect(toast.add).not.toHaveBeenCalled();
         expect(reactions()).toBeUndefined();
       });
     });

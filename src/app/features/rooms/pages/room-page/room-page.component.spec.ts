@@ -248,7 +248,7 @@ describe('RoomPageComponent (container)', () => {
     ).toEqual(['Share']);
   });
 
-  it('copies the address of the room when Share is pressed, and says so', async () => {
+  it('copies the address of the room when Share is pressed, without a toast', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
     const toast = vi.spyOn(TestBed.inject(MessageService), 'add');
@@ -258,7 +258,7 @@ describe('RoomPageComponent (container)', () => {
     await settle();
 
     expect(writeText).toHaveBeenCalledWith(`${location.origin}/rooms/r-1`);
-    expect(toast).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Link copied.' }));
+    expect(toast).not.toHaveBeenCalled();
   });
 
   it('moves focus to the room title once it has opened, so screen readers announce it', async () => {
@@ -981,17 +981,16 @@ describe('RoomPageComponent (container)', () => {
       expect(root().querySelector('h1')?.textContent).toBe('Spanish for beginners');
     });
 
-    it('warns, and tells them what to do, when the browser refuses the microphone', async () => {
+    it('tells them in the dock, not in a toast, when the browser refuses the microphone', async () => {
       server.session = speakerSession();
       server.stage = { speakers: ['h-1', 'm-1'], handRaiseQueue: [] };
       link.microphoneFailure = new Error('NotAllowedError');
       const toast = vi.spyOn(TestBed.inject(MessageService), 'add');
       await open();
 
-      expect(toast).toHaveBeenCalledWith(
-        expect.objectContaining({
-          summary: 'Your microphone is blocked. Allow it in your browser, then press Unmute.',
-        }),
+      expect(toast).not.toHaveBeenCalled();
+      expect(root().querySelector('app-room-controls')?.textContent).toContain(
+        'Your microphone is blocked.',
       );
       expect(controlLabels()).toContain('Unmute');
     });

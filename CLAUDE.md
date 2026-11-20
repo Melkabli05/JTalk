@@ -277,3 +277,5 @@ The room page ends with **Live Discussion** (`app-chat-panel` with `compact`): i
 
 **Keyboard in the actions** (card and sheet): when they open, focus goes to the menu (`focusActions()`, the menu on screen: both containers draw one), so the arrows move between the actions and Enter does one; Escape closes, and closing, by an action or not, puts focus back on the message's `⋯` (`giveFocusBack()`). The shortcut shown is `⌘R` on a Mac and `Ctrl+R` elsewhere (the page's `modifier`); both Command-R and Control-R work while the card is open.
 
+**The room shows almost no toasts**: an action is its own answer (the form closes after `Edit`, the person's card closes after `Block`, `Copy text` says `Copied`, a reaction appears when kept), so there is no toast for sharing the link, updating the room, blocking, a refused reaction or a blocked microphone (the dock says that one itself). The only ones left are what happens *to* the person and takes them away from the page: removed from the room, the room ended (`EXIT_MESSAGES` in `RoomFacade`).
+
