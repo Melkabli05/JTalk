@@ -452,10 +452,12 @@ export class ChatPanelComponent {
   protected focusActions(): void {
     // After the menu has drawn itself inside the card or the sheet.
     setTimeout(() => {
-      const lists = this.menus().map(
-        (menu) => menu.listViewChild()?.nativeElement as HTMLElement | undefined,
+      const shown = this.menus().find(
+        (menu) =>
+          (menu.listViewChild()?.nativeElement as HTMLElement | undefined)?.getClientRects().length,
       );
-      lists.find((list) => (list?.getClientRects().length ?? 0) > 0)?.focus();
+      (shown?.listViewChild()?.nativeElement as HTMLElement | undefined)?.focus();
+      shown?.changeFocusedOptionIndex(0);
     });
   }
 

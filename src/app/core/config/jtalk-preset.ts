@@ -423,6 +423,36 @@ export const JtalkPreset = definePreset(Aura, {
         .p-menu:not(.p-menu-overlay) .p-menu-item-link-active .p-menu-item-icon {
           color: ${dt('primary.color')};
         }
+        /* A message's actions: a list that breathes, rows with rounded corners, a tonal hover and, for the one the keyboard is on, a Forest tint with a ring that shows. */
+        .actions-menu .p-menu {
+          padding: 0.25rem 0.5rem;
+        }
+        .actions-menu .p-menu-list {
+          gap: 0.125rem;
+        }
+        .actions-menu .p-menu-item-content {
+          padding-inline: 0.5rem;
+          border-radius: ${dt('jtalk.radius.card')};
+          transition: background-color ${dt('jtalk.motion.fast')} ease;
+        }
+        .actions-menu .p-menu-item:not([data-p-disabled='true']) .p-menu-item-content:hover {
+          background: ${dt('content.hover.background')};
+        }
+        .actions-menu .p-menu-item:not([data-p-disabled='true']) .p-menu-item-content:active {
+          background: color-mix(in srgb, ${dt('primary.color')} 18%, transparent);
+        }
+        .actions-menu .p-menu-item[data-p-focused='true'] .p-menu-item-content,
+        .actions-menu .p-menu-item.p-focus .p-menu-item-content {
+          background: color-mix(in srgb, ${dt('primary.color')} 12%, transparent);
+          outline: 2px solid ${dt('primary.color')};
+          outline-offset: -2px;
+        }
+        .actions-menu .p-menu-item[data-p-disabled='true'] {
+          opacity: 0.5;
+        }
+        .actions-menu .p-menu-separator {
+          margin: 0.375rem 0.5rem;
+        }
         .p-menu-item-link.danger-item,
         .p-menu-item-link.danger-item .p-menu-item-icon {
           color: var(--p-red-500);
