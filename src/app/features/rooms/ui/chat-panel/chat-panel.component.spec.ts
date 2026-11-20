@@ -35,9 +35,16 @@ describe('ChatPanelComponent (presentational)', () => {
   const actionsOf = async (name: string) => {
     button(`Actions for ${name}`)!.click();
     await fixture.whenStable();
-    return [...document.body.querySelectorAll<HTMLElement>('.p-menu-item-link')];
+    return [
+      ...document.body.querySelectorAll<HTMLElement>('.comment-actions .p-menu-item-content'),
+    ];
   };
-  const labelsOf = (items: HTMLElement[]) => items.map((item) => item.textContent?.trim());
+  const labelsOf = (items: HTMLElement[]) =>
+    items.map((item) => item.querySelector('.action-label')?.textContent?.trim());
+  const pick = async (name: string, label: string) =>
+    (await actionsOf(name))
+      .find((item) => item.querySelector('.action-label')?.textContent === label)!
+      .click();
   const field = (label: string) =>
     [...root().querySelectorAll('app-textarea-field')]
       .find((f) => f.querySelector('label')?.textContent?.trim() === label)
@@ -284,9 +291,8 @@ describe('ChatPanelComponent (presentational)', () => {
     });
     const sent: CommentDraft[] = [];
     fixture.componentInstance.submitted.subscribe((draft) => sent.push(draft));
-    expect(button('Actions for Mona')).toBeUndefined();
-
-    (await actionsOf('Bilal')).find((item) => item.textContent?.includes('Correct Bilal'))!.click();
+    expect(labelsOf(await actionsOf('Mona'))).not.toContain('Correct');
+    await pick('Bilal', 'Correct');
     await fixture.whenStable();
     expect(root().querySelector('.replying')?.textContent).toContain('Correcting Bilal');
 
@@ -312,7 +318,7 @@ describe('ChatPanelComponent (presentational)', () => {
       ],
     });
 
-    expect(button('Actions for Bilal')).toBeUndefined();
+    expect(labelsOf(await actionsOf('Bilal'))).not.toContain('Correct');
   });
 
   describe('writing from the keyboard', () => {
@@ -441,16 +447,15 @@ describe('ChatPanelComponent (presentational)', () => {
     it('can pin, mute and delete what others wrote, and not what they wrote themselves', async () => {
       await render({ isHost: true, comments });
 
-      expect(labelsOf(await actionsOf('Bilal'))).toEqual(
-        [
-          'Correct Bilal',
-          'Pin this comment',
-          'Mute Bilal in the chat',
-          undefined,
-          'Delete the comment by Bilal',
-        ].filter((label) => label !== undefined),
-      );
-      expect(button('Actions for Mona')).toBeUndefined();
+      expect(labelsOf(await actionsOf('Bilal'))).toEqual([
+        'Reply in thread',
+        'Correct',
+        'Pin this comment',
+        'Copy text',
+        'Mute participant in room',
+        'Delete comment',
+      ]);
+      expect(labelsOf(await actionsOf('Mona'))).toEqual(['Reply in thread', 'Copy text']);
     });
 
     it('asks to delete, mute and unmute', async () => {
@@ -459,14 +464,12 @@ describe('ChatPanelComponent (presentational)', () => {
       fixture.componentInstance.deleted.subscribe((id) => asked.push(`delete ${id}`));
       fixture.componentInstance.muteRequested.subscribe((id) => asked.push(`mute ${id}`));
       fixture.componentInstance.unmuteRequested.subscribe((id) => asked.push(`unmute ${id}`));
-      const choose = async (label: string) =>
-        (await actionsOf('Bilal')).find((item) => item.textContent?.includes(label))!.click();
 
-      await choose('Delete the comment by Bilal');
-      await choose('Mute Bilal in the chat');
+      await pick('Bilal', 'Delete comment');
+      await pick('Bilal', 'Mute participant in room');
       fixture.componentRef.setInput('mutedUsers', ['b-1']);
       await fixture.whenStable();
-      await choose('Unmute Bilal in the chat');
+      await pick('Bilal', 'Unmute participant in room');
 
       expect(asked).toEqual(['delete c-1', 'mute b-1', 'unmute b-1']);
       expect(root().textContent).toContain('Muted');
@@ -506,10 +509,30 @@ describe('ChatPanelComponent (presentational)', () => {
     expect(scroll).toHaveBeenCalled();
   });
 
+  it('opens a sheet for a message, titled with the start of it, which Cancel closes', async () => {
+    await render({ comments: [comment('c-1', 'b-1', 'x'.repeat(80))] });
+    const copied: string[] = [];
+    fixture.componentInstance.textCopied.subscribe((text) => copied.push(text));
+
+    await actionsOf('Bilal');
+    expect(document.body.querySelector('.sheet-heading h2')?.textContent).toBe('Comment actions');
+    expect(document.body.querySelector('.excerpt')?.textContent).toBe(`“${'x'.repeat(48)}…”`);
+
+    await pick('Bilal', 'Copy text');
+    expect(copied).toEqual(['x'.repeat(80)]);
+
+    await actionsOf('Bilal');
+    document.body
+      .querySelector<HTMLButtonElement>('.comment-actions .sheet-footer button')!
+      .click();
+    await fixture.whenStable();
+    expect(document.body.querySelector('.comment-actions')).toBeNull();
+  });
+
   it('gives a listener no moderation', async () => {
     await render({ comments: [comment('c-1', 'b-1', 'Hello')] });
 
-    expect(labelsOf(await actionsOf('Bilal'))).toEqual(['Correct Bilal']);
+    expect(labelsOf(await actionsOf('Bilal'))).toEqual(['Reply in thread', 'Correct', 'Copy text']);
     expect(button('Reply to Bilal')).toBeDefined();
   });
 });

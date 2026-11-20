@@ -116,23 +116,21 @@
                     <time class="when" [attr.datetime]="comment.createdAt">{{
                       timeAgo(comment.createdAt, now())
                     }}</time>
-                    @if (hasMenu(comment)) {
-                      @let menuLabel = `Actions for ${nameOf(comment.authorId)}`;
-                      <button
-                        pButton
-                        type="button"
-                        size="small"
-                        icon="pi pi-ellipsis-h"
-                        severity="secondary"
-                        [text]="true"
-                        [rounded]="true"
-                        aria-haspopup="menu"
-                        [attr.aria-label]="menuLabel"
-                        [pTooltip]="menuLabel"
-                        tooltipPosition="top"
-                        (click)="openMenu(comment, $event, menu)"
-                      ></button>
-                    }
+                    @let menuLabel = `Actions for ${nameOf(comment.authorId)}`;
+                    <button
+                      pButton
+                      type="button"
+                      size="small"
+                      icon="pi pi-ellipsis-h"
+                      severity="secondary"
+                      [text]="true"
+                      [rounded]="true"
+                      aria-haspopup="dialog"
+                      [attr.aria-label]="menuLabel"
+                      [pTooltip]="menuLabel"
+                      tooltipPosition="top"
+                      (click)="actionsFor.set(comment)"
+                    ></button>
                   </div>
                   @if (quoted(comment); as original) {
                     <p class="quote">
@@ -303,4 +301,45 @@
   <app-reaction-picker (chosen)="choose($event, picker)" />
 </p-popover>
 
-<p-menu #menu [popup]="true" appendTo="body" [model]="actions()" />
+<p-drawer
+  position="bottom"
+  styleClass="comment-actions"
+  appendTo="body"
+  [style]="{ height: 'auto', maxHeight: '90dvh' }"
+  ariaCloseLabel="Close"
+  [visible]="actionsFor() !== null"
+  [modal]="true"
+  [dismissible]="true"
+  (visibleChange)="$event || actionsFor.set(null)"
+>
+  <ng-template #header>
+    @if (actionsFor(); as comment) {
+      <div class="sheet-heading">
+        <h2>Comment actions</h2>
+        <p class="excerpt">“{{ excerpt(comment) }}”</p>
+      </div>
+    }
+  </ng-template>
+  <p-menu class="sheet-menu" [model]="actions()" ariaLabel="Comment actions">
+    <ng-template #item let-item>
+      <span class="action" [class.danger]="item.linkClass === 'danger-item'">
+        <p-avatar [icon]="item.icon" shape="circle" aria-hidden="true" />
+        <span class="action-label">{{ item.label }}</span>
+        @if (item.badge) {
+          <p-tag severity="warn" [value]="item.badge" />
+        }
+      </span>
+    </ng-template>
+  </p-menu>
+  <div class="sheet-footer">
+    <button
+      pButton
+      type="button"
+      label="Cancel"
+      severity="secondary"
+      [rounded]="true"
+      [fluid]="true"
+      (click)="actionsFor.set(null)"
+    ></button>
+  </div>
+</p-drawer>

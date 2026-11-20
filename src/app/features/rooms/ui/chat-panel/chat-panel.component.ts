@@ -14,6 +14,8 @@ import { NgOptimizedImage } from '@angular/common';
 import { ButtonDirective } from '@openng/optimus-ui/button';
 import { Card } from '@openng/optimus-ui/card';
 import { Divider } from '@openng/optimus-ui/divider';
+import { Avatar } from '@openng/optimus-ui/avatar';
+import { Drawer } from '@openng/optimus-ui/drawer';
 import { Menu } from '@openng/optimus-ui/menu';
 import type { MenuItem } from '@openng/optimus-ui/api';
 import { Message } from '@openng/optimus-ui/message';
@@ -48,14 +50,17 @@ interface TopicModel {
 
 const NEAR_BOTTOM_PX = 48;
 const CLOCK_MS = 30_000;
+const EXCERPT_LENGTH = 48;
 const LONG_PRESS_MS = 500;
 
 @Component({
   selector: 'app-chat-panel',
   imports: [
     ButtonDirective,
+    Avatar,
     Card,
     Divider,
+    Drawer,
     Menu,
     FormField,
     FormRoot,
@@ -103,6 +108,7 @@ export class ChatPanelComponent {
   readonly retry = output<void>();
   readonly expand = output<void>();
   readonly reacted = output<{ commentId: string; reaction: Reaction }>();
+  readonly textCopied = output<string>();
 
   protected readonly log = viewChild<ElementRef<HTMLElement>>('log');
   protected readonly stuck = signal(true);
@@ -112,7 +118,12 @@ export class ChatPanelComponent {
   protected readonly topicDraft = signal<TopicModel>({ text: '' });
   private longPressTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-  protected readonly actions = signal<MenuItem[]>([]);
+  /** The message whose actions are open in the sheet. */
+  protected readonly actionsFor = signal<RoomComment | null>(null);
+  protected readonly actions = computed(() => {
+    const comment = this.actionsFor();
+    return comment === null ? [] : this.menuOf(comment);
+  });
   protected readonly replies = computed(() => {
     const answers = new Map<string, RoomComment[]>();
     for (const comment of this.comments()) {
@@ -325,57 +336,70 @@ export class ChatPanelComponent {
     this.togglePin(comment);
   }
 
-  /** What can be done to this message from its ⋯ menu: correct it, and for the host pin, mute and delete. */
+  /**
+   * What can be done to a message, in the order of the owner's picture: reply, correct and pin (the host), copy, then (the host) mute and
+   * delete. Choosing one closes the sheet.
+   */
   protected menuOf(comment: RoomComment): MenuItem[] {
-    const name = this.nameOf(comment.authorId);
-    const items: MenuItem[] = [];
     const others = comment.authorId !== this.meId();
-    if (!this.compact() && comment.type === 'TEXT' && others) {
-      items.push({
-        label: `Correct ${name}`,
-        icon: 'pi pi-pencil',
-        command: () => this.reply(comment, true),
-      });
-    }
-    if (this.isHost() && others) {
-      const busy = this.moderating();
-      const muted = this.muteIds().has(comment.authorId);
-      items.push(
-        {
-          label: this.isPinned(comment) ? 'Unpin this comment' : 'Pin this comment',
-          icon: this.isPinned(comment) ? 'pi pi-bookmark-fill' : 'pi pi-bookmark',
-          disabled: busy,
-          command: () => this.togglePin(comment),
+    const host = this.isHost() && others;
+    const busy = this.moderating();
+    const muted = this.muteIds().has(comment.authorId);
+    const then = (action: () => void) => () => {
+      this.actionsFor.set(null);
+      action();
+    };
+    const items: (MenuItem | false)[] = [
+      {
+        label: 'Reply in thread',
+        icon: 'pi pi-reply',
+        command: then(() => this.reply(comment)),
+      },
+      !this.compact() &&
+        comment.type === 'TEXT' &&
+        others && {
+          label: 'Correct',
+          icon: 'pi pi-pencil',
+          command: then(() => this.reply(comment, true)),
         },
-        {
-          label: muted ? `Unmute ${name} in the chat` : `Mute ${name} in the chat`,
-          icon: muted ? 'pi pi-microphone' : 'pi pi-microphone pi-slashed',
-          disabled: busy,
-          command: () =>
-            muted
-              ? this.unmuteRequested.emit(comment.authorId)
-              : this.muteRequested.emit(comment.authorId),
-        },
-        { separator: true },
-        {
-          label: `Delete the comment by ${name}`,
-          icon: 'pi pi-trash',
-          linkClass: 'danger-item',
-          disabled: busy,
-          command: () => this.deleted.emit(comment.id),
-        },
-      );
-    }
-    return items;
+      host && {
+        label: this.isPinned(comment) ? 'Unpin this comment' : 'Pin this comment',
+        icon: this.isPinned(comment) ? 'pi pi-bookmark-fill' : 'pi pi-bookmark',
+        badge: 'Host',
+        disabled: busy,
+        command: then(() => this.togglePin(comment)),
+      },
+      {
+        label: 'Copy text',
+        icon: 'pi pi-copy',
+        command: then(() => this.textCopied.emit(comment.content)),
+      },
+      host && { separator: true },
+      host && {
+        label: muted ? 'Unmute participant in room' : 'Mute participant in room',
+        icon: muted ? 'pi pi-microphone' : 'pi pi-microphone pi-slashed',
+        disabled: busy,
+        command: then(() =>
+          muted
+            ? this.unmuteRequested.emit(comment.authorId)
+            : this.muteRequested.emit(comment.authorId),
+        ),
+      },
+      host && {
+        label: 'Delete comment',
+        icon: 'pi pi-trash',
+        linkClass: 'danger-item',
+        disabled: busy,
+        command: then(() => this.deleted.emit(comment.id)),
+      },
+    ];
+    return items.filter((item): item is MenuItem => item !== false);
   }
 
-  protected hasMenu(comment: RoomComment): boolean {
-    return this.menuOf(comment).length > 0;
-  }
-
-  protected openMenu(comment: RoomComment, event: Event, menu: Menu): void {
-    this.actions.set(this.menuOf(comment));
-    menu.toggle(event);
+  protected excerpt(comment: RoomComment): string {
+    return comment.content.length > EXCERPT_LENGTH
+      ? `${comment.content.slice(0, EXCERPT_LENGTH)}…`
+      : comment.content;
   }
 
   protected repliesLabel(count: number): string {

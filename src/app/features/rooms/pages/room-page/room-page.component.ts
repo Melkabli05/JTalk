@@ -236,6 +236,13 @@ export default class RoomPageComponent {
     this.chat.watch(open);
   }
 
+  protected copyText(text: string): void {
+    void this.document.defaultView?.navigator.clipboard.writeText(text).then(
+      () => this.toast.add({ severity: 'success', summary: 'Copied.' }),
+      () => this.toast.add({ severity: 'warn', summary: 'Could not copy the text.' }),
+    );
+  }
+
   protected share(): void {
     const link = new URL(`/rooms/${this.id()}`, this.document.location.origin).href;
     void this.document.defaultView?.navigator.clipboard.writeText(link).then(

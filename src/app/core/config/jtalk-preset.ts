@@ -478,7 +478,8 @@ export const JtalkPreset = definePreset(Aura, {
           flex-direction: column;
           min-block-size: 0;
         }
-        .p-drawer.chat-drawer.p-drawer-bottom {
+        .p-drawer.chat-drawer.p-drawer-bottom,
+        .p-drawer.comment-actions.p-drawer-bottom {
           border-start-start-radius: var(--p-jtalk-radius-sheet);
           border-start-end-radius: var(--p-jtalk-radius-sheet);
         }

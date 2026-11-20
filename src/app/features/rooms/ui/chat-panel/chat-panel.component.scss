@@ -219,3 +219,39 @@ button.add-reaction {
     background: var(--p-content-background);
   }
 }
+
+// The sheet of a message's actions: its title and the start of the message, the actions each with a round icon, and a Cancel.
+.sheet-heading h2 {
+  margin: 0;
+  font-size: var(--p-jtalk-type-card);
+}
+
+.excerpt {
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--p-jtalk-type-secondary);
+}
+
+.action {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.75rem;
+
+  &.danger {
+    color: var(--p-jtalk-danger);
+  }
+
+  p-tag {
+    margin-inline-start: auto;
+  }
+}
+
+.sheet-menu {
+  display: block;
+  padding-inline: 1rem;
+}
+
+.sheet-footer {
+  padding: 0.75rem 1rem 1rem;
+}
