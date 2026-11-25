@@ -171,6 +171,10 @@ export class VoiceRoomApi {
     return this.mutate('DELETE', roomId, `comments/${encodeURIComponent(commentId)}/pin`);
   }
 
+  transferHost(roomId: string, toUserId: string): Promise<void> {
+    return this.mutate('POST', roomId, 'transfer-host', { toUserId });
+  }
+
   sendReaction(roomId: string, reaction: BackendReaction): Promise<void> {
     return this.mutate('POST', roomId, 'reactions', { reaction });
   }

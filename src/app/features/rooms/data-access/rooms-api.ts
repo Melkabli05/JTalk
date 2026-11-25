@@ -19,13 +19,20 @@ export class RoomsApi {
   private readonly http = inject(HttpClient);
   private readonly base = `${inject(API_BASE_URL)}/v1/voice-rooms`;
 
-  listRoomsResource(enabled: () => boolean) {
+  listRoomsResource(enabled: () => boolean, targetLanguage?: () => string | undefined) {
     return httpResource(
-      () => enabled() ? {
-        url: this.base,
-        params: { size: ROOMS_LIST_PAGE_SIZE },
-        transferCache: false,
-      } : undefined,
+      () => {
+        if (!enabled()) return undefined;
+        const lang = targetLanguage?.();
+        return {
+          url: this.base,
+          params: {
+            size: ROOMS_LIST_PAGE_SIZE,
+            ...(lang ? { targetLanguage: lang } : {}),
+          },
+          transferCache: false,
+        };
+      },
       { parse: parseRoomList },
     );
   }

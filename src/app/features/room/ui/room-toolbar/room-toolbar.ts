@@ -43,8 +43,6 @@ export class RoomToolbar {
   readonly findPeople = output<void>();
   readonly openEditRoom = output<void>();
   readonly openEndRoom = output<void>();
-  readonly logOut = output<void>();
-  readonly leaveQuietly = output<void>();
   readonly approveRequest = output<string>();
   readonly toggleNoiseIsolation = output<void>();
   readonly selectAudioDevice = output<string>();

@@ -173,6 +173,16 @@
 
         <button
           mat-menu-item
+          type="button"
+          (click)="speakerAction.emit({ action: 'transfer-host', speaker })"
+        >
+          <mat-icon>swap_horiz</mat-icon>
+          <span>Transfer host</span>
+          <span class="ca-chip-inline">Host</span>
+        </button>
+
+        <button
+          mat-menu-item
           class="menu-item-danger"
           type="button"
           (click)="speakerAction.emit({ action: 'remove', speaker })"

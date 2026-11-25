@@ -377,6 +377,13 @@ export class RoomStageStore {
     );
   }
 
+  transferHost(targetUserId: string): Promise<ActionFeedback> {
+    return this.runRoomCommand(
+      (id) => this.voiceRoomApi.transferHost(id, targetUserId),
+      'Could not transfer host role.',
+    );
+  }
+
   triggerStageReaction(reaction: BackendReaction): Promise<ActionFeedback> {
     return this.runRoomCommand(
       (id) => this.voiceRoomApi.sendReaction(id, reaction),

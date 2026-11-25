@@ -74,6 +74,10 @@ export class RoomsStore {
 
   private readonly listResource = this.roomsApi.listRoomsResource(
     () => this.canFetch() && this.listRequest() !== null,
+    () => {
+      const f = this.selectedFilter();
+      return f === 'all' ? undefined : f;
+    },
   );
 
   // Bridge external ngx-sse-client Observable via rxResource so teardown is automatic.

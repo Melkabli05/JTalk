@@ -181,22 +181,8 @@
             <mat-icon>power_settings_new</mat-icon>
             <span>End room for everyone</span>
           </button>
-          <button mat-menu-item type="button" (click)="leaveQuietly.emit()">
-            <mat-icon>logout</mat-icon>
-            <span>Leave room</span>
-          </button>
         </mat-menu>
       }
-      <button
-        matIconButton
-        class="room-header-icon-btn"
-        type="button"
-        aria-label="Log out"
-        matTooltip="Log out"
-        (click)="logOut.emit()"
-      >
-        <mat-icon>logout</mat-icon>
-      </button>
     </div>
   </div>
 

@@ -157,6 +157,16 @@ export class RoomPage {
         }
       },
     });
+
+    // Auto-redirect to rooms list when the room has ended (host closed it or user was removed)
+    effect(() => {
+      const err = this.roomStore.roomError();
+      if (err) {
+        untracked(() => {
+          void this.router.navigate(['/rooms']);
+        });
+      }
+    });
   }
 
   navigateTo(path: string): void {
@@ -287,6 +297,13 @@ export class RoomPage {
           `${speaker.name} removed from the room.`,
         );
         return;
+      case 'transfer-host':
+        this.handleFeedback(
+          roomId,
+          await this.stageStore.transferHost(speaker.id),
+          `Host role transferred to ${speaker.name}.`,
+        );
+        return;
       default:
         return;
     }
@@ -294,11 +311,9 @@ export class RoomPage {
 
   async onToggleMute(): Promise<void> {
     const roomId = this.id();
-    const wasMuted = this.roomStore.muted();
     this.handleFeedback(
       roomId,
       await this.roomStore.toggleSelfMic(),
-      wasMuted ? 'Microphone on.' : 'Muted.',
     );
   }
 

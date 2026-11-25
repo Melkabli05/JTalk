@@ -18,7 +18,8 @@ export type SpeakerMenuAction =
   | 'mute'
   | 'audience'
   | 'leave-stage'
-  | 'remove';
+  | 'remove'
+  | 'transfer-host';
 
 @Component({
   selector: 'app-room-stage',
