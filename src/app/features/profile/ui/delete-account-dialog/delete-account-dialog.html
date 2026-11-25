@@ -1,0 +1,31 @@
+<h2 mat-dialog-title id="deleteModalTitle">Delete your account?</h2>
+<mat-dialog-content>
+  <p>Deletes your profile and data. Can't be undone.</p>
+  <div class="dialog-form-stack">
+    <mat-form-field class="full-width">
+      <mat-label>Type DELETE to confirm</mat-label>
+      <input
+        matInput
+        id="deleteConfirmInput"
+        type="text"
+        autocomplete="off"
+        placeholder="DELETE"
+        [formField]="confirmField"
+        cdkFocusInitial
+      />
+    </mat-form-field>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button matButton="text" type="button" mat-dialog-close>Cancel</button>
+  <button
+    matButton="filled"
+    class="btn-danger-filled"
+    type="button"
+    id="confirmDeleteProfile"
+    [disabled]="!canDelete()"
+    (click)="onConfirm()"
+  >
+    Delete your account
+  </button>
+</mat-dialog-actions>

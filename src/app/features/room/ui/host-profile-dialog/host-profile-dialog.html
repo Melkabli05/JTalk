@@ -1,0 +1,90 @@
+@let preview = previewData();
+<div class="host-profile-dialog">
+  <div class="hp-top">
+    <p class="hp-status">
+      <span class="hp-dot" aria-hidden="true"></span>
+      <span id="hostProfileStatus">{{ preview.status }}</span>
+    </p>
+    @if (data.isYou) {
+    <button
+      matButton="tonal"
+      class="hp-view-btn"
+      type="button"
+      id="hostProfileView"
+      [mat-dialog-close]="'view-profile'"
+    >
+      <mat-icon aria-hidden="true">person</mat-icon>
+      View profile
+    </button>
+    }
+    <button
+      matIconButton
+      class="dialog-close-btn"
+      type="button"
+      aria-label="Close profile preview"
+      mat-dialog-close
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-divider class="hp-divider" />
+
+  <div class="hp-body">
+    <div class="hp-avatar-wrap">
+      <div
+        class="hp-avatar"
+        id="hostProfileAvatar"
+        [class.is-initial]="!preview.avatarUrl"
+      >
+        @if (preview.avatarUrl; as url) {
+          <app-avatar-art avatarId="own" [imageUrl]="url" />
+        } @else {
+          {{ preview.initial }}
+        }
+      </div>
+      <span
+        class="hp-mic"
+        id="hostProfileMic"
+        [hidden]="data.target.kind === 'listener'"
+        [class.is-muted]="data.target.muted"
+        aria-hidden="true"
+      >
+        <mat-icon class="icon-20">{{ data.target.muted ? 'mic_off' : 'mic' }}</mat-icon>
+      </span>
+    </div>
+
+    <div class="hp-id">
+      <h2 class="hp-name" id="hostProfileName">{{ preview.name }}</h2>
+      <p class="hp-meta" id="hostProfileMeta">{{ preview.meta }}</p>
+    </div>
+  </div>
+
+  <mat-divider class="hp-divider" />
+
+  <div class="hp-stats" id="hostProfileStats">
+    <span class="hp-stat">
+      <b>{{ data.stats.followerCount }}</b>
+      <span class="hp-stat-label">Followers</span>
+    </span>
+    <span class="hp-stat">
+      <b>{{ data.stats.followingCount }}</b>
+      <span class="hp-stat-label">Following</span>
+    </span>
+  </div>
+
+  <div class="hp-langs">
+    <mat-icon class="icon-20" aria-hidden="true">translate</mat-icon>
+    @for (lang of preview.langs; track lang.name) {
+      <span class="hp-lang">
+        @if (lang.flag) {
+          <span aria-hidden="true">{{ lang.flag }}</span>
+        }
+        {{ lang.name }}
+        @if (lang.level) {
+          <span class="hp-lang-level">{{ lang.level }}</span>
+        }
+      </span>
+    }
+  </div>
+</div>

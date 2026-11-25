@@ -1,0 +1,131 @@
+@let greeting = activeGreeting();
+@let currentRoom = selectedRoom();
+
+<div #homeShell class="home-shell">
+  <a class="home-skip-link" href="#main-content">Skip to main content</a>
+
+  <header class="home-header">
+    <a class="home-brand" routerLink="/" aria-label="Jtalk home">
+      <span class="brand-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="home-brand-name">Jtalk</span>
+    </a>
+
+    <button
+      matButton="outlined"
+      type="button"
+      class="home-signin-btn"
+      (click)="enterRooms()"
+    >
+      {{ identity.isAuthenticated() ? 'Open rooms' : 'Sign in' }}
+    </button>
+  </header>
+
+  <main id="main-content" class="home-main">
+    <section class="home-hero" aria-labelledby="homeHeroHeading">
+      <p class="home-status home-anim-fade">
+        <span class="home-eq" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>Live audio</span>
+        <span class="home-dot" aria-hidden="true">·</span>
+        <span class="home-status-count">{{ liveSummary() }}</span>
+      </p>
+
+      <h1 id="homeHeroHeading" class="home-headline">
+        <span class="home-line-mask"
+          ><span class="home-line-reveal home-title-light">Learn a language</span></span
+        >{{ ' ' }}<span class="home-line-mask"
+          ><span class="home-line-reveal home-title-heavy">by talking.</span></span
+        >
+      </h1>
+
+      <p class="home-lead home-anim-fade">
+        Drop into a room, listen first, and speak when you're ready.
+      </p>
+
+      <div class="home-actions home-anim-fade">
+        <button
+          matButton="tonal"
+          type="button"
+          class="btn-lg-pill home-primary-btn"
+          (pointermove)="onPrimaryMagnetMove($event)"
+          (pointerleave)="onPrimaryMagnetLeave($event)"
+          (click)="enterRooms()"
+        >
+          <span>Enter live rooms</span>
+          <mat-icon class="home-primary-arrow" iconPositionEnd aria-hidden="true"
+            >arrow_forward</mat-icon
+          >
+        </button>
+
+        <button
+          matButton="text"
+          type="button"
+          class="home-secondary-btn"
+          (click)="openStartRoom()"
+        >
+          <mat-icon aria-hidden="true">add</mat-icon>
+          <span>Start a room</span>
+        </button>
+      </div>
+
+      @if (currentRoom) {
+        <div
+          class="home-live-bar home-anim-fade"
+          aria-label="Currently live room"
+          (pointerenter)="autoCyclePaused.set(true)"
+        >
+          <button
+            type="button"
+            class="home-live-index"
+            aria-label="Show next live room"
+            (click)="cycleRoom()"
+          >
+            {{ activeCounterLabel() }}
+          </button>
+
+          <div #liveStrip class="home-live-info">
+            <span class="home-live-title">{{ currentRoom.title }}</span>
+            <span class="home-live-meta">
+              {{ currentRoom.langLabel }} · {{ currentRoom.meta }}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            class="home-live-join"
+            (click)="joinRoom(currentRoom)"
+          >
+            <span>Join</span>
+            <mat-icon class="home-live-join-icon" aria-hidden="true">arrow_outward</mat-icon>
+          </button>
+        </div>
+      }
+    </section>
+  </main>
+
+  <footer class="home-footer home-anim-fade">
+    <div class="home-footer-inner">
+      <span class="home-footer-note">Audio only · No camera</span>
+
+      <button
+        type="button"
+        class="home-greeting-btn"
+        aria-label="Cycle welcome greeting"
+        (click)="cycleGreeting()"
+      >
+        <span class="home-greeting-viewport">
+          @for (item of greetings; track item.lang) {
+            <span
+              class="home-greeting"
+              [class.is-active]="item.lang === greeting.lang"
+              [attr.lang]="item.lang"
+              [attr.dir]="item.dir ?? 'ltr'"
+              [attr.aria-hidden]="item.lang !== greeting.lang"
+            >
+              {{ item.text }}
+            </span>
+          }
+        </span>
+      </button>
+    </div>
+  </footer>
+</div>

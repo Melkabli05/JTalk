@@ -1,0 +1,42 @@
+@let current = activeScene();
+@for (item of scenes(); track item.id) {
+  @let isActive = item.id === current.id;
+  <img
+    class="hero-bg"
+    [class.is-active]="isActive"
+    [src]="item.src"
+    [alt]="isActive ? item.alt : ''"
+    [attr.aria-hidden]="isActive ? null : 'true'"
+    [attr.fetchpriority]="isActive ? 'high' : 'low'"
+    referrerpolicy="no-referrer"
+  />
+}
+<div class="hero-inner">
+  <span class="live-pill" [class.is-empty]="isEmpty()">
+    <span class="live-dot" aria-hidden="true"></span>{{ statusPillText() }}
+  </span>
+  <h1>{{ current.greeting }}</h1>
+  <p>{{ heroSubtitle() }}</p>
+  @if (isEmpty()) {
+    <button
+      matButton="filled"
+      type="button"
+      class="hero-start-btn"
+      id="heroStartRoomBtn"
+      (click)="startRoom.emit()"
+    >
+      <mat-icon aria-hidden="true">add</mat-icon>
+      Start a room
+    </button>
+  }
+</div>
+<button
+  matIconButton
+  class="hero-scene-btn"
+  type="button"
+  aria-label="Next hero background"
+  matTooltip="Next scene"
+  (click)="nextScene.emit()"
+>
+  <mat-icon>wallpaper</mat-icon>
+</button>

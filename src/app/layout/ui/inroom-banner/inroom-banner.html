@@ -1,0 +1,22 @@
+<div
+  class="inroom-banner"
+  id="inRoomBanner"
+  [hidden]="!visible()"
+  role="region"
+  [attr.aria-label]="'You are in a room: ' + roomTitle()"
+>
+  <div class="inroom-banner-inner">
+    <span class="banner-live-pill">
+      <span class="live-dot" aria-hidden="true"></span>Live
+    </span>
+    <span class="banner-room-name">{{ roomTitle() }}</span>
+    <button
+      matButton="tonal"
+      class="btn-banner-pill banner-back-btn"
+      type="button"
+      (click)="backToRoom.emit()"
+    >
+      Back to the room
+    </button>
+  </div>
+</div>

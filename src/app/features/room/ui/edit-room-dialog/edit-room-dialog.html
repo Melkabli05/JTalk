@@ -1,0 +1,43 @@
+<h2 mat-dialog-title id="editModalTitle">Edit room</h2>
+<form id="editRoomForm" [formRoot]="roomForm">
+  <mat-dialog-content>
+    <p>Change the title, topic or number of seats.</p>
+    <div class="dialog-form-stack">
+      <mat-form-field class="full-width">
+        <mat-label>Room title</mat-label>
+        <input
+          matInput
+          id="roomTitleInput"
+          type="text"
+          [formField]="roomForm.title"
+          cdkFocusInitial
+        />
+        @for (error of roomForm.title().errors(); track error.kind) {
+          <mat-error>{{ error.message }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="full-width">
+        <mat-label>Topic</mat-label>
+        <input matInput id="roomTopicInput" type="text" [formField]="roomForm.topic" />
+        @for (error of roomForm.topic().errors(); track error.kind) {
+          <mat-error>{{ error.message }}</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field class="full-width">
+        <mat-label>Stage seats including the host</mat-label>
+        <input matInput id="roomSeatsInput" type="number" [formField]="roomForm.maxStageSeats" />
+        @for (error of roomForm.maxStageSeats().errors(); track error.kind) {
+          <mat-error>{{ error.message }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button matButton="text" type="button" mat-dialog-close>Cancel</button>
+    <button matButton="tonal" type="submit" [disabled]="roomForm().invalid() || roomForm().submitting()">
+      Save
+    </button>
+  </mat-dialog-actions>
+</form>

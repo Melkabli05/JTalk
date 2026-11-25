@@ -13,18 +13,11 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "ES2022",
-    "lib": ["ES2024", "dom", "dom.iterable"],
-    "module": "preserve",
-    "paths": {
-      "@core/*": ["./src/app/core/*"],
-      "@shared/*": ["./src/app/shared/*"]
-    }
+    "module": "preserve"
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
-    "strictTemplates": true,
-    "extendedDiagnostics": { "defaultCategory": "error" },
     "strictInputAccessModifiers": true
   },
   "files": [],

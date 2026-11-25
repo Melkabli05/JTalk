@@ -1,0 +1,21 @@
+:host {
+  display: block;
+}
+
+.person-handle {
+  font-size: 0.85em;
+  color: var(--ink-muted, #64748b);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+img.avatar {
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.directory-list-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}

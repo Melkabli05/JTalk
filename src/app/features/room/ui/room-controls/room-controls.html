@@ -1,0 +1,131 @@
+<div class="room-controls" role="toolbar" aria-label="Voice room controls">
+  <button
+    type="button"
+    class="ctrl-leave-btn"
+    matRipple
+    aria-label="Leave room menu"
+    [matMenuTriggerFor]="leaveMenu"
+  >
+    <mat-icon aria-hidden="true">logout</mat-icon>
+    <span>Leave</span>
+  </button>
+
+  <mat-menu #leaveMenu="matMenu" class="jtalk-menu" yPosition="above">
+    @if (canLeaveStage()) {
+      <button mat-menu-item type="button" id="leaveStageMenuItem" (click)="leaveStage.emit()">
+        <mat-icon>arrow_downward</mat-icon>
+        <span>Leave stage</span>
+      </button>
+    }
+    <button mat-menu-item type="button" id="leaveQuietlyMenuItem" (click)="leaveQuietly.emit()">
+      <mat-icon>logout</mat-icon>
+      <span>Leave room</span>
+    </button>
+    @if (canEndRoom()) {
+      <button
+        mat-menu-item
+        class="menu-item-danger"
+        type="button"
+        id="endRoomMenuItem"
+        (click)="openEndRoom.emit()"
+      >
+        <mat-icon>power_settings_new</mat-icon>
+        <span>End room for everyone</span>
+      </button>
+    }
+  </mat-menu>
+
+  <div class="room-controls-group">
+    @if (soundBlocked()) {
+      <button
+        type="button"
+        class="ctrl-invite-accept-btn"
+        matRipple
+        id="enableAudioBtn"
+        (click)="enableAudio.emit()"
+      >
+        <mat-icon aria-hidden="true">volume_up</mat-icon>
+        <span>Enable audio</span>
+      </button>
+    }
+
+    <button
+      matIconButton
+      class="ctrl-action-btn"
+      type="button"
+      id="reactBtn"
+      aria-label="Open reaction picker"
+      matTooltip="React"
+      [matMenuTriggerFor]="reactionMenu"
+    >
+      <mat-icon>mood</mat-icon>
+    </button>
+
+    <mat-menu #reactionMenu="matMenu" class="jtalk-emoji-menu" yPosition="above">
+      <div class="emoji-menu-row" role="group" aria-label="Choose a reaction">
+        @for (item of reactionEmojis; track item.emoji) {
+          <button
+            class="emoji-menu-btn"
+            matRipple
+            type="button"
+            [attr.aria-label]="'React with ' + item.label.toLowerCase()"
+            (click)="reactionPicked.emit(item.code)"
+          >
+            {{ item.emoji }}
+          </button>
+        }
+      </div>
+    </mat-menu>
+
+    @if (canClaimStageSeat()) {
+      <button
+        type="button"
+        class="ctrl-invite-accept-btn"
+        matRipple
+        id="joinStageBtn"
+        (click)="claimStageSeat.emit()"
+      >
+        <mat-icon aria-hidden="true">mic</mat-icon>
+        <span>Join stage</span>
+      </button>
+    }
+
+    @if (canRaiseHand()) {
+      <button
+        type="button"
+        class="ctrl-hand-btn"
+        matRipple
+        id="raiseHandBtn"
+        [class.is-active]="handRaised()"
+        [attr.aria-pressed]="handRaised()"
+        [attr.aria-label]="handRaised() ? 'Lower hand' : 'Raise hand to speak'"
+        [matTooltip]="handRaised() ? 'Lower hand' : 'Raise hand'"
+        (click)="toggleHand.emit()"
+      >
+        <mat-icon aria-hidden="true">front_hand</mat-icon>
+        <span>{{ handRaised() ? 'Hand raised' : 'Raise hand' }}</span>
+      </button>
+    }
+
+    @if (canUseMic()) {
+      <button
+        type="button"
+        class="ctrl-mic-btn"
+        matRipple
+        id="muteBtn"
+        [class.is-muted]="muted()"
+        [attr.aria-pressed]="muted()"
+        [attr.aria-label]="muted() ? 'Unmute microphone' : 'Mute microphone'"
+        [matTooltip]="micError() || (muted() ? 'Unmute microphone' : 'Mute microphone')"
+        (click)="toggleMute.emit()"
+      >
+        <mat-icon aria-hidden="true">
+          {{ muted() ? 'mic_off' : 'mic' }}
+        </mat-icon>
+        <span class="ctrl-mic-label" id="muteLabel">
+          {{ muted() ? 'Muted' : 'Mic on' }}
+        </span>
+      </button>
+    }
+  </div>
+</div>

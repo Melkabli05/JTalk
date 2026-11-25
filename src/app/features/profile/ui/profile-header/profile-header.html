@@ -1,0 +1,41 @@
+@let p = profile();
+<mat-card
+  class="profile-card profile-header-card"
+  appearance="outlined"
+  aria-labelledby="profileName"
+>
+  <div class="profile-cover" aria-hidden="true">
+    <span class="cover-semicircle"></span>
+  </div>
+  <div class="profile-header-body">
+    <div
+      class="profile-avatar"
+      id="profileHeaderAvatar"
+      role="img"
+      [attr.aria-label]="avatarAriaLabel()"
+      [style.background]="p.avatar.bg"
+    >
+      <app-avatar-art [avatarId]="p.avatar.id" [imageUrl]="p.avatar.imageUrl" />
+    </div>
+    <h2 class="profile-name" id="profileName">{{ p.name }}</h2>
+    <p class="profile-meta">
+      <span id="profileHandle">&#64;{{ p.username }}</span> · Joined {{ p.joined }}
+    </p>
+    <div class="profile-chips">
+      <span class="profile-chip" id="profileSpeakChip">Speaks {{ p.speak }}</span>
+      @if (p.learn !== 'Not set') {
+        <span class="profile-chip" id="profileLearnChip">Learning {{ p.learn }}</span>
+      }
+    </div>
+    <div class="profile-stats">
+      <span><b>{{ p.followers }}</b> Followers</span>
+      <span><b>{{ p.following }}</b> Following</span>
+    </div>
+    <div class="profile-header-actions">
+      <button matButton="tonal" type="button" (click)="editProfile.emit()">
+        <mat-icon aria-hidden="true">edit</mat-icon>
+        Edit profile
+      </button>
+    </div>
+  </div>
+</mat-card>

@@ -1,0 +1,252 @@
+@let p = profile();
+@let avatar = selectedAvatar();
+@let allAvatars = showAllAvatars();
+@let isDirty = dirty();
+<div class="edit-layout">
+  <mat-card class="profile-card" appearance="outlined" aria-labelledby="edit-profile-h">
+    <h3 id="edit-profile-h">Edit profile</h3>
+    <p class="card-sub">Name and picture shown in rooms.</p>
+
+    <form class="profile-form" id="profileForm" (submit)="onSave($event)">
+      <div class="form-section">
+        <h4>Identity</h4>
+        <div class="stack-fields">
+          <mat-form-field class="full-width">
+            <mat-label>Your name</mat-label>
+            <input
+              matInput
+              id="profileNameInput"
+              type="text"
+              [formField]="profileForm.name"
+              autocomplete="name"
+            />
+            @for (error of profileForm.name().errors(); track error.kind) {
+              <mat-error>{{ error.message }}</mat-error>
+            }
+          </mat-form-field>
+
+          <div class="info-banner" role="note">
+            <mat-icon class="icon-20" aria-hidden="true">info</mat-icon>
+            <span>Handle, like &#64;mona.</span>
+          </div>
+
+          <mat-form-field class="full-width">
+            <mat-label>Username</mat-label>
+            <input
+              matInput
+              id="profileUsernameInput"
+              type="text"
+              [formField]="profileForm.username"
+              autocomplete="username"
+            />
+            @for (error of profileForm.username().errors(); track error.kind) {
+              <mat-error>{{ error.message }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h4>Picture</h4>
+        <span class="field-label" id="pictureLabel">Choose your picture</span>
+        <div class="avatar-row" role="group" aria-labelledby="pictureLabel">
+          <div class="avatar-option" [class.selected]="avatar.id === 'own'">
+            <button
+              class="avatar-choice"
+              type="button"
+              matRipple
+              [class.selected]="avatar.id === 'own'"
+              aria-label="Your own picture"
+              [attr.aria-pressed]="avatar.id === 'own'"
+              (click)="pickOwnAvatar()"
+            >
+              <app-avatar-art avatarId="own" variant="thumb" />
+            </button>
+            <span class="check-badge" aria-hidden="true">
+              <mat-icon class="icon-16">check</mat-icon>
+            </span>
+          </div>
+
+          @for (preset of presets; track preset.id) {
+            <div
+              class="avatar-option"
+              [class.selected]="avatar.id === preset.id"
+              [hidden]="preset.extra && !allAvatars"
+            >
+              <button
+                class="avatar-choice"
+                type="button"
+                matRipple
+                [class.selected]="avatar.id === preset.id"
+                [attr.aria-label]="preset.label"
+                [attr.aria-pressed]="avatar.id === preset.id"
+                (click)="pickPresetAvatar(preset)"
+              >
+                <app-avatar-art [avatarId]="preset.id" />
+              </button>
+              <span class="check-badge" aria-hidden="true">
+                <mat-icon class="icon-16">check</mat-icon>
+              </span>
+            </div>
+          }
+
+          <div class="avatar-option">
+            <input
+              #avatarFileInput
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              hidden
+              (change)="onFileSelected($event)"
+            />
+            <button
+              class="avatar-choice upload"
+              type="button"
+              matRipple
+              id="avatarUpload"
+              aria-label="Upload your own picture"
+              (click)="triggerAvatarUpload()"
+            >
+              <mat-icon class="icon-28" aria-hidden="true">photo_camera</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <button
+          matButton="text"
+          class="show-all-btn"
+          type="button"
+          id="avatarShowAll"
+          [attr.aria-expanded]="allAvatars"
+          (click)="toggleShowAllAvatars()"
+        >
+          {{ allAvatars ? 'Show fewer' : 'Show all 10' }}
+          <mat-icon aria-hidden="true">
+            {{ allAvatars ? 'expand_less' : 'expand_more' }}
+          </mat-icon>
+        </button>
+        <p class="avatar-caption">Uploads are cropped to a square.</p>
+      </div>
+
+      <div class="form-section">
+        <h4>Languages &amp; location</h4>
+        <div class="stack-fields">
+          <div class="select-row">
+            <mat-form-field class="full-width">
+              <mat-label>I speak</mat-label>
+              <mat-select [formField]="profileForm.speak" aria-label="I speak">
+                @for (lang of speakOptions; track lang) {
+                  <mat-option [value]="lang">{{ lang }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field class="full-width">
+              <mat-label>I am learning</mat-label>
+              <mat-select [formField]="profileForm.learn" aria-label="I am learning">
+                @for (lang of learnOptions; track lang) {
+                  <mat-option [value]="lang">{{ lang }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field class="full-width">
+            <mat-label>Where you live</mat-label>
+            <mat-select [formField]="profileForm.location" aria-label="Where you live">
+              @for (city of locationOptions; track city) {
+                <mat-option [value]="city">{{ city }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h4>About</h4>
+        <mat-form-field class="full-width">
+          <mat-label>About you</mat-label>
+          <textarea
+            #aboutTextarea
+            matInput
+            id="profileAbout"
+            rows="4"
+            [formField]="profileForm.about"
+          ></textarea>
+          @if (aboutLength() > 0) {
+            <button
+              matIconButton
+              matSuffix
+              type="button"
+              id="aboutClear"
+              aria-label="Clear about you"
+              (click)="clearAbout()"
+            >
+              <mat-icon class="icon-18">close</mat-icon>
+            </button>
+          }
+          @for (error of profileForm.about().errors(); track error.kind) {
+            <mat-error>{{ error.message }}</mat-error>
+          }
+          <mat-hint align="end" id="aboutCounter">{{ aboutLength() }} / 300</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <div class="save-bar" id="profileSaveBar" [hidden]="!isDirty">
+        <span class="save-bar-text">Unsaved changes</span>
+        <button
+          matButton="text"
+          type="button"
+          id="profileDiscard"
+          (click)="onDiscard()"
+        >
+          Discard
+        </button>
+        <button
+          matButton="tonal"
+          type="submit"
+          id="profileSave"
+          [disabled]="!canSubmit()"
+        >
+          Save
+        </button>
+      </div>
+    </form>
+  </mat-card>
+
+  <mat-card
+    class="profile-card live-preview-card"
+    appearance="outlined"
+    aria-labelledby="livePreviewH"
+  >
+    <div class="live-preview-head" id="livePreviewH">Live preview</div>
+    <div class="live-cover" aria-hidden="true">
+      <span class="cover-semicircle"></span>
+    </div>
+    <div class="live-body">
+      <div
+        class="live-avatar"
+        id="livePreviewAvatar"
+        role="img"
+        aria-label="Preview of your profile picture"
+        [style.background]="avatar.bg"
+      >
+        <app-avatar-art [avatarId]="avatar.id" [imageUrl]="avatar.imageUrl" />
+      </div>
+      <p class="live-name" id="livePreviewName">{{ previewName() }}</p>
+      <p class="live-meta">
+        <span id="livePreviewHandle">&#64;{{ previewHandle() }}</span> · Joined {{ p.joined }}
+      </p>
+      <div class="profile-chips">
+        <span class="profile-chip" id="liveSpeakChip">Speaks {{ previewSpeak() }}</span>
+        @if (previewLearn() !== 'Not set') {
+          <span class="profile-chip" id="liveLearnChip">Learning {{ previewLearn() }}</span>
+        }
+      </div>
+      <div class="profile-stats">
+        <span><b>{{ p.followers }}</b> Followers</span>
+        <span><b>{{ p.following }}</b> Following</span>
+      </div>
+      <p class="live-bio" id="livePreviewBio">{{ previewBio() }}</p>
+    </div>
+  </mat-card>
+</div>

@@ -10,22 +10,52 @@
       "destination": "https://live-communication-service.onrender.com/api/:path*"
     },
     {
-      "source": "/:path((?!api/).*)",
-      "destination": "/index.html"
+      "source": "/:path((?!api(?:/|$)).*)",
+      "destination": "/index.csr.html"
     }
   ],
   "headers": [
     {
-      "source": "/api/:path*",
+      "source": "/api/:path((?!v1/users/[^/]+/avatar/).*)",
       "headers": [
         {
-          "key": "x-vercel-enable-rewrite-caching",
-          "value": "0"
+          "key": "Cache-Control",
+          "value": "private, no-store"
+        },
+        {
+          "key": "X-Accel-Buffering",
+          "value": "no"
         }
       ]
     },
     {
-      "source": "/(.*)\\.(js|css|woff2|woff|ttf)",
+      "source": "/index.csr.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "microphone=(self), camera=()"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(js|mjs|css|wasm|woff2|woff|ttf)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -34,7 +64,7 @@
       ]
     },
     {
-      "source": "/(avatars|brand|icons)/(.*)",
+      "source": "/(assets|avatars|brand|icons)/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -42,5 +72,9 @@
         }
       ]
     }
-  ]
+  ],
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/app/browser",
+  "installCommand": "command -v bun && [ -f bun.lock ] && bun install || npm install --legacy-peer-deps --include=dev --include=optional"
 }

@@ -1,0 +1,57 @@
+@let item = room();
+<mat-card
+  class="room-card"
+  appearance="filled"
+  role="article"
+  [attr.data-lang]="item.lang"
+>
+  <div class="room-top">
+    <span class="lang-chip">
+      <span class="lang-dot" [class]="item.dotClass"></span>{{ item.langLabel }}
+    </span>
+    <span class="badge-live">LIVE</span>
+
+    <button
+      matIconButton
+      class="room-menu-btn"
+      type="button"
+      [attr.aria-label]="'Options for ' + item.title"
+      [matMenuTriggerFor]="roomMenu"
+    >
+      <mat-icon>more_vert</mat-icon>
+    </button>
+
+    <mat-menu #roomMenu="matMenu" class="jtalk-menu" xPosition="before">
+      <button mat-menu-item type="button" (click)="join.emit(item)">
+        <mat-icon>mic</mat-icon>
+        <span>Join room</span>
+      </button>
+      <button mat-menu-item type="button" (click)="pin.emit(item)">
+        <mat-icon>push_pin</mat-icon>
+        <span>Pin to top</span>
+      </button>
+      <button mat-menu-item type="button" (click)="notInterested.emit(item)">
+        <mat-icon>delete_outline</mat-icon>
+        <span>Not interested</span>
+      </button>
+    </mat-menu>
+  </div>
+
+  <h3>{{ item.title }}</h3>
+  <p class="desc">{{ item.description }}</p>
+
+  <div class="room-foot">
+    <div class="stack" aria-hidden="true">
+      @for (av of item.avatars; track av.userId) {
+        <span class="avatar" [class]="av.chipClass">{{ av.initial }}</span>
+      }
+      @if (item.moreCount) {
+        <span class="avatar more">{{ item.moreCount }}</span>
+      }
+    </div>
+    <p class="room-meta">{{ item.meta }}</p>
+    <button matButton="tonal" class="join-btn" type="button" [attr.aria-label]="'Join room: ' + item.title" (click)="join.emit(item)">
+      Join room
+    </button>
+  </div>
+</mat-card>

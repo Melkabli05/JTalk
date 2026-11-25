@@ -1,0 +1,153 @@
+@let name = profileName();
+@let collapseText = toggleLabel();
+<div class="brand">
+  <a class="brand-link" routerLink="/" aria-label="Jtalk home">
+    <span class="brand-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="brand-name">Jtalk</span>
+  </a>
+  <button
+    matIconButton
+    class="sidebar-toggle"
+    type="button"
+    [attr.aria-expanded]="!collapsed()"
+    [attr.aria-label]="collapseText"
+    [matTooltip]="collapseText"
+    matTooltipPosition="right"
+    (click)="toggleCollapse.emit()"
+  >
+    <mat-icon>chevron_left</mat-icon>
+  </button>
+</div>
+
+<mat-nav-list class="mainnav-list" aria-label="Main">
+  <a
+    mat-list-item
+    class="nav-pill-item"
+    data-view="rooms"
+    routerLink="/rooms"
+    routerLinkActive="active"
+    #roomsRla="routerLinkActive"
+    [activated]="roomsRla.isActive"
+    ariaCurrentWhenActive="page"
+    matTooltip="Rooms"
+    matTooltipPosition="right"
+    [matTooltipDisabled]="!collapsed()"
+  >
+    <mat-icon matListItemIcon class="icon-20" aria-hidden="true">mic</mat-icon>
+    <span matListItemTitle class="tab-label">Rooms</span>
+    <span matListItemMeta class="tab-count">{{ liveRoomsCount() }} live</span>
+  </a>
+
+  <a
+    mat-list-item
+    class="nav-pill-item"
+    data-view="people"
+    routerLink="/people"
+    routerLinkActive="active"
+    #peopleRla="routerLinkActive"
+    [activated]="peopleRla.isActive"
+    ariaCurrentWhenActive="page"
+    matTooltip="People"
+    matTooltipPosition="right"
+    [matTooltipDisabled]="!collapsed()"
+  >
+    <mat-icon matListItemIcon class="icon-20" aria-hidden="true">group</mat-icon>
+    <span matListItemTitle class="tab-label">People</span>
+  </a>
+
+  <a
+    mat-list-item
+    class="nav-pill-item"
+    data-view="profile"
+    routerLink="/profile"
+    routerLinkActive="active"
+    #profileRla="routerLinkActive"
+    [activated]="profileRla.isActive"
+    ariaCurrentWhenActive="page"
+    matTooltip="Profile"
+    matTooltipPosition="right"
+    [matTooltipDisabled]="!collapsed()"
+  >
+    <mat-icon matListItemIcon class="icon-20" aria-hidden="true">person</mat-icon>
+    <span matListItemTitle class="tab-label">Profile</span>
+  </a>
+</mat-nav-list>
+
+<div class="sidebar-spacer"></div>
+
+@if (showInRoomCard()) {
+  <mat-card class="inroom-card" appearance="filled" aria-labelledby="inroom-h">
+    <h2 id="inroom-h">You are in a room</h2>
+    <div class="inroom-live-row">
+      <span class="inroom-live-pill">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span class="inroom-live-text">Live</span>
+      </span>
+      <span class="inroom-room-name">{{ activeRoomTitle() }}</span>
+    </div>
+    <p class="inroom-meta">{{ activeRoomLang() }} · {{ activeRoomSeats() }} seats</p>
+    <div class="inroom-host">
+      <span class="inroom-host-avatar" aria-hidden="true">
+        <span>Learn by <em>talking.</em></span>
+      </span>
+      <div>
+        <p class="inroom-host-name">{{ name }}</p>
+        <p class="inroom-host-role">Host · You</p>
+      </div>
+      <span class="inroom-crown" aria-hidden="true">
+        <mat-icon class="icon-20">workspace_premium</mat-icon>
+      </span>
+    </div>
+    <button
+      matButton="tonal"
+      class="btn-lg-pill inroom-back-btn"
+      type="button"
+      matTooltip="Back to the room"
+      matTooltipPosition="right"
+      [matTooltipDisabled]="!collapsed()"
+      aria-label="Back to the room"
+      (click)="backToRoom.emit()"
+    >
+      <mat-icon class="inroom-back-icon" aria-hidden="true">graphic_eq</mat-icon>
+      <span class="inroom-back-label">Back to the room</span>
+    </button>
+  </mat-card>
+} @else {
+  <mat-card class="golive-card" appearance="filled" aria-labelledby="golive-h">
+    <h2 id="golive-h">Go live</h2>
+    <p>Start a room. People join to practise.</p>
+    <button
+      matButton="tonal"
+      class="btn-lg-pill golive-cta"
+      type="button"
+      matTooltip="Go live"
+      matTooltipPosition="right"
+      [matTooltipDisabled]="!collapsed()"
+      aria-label="Go live: start a room"
+      (click)="startRoom.emit()"
+    >
+      <mat-icon aria-hidden="true">add</mat-icon>
+      <span class="golive-cta-label">Start a room</span>
+    </button>
+  </mat-card>
+}
+
+<button
+  class="account"
+  matRipple
+  type="button"
+  routerLink="/profile"
+  routerLinkActive="active"
+  ariaCurrentWhenActive="page"
+  [attr.aria-label]="'Profile — ' + name"
+  [matTooltip]="name"
+  matTooltipPosition="right"
+  [matTooltipDisabled]="!collapsed()"
+  (click)="openProfileOverview.emit()"
+>
+  <span class="avatar grad" aria-hidden="true">{{ avatarInitial() }}</span>
+  <span>
+    <span class="account-name">{{ name }}</span>
+    <span class="account-sub">Your account</span>
+  </span>
+</button>

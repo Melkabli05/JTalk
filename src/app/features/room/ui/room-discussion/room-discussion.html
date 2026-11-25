@@ -1,0 +1,336 @@
+@let isLoading = loading();
+@let hasError = chatError();
+@let hasMessages = messages().length > 0;
+@let replyingTo = replyTarget();
+
+<section
+  class="discussion-panel"
+  role="complementary"
+  aria-labelledby="disc-h"
+>
+  <div class="disc-head">
+    <div class="disc-head-main">
+      <span class="disc-live-dot" aria-hidden="true"></span>
+      <h2 id="disc-h">Chat</h2>
+      <span class="disc-count" id="msgCount">{{ commentCountLabel() }}</span>
+    </div>
+
+    <div class="disc-head-actions">
+      @if (isHost()) {
+        <button matIconButton type="button" aria-label="Edit pinned topic" (click)="editingTopic.set(!editingTopic())">
+          <mat-icon>edit_note</mat-icon>
+        </button>
+      }
+      <button
+        matIconButton
+        class="disc-icon-btn"
+        type="button"
+        id="refreshChatBtn"
+        aria-label="Refresh chat"
+        matTooltip="Refresh chat"
+        [disabled]="isLoading"
+        (click)="refreshChat.emit()"
+      >
+        <mat-icon [class.is-spinning]="isLoading">refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  @if (editingTopic() && isHost()) {
+    <form class="composer" (submit)="$event.preventDefault(); topicChange.emit(topic.value); editingTopic.set(false)">
+      <input #topic aria-label="Pinned chat topic" maxlength="200" [value]="pinnedTopic() ?? ''" placeholder="Pinned chat topic">
+      <button matButton type="submit">Save</button>
+      @if (pinnedTopic()) {
+        <button matButton type="button" (click)="topicChange.emit(''); editingTopic.set(false)">Unpin</button>
+      }
+    </form>
+  }
+  <div class="chat-error" id="chatError" role="alert" [hidden]="!hasError || isLoading">
+    <mat-icon aria-hidden="true">cloud_off</mat-icon>
+    <p>{{ hasMessages ? 'Could not refresh chat. Try again.' : "Chat couldn't connect. Check your connection and try again." }}</p>
+    <button matButton="outlined" type="button" id="chatRetry" (click)="retryChat.emit()">
+      Retry
+    </button>
+  </div>
+
+  <div
+    #discScroll
+    class="disc-messages-scroll"
+    id="discScroll"
+    [hidden]="hasError && !isLoading && !hasMessages"
+    [attr.aria-busy]="isLoading"
+    (scroll)="onScrollMessages()"
+  >
+    <div id="discMessages" class="disc-messages-list">
+      @if (isLoading) {
+        <span class="sr-only" role="status">Loading discussion messages…</span>
+      }
+      @if (isLoading && !hasMessages) {
+        @for (slot of skeletonMessages; track slot.id) {
+          <div
+            class="msg msg-skeleton"
+            [class.msg-thread-reply]="slot.isReply"
+            aria-hidden="true"
+          >
+            <app-skeleton-loader variant="circle" width="34px" height="34px" />
+            <div class="msg-body">
+              <div class="msg-skeleton-head">
+                <app-skeleton-loader variant="text" [width]="slot.authorWidth" height="13px" />
+                <span class="msg-skeleton-time">
+                  <app-skeleton-loader variant="text" width="30px" height="11px" />
+                </span>
+              </div>
+              <app-skeleton-loader
+                variant="text"
+                width="100%"
+                height="13px"
+                [lines]="slot.lines"
+              />
+            </div>
+          </div>
+        }
+      } @else {
+        @for (msg of messages(); track msg.id) {
+          <article
+            class="msg"
+            [class.msg-thread-reply]="msg.isThreadReply"
+            [class.msg-is-you]="msg.isYou"
+            [attr.data-author]="msg.author"
+          >
+            <span class="avatar msg-avatar" [class]="msg.avatarClass" aria-hidden="true">
+              {{ msg.avatarText }}
+            </span>
+
+            <div class="msg-body">
+              <div class="msg-head">
+                <b class="msg-author">{{ msg.author }}</b>
+                @if (msg.isHost) {
+                  <span class="msg-role-label is-host">Host</span>
+                }
+                @if (msg.isYou) {
+                  <span class="msg-role-label">You</span>
+                }
+                <time class="msg-time">{{ msg.timeLabel }}</time>
+                <button
+                  matIconButton
+                  class="msg-more-btn"
+                  type="button"
+                  [attr.aria-label]="commentActionsAriaLabel(msg.author)"
+                  [matMenuTriggerFor]="commentActionsMenu"
+                  [matMenuTriggerData]="{ msg }"
+                >
+                  <mat-icon>more_horiz</mat-icon>
+                </button>
+              </div>
+
+              <p class="msg-text">{{ msg.text }}</p>
+
+              <div class="msg-actions">
+                <div class="msg-reactions" aria-label="Message reactions">
+                  @for (rx of msg.reactions; track rx.emoji) {
+                    <button
+                      type="button"
+                      matRipple
+                      class="reaction-chip"
+                      [class.is-active]="rx.active"
+                      [attr.aria-label]="rx.label + ', ' + rx.count + ' reactions'"
+                      (click)="toggleReaction.emit({ messageId: msg.id, reaction: rx.code })"
+                    >
+                      <span>{{ rx.emoji }}</span>
+                      <span>{{ rx.count }}</span>
+                    </button>
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  class="msg-inline-action"
+                  aria-label="Add a reaction"
+                  [matMenuTriggerFor]="msgReactionMenu"
+                  [matMenuTriggerData]="{ msg }"
+                >
+                  <mat-icon aria-hidden="true">add_reaction</mat-icon>
+                </button>
+
+                @if (canSend()) {
+                  <button
+                    type="button"
+                    class="msg-inline-action msg-reply-action"
+                    (click)="onReplyTo(msg)"
+                  >
+                    Reply
+                  </button>
+                }
+              </div>
+            </div>
+          </article>
+        }
+      }
+
+      <div class="chat-empty" id="chatEmpty" [hidden]="isLoading || hasMessages">
+        No messages yet. Say hello to start the conversation.
+      </div>
+    </div>
+  </div>
+
+  <div class="disc-footer">
+    <div class="new-msgs-wrap" [hidden]="!hasMessages || !showNewMessagesPill()">
+      <button
+        type="button"
+        class="new-msgs-pill"
+        id="newMsgsPill"
+        matRipple
+        (click)="onJumpToNewest()"
+      >
+        <mat-icon aria-hidden="true">arrow_downward</mat-icon>
+        <span>Latest messages</span>
+      </button>
+    </div>
+
+    @if (replyingTo) {
+      <div class="reply-banner">
+        <mat-icon aria-hidden="true">reply</mat-icon>
+        <span>{{ correcting() ? 'Correcting' : 'Replying to' }} <strong>{{ replyingTo }}</strong></span>
+        <button
+          type="button"
+          class="reply-banner-close"
+          aria-label="Cancel reply"
+          (click)="clearReplyTarget()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    }
+
+    <div
+      class="emoji-row"
+      id="emojiRow"
+      role="group"
+      aria-label="Add emoji"
+      [hidden]="!emojiDrawerOpen()"
+    >
+      @for (item of composerEmojis; track item.emoji) {
+        <button
+          type="button"
+          matRipple
+          [attr.aria-label]="item.label"
+          (click)="insertEmoji(item.emoji)"
+        >
+          {{ item.emoji }}
+        </button>
+      }
+    </div>
+
+    <form
+      class="composer composer-enhanced"
+      id="composer"
+      aria-label="Message the room"
+      (submit)="onSendMessage($event)"
+    >
+      <button
+        matIconButton
+        class="composer-emoji-btn"
+        type="button"
+        id="emojiBtn"
+        aria-label="Add emoji"
+        [disabled]="!canSend()"
+        [attr.aria-expanded]="emojiDrawerOpen()"
+        aria-controls="emojiRow"
+        (click)="emojiDrawerOpen.update((v) => !v)"
+      >
+        <mat-icon>mood</mat-icon>
+      </button>
+
+      <textarea
+        #composerInput
+        rows="1"
+        (keydown)="onComposerKey($event)"
+        id="composerInput"
+        [formField]="messageField"
+        [placeholder]="composerPlaceholder()"
+        [attr.aria-label]="composerAriaLabel()"
+        autocomplete="off"
+        enterkeyhint="send"
+      ></textarea>
+
+      <button
+        matIconButton
+        class="send-btn"
+        type="submit"
+        [disabled]="!canSend() || sending() || !draftMessage().trim() || messageField().invalid()"
+        aria-label="Send message"
+      >
+        <mat-icon>arrow_upward</mat-icon>
+      </button>
+    </form>
+  </div>
+
+  <mat-menu #commentActionsMenu="matMenu" class="jtalk-menu" xPosition="before">
+    <ng-template matMenuContent let-msg="msg">
+      @if (canSend()) {
+        <button mat-menu-item type="button" (click)="commentAction.emit({ action: 'correct', message: msg })">
+          <mat-icon>edit</mat-icon><span>Correct this message</span>
+        </button>
+        <button mat-menu-item type="button" (click)="onReplyTo(msg)">
+          <mat-icon>reply</mat-icon>
+          <span>Reply in thread</span>
+        </button>
+      }
+      @if (isHost()) {
+        <button
+          mat-menu-item
+          type="button"
+          (click)="commentAction.emit({ action: 'pin', message: msg })"
+        >
+          <mat-icon>push_pin</mat-icon>
+          <span>Pin to Stage</span>
+          <span class="ca-chip-inline">Host</span>
+        </button>
+      }
+      <button
+        mat-menu-item
+        type="button"
+        (click)="commentAction.emit({ action: 'copy', message: msg })"
+      >
+        <mat-icon>content_copy</mat-icon>
+        <span>Copy text</span>
+      </button>
+      @if (isHost() && !msg.isYou && msg.authorId) {
+        <button mat-menu-item type="button" (click)="commentAction.emit({ action: 'mute', message: msg })">
+          <mat-icon>speaker_notes_off</mat-icon>
+          <span>{{ mutedUsers().has(msg.authorId) ? 'Unmute in chat' : 'Mute in chat' }}</span>
+        </button>
+      }
+      @if (isHost()) {
+        <button
+          mat-menu-item
+          class="menu-item-danger"
+          type="button"
+          (click)="commentAction.emit({ action: 'delete', message: msg })"
+        >
+          <mat-icon>delete_outline</mat-icon>
+          <span>Delete comment</span>
+        </button>
+      }
+    </ng-template>
+  </mat-menu>
+
+  <mat-menu #msgReactionMenu="matMenu" class="jtalk-emoji-menu" yPosition="above">
+    <ng-template matMenuContent let-msg="msg">
+      <div class="emoji-menu-row" role="group" aria-label="React to this message">
+        @for (opt of reactionEmojis; track opt.emoji) {
+          <button
+            class="emoji-menu-btn"
+            type="button"
+            [class.is-active]="isEmojiActive(msg, opt.emoji)"
+            [attr.aria-pressed]="isEmojiActive(msg, opt.emoji)"
+            [attr.aria-label]="'React with ' + opt.label.toLowerCase()"
+            (click)="toggleReaction.emit({ messageId: msg.id, reaction: opt.code })"
+          >
+            {{ opt.emoji }}
+          </button>
+        }
+      </div>
+    </ng-template>
+  </mat-menu>
+</section>

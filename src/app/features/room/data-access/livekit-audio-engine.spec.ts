@@ -1,0 +1,141 @@
+import { provideZonelessChangeDetection } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
+import { RoomSessionDto } from '../../../shared/models/voice-room.model';
+import {
+  LIVEKIT_CONNECTOR,
+  LiveKitAudioEngine,
+  LiveKitConnectionHandle,
+  LiveKitConnectorFn,
+  LiveKitListener,
+} from './livekit-audio-engine';
+
+describe('LiveKitAudioEngine', () => {
+  const session: RoomSessionDto = {
+    room: {
+      id: 'room-1',
+      title: 'Live Practice',
+      topic: 'Greetings',
+      hostId: 'u-host',
+      targetLanguage: 'es',
+      nativeLanguage: 'en',
+      maxStageSeats: 6,
+      speakers: ['u-host'],
+      participantCount: 1,
+      handRaiseCount: 0,
+    },
+    liveKitUrl: 'wss://jtalk-eimd2bul.livekit.cloud',
+    liveKitToken: 'tok-123',
+    role: 'HOST',
+    canPublishAudio: true,
+  };
+
+  function setupMockConnector() {
+    let capturedListener!: LiveKitListener;
+    const handle: LiveKitConnectionHandle = {
+      setMicrophone: vi.fn().mockResolvedValue(undefined),
+      setNoiseIsolation: vi.fn().mockImplementation(async (on: boolean) =>
+        on ? 'krisp-active' : 'krisp-bypassed',
+      ),
+      selectAudioInputDevice: vi.fn().mockResolvedValue(undefined),
+      listAudioInputDevices: vi
+        .fn()
+        .mockResolvedValue([{ deviceId: 'mic-1', label: 'Studio USB Mic' }]),
+      startAudio: vi.fn().mockResolvedValue(undefined),
+      disconnect: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const connector: LiveKitConnectorFn = vi.fn(async (_url, _token, _opts, listener) => {
+      capturedListener = listener;
+      return handle;
+    });
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        LiveKitAudioEngine,
+        { provide: LIVEKIT_CONNECTOR, useValue: connector },
+      ],
+    });
+
+    return {
+      engine: TestBed.inject(LiveKitAudioEngine),
+      handle,
+      connector,
+      getListener: () => capturedListener,
+    };
+  }
+
+  it('connects, enables mic for publishers, toggles Krisp noise isolation, and switches devices', async () => {
+    const { engine, handle, getListener } = setupMockConnector();
+
+    const ok = await engine.connect(session);
+    expect(ok).toBe(true);
+    expect(engine.status()).toBe('connected');
+    expect(engine.micOn()).toBe(true);
+    expect(handle.setMicrophone).toHaveBeenCalledWith(true);
+
+    // Krisp active -> toggle off -> bypassed
+    getListener().onNoiseIsolationMode('krisp-active');
+    expect(engine.noiseIsolationMode()).toBe('krisp-active');
+
+    const modeAfterToggle = await engine.toggleNoiseIsolation();
+    expect(modeAfterToggle).toBe('krisp-bypassed');
+    expect(engine.noiseIsolationEnabled()).toBe(false);
+
+    // Device switching
+    engine.refreshAudioInputDevices();
+    TestBed.tick();
+    await vi.waitFor(() => expect(engine.audioInputDevices()).toHaveLength(1));
+    await engine.selectAudioInputDevice('mic-1');
+    expect(handle.selectAudioInputDevice).toHaveBeenCalledWith('mic-1');
+  });
+
+  it('syncs server-side remote mute, autoplay unlock, and LOW_BANDWIDTH network mode reporting', async () => {
+    const { engine, handle, getListener } = setupMockConnector();
+    await engine.connect(session);
+
+    // Host server-side mute reflects immediately on local mic state
+    getListener().onMicrophoneMuted('u-host', true, true);
+    expect(engine.micOn()).toBe(false);
+
+    // Browser autoplay blocked -> enableAudio clears blocked flag
+    getListener().onSoundBlocked(true);
+    expect(engine.soundBlocked()).toBe(true);
+    await engine.enableAudio();
+    expect(handle.startAudio).toHaveBeenCalledTimes(1);
+    expect(engine.soundBlocked()).toBe(false);
+
+    // Connection quality drop updates lastNetworkModeChange signal and notifies handlers
+    const emissions: string[] = [];
+    const unbind = engine.onEvents({ onNetworkModeChange: (e) => emissions.push(e.mode) });
+    getListener().onConnectionQuality('poor', {
+      primarySids: ['TR_1'],
+      secondarySids: ['TR_2'],
+    });
+    expect(engine.lastNetworkModeChange()?.mode).toBe('LOW_BANDWIDTH');
+    expect(emissions).toEqual(['LOW_BANDWIDTH']);
+    unbind();
+
+    await engine.disconnect();
+    expect(handle.disconnect).toHaveBeenCalled();
+    expect(engine.status()).toBe('idle');
+  });
+
+  it('ignores completed playback work from a disconnected room', async () => {
+    const { engine, handle, getListener } = setupMockConnector();
+    let finishPlayback!: () => void;
+    vi.mocked(handle.startAudio).mockImplementationOnce(() => new Promise<void>((resolve) => {
+      finishPlayback = resolve;
+    }));
+    await engine.connect(session);
+    const playback = engine.enableAudio();
+    await engine.disconnect();
+    finishPlayback();
+
+    expect(await playback).toBe(false);
+    expect(engine.status()).toBe('idle');
+    getListener().onSoundBlocked(true);
+    expect(engine.soundBlocked()).toBe(false);
+  });
+});

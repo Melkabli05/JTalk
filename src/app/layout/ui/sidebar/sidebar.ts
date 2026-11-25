@@ -1,0 +1,55 @@
+import { Component, computed, input, output } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatRippleModule } from '@angular/material/core';
+import { MatIconModule } from '@angular/material/icon';
+import { MatListModule } from '@angular/material/list';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AppView } from '../../../core/models/session.model';
+
+@Component({
+  selector: 'app-sidebar',
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    MatListModule,
+    MatRippleModule,
+    MatTooltipModule,
+  ],
+  host: {
+    class: 'sidebar',
+    role: 'complementary',
+  },
+  templateUrl: './sidebar.html',
+  styleUrl: './sidebar.scss',
+})
+export class Sidebar {
+  readonly collapsed = input.required<boolean>();
+  readonly liveRoomsCount = input(4);
+  readonly profileName = input('Jilali');
+  readonly inRoom = input(false);
+  readonly activeView = input<AppView>('rooms');
+  readonly activeRoomTitle = input('Practice room');
+  readonly activeRoomLang = input('English');
+  readonly activeRoomSeats = input(6);
+
+  readonly toggleCollapse = output<void>();
+  readonly startRoom = output<void>();
+  readonly backToRoom = output<void>();
+  readonly openProfileOverview = output<void>();
+
+  readonly showInRoomCard = computed(() => this.inRoom() && this.activeView() !== 'room');
+
+  readonly toggleLabel = computed(() =>
+    this.collapsed() ? 'Open sidebar' : 'Collapse sidebar',
+  );
+
+  readonly avatarInitial = computed(() => {
+    const trimmed = this.profileName().trim();
+    return trimmed ? trimmed.charAt(0).toUpperCase() : 'J';
+  });
+}

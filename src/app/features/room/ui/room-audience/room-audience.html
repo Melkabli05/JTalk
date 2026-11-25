@@ -1,0 +1,125 @@
+<section class="audience-section" aria-labelledby="audience-h">
+  <div class="audience-bar">
+    <div class="audience-title-group">
+      <h2 id="audience-h" class="audience-label">Audience</h2>
+      <span class="audience-count" id="audienceCount">{{ listenerLabel() }}</span>
+    </div>
+
+    <div class="audience-bar-actions">
+      <button
+        type="button"
+        class="audience-text-btn audience-toggle-btn"
+        id="audienceToggle"
+        aria-controls="audienceList"
+        [attr.aria-expanded]="audienceVisible()"
+        [matTooltip]="audienceVisible() ? 'Hide listeners' : 'Show listeners'"
+        [hidden]="listeners().length === 0 && !hasMore()"
+        (click)="audienceVisible.set(!audienceVisible())"
+      >
+        {{ audienceVisible() ? 'Hide list' : 'Show list' }}
+      </button>
+    </div>
+  </div>
+
+  <p
+    class="audience-empty"
+    id="audienceEmpty"
+    [hidden]="listeners().length > 0 || hasMore()"
+  >
+    Nobody is listening yet. Invite someone to tune in.
+  </p>
+
+  <div
+    class="audience-rail"
+    id="audienceList"
+    role="list"
+    aria-label="Listeners in the room"
+    [hidden]="!audienceVisible() || listeners().length === 0"
+  >
+    @for (listener of listeners(); track listener.id) {
+      <button
+        type="button"
+        role="listitem"
+        class="listener-tile"
+        [class.is-hand-raised]="listener.handRaised"
+        [attr.data-listener-id]="listener.id"
+        [attr.data-name]="listener.name"
+        [attr.aria-label]="listenerAriaLabel(listener)"
+        [matMenuTriggerFor]="listenerMenu"
+        [matMenuTriggerData]="{ listener }"
+      >
+        <span class="listener-avatar-shell">
+          <span
+            class="listener-avatar"
+            [class]="listener.chipClass"
+            matRipple
+            aria-hidden="true"
+          >
+            @if (listener.avatarUrl; as url) {
+              <img [src]="url" alt="" referrerpolicy="no-referrer" width="100%" height="100%" style="object-fit: cover; border-radius: inherit">
+            } @else { {{ listener.initial }} }
+          </span>
+          @if (listener.handRaised) {
+            <span class="listener-badge listener-badge-hand" aria-hidden="true" title="Hand raised">
+              <mat-icon>front_hand</mat-icon>
+            </span>
+          } @else {
+            <span class="listener-presence-dot" aria-hidden="true"></span>
+          }
+        </span>
+        <span class="listener-name">{{ listener.name }}</span>
+      </button>
+    }
+  </div>
+
+  @if (audienceVisible() && hasMore()) {
+    <button matButton type="button" [disabled]="loading()" (click)="loadMore.emit()">
+      {{ loading() ? 'Loading listeners…' : 'Show more listeners' }}
+    </button>
+  }
+
+  <mat-menu #listenerMenu="matMenu" class="jtalk-menu" xPosition="before">
+    <ng-template matMenuContent let-listener="listener">
+      @if (isHost() && listener.handRaised) {
+        <button
+          mat-menu-item
+          type="button"
+          (click)="listenerAction.emit({ action: 'approve', listener })"
+        >
+          <mat-icon>check_circle</mat-icon>
+          <span>Approve speaker request</span>
+        </button>
+      } @else if (isHost()) {
+        <button
+          mat-menu-item
+          type="button"
+          (click)="listenerAction.emit({ action: 'stage', listener })"
+        >
+          <mat-icon>mic</mat-icon>
+          <span>Promote to stage</span>
+        </button>
+      }
+
+      <button
+        mat-menu-item
+        type="button"
+        (click)="listenerAction.emit({ action: 'profile', listener })"
+      >
+        <mat-icon>person</mat-icon>
+        <span>View profile</span>
+      </button>
+
+      @if (isHost()) {
+        <button
+          mat-menu-item
+          class="menu-item-danger"
+          type="button"
+          (click)="listenerAction.emit({ action: 'remove', listener })"
+        >
+          <mat-icon>person_remove</mat-icon>
+          <span>Remove from room</span>
+        </button>
+      }
+    </ng-template>
+  </mat-menu>
+</section>

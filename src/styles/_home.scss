@@ -1,0 +1,551 @@
+// ============================================================================
+// Jtalk — Mobile-First Minimalist Single-Screen Editorial Homepage
+// Base styles target compact/standard mobile (320px+), progressively enhancing
+// for large mobile (480px+), tablet (768px+), desktop (1024px+), and wide
+// monitors (1440px+) while preserving single-screen harmony and 44px touch
+// targets without ever clipping on short or zoomed viewports.
+// ============================================================================
+
+.home-shell {
+  position: relative;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: var(--mat-sys-background);
+  color: var(--mat-sys-on-surface);
+  overflow-x: clip;
+  isolation: isolate;
+}
+
+.home-skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 40;
+  padding: 10px 16px;
+  border-radius: var(--r-full);
+  background: var(--mat-sys-inverse-surface);
+  color: var(--mat-sys-inverse-on-surface);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transform: translateY(-180%);
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home-skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+// ----------------------------------------------------------------------------
+// 1. Whisper-Quiet Header (Mobile-first)
+// ----------------------------------------------------------------------------
+
+.home-header {
+  width: 100%;
+  max-width: 68rem;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+}
+
+.home-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--touch-min);
+  color: var(--mat-sys-on-surface);
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border-radius: var(--r-s);
+  padding: 6px 4px;
+  margin-inline-start: -4px;
+  transition: opacity 0.18s ease;
+}
+
+.home-brand:hover {
+  opacity: 0.72;
+}
+
+.home-brand-name {
+  font-size: 1.1875rem;
+  line-height: 1.4rem;
+  font-weight: 540;
+  letter-spacing: -0.02em;
+}
+
+.home-signin-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+// ----------------------------------------------------------------------------
+// 2. Centered Minimalist Hero Stage (Mobile-first)
+// ----------------------------------------------------------------------------
+
+.home-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.75rem, 2.8dvh, 2rem) clamp(1rem, 4vw, 2.5rem);
+  min-height: 0;
+}
+
+.home-hero {
+  width: 100%;
+  max-width: 44rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+}
+
+.home-status {
+  margin: 0 0 clamp(1rem, 2.6dvh, 1.75rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--muted);
+}
+
+.home-dot {
+  opacity: 0.45;
+}
+
+.home-status-count {
+  color: var(--mat-sys-on-surface);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+// Quiet 3-bar hairline acoustic pulse
+.home-eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 11px;
+  margin-inline-end: 2px;
+}
+
+.home-eq i {
+  display: block;
+  width: 1.75px;
+  height: 11px;
+  border-radius: 2px;
+  background: var(--positive-ink);
+  transform-origin: center bottom;
+  animation: home-eq-pulse 1.5s ease-in-out infinite;
+}
+
+.home-eq i:nth-child(1) {
+  animation-delay: -0.9s;
+}
+.home-eq i:nth-child(2) {
+  animation-delay: -0.35s;
+}
+.home-eq i:nth-child(3) {
+  animation-delay: -1.2s;
+}
+
+@keyframes home-eq-pulse {
+  0%,
+  100% {
+    transform: scaleY(0.32);
+  }
+  50% {
+    transform: scaleY(0.95);
+  }
+}
+
+.home-headline {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.04em;
+  font-size: clamp(2.125rem, 10.5vw, 3.125rem);
+  line-height: 1.03;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+  color: var(--mat-sys-on-surface);
+  max-width: 100%;
+}
+
+.home-line-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
+  max-width: 100%;
+}
+
+.home-line-reveal {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.home-title-light {
+  font-weight: 300;
+}
+
+.home-title-heavy {
+  font-weight: 560;
+}
+
+.home-lead {
+  margin: clamp(1rem, 2.4dvh, 1.625rem) 0 0;
+  max-width: 32ch;
+  font-size: clamp(0.9375rem, 1.35vw, 1.15rem);
+  line-height: 1.55;
+  font-weight: 400;
+  color: var(--mat-sys-on-surface-variant);
+  text-wrap: balance;
+}
+
+// Mobile-first stacked CTAs for effortless thumb tapping
+.home-actions {
+  margin-top: clamp(1.25rem, 3.2dvh, 2.375rem);
+  width: 100%;
+  max-width: 20rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+}
+
+.home-primary-btn {
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+  font-weight: 500 !important;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.home-primary-arrow {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home-primary-btn:hover .home-primary-arrow {
+  transform: translateX(4px);
+}
+
+.home-primary-btn:active {
+  transform: scale(0.975) !important;
+}
+
+.home-secondary-btn {
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+  min-height: var(--touch-min);
+  padding-inline: 16px !important;
+  font-weight: 500 !important;
+}
+
+// ----------------------------------------------------------------------------
+// 3. Unboxed Single-Line Live Whisper Bar (Mobile-first 44px touch hitboxes)
+// ----------------------------------------------------------------------------
+
+.home-live-bar {
+  margin-top: clamp(1.5rem, 4.4dvh, 3.5rem);
+  width: 100%;
+  max-width: 35rem;
+  padding-top: 12px;
+  border-top: 1px solid var(--mat-sys-outline);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+
+.home-live-index {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  padding: 0 8px;
+  margin-inline-start: -8px;
+  border-radius: var(--r-s);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 520;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.home-live-index:hover {
+  color: var(--mat-sys-on-surface);
+  background: var(--state-hover);
+}
+
+.home-live-index:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.home-live-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.home-live-title {
+  font-size: 0.875rem;
+  line-height: 1.3;
+  font-weight: 520;
+  color: var(--mat-sys-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-live-meta {
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-live-join {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  min-height: var(--touch-min);
+  padding: 0 10px;
+  margin-inline-end: -10px;
+  border-radius: var(--r-full);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 520;
+  color: var(--mat-sys-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 0.16s ease;
+}
+
+.home-live-join:hover {
+  background: var(--state-hover);
+}
+
+.home-live-join:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.home-live-join-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  line-height: 16px !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home-live-join:hover .home-live-join-icon {
+  transform: translate(2px, -2px);
+}
+
+// ----------------------------------------------------------------------------
+// 4. Minimal Footer (Mobile-first)
+// ----------------------------------------------------------------------------
+
+.home-footer {
+  width: 100%;
+  max-width: 68rem;
+  margin-inline: auto;
+}
+
+.home-footer-inner {
+  min-height: 52px;
+  padding: 8px clamp(1rem, 4vw, 2.5rem) calc(12px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: var(--muted);
+}
+
+.home-footer-note {
+  white-space: nowrap;
+}
+
+.home-greeting-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0 10px;
+  margin-inline-end: -10px;
+  border-radius: var(--r-full);
+  min-width: 88px;
+  min-height: var(--touch-min);
+  display: inline-grid;
+  place-items: center end;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 0.16s ease;
+}
+
+.home-greeting-btn:hover {
+  background: var(--state-hover);
+}
+
+.home-greeting-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.home-greeting-viewport {
+  position: relative;
+  display: grid;
+  place-items: center end;
+  height: 22px;
+  overflow: hidden;
+}
+
+.home-greeting {
+  grid-area: 1 / 1;
+  font-size: 0.875rem;
+  font-weight: 520;
+  color: var(--positive-ink);
+  opacity: 0;
+  transform: translateY(105%);
+  transition:
+    opacity 0.36s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.36s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.home-greeting.is-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+// ----------------------------------------------------------------------------
+// Progressive Enhancement: Large Mobile / Tablet+ (>= 40rem / 640px)
+// ----------------------------------------------------------------------------
+
+@media (min-width: 40rem) {
+  .home-header {
+    min-height: 76px;
+  }
+
+  .home-brand-name {
+    font-size: 1.2rem;
+  }
+
+  .home-headline {
+    font-size: clamp(3rem, 6.2vw, 5.25rem);
+    line-height: 1.02;
+    letter-spacing: -0.042em;
+  }
+
+  .home-lead {
+    max-width: 48ch;
+  }
+
+  .home-actions {
+    width: auto;
+    max-width: none;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .home-primary-btn {
+    width: auto;
+    min-width: 196px;
+  }
+
+  .home-secondary-btn {
+    width: auto;
+  }
+
+  .home-live-bar {
+    gap: 16px;
+    padding-top: 16px;
+  }
+
+  .home-live-title {
+    font-size: 0.9375rem;
+  }
+
+  .home-live-meta {
+    font-size: 0.8125rem;
+  }
+
+  .home-footer-inner {
+    min-height: 60px;
+    padding-block: 12px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+// Refined desktop pointer density (>= 48rem / 768px & fine pointer)
+@media (min-width: 48rem) and (pointer: fine) {
+  .home-live-index,
+  .home-live-join,
+  .home-greeting-btn {
+    min-height: 36px;
+  }
+}
+
+// Wide desktop framing (>= 90rem / 1440px)
+@media (min-width: 90rem) {
+  .home-header,
+  .home-footer {
+    max-width: 74rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-eq i {
+    animation: none;
+  }
+
+  .home-greeting,
+  .home-primary-btn,
+  .home-primary-arrow,
+  .home-live-index,
+  .home-live-join,
+  .home-live-join-icon,
+  .home-brand,
+  .home-skip-link {
+    transition: none;
+  }
+}

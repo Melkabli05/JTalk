@@ -1,0 +1,472 @@
+@use '@angular/material' as mat;
+
+// ============================================================================
+// Official Angular Material 3 Component Overrides
+// Uses ONLY documented mat.<component>-overrides(...) Sass mixins.
+// Zero ::ng-deep, zero private .mdc-* selectors.
+// ============================================================================
+
+:root {
+  // Buttons: mobile-first 44px touch targets; refined to 40px on desktop pointer devices
+  @include mat.button-overrides((
+    tonal-container-color: var(--primary-btn),
+    tonal-label-text-color: var(--on-primary-btn),
+    tonal-container-shape: 9999px,
+    tonal-container-height: 44px,
+    tonal-horizontal-padding: 20px,
+    tonal-label-text-font: var(--font),
+    tonal-label-text-size: 0.9375rem,
+    tonal-label-text-weight: 450,
+    tonal-label-text-tracking: 0,
+
+    filled-container-shape: 9999px,
+    filled-container-height: 44px,
+    filled-horizontal-padding: 20px,
+    filled-label-text-font: var(--font),
+    filled-label-text-size: 0.9375rem,
+    filled-label-text-weight: 450,
+    filled-label-text-tracking: 0,
+
+    outlined-container-shape: 9999px,
+    outlined-container-height: 44px,
+    outlined-horizontal-padding: 16px,
+    outlined-outline-color: var(--mat-sys-outline-variant),
+    outlined-label-text-color: var(--mat-sys-on-surface),
+    outlined-label-text-font: var(--font),
+    outlined-label-text-size: 0.9375rem,
+    outlined-label-text-weight: 500,
+    outlined-label-text-tracking: 0,
+
+    text-container-shape: 9999px,
+    text-container-height: 44px,
+    text-horizontal-padding: 14px,
+    text-label-text-color: var(--mat-sys-primary),
+    text-label-text-font: var(--font),
+    text-label-text-size: 0.9375rem,
+    text-label-text-weight: 500,
+    text-label-text-tracking: 0,
+  ));
+
+  // Icon buttons: mobile-first 44px circular touch targets
+  @include mat.icon-button-overrides((
+    container-shape: 9999px,
+    icon-color: var(--mat-sys-on-surface-variant),
+    icon-size: 20px,
+    state-layer-size: 44px,
+    touch-target-size: 44px,
+  ));
+
+  // Mini FAB (used for mobile bottom bar "Go live" + control)
+  @include mat.fab-overrides((
+    small-container-shape: 9999px,
+    small-container-color: var(--primary-btn),
+    small-foreground-color: var(--on-primary-btn),
+    small-container-elevation-shadow: none,
+    small-hover-container-elevation-shadow: none,
+    small-focus-container-elevation-shadow: none,
+    small-pressed-container-elevation-shadow: none,
+  ));
+
+  // Cards: flat NotebookLM cards (0 elevation, clean hairline border)
+  @include mat.card-overrides((
+    filled-container-shape: 28px,
+    filled-container-color: var(--card),
+    filled-container-elevation: none,
+    outlined-container-shape: 20px,
+    outlined-container-color: var(--mat-sys-surface),
+    outlined-outline-color: var(--mat-sys-outline),
+    outlined-outline-width: 1px,
+    outlined-container-elevation: none,
+  ));
+
+  // Filter chips: mobile-first 44px touch height, refined to 36px at tablet+
+  @include mat.chips-overrides((
+    container-shape-radius: 9999px,
+    container-height: 44px,
+    outline-width: 0px,
+    flat-selected-outline-width: 0px,
+    elevated-container-color: var(--mat-sys-surface-container),
+    elevated-selected-container-color: var(--primary-btn),
+    label-text-color: var(--mat-sys-on-surface-variant),
+    selected-label-text-color: var(--on-primary-btn),
+    label-text-font: var(--font),
+    label-text-size: 0.875rem,
+    label-text-weight: 500,
+    label-text-tracking: 0,
+  ));
+
+  // Overflow menus: NotebookLM 24px white card surface with level-1 shadow
+  @include mat.menu-overrides((
+    container-shape: 24px,
+    container-color: var(--menu-bg),
+    container-elevation-shadow: var(--elevation-1),
+    item-label-text-color: var(--menu-ink),
+    item-icon-color: var(--menu-variant),
+    item-hover-state-layer-color: var(--menu-hover),
+    item-focus-state-layer-color: var(--menu-hover),
+    item-label-text-font: var(--font),
+    item-label-text-size: 0.9375rem,
+    item-label-text-weight: 400,
+    item-label-text-tracking: 0,
+    item-leading-spacing: 16px,
+    item-trailing-spacing: 16px,
+    item-with-icon-leading-spacing: 16px,
+    item-with-icon-trailing-spacing: 16px,
+    item-spacing: 12px,
+    item-icon-size: 20px,
+    divider-color: var(--outline-variant),
+  ));
+
+  // Dialogs: mobile-first compact 16px padding, expanding to 24px at tablet+
+  @include mat.dialog-overrides((
+    container-shape: 24px,
+    container-color: var(--dialog-surface),
+    container-elevation-shadow: var(--elevation-2),
+    subhead-color: var(--mat-sys-on-surface),
+    supporting-text-color: var(--muted),
+    subhead-font: var(--font),
+    subhead-size: var(--type-dialog-title),
+    subhead-line-height: 1.3,
+    subhead-weight: 380,
+    subhead-tracking: 0,
+    supporting-text-font: var(--font),
+    supporting-text-size: 0.9375rem,
+    supporting-text-line-height: 1.35,
+    supporting-text-tracking: 0,
+    headline-padding: 18px 18px 8px,
+    content-padding: 12px 18px,
+    with-actions-content-padding: 12px 18px 8px,
+    actions-padding: 12px 18px 18px,
+  ));
+
+  // Outlined Form Fields: 12px-16px soft rounded NotebookLM inputs
+  @include mat.form-field-overrides((
+    outlined-container-shape: 12px,
+    outlined-outline-color: var(--mat-sys-outline-variant),
+    outlined-hover-outline-color: var(--mat-sys-on-surface-variant),
+    outlined-focus-outline-color: var(--mat-sys-primary),
+    outlined-input-text-color: var(--mat-sys-on-surface),
+    outlined-input-text-placeholder-color: var(--placeholder),
+    outlined-label-text-color: var(--muted),
+    outlined-focus-label-text-color: var(--mat-sys-primary),
+    outlined-caret-color: var(--mat-sys-primary),
+    container-text-font: var(--font),
+    container-text-size: 1rem,
+    container-text-tracking: 0,
+    subscript-text-font: var(--font),
+    subscript-text-size: 0.8125rem,
+    subscript-text-tracking: 0,
+  ));
+
+  // Select dropdown panel: matches NotebookLM white card menu aesthetic
+  @include mat.select-overrides((
+    panel-background-color: var(--menu-bg),
+    container-elevation-shadow: var(--elevation-1),
+    enabled-trigger-text-color: var(--mat-sys-on-surface),
+    enabled-arrow-color: var(--mat-sys-on-surface-variant),
+    focused-arrow-color: var(--mat-sys-primary),
+    trigger-text-font: var(--font),
+    trigger-text-size: 1rem,
+    trigger-text-tracking: 0,
+  ));
+
+  // Select options inside dropdown panel
+  @include mat.option-overrides((
+    label-text-color: var(--menu-ink),
+    selected-state-label-text-color: var(--mat-sys-on-primary-container),
+    hover-state-layer-color: var(--menu-hover),
+    focus-state-layer-color: var(--menu-hover),
+    selected-state-layer-color: var(--mat-sys-primary-container),
+    label-text-font: var(--font),
+    label-text-size: 0.9375rem,
+    label-text-tracking: 0,
+  ));
+
+  // Tabs (Profile view): crisp Google Sans Flex tabs
+  @include mat.tabs-overrides((
+    active-indicator-height: 3px,
+    active-indicator-color: var(--mat-sys-primary),
+    active-label-text-color: var(--mat-sys-primary),
+    active-hover-label-text-color: var(--mat-sys-primary),
+    active-focus-label-text-color: var(--mat-sys-primary),
+    inactive-label-text-color: var(--mat-sys-on-surface-variant),
+    inactive-hover-label-text-color: var(--mat-sys-on-surface),
+    divider-color: var(--mat-sys-outline),
+    container-height: 44px,
+    label-text-font: var(--font),
+    label-text-size: 0.9375rem,
+    label-text-weight: 500,
+    label-text-tracking: 0,
+  ));
+
+  // Snackbar / Toast: NotebookLM pill toast using inverse-surface roles
+  @include mat.snack-bar-overrides((
+    container-shape: 9999px,
+    container-color: var(--mat-sys-inverse-surface),
+    supporting-text-color: var(--mat-sys-inverse-on-surface),
+    supporting-text-font: var(--font),
+    supporting-text-size: 0.9375rem,
+    supporting-text-weight: 500,
+  ));
+
+  // Tooltip: compact dark/light inverse pill for collapsed sidebar rail & toolbar
+  @include mat.tooltip-overrides((
+    container-shape: 8px,
+    container-color: var(--mat-sys-inverse-surface),
+    supporting-text-color: var(--mat-sys-inverse-on-surface),
+    supporting-text-font: var(--font),
+    supporting-text-size: 0.8125rem,
+    supporting-text-weight: 500,
+  ));
+
+  // Dividers & Action Lists
+  @include mat.divider-overrides((
+    color: var(--mat-sys-outline),
+    width: 1px,
+  ));
+
+  @include mat.list-overrides((
+    list-item-container-shape: 12px,
+    list-item-container-color: transparent,
+    list-item-label-text-color: var(--mat-sys-on-surface),
+    list-item-leading-icon-color: var(--mat-sys-on-surface-variant),
+    list-item-hover-state-layer-color: var(--mat-sys-on-surface),
+    list-item-hover-state-layer-opacity: 0.08,
+    list-item-label-text-font: var(--font),
+    list-item-label-text-size: 1rem,
+    list-item-label-text-weight: 400,
+    list-item-label-text-tracking: 0,
+    list-item-one-line-container-height: 52px,
+  ));
+}
+
+// ---- Scoped Material 3 semantic variants (zero ::ng-deep, pure override mixins) ----
+
+// Room card surface: warm-grey 32px flat NotebookLM recent card
+.room-card {
+  @include mat.card-overrides((
+    filled-container-shape: 32px,
+    filled-container-color: var(--card),
+  ));
+}
+
+// Sidebar "Go live" card: warm card in light mode, elevated obsidian card in dark mode
+.golive-card {
+  @include mat.card-overrides((
+    filled-container-shape: 28px,
+    filled-container-color: var(--card),
+  ));
+}
+
+// Sidebar "You are in a room" card
+.inroom-card {
+  @include mat.card-overrides((
+    filled-container-shape: 20px,
+    filled-container-color: var(--mat-sys-surface-container-low),
+  ));
+}
+
+// Discussion panel card
+.discussion-card {
+  @include mat.card-overrides((
+    outlined-container-shape: 24px,
+    outlined-container-color: var(--mat-sys-surface-container-low),
+    outlined-outline-color: var(--mat-sys-outline-variant),
+  ));
+}
+
+// People panel card
+.people-panel-card {
+  @include mat.card-overrides((
+    outlined-container-shape: 28px,
+    outlined-container-color: var(--mat-sys-surface),
+    outlined-outline-color: var(--mat-sys-outline),
+  ));
+}
+
+// Large 48px primary pill button ("Start a room", "Back to the room")
+.btn-lg-pill {
+  @include mat.button-overrides((
+    tonal-container-height: 48px,
+    tonal-horizontal-padding: 24px,
+    tonal-label-text-size: 1.0625rem,
+    tonal-label-text-weight: 370,
+  ));
+}
+
+// Compact 32px banner button ("Back to the room" on mobile in-room bar)
+.btn-banner-pill {
+  @include mat.button-overrides((
+    tonal-container-height: 32px,
+    tonal-horizontal-padding: 14px,
+    tonal-label-text-size: 0.875rem,
+    tonal-label-text-weight: 500,
+  ));
+}
+
+// Solid danger action button ("Leave" on stage controls, "End room", "Delete account")
+.btn-danger-filled {
+  @include mat.button-overrides((
+    filled-container-color: var(--error-solid),
+    filled-label-text-color: var(--on-error-solid),
+    filled-container-shape: 9999px,
+  ));
+}
+
+.btn-leave-pill {
+  @include mat.button-overrides((
+    filled-container-color: var(--error-solid),
+    filled-label-text-color: var(--on-error-solid),
+    filled-container-shape: 9999px,
+    filled-container-height: 56px,
+    filled-horizontal-padding: 24px,
+    filled-label-text-size: 1.0625rem,
+    filled-label-text-weight: 370,
+  ));
+}
+
+// Outlined danger button ("Delete your account")
+.btn-danger-outlined {
+  @include mat.button-overrides((
+    outlined-outline-color: var(--mat-sys-error),
+    outlined-label-text-color: var(--mat-sys-error),
+    outlined-state-layer-color: var(--mat-sys-error),
+  ));
+}
+
+// Subtle tonal neutral button (e.g. Hide/Show audience, Refresh)
+.btn-neutral-tonal {
+  @include mat.button-overrides((
+    tonal-container-color: var(--mat-sys-surface-container),
+    tonal-label-text-color: var(--mat-sys-on-surface-variant),
+    tonal-horizontal-padding: 16px,
+    tonal-label-text-size: 0.875rem,
+    tonal-label-text-weight: 500,
+  ));
+}
+
+// Outlined primary action button (e.g. "Invite people")
+.btn-primary-outlined {
+  @include mat.button-overrides((
+    outlined-outline-color: var(--mat-sys-outline-variant),
+    outlined-label-text-color: var(--mat-sys-primary),
+    outlined-horizontal-padding: 16px,
+    outlined-label-text-size: 0.875rem,
+    outlined-label-text-weight: 500,
+  ));
+}
+
+// Room control 56px circular icon buttons (React, Hand, Mute) & semantic icon states
+.ctrl-icon-btn {
+  @include mat.icon-button-overrides((
+    state-layer-size: 56px,
+    touch-target-size: 56px,
+    icon-size: 24px,
+  ));
+}
+
+.ctrl-icon-btn[aria-pressed='true'],
+.disc-icon-btn[aria-expanded='true'] {
+  @include mat.icon-button-overrides((
+    icon-color: var(--mat-sys-on-primary-container),
+  ));
+}
+
+.ctrl-icon-btn.muted[aria-pressed='true'] {
+  @include mat.icon-button-overrides((
+    icon-color: var(--mat-sys-on-error-container),
+  ));
+}
+
+.toolbar-icon-btn.end-btn {
+  @include mat.icon-button-overrides((
+    icon-color: var(--mat-sys-error),
+  ));
+}
+
+.send-btn {
+  @include mat.icon-button-overrides((
+    icon-color: var(--on-primary-btn),
+  ));
+}
+
+.hero-scene-btn {
+  @include mat.icon-button-overrides((
+    icon-color: var(--nb-white),
+  ));
+}
+
+// Danger menu item (End room / Delete comment) via official Material 3 menu token overrides
+.menu-item-danger {
+  @include mat.menu-overrides((
+    item-label-text-color: var(--menu-danger),
+    item-icon-color: var(--menu-danger),
+  ));
+}
+
+// Sidebar Material Nav List (NotebookLM pill active rail items)
+.mainnav-list {
+  @include mat.list-overrides((
+    list-item-container-shape: 9999px,
+    list-item-one-line-container-height: 48px,
+    list-item-label-text-color: var(--mat-sys-on-surface-variant),
+    list-item-label-text-size: 0.9375rem,
+    list-item-label-text-weight: 500,
+    list-item-leading-icon-color: var(--mat-sys-on-surface-variant),
+    list-item-leading-icon-start-space: 16px,
+    list-item-leading-icon-end-space: 12px,
+    list-item-trailing-supporting-text-color: var(--mat-sys-on-surface-variant),
+    active-indicator-shape: 9999px,
+    active-indicator-color: var(--primary-btn),
+  ));
+}
+
+// Directory & Listener Material Lists (People, Audience, Invite dialog)
+.directory-list {
+  @include mat.list-overrides((
+    list-item-container-shape: 12px,
+    list-item-two-line-container-height: 68px,
+    list-item-label-text-color: var(--mat-sys-on-surface),
+    list-item-label-text-size: 1rem,
+    list-item-label-text-weight: 540,
+    list-item-supporting-text-color: var(--muted),
+    list-item-supporting-text-font: var(--font),
+    list-item-supporting-text-size: 0.8125rem,
+    list-item-supporting-text-tracking: 0,
+  ));
+}
+
+// Mobile-first progressive enhancement: tablet & desktop (>= 48rem / 768px)
+@media (min-width: 48rem) {
+  :root {
+    @include mat.dialog-overrides((
+      container-shape: 28px,
+      headline-padding: 24px 24px 8px,
+      content-padding: 16px 24px,
+      with-actions-content-padding: 16px 24px 8px,
+      actions-padding: 16px 24px 24px,
+    ));
+
+    @include mat.chips-overrides((
+      container-height: 36px,
+    ));
+  }
+}
+
+// Fine-pointer desktop density (>= 64rem / 1024px)
+@media (min-width: 64rem) and (pointer: fine) {
+  :root {
+    @include mat.button-overrides((
+      tonal-container-height: 40px,
+      filled-container-height: 40px,
+      outlined-container-height: 40px,
+      text-container-height: 40px,
+      text-horizontal-padding: 16px,
+    ));
+
+    @include mat.icon-button-overrides((
+      state-layer-size: 40px,
+      touch-target-size: 40px,
+    ));
+  }
+}

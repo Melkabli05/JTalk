@@ -1,0 +1,13 @@
+@let currentVariant = variant();
+@let boneHeight = resolvedHeight();
+@for (lineWidth of lineWidths(); track $index) {
+  <span
+    class="skeleton-bone"
+    [class.skeleton-text]="currentVariant === 'text'"
+    [class.skeleton-circle]="currentVariant === 'circle'"
+    [class.skeleton-pill]="currentVariant === 'pill'"
+    [class.skeleton-rect]="currentVariant === 'rect'"
+    [style.width]="lineWidth"
+    [style.height]="boneHeight"
+  ></span>
+}

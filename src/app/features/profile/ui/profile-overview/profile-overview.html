@@ -1,0 +1,23 @@
+@let p = profile();
+@let bio = trimmedBio();
+<mat-card class="profile-card" appearance="outlined" aria-labelledby="about-h">
+  <h3 id="about-h">About</h3>
+  @if (bio) {
+    <p class="profile-bio" id="aboutBioText">{{ bio }}</p>
+  } @else {
+    <p class="profile-empty" id="aboutEmptyText">No bio yet.</p>
+  }
+  <mat-divider class="profile-divider" />
+  <h3 id="languages-h">Languages</h3>
+  <ul class="lang-rows">
+    <li>
+      <span class="lang-row-label">Speaks</span>
+      <span class="profile-chip" id="aboutSpeakChip">{{ p.speak }}</span>
+    </li>
+    <li>
+      <span class="lang-row-label">Learning</span>
+      <span class="profile-chip" id="aboutLearnChip">{{ p.learn }}</span>
+      <span class="mini-chip">Beginner</span>
+    </li>
+  </ul>
+</mat-card>

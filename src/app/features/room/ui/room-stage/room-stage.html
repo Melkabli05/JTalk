@@ -1,0 +1,198 @@
+@let activeSpeakers = speakers();
+
+<section #stageSection tabindex="-1" class="stage-wrap" aria-labelledby="stage-h">
+  <div class="stage-bar">
+    <h2 id="stage-h" class="stage-label">
+      Stage
+      <span class="stage-count">{{ activeSpeakers.length }}/{{ maxSeats() }}</span>
+    </h2>
+  </div>
+
+  @if (pinnedMessage(); as pinned) {
+    <div class="stage-pinned-banner" id="pinnedMessageBanner">
+      <mat-icon aria-hidden="true">push_pin</mat-icon>
+      <span class="stage-pinned-text">
+        <strong>{{ pinned.author }}:</strong> {{ pinned.text }}
+      </span>
+      @if (isHost()) {
+        <button
+          type="button"
+          class="stage-pinned-close"
+          aria-label="Unpin message"
+          (click)="unpinMessage.emit()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+  }
+
+  @if (stageReaction(); as reaction) {
+    @for (key of [stageReactionKey()]; track key) {
+      <span class="stage-reaction" id="stageReaction" aria-hidden="true">{{ reaction }}</span>
+    }
+  }
+
+  <div
+    class="stage-grid"
+    [style.--stage-cols]="stageColumns()"
+    [attr.data-speaker-count]="activeSpeakers.length"
+  >
+    @for (speaker of activeSpeakers; track speaker.id) {
+      <button
+        type="button"
+        class="speaker-tile"
+        [class.is-speaking]="speaker.speaking && !speaker.muted"
+        [class.is-muted]="speaker.muted"
+        [class.is-host]="speaker.role === 'host'"
+        [attr.data-speaker-id]="speaker.id"
+        [attr.aria-label]="speakerAriaLabel(speaker)"
+        [matMenuTriggerFor]="speakerMenu"
+        [matMenuTriggerData]="{ speaker }"
+      >
+        <span class="speaker-avatar-shell">
+          <span
+            class="speaker-avatar"
+            [class]="speaker.chipClass"
+            matRipple
+          >
+            @if (speaker.avatarUrl; as url) {
+              <img [src]="url" alt="" referrerpolicy="no-referrer" width="100%" height="100%" style="object-fit: cover; border-radius: inherit">
+            } @else { {{ speaker.initial }} }
+          </span>
+
+          @if (speaker.role === 'host') {
+            <span class="speaker-badge speaker-badge-host" aria-hidden="true" title="Host">
+              <mat-icon>star</mat-icon>
+            </span>
+          }
+
+          @if (speaker.muted) {
+            <span
+              class="speaker-badge speaker-badge-mic is-muted"
+              [attr.id]="speaker.isYou ? 'hostMicBadge' : null"
+              title="Muted"
+              aria-hidden="true"
+            >
+              <mat-icon>mic_off</mat-icon>
+            </span>
+          } @else if (speaker.speaking) {
+            <span class="speaker-badge speaker-badge-wave" aria-hidden="true">
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+            </span>
+          } @else if (speaker.isYou) {
+            <span class="speaker-badge speaker-badge-mic" id="hostMicBadge" aria-hidden="true">
+              <mat-icon>mic</mat-icon>
+            </span>
+          }
+        </span>
+
+        <span class="speaker-name-row">
+          <span class="speaker-name">{{ speaker.name }}</span>
+          @if (speakerRoleLabel(speaker); as roleLabel) {
+            <span class="speaker-role-tag" [class.is-host]="speaker.role === 'host'">
+              {{ roleLabel }}
+            </span>
+          }
+        </span>
+      </button>
+    }
+
+    @if (hasOpenSeat()) {
+      <button
+        type="button"
+        class="speaker-tile speaker-tile-open"
+        id="openSeatButton"
+        aria-label="Join stage"
+        (click)="claimSeat.emit()"
+      >
+        <span class="speaker-avatar-shell">
+          <span class="speaker-avatar speaker-avatar-open" matRipple>
+            <mat-icon aria-hidden="true">add</mat-icon>
+          </span>
+        </span>
+        <span class="speaker-name-row">
+          <span class="speaker-name speaker-name-muted">Join stage</span>
+        </span>
+      </button>
+    }
+  </div>
+
+  <mat-menu #speakerMenu="matMenu" class="jtalk-menu">
+    <ng-template matMenuContent let-speaker="speaker">
+      <button
+        mat-menu-item
+        type="button"
+        (click)="speakerAction.emit({ action: 'profile', speaker })"
+      >
+        <mat-icon>person</mat-icon>
+        <span>View profile</span>
+      </button>
+
+      @if (canMuteSpeaker(speaker)) {
+        <button
+          mat-menu-item
+          type="button"
+          (click)="speakerAction.emit({ action: 'mute', speaker })"
+        >
+          <mat-icon>
+            {{ speaker.isYou ? (speaker.muted ? 'mic' : 'mic_off') : 'mic_off' }}
+          </mat-icon>
+          <span>
+            @if (speaker.isYou) {
+              {{ speaker.muted ? 'Unmute microphone' : 'Mute microphone' }}
+            } @else {
+              Mute speaker
+            }
+          </span>
+        </button>
+      }
+
+      @if (canLeaveOwnStage(speaker)) {
+        <button
+          mat-menu-item
+          type="button"
+          (click)="speakerAction.emit({ action: 'leave-stage', speaker })"
+        >
+          <mat-icon>arrow_downward</mat-icon>
+          <span>Leave stage</span>
+        </button>
+      }
+
+      @if (canModerateTarget(speaker)) {
+        <button
+          mat-menu-item
+          type="button"
+          (click)="speakerAction.emit({ action: 'audience', speaker })"
+        >
+          <mat-icon>arrow_downward</mat-icon>
+          <span>Move to audience</span>
+        </button>
+
+        <button
+          mat-menu-item
+          class="menu-item-danger"
+          type="button"
+          (click)="speakerAction.emit({ action: 'remove', speaker })"
+        >
+          <mat-icon>person_remove</mat-icon>
+          <span>Remove from room</span>
+        </button>
+      }
+
+      @if (speaker.role === 'host' && speaker.isYou && isHost()) {
+        <button
+          mat-menu-item
+          class="menu-item-danger"
+          type="button"
+          (click)="endRoom.emit()"
+        >
+          <mat-icon>power_settings_new</mat-icon>
+          <span>End room</span>
+        </button>
+      }
+    </ng-template>
+  </mat-menu>
+</section>

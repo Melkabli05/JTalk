@@ -1,0 +1,53 @@
+<div class="mobile-tab-dock">
+  <button
+    class="mobile-tab"
+    matRipple
+    type="button"
+    routerLink="/rooms"
+    routerLinkActive="active"
+    ariaCurrentWhenActive="page"
+  >
+    <span class="mobile-tab-pill">
+      <mat-icon class="icon-24" aria-hidden="true">mic</mat-icon>
+    </span>
+    <span class="mobile-tab-label">Rooms</span>
+  </button>
+  <button
+    class="mobile-tab"
+    matRipple
+    type="button"
+    routerLink="/people"
+    routerLinkActive="active"
+    ariaCurrentWhenActive="page"
+  >
+    <span class="mobile-tab-pill">
+      <mat-icon class="icon-24" aria-hidden="true">group</mat-icon>
+    </span>
+    <span class="mobile-tab-label">People</span>
+  </button>
+  <button
+    class="mobile-tab"
+    matRipple
+    type="button"
+    routerLink="/profile"
+    routerLinkActive="active"
+    ariaCurrentWhenActive="page"
+    [attr.aria-label]="'Profile — ' + profileName()"
+    (click)="openProfileOverview.emit()"
+  >
+    <span class="mobile-tab-pill">
+      <span class="avatar grad" aria-hidden="true">{{ avatarInitial() }}</span>
+    </span>
+    <span class="mobile-tab-label">Profile</span>
+  </button>
+</div>
+<button
+  matRipple
+  class="mobile-golive-fab"
+  type="button"
+  aria-label="Go live: start a room"
+  (click)="startRoom.emit()"
+>
+  <mat-icon aria-hidden="true">add</mat-icon>
+</button>
+

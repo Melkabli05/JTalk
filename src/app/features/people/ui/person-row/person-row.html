@@ -1,0 +1,48 @@
+@let p = person();
+<mat-list-item>
+  @if (p.avatarUrl) {
+    <img
+      matListItemAvatar
+      class="avatar"
+      [src]="p.avatarUrl"
+      [alt]="p.name"
+      referrerpolicy="no-referrer"
+    />
+  } @else {
+    <span matListItemAvatar class="avatar" [class]="p.chipClass" aria-hidden="true">
+      {{ p.initial }}
+    </span>
+  }
+  <span matListItemTitle>{{ p.name }} <span class="person-handle">&#64;{{ p.username }}</span></span>
+  <span matListItemLine>{{ p.languages }}</span>
+  <span matListItemMeta class="directory-list-meta">
+    <button
+      [matButton]="p.followedByMe ? 'outlined' : 'tonal'"
+      type="button"
+      [disabled]="busy()"
+      (click)="followToggle.emit(p)"
+    >
+      <mat-icon aria-hidden="true">{{ p.followedByMe ? 'check' : 'person_add' }}</mat-icon>
+      {{ p.followedByMe ? 'Following' : 'Follow' }}
+    </button>
+    <button
+      matIconButton
+      type="button"
+      [attr.aria-label]="'More options for ' + p.name"
+      [matMenuTriggerFor]="personMenu"
+    >
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #personMenu="matMenu" class="jtalk-menu" xPosition="before">
+      <button
+        mat-menu-item
+        class="menu-item-danger"
+        type="button"
+        (click)="blockUser.emit(p)"
+      >
+        <mat-icon>block</mat-icon>
+        <span>Block &#64;{{ p.username }}</span>
+      </button>
+    </mat-menu>
+  </span>
+</mat-list-item>

@@ -1,0 +1,31 @@
+@let current = selected();
+<div
+  #chipsRow
+  class="chips-scroll mt-sp-l"
+  [class.can-scroll-right]="canScrollRight()"
+  [class.is-dragging]="isDragging()"
+  (scroll)="updateScrollFade()"
+  (wheel)="onWheel($event)"
+  (pointerdown)="onPointerDown($event)"
+  (pointermove)="onPointerMove($event)"
+  (pointerup)="onPointerEnd()"
+  (pointercancel)="onPointerEnd()"
+>
+  <mat-chip-listbox
+    class="chips-listbox"
+    aria-label="Filter by language"
+    [hideSingleSelectionIndicator]="true"
+    [value]="current"
+    (change)="onSelectionChange($event)"
+  >
+    @for (chip of chips(); track chip.value) {
+      <mat-chip-option
+        [value]="chip.value"
+        [selected]="current === chip.value"
+        (click)="onChipClick($event)"
+      >
+        {{ chip.label }}
+      </mat-chip-option>
+    }
+  </mat-chip-listbox>
+</div>

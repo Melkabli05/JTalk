@@ -1,0 +1,3 @@
+export const PEOPLE_SEARCH_DEBOUNCE_MS = 300;
+export const PEOPLE_MIN_SEARCH_LENGTH = 2;
+export const PEOPLE_MATCHMAKING_PAGE_SIZE = 24;

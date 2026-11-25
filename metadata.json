@@ -1,0 +1,8 @@
+{
+  "name": "Jtalk",
+  "description": "Language speaking practice rooms, live audio stage, discussion thread, and learner profiles.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

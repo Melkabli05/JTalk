@@ -1,0 +1,50 @@
+:host {
+  display: block;
+}
+
+.people-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.people-search-field {
+  margin-bottom: 12px;
+}
+
+.people-loading-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 8px 0;
+}
+
+.people-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.people-skeleton-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.people-state-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 0;
+  color: var(--ink-muted, #64748b);
+}
+
+.people-load-more {
+  display: flex;
+  justify-content: center;
+  padding-top: 16px;
+}

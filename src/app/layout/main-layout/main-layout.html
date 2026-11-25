@@ -1,0 +1,47 @@
+@let profileName = appState.profile().name;
+@let room = roomStore.room();
+@let inRoom = room !== null;
+@let isRoomView = appState.activeView() === 'room';
+@let bannerVisible = inRoom && !isRoomView && isPhoneViewport();
+<div
+  class="app"
+  id="app"
+  [class.sidebar-collapsed]="sidebarCollapsed()"
+  [class.in-room]="inRoom"
+  [class.banner-visible]="bannerVisible"
+  [class.room-active]="isRoomView"
+>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <app-sidebar
+    [collapsed]="sidebarCollapsed()"
+    [liveRoomsCount]="roomsStore.liveCount()"
+    [profileName]="profileName"
+    [inRoom]="inRoom"
+    [activeView]="appState.activeView()"
+    [activeRoomTitle]="room?.title ?? 'Live room'"
+    [activeRoomLang]="roomStore.practiseLangLabel()"
+    [activeRoomSeats]="room?.maxStageSeats ?? 8"
+    (toggleCollapse)="toggleSidebar()"
+    (startRoom)="onOpenStartRoom()"
+    (backToRoom)="onBackToRoom()"
+    (openProfileOverview)="onOpenProfileOverview()"
+  />
+
+  <main id="main-content" class="main">
+    <app-inroom-banner
+      [visible]="bannerVisible"
+      [roomTitle]="room?.title ?? 'Live room'"
+      (backToRoom)="onBackToRoom()"
+    />
+    <router-outlet />
+  </main>
+</div>
+
+@if (!isRoomView) {
+  <app-mobile-tabbar
+    [profileName]="profileName"
+    (startRoom)="onOpenStartRoom()"
+    (openProfileOverview)="onOpenProfileOverview()"
+  />
+}

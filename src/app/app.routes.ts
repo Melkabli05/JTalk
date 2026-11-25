@@ -1,33 +1,42 @@
 import { Routes } from '@angular/router';
-import { signedOutGuard } from '@core/auth/signed-out.guard';
-import { layoutRoutes } from './layout/layout.routes';
+import { authGuard } from './core/auth/auth.guards';
 
 export const routes: Routes = [
-  // The front address is the home page for someone who is not signed in, and the rooms hallway (below) for someone who is.
   {
     path: '',
     pathMatch: 'full',
-    canMatch: [signedOutGuard],
-    loadChildren: () => import('./features/home/home').then((m) => m.HOME_ROUTES),
+    loadChildren: () =>
+      import('./features/home/home.routes').then((m) => m.HOME_ROUTES),
   },
-  ...layoutRoutes([
-    {
-      path: '',
-      loadChildren: () => import('./features/rooms/rooms').then((m) => m.ROOMS_ROUTES),
-    },
-    {
-      path: 'profile',
-      loadChildren: () => import('./features/profile/profile').then((m) => m.PROFILE_ROUTES),
-    },
-    {
-      path: 'people',
-      loadChildren: () => import('./features/profile/profile').then((m) => m.PEOPLE_ROUTES),
-    },
-    {
-      path: '**',
-      title: 'Page not found',
-      loadComponent: () =>
-        import('@core/error-handling/pages/not-found-page/not-found-page.component'),
-    },
-  ]),
+  {
+    path: '',
+    loadComponent: () => import('./layout/main-layout/main-layout').then(m => m.MainLayout),
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'rooms',
+        loadChildren: () =>
+          import('./features/rooms/rooms.routes').then((m) => m.ROOMS_ROUTES),
+      },
+      {
+        path: 'room',
+        loadChildren: () =>
+          import('./features/room/room.routes').then((m) => m.ROOM_ROUTES),
+      },
+      {
+        path: 'people',
+        loadChildren: () =>
+          import('./features/people/people.routes').then((m) => m.PEOPLE_ROUTES),
+      },
+      {
+        path: 'profile',
+        loadChildren: () =>
+          import('./features/profile/profile.routes').then((m) => m.PROFILE_ROUTES),
+      },
+    ],
+  },
+  {
+    path: '**',
+    redirectTo: '',
+  },
 ];

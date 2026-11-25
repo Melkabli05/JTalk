@@ -1,9 +1,0 @@
-# Install scripts of dependencies do not run, so nothing is executed on install. Each of these ships prebuilt binaries
-# (or falls back to a slower pure-JS path), and the project built and tested this way before `livekit-client` was added.
-allowBuilds:
-  '@parcel/watcher': false
-  esbuild: false
-  lmdb: false
-  msgpackr-extract: false
-  # Pulled in by the Auth0 SDK. It ships its compiled code; its install script only runs a post-install notice.
-  browser-tabs-lock: false

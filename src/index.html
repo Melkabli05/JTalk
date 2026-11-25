@@ -1,24 +1,33 @@
 <!doctype html>
-<html lang="en" dir="ltr">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Jtalk</title>
+    <title>Jtalk — Language Speaking Practice Rooms</title>
     <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="Language speaking practice rooms, live audio stage, discussion thread, and learner profiles."
+    />
+    <meta property="og:title" content="Jtalk — Language Speaking Practice Rooms" />
+    <meta
+      property="og:description"
+      content="Language speaking practice rooms, live audio stage, discussion thread, and learner profiles."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <script>
-      (function () {
-        try {
-          var saved = localStorage.getItem('jtalk:color-scheme');
-          var dark =
-            saved === 'dark' ||
-            ((saved === null || saved === 'system') &&
-              matchMedia('(prefers-color-scheme: dark)').matches);
-          if (dark) document.documentElement.classList.add('app-dark');
-        } catch (e) {}
-      })();
-    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,280..700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <app-root></app-root>

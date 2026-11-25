@@ -1,0 +1,206 @@
+<header class="room-header">
+  <div class="room-toolbar">
+    <button
+      matIconButton
+      class="room-header-icon-btn"
+      type="button"
+      aria-label="Back to rooms"
+      matTooltip="Back to rooms"
+      (click)="backToRooms.emit()"
+    >
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+
+    <div class="room-header-info">
+      <div class="room-header-title-row">
+        <span class="room-live-dot" aria-label="Live"></span>
+        <h1 class="room-header-title" id="roomTitle">{{ roomTitle() }}</h1>
+      </div>
+      <p class="room-header-meta" aria-label="Room details">
+        <span>{{ practiseLang() }}</span>
+        <span class="meta-sep meta-host" aria-hidden="true">·</span>
+        <span class="meta-host">Host {{ hostName() }}</span>
+        <span class="meta-sep" aria-hidden="true">·</span>
+        <span class="meta-count">
+          <mat-icon class="meta-inline-icon" aria-hidden="true">group</mat-icon>
+          <span id="peopleStat">{{ peopleCount() }}</span>
+        </span>
+        @if (handCount() > 0) {
+          <span class="meta-sep" aria-hidden="true">·</span>
+          <span class="meta-count meta-count-hand">
+            <mat-icon class="meta-inline-icon" aria-hidden="true">front_hand</mat-icon>
+            <span id="handStat">{{ handCount() }}</span>
+          </span>
+        } @else {
+          <span id="handStat" class="sr-only">0</span>
+        }
+      </p>
+    </div>
+
+    <div class="room-header-actions">
+      <button
+        matIconButton
+        class="room-header-icon-btn"
+        id="audioSettingsBtn"
+        type="button"
+        [attr.aria-label]="audioStatusLabel() + '. Audio & noise isolation settings'"
+        [matTooltip]="audioStatusLabel()"
+        [matMenuTriggerFor]="audioMenu"
+        (click)="refreshAudioDevices.emit()"
+      >
+        <mat-icon>
+          {{ audioStatus() === 'failed' ? 'signal_wifi_off' : noiseIsolationMode() === 'krisp-active' ? 'noise_aware' : 'graphic_eq' }}
+        </mat-icon>
+      </button>
+      <mat-menu #audioMenu="matMenu" class="jtalk-menu" xPosition="before">
+        <div class="mod-menu-section-label">{{ audioStatusLabel() }}</div>
+        <button mat-menu-item type="button" (click)="toggleNoiseIsolation.emit()">
+          <mat-icon>{{ noiseIsolationEnabled() ? 'noise_aware' : 'noise_control_off' }}</mat-icon>
+          <span>{{ noiseIsolationLabel() }}</span>
+        </button>
+
+        @if (audioStatus() === 'failed') {
+          <button mat-menu-item type="button" (click)="reconnectAudio.emit()">
+            <mat-icon>refresh</mat-icon>
+            <span>Reconnect audio</span>
+          </button>
+        }
+
+        @if (audioInputDevices().length > 0) {
+          <div class="mod-menu-section-label">Microphone</div>
+          @for (device of audioInputDevices(); track device.deviceId) {
+            <button
+              mat-menu-item
+              type="button"
+              (click)="selectAudioDevice.emit(device.deviceId)"
+            >
+              <mat-icon>
+                {{ device.deviceId === selectedAudioInputId() ? 'radio_button_checked' : 'radio_button_unchecked' }}
+              </mat-icon>
+              <span>{{ device.label }}</span>
+            </button>
+          }
+        }
+      </mat-menu>
+
+      @if (isHost()) {
+        <button
+          matIconButton
+          class="room-header-icon-btn room-header-queue-btn"
+          id="modQueueBtn"
+          type="button"
+          aria-label="Raised hands queue"
+          matTooltip="Raised hands"
+          [matMenuTriggerFor]="modQueueMenu"
+        >
+          <mat-icon>how_to_reg</mat-icon>
+          @if (pendingRequests().length > 0) {
+            <span class="header-badge-count" id="pendingReqBadge">
+              {{ pendingRequests().length }}
+            </span>
+          }
+        </button>
+        <mat-menu #modQueueMenu="matMenu" class="jtalk-menu mod-queue-menu" xPosition="before">
+          <div class="mod-menu-section-label">
+            Raised hands ({{ pendingRequests().length }})
+          </div>
+          @if (pendingRequests().length === 0) {
+            <div class="mod-menu-empty">No raised hands right now.</div>
+          } @else {
+            @for (req of pendingRequests(); track req.id) {
+              <div class="mod-req-row">
+                <span class="mod-req-name">{{ req.name }}</span>
+                <div class="mod-req-actions">
+                  <button
+                    type="button"
+                    class="mod-req-btn is-approve"
+                    [attr.aria-label]="'Bring ' + req.name + ' to stage'"
+                    (click)="$event.stopPropagation(); approveRequest.emit(req.id)"
+                  >
+                    <mat-icon>check</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
+          }
+        </mat-menu>
+      }
+
+      <button
+        matIconButton
+        class="room-header-icon-btn"
+        type="button"
+        aria-label="Share room menu"
+        matTooltip="Share"
+        [matMenuTriggerFor]="shareMenu"
+      >
+        <mat-icon>ios_share</mat-icon>
+      </button>
+      <mat-menu #shareMenu="matMenu" class="jtalk-menu" xPosition="before">
+        <button mat-menu-item type="button" (click)="copyRoomLink.emit()">
+          <mat-icon>link</mat-icon>
+          <span>Copy room link</span>
+        </button>
+        <button mat-menu-item type="button" (click)="findPeople.emit()">
+          <mat-icon>group</mat-icon>
+          <span>Browse language partners</span>
+        </button>
+      </mat-menu>
+
+      @if (isHost()) {
+        <button
+          matIconButton
+          class="room-header-icon-btn"
+          id="editRoomBtn"
+          type="button"
+          aria-label="Edit room"
+          matTooltip="Edit room"
+          (click)="openEditRoom.emit()"
+        >
+          <mat-icon>tune</mat-icon>
+        </button>
+
+        <button
+          matIconButton
+          class="room-header-icon-btn room-header-end-btn"
+          id="endRoomBtn"
+          type="button"
+          aria-label="End room menu"
+          matTooltip="End room"
+          [matMenuTriggerFor]="endMenu"
+        >
+          <mat-icon>power_settings_new</mat-icon>
+        </button>
+        <mat-menu #endMenu="matMenu" class="jtalk-menu" xPosition="before">
+          <button
+            mat-menu-item
+            class="menu-item-danger"
+            type="button"
+            (click)="openEndRoom.emit()"
+          >
+            <mat-icon>power_settings_new</mat-icon>
+            <span>End room for everyone</span>
+          </button>
+          <button mat-menu-item type="button" (click)="leaveQuietly.emit()">
+            <mat-icon>logout</mat-icon>
+            <span>Leave room</span>
+          </button>
+        </mat-menu>
+      }
+      <button
+        matIconButton
+        class="room-header-icon-btn"
+        type="button"
+        aria-label="Log out"
+        matTooltip="Log out"
+        (click)="logOut.emit()"
+      >
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  @if (roomTopic()) {
+    <p class="room-header-topic" id="roomTopic">{{ roomTopic() }}</p>
+  }
+</header>

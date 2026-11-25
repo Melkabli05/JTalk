@@ -1,0 +1,9 @@
+@if (imageUrl(); as image) {
+  <img [src]="image" alt="">
+} @else if (presetUrl(); as preset) {
+  <img [src]="preset" alt="">
+} @else if (variant() === 'thumb') {
+  <span class="own-thumb"><span>Learn a language <em>by talking.</em></span></span>
+} @else {
+  <div class="own-photo"><span>Learn a language <em>by talking.</em></span></div>
+}

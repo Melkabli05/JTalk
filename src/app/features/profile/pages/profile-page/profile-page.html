@@ -1,0 +1,100 @@
+@let profile = appState.profile();
+<div class="view view-profile">
+  <div class="profile-wrap">
+    <app-profile-header
+      [profile]="profile"
+      (editProfile)="selectTab('edit')"
+    />
+
+    <mat-tab-group
+      animationDuration="0ms"
+      mat-stretch-tabs="false"
+      [selectedIndex]="selectedTabIndex()"
+      (selectedIndexChange)="onSelectedIndexChange($event)"
+    >
+      <mat-tab label="Overview">
+        <div class="profile-tab-content">
+          <app-profile-overview [profile]="profile" />
+          @if (identity.me(); as me) {
+            <button matButton type="button" (click)="profileStore.loadConnections('followers')">Followers</button>
+            <button matButton type="button" (click)="profileStore.loadConnections('following')">Following</button>
+            <button matButton type="button" (click)="profileStore.loadConnections('blocks')">Blocked accounts</button>
+            @if (profileStore.connectionList(); as list) {
+              <section aria-live="polite">
+                @if (profileStore.connectionsBusy()) { <p>Loading accounts…</p> }
+                @for (account of profileStore.connections(); track account.id) {
+                  <p>{{ account.displayName }} (&#64;{{ account.username }})
+                    @if (list === 'blocks') { <button matButton type="button" (click)="unblock(account.id)">Unblock</button> }
+                  </p>
+                } @empty { @if (!profileStore.connectionsBusy()) { <p>No accounts to show.</p> } }
+                @if (profileStore.moreConnections()) { <button matButton type="button" (click)="profileStore.loadConnections(list, true)">Load more</button> }
+              </section>
+            }
+          }
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Edit profile">
+        <div class="profile-tab-content">
+          @if (identity.me(); as me) {
+            <button matButton type="button" (click)="profileStore.editingLanguages.update((v) => !v)">Manage languages</button>
+            @if (profileStore.editingLanguages()) {
+              <fieldset [disabled]="profileStore.languageBusy()">
+                <legend>Languages</legend>
+                @for (code of me.nativeLanguages; track code) {
+                  <p>{{ code }} · Native
+                    <button matButton type="button" (click)="changeLanguage(code)">Remove</button>
+                  </p>
+                }
+                @for (entry of me.learningLanguages; track entry.languageCode) {
+                  <p>{{ entry.languageCode }} · Learning {{ entry.proficiencyLevel }}
+                    <button matButton type="button" (click)="changeLanguage(entry.languageCode)">Remove</button>
+                  </p>
+                }
+                <label>Language <input #code list="profile-language-codes" maxlength="10"></label>
+                <datalist id="profile-language-codes">@for (lang of languages; track lang.code) { <option [value]="lang.code">{{ lang.name }}</option> }</datalist>
+                <label>Level <select [formField]="level">
+                  @for (option of levels; track option) { <option [value]="option">{{ option }}</option> }
+                </select></label>
+                <button matButton type="button" (click)="changeLanguage(code.value, 'NATIVE')">Add native</button>
+                <button matButton type="button" (click)="changeLanguage(code.value, 'LEARNING', level().value())">Save learning language</button>
+              </fieldset>
+            }
+          }
+          @if (identity.profileError(); as error) {
+            <p role="alert">{{ error }}</p>
+            <button matButton type="button" (click)="identity.loadMe()">Retry profile</button>
+          }
+          @if (identity.hasProfile() || identity.needsOnboarding()) {
+            <app-profile-edit-form
+              [profile]="profile"
+              [onboarding]="identity.needsOnboarding()"
+              [saving]="identity.savingProfile()"
+              (saved)="onProfileSaved($event)"
+              (discarded)="onProfileDiscarded()"
+              (avatarPicked)="toast.show('Picture ready to save.')"
+              (uploadError)="toast.show($event)"
+            />
+          }
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Account">
+        <div class="profile-tab-content">
+          <label>Appearance
+            <select #scheme [value]="appState.colorScheme()" (change)="appState.setColorScheme(scheme.value)">
+              <option value="system">Use device theme</option><option value="light">Light</option><option value="dark">Dark</option>
+            </select>
+          </label>
+          <app-profile-account
+            [profile]="profile"
+            (settingsClicked)="selectTab('edit')"
+            (helpClicked)="toast.show('Open the audio menu in a room to choose a microphone or check noise isolation.')"
+            (signOutClicked)="roomStore.signOut()"
+            (deleteClicked)="openDeleteDialog()"
+          />
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

@@ -1,0 +1,229 @@
+import { httpErrorInterceptor } from '../../../../core/http/http-error.interceptor';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { provideRouter, Router, withComponentInputBinding } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { AuthService } from '@auth0/auth0-angular';
+import { from } from 'rxjs';
+import { vi } from 'vitest';
+import { provideNoopAuthForTests } from '../../../../core/auth/auth.providers';
+import { AppState } from '../../../../core/state/app-state';
+import { ToastNotifier } from '../../../../core/services/toast-notifier';
+import { LiveRoomStore } from '../../store/live-room-store';
+import { ROOM_ROUTES } from '../../room.routes';
+import { RoomPage } from './room-page';
+
+@Component({ template: 'Live rooms' })
+class HallwayRoute {}
+
+describe('RoomPage', () => {
+  afterEach(() => TestBed.inject(AppState).rememberRoom(null));
+  const toastSpy = { show: vi.fn() };
+  const dialogSpy = {
+    open: vi.fn(),
+  };
+
+  beforeEach(async () => {
+    toastSpy.show.mockReset();
+    dialogSpy.open.mockClear();
+    await TestBed.configureTestingModule({
+      imports: [RoomPage],
+      providers: [
+        provideHttpClient(withInterceptors([httpErrorInterceptor])),
+        provideHttpClientTesting(),
+        provideNoopAuthForTests(),
+        provideRouter([
+          { path: 'room', children: ROOM_ROUTES },
+          { path: 'rooms', component: HallwayRoute },
+        ], withComponentInputBinding()),
+        LiveRoomStore,
+        { provide: ToastNotifier, useValue: toastSpy },
+        { provide: MatDialog, useValue: dialogSpy },
+      ],
+    }).compileComponents();
+    TestBed.inject(AppState).rememberRoom(null);
+  });
+
+  it('hydrates the room from join and fetches audience pages only on demand', async () => {
+    const fixture = TestBed.createComponent(RoomPage);
+    const store = TestBed.inject(LiveRoomStore);
+    const http = TestBed.inject(HttpTestingController);
+    vi.spyOn(store.audio, 'connect').mockResolvedValue(true);
+    const room = {
+      id: 'current',
+      hostId: 'host',
+      title: 'Practice',
+      topic: '',
+      targetLanguage: 'ar',
+      nativeLanguage: 'en',
+      maxStageSeats: 8,
+      speakers: ['host'],
+      participantCount: 1,
+      handRaiseCount: 0,
+    };
+    const base = '/api/v1/voice-rooms/current';
+    fixture.componentRef.setInput('id', room.id);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Joining room');
+    expect(fixture.nativeElement.querySelector('app-room-controls')).toBeNull();
+
+    const join = await vi.waitFor(() => http.expectOne(base + '/participants/join'));
+    join.flush({
+      room, role: 'LISTENER', canPublishAudio: false, isChatMuted: true,
+      liveKitUrl: 'wss://example.invalid', liveKitToken: 'token',
+      snapshot: {
+        speakers: [{ userId: 'host', displayName: 'Cached speaker', nativeLanguage: 'en' }],
+        audienceCount: 301,
+        audience: { audiencePreview: [{ userId: 'listener', displayName: 'First listener' }], hasMoreAudience: true, nextCursor: 'listener' },
+        handRaiseQueue: [],
+        chat: {
+          comments: [{ id: 'comment', authorId: 'host', type: 'TEXT', content: 'Bundled comment', createdAt: '2026-01-01T00:00:00Z' }],
+          muted: true, topic: 'Travel', mutedUsers: [], reactions: [],
+        },
+      },
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const composer = fixture.nativeElement.querySelector('#composerInput') as HTMLTextAreaElement;
+    expect(composer.readOnly).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Cached speaker');
+    expect(fixture.nativeElement.textContent).toContain('Bundled comment');
+    expect(fixture.nativeElement.textContent).toContain('301 listening');
+    http.expectNone(request => request.method === 'GET' && request.url.startsWith(base));
+
+    for (const selector of ['app-room-toolbar', 'app-room-stage', 'app-room-audience', 'app-room-controls', 'app-room-discussion']) {
+      expect(fixture.nativeElement.querySelector(selector)).toBeTruthy();
+    }
+
+    const audience = fixture.nativeElement.querySelector('app-room-audience') as HTMLElement;
+    const more = Array.from(audience.querySelectorAll('button')).find(button => button.textContent?.includes('Show more listeners'));
+    expect(more).toBeDefined();
+    more!.click();
+    TestBed.tick();
+    http.expectOne(base + '/participants/audience?cursor=listener').flush({
+      audiencePreview: [{ userId: 'next', displayName: 'Next listener' }], hasMoreAudience: false, nextCursor: null,
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(audience.textContent).toContain('Next listener');
+    expect(audience.textContent).not.toContain('Show more listeners');
+    http.verify();
+  });
+
+  async function joinForHeaderAction(role: 'HOST' | 'LISTENER') {
+    const fixture = TestBed.createComponent(RoomPage);
+    const store = TestBed.inject(LiveRoomStore);
+    const http = TestBed.inject(HttpTestingController);
+    vi.spyOn(store.audio, 'connect').mockResolvedValue(true);
+    fixture.componentRef.setInput('id', 'current');
+    fixture.detectChanges();
+    const base = '/api/v1/voice-rooms/current';
+    const join = await vi.waitFor(() => http.expectOne(base + '/participants/join'));
+    join.flush({
+      room: {
+        id: 'current', title: 'Practice', hostId: 'host', targetLanguage: 'ar', nativeLanguage: 'en',
+        maxStageSeats: 8, speakers: ['host'], participantCount: 2, handRaiseCount: 0,
+      },
+      role, canPublishAudio: role === 'HOST', liveKitUrl: 'wss://example.invalid', liveKitToken: 'local',
+      snapshot: {
+        speakers: [{ userId: 'host', displayName: 'Host' }], audienceCount: 1,
+        audience: { audiencePreview: [], nextCursor: null, hasMoreAudience: false }, handRaiseQueue: [],
+        chat: { comments: [], muted: false, mutedUsers: [], reactions: [], topic: null },
+      },
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const header = fixture.nativeElement.querySelector('app-room-toolbar') as HTMLElement;
+    return { fixture, store, http, base, header };
+  }
+
+  it('closes the host room only after confirmation and keeps it open on backend failure', async () => {
+    const { fixture, store, http, base, header } = await joinForHeaderAction('HOST');
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const chooseEndRoom = () => {
+      header.querySelector<HTMLButtonElement>('#endRoomBtn')!.click();
+      fixture.detectChanges();
+      const item = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'))
+        .find(button => button.textContent.includes('End room for everyone'));
+      item!.click();
+      fixture.detectChanges();
+    };
+    dialogSpy.open.mockReturnValueOnce({ afterClosed: () => from(Promise.resolve(false)) });
+    chooseEndRoom();
+    await Promise.resolve();
+    http.expectNone({ method: 'DELETE', url: base });
+
+    dialogSpy.open.mockReturnValue({ afterClosed: () => from(Promise.resolve(true)) });
+    chooseEndRoom();
+    const rejected = await vi.waitFor(() => http.expectOne({ method: 'DELETE', url: base }));
+    rejected.flush({ detail: 'Host required' }, { status: 403, statusText: 'Forbidden' });
+    await vi.waitFor(() => expect(toastSpy.show).toHaveBeenCalledWith('Host required'));
+    expect(store.roomId()).toBe('current');
+    expect(navigate).not.toHaveBeenCalled();
+
+    chooseEndRoom();
+    const accepted = await vi.waitFor(() => http.expectOne({ method: 'DELETE', url: base }));
+    accepted.flush(null, { status: 204, statusText: 'No Content' });
+    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith(['/rooms']));
+    expect(store.room()).toBeNull();
+    http.verify();
+  });
+
+  it.each([204, 503])('logs out after the leave endpoint returns %i', async status => {
+    const { store, http, base, header } = await joinForHeaderAction('LISTENER');
+    expect(header.querySelector('#endRoomBtn')).toBeNull();
+    const logout = vi.spyOn(TestBed.inject(AuthService), 'logout').mockReturnValue(from(Promise.resolve()));
+    header.querySelector<HTMLButtonElement>('[aria-label="Log out"]')!.click();
+    const leave = await vi.waitFor(() => http.expectOne({ method: 'POST', url: base + '/participants/leave' }));
+    expect(logout).not.toHaveBeenCalled();
+    leave.flush(null, { status, statusText: status === 204 ? 'No Content' : 'Unavailable' });
+    await vi.waitFor(() => expect(logout).toHaveBeenCalledWith({ logoutParams: { returnTo: window.location.origin } }));
+    expect(store.room()).toBeNull();
+    http.verify();
+  });
+
+  it('redirects a room shortcut and binds the ID on subsequent navigation', async () => {
+    const router = TestBed.inject(Router);
+    const store = TestBed.inject(LiveRoomStore);
+    const enterRoom = vi.spyOn(store, 'enterRoom').mockResolvedValue(true);
+    const appState = TestBed.inject(AppState);
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/room', HallwayRoute);
+    expect(router.url).toBe('/rooms');
+
+    appState.rememberRoom('saved');
+    const restored = await harness.navigateByUrl('/room', RoomPage);
+    expect(router.url).toBe('/room/saved');
+    expect(restored.id()).toBe('saved');
+    expect(enterRoom).toHaveBeenCalledWith('saved');
+
+    await harness.navigateByUrl('/room/second', RoomPage);
+    expect(enterRoom.mock.calls).toEqual([['saved'], ['second']]);
+  });
+
+  it('should notify user when toggling microphone without stage publish permission', async () => {
+    vi.spyOn(TestBed.inject(LiveRoomStore), 'enterRoom').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(RoomPage);
+    fixture.componentRef.setInput('id', 'current');
+    fixture.detectChanges();
+
+    await fixture.componentInstance.onToggleMute();
+    expect(toastSpy.show).toHaveBeenCalledWith('Join the stage to use your microphone.');
+  });
+
+  it('should report false from reloadMessages when not joined to an active room', () => {
+    vi.spyOn(TestBed.inject(LiveRoomStore), 'enterRoom').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(RoomPage);
+    fixture.componentRef.setInput('id', 'current');
+    fixture.detectChanges();
+
+    let ok: boolean | undefined;
+    fixture.componentInstance.chatStore.reloadMessages((result) => {
+      ok = result;
+    });
+    expect(ok).toBe(false);
+  });
+});

@@ -1,0 +1,109 @@
+<div class="view view-people">
+  <mat-card
+    class="people-panel-card"
+    appearance="outlined"
+    aria-labelledby="people-h"
+  >
+    <div class="people-panel-head">
+      <div>
+        <h2 id="people-h">Language partners</h2>
+        <p class="sub">Matched by the languages you speak and learn, or search by name.</p>
+      </div>
+      <button
+        matButton="text"
+        type="button"
+        [disabled]="peopleStore.loading()"
+        (click)="peopleStore.refresh()"
+      >
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+
+    <mat-form-field class="full-width people-search-field">
+      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+      <mat-label>Search by name or handle</mat-label>
+      <input
+        matInput
+        type="search"
+        #searchField
+        maxlength="50"
+        [value]="peopleStore.query()"
+        (input)="peopleStore.query.set(searchField.value)"
+        placeholder="Type at least 2 characters"
+      />
+      @if (peopleStore.query()) {
+        <button
+          matIconButton
+          matSuffix
+          type="button"
+          aria-label="Clear search"
+          (click)="peopleStore.query.set('')"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    @if (peopleStore.loading() && peopleStore.people().length === 0) {
+      <div class="people-loading-list" role="status" aria-busy="true">
+        <span class="sr-only">Loading people…</span>
+        @for (slot of [0, 1, 2, 3]; track slot) {
+          <div class="people-skeleton-row" aria-hidden="true">
+            <app-skeleton-loader variant="circle" width="40px" height="40px" />
+            <div class="people-skeleton-text">
+              <app-skeleton-loader variant="text" width="140px" height="16px" />
+              <app-skeleton-loader variant="text" width="220px" height="13px" />
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (peopleStore.error()) {
+      <div class="people-state-hint" role="alert">
+        <p>{{ peopleStore.error() }}</p>
+        <button matButton="outlined" type="button" (click)="peopleStore.refresh()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Retry
+        </button>
+      </div>
+    } @else {
+      <mat-list class="directory-list">
+        @for (person of peopleStore.people(); track person.id; let first = $first) {
+          @if (!first) {
+            <mat-divider />
+          }
+          <app-person-row
+            [person]="person"
+            [busy]="peopleStore.busyIds().has(person.id)"
+            (followToggle)="onFollowToggle($event)"
+            (blockUser)="onBlockUser($event)"
+          />
+        } @empty {
+          <div class="people-state-hint">
+            <p>
+              {{
+                peopleStore.searching()
+                  ? 'No users matched your search.'
+                  : 'No language partners found yet. Try searching by name.'
+              }}
+            </p>
+          </div>
+        }
+      </mat-list>
+
+      @if (peopleStore.hasMore()) {
+        <div class="people-load-more">
+          <button
+            matButton="outlined"
+            type="button"
+            [disabled]="peopleStore.loading()"
+            (click)="peopleStore.loadMore()"
+          >
+            <mat-icon aria-hidden="true">expand_more</mat-icon>
+            Load more
+          </button>
+        </div>
+      }
+    }
+  </mat-card>
+</div>

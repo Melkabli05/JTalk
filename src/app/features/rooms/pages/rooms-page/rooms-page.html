@@ -1,0 +1,104 @@
+@let isLoading = roomsStore.loading();
+@let currentHero = hero();
+<div class="view view-rooms">
+  <app-rooms-hero
+    [liveCount]="roomsStore.filteredRooms().length"
+    [activeFilter]="roomsStore.selectedFilter()"
+    [activeFilterLabel]="roomsStore.activeFilterLabel()"
+    [scenes]="currentHero.scenes"
+    [activeScene]="currentHero.active"
+    (nextScene)="cycleHeroScene()"
+    (startRoom)="onStartRoom()"
+  />
+
+  <section aria-labelledby="live-h">
+    <div class="section-head">
+      <h2 id="live-h">Live rooms</h2>
+      <span class="sub">Pick a language. Cameras off is fine.</span>
+      <button
+        matButton="text"
+        class="section-refresh-btn"
+        type="button"
+        id="refreshRoomsBtn"
+        [disabled]="isLoading"
+        (click)="onRefreshRooms()"
+      >
+        <mat-icon [class.is-spinning]="isLoading" aria-hidden="true">refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+
+    <app-language-chips
+      [chips]="roomsStore.filterChips"
+      [selected]="roomsStore.selectedFilter()"
+      (filterChange)="roomsStore.selectedFilter.set($event)"
+    />
+
+    <div class="cards mt-sp-l" [attr.aria-busy]="isLoading">
+      @if (isLoading) {
+        <span class="sr-only" role="status">Loading live rooms…</span>
+      }
+      @if (isLoading && !roomsStore.hasLoaded()) {
+        @for (slot of [0, 1, 2]; track slot) {
+          <mat-card class="room-card room-skeleton" appearance="filled" aria-hidden="true">
+            <div class="room-top">
+              <app-skeleton-loader variant="pill" width="116px" height="28px" />
+              <app-skeleton-loader variant="pill" width="48px" height="20px" />
+              <span class="room-skeleton-menu">
+                <app-skeleton-loader variant="circle" width="32px" height="32px" />
+              </span>
+            </div>
+
+            <app-skeleton-loader variant="text" width="76%" height="24px" />
+            <app-skeleton-loader variant="text" width="100%" height="14px" [lines]="2" />
+
+            <div class="room-foot">
+              <div class="room-skeleton-stack">
+                <app-skeleton-loader variant="circle" width="32px" height="32px" />
+                <app-skeleton-loader variant="circle" width="32px" height="32px" />
+                <app-skeleton-loader variant="circle" width="32px" height="32px" />
+                <app-skeleton-loader variant="circle" width="32px" height="32px" />
+              </div>
+              <app-skeleton-loader variant="text" width="72%" height="13px" />
+              <app-skeleton-loader variant="pill" width="108px" height="40px" />
+            </div>
+          </mat-card>
+        }
+      } @else {
+        @if (roomsStore.error(); as error) {
+          <div class="rooms-empty-hint" id="roomsErrorHint" role="alert">
+            <p>{{ error }}</p>
+            <button matButton="outlined" type="button" (click)="onRefreshRooms()">
+              <mat-icon aria-hidden="true">refresh</mat-icon>
+              Retry
+            </button>
+          </div>
+        }
+        @for (room of roomsStore.filteredRooms(); track room.id) {
+          <app-room-card
+            [room]="room"
+            (join)="onJoinRoom($event)"
+            (pin)="onPinRoom($event)"
+            (notInterested)="onNotInterested($event)"
+          />
+        } @empty {
+          @if (!roomsStore.error() && !isLoading) {
+            <div class="rooms-empty-hint" id="roomsEmptyHint">
+              <p>No matching rooms right now. Start one above or refresh to check again.</p>
+              @if (roomsStore.selectedFilter() !== 'all') {
+                <button matButton="outlined" type="button" (click)="roomsStore.selectedFilter.set('all')">
+                  Show all languages
+                </button>
+              } @else {
+                <button matButton="outlined" type="button" (click)="onRefreshRooms()">
+                  <mat-icon aria-hidden="true">refresh</mat-icon>
+                  Refresh rooms
+                </button>
+              }
+            </div>
+          }
+        }
+      }
+    </div>
+  </section>
+</div>

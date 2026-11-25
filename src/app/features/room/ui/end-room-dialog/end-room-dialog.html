@@ -1,0 +1,16 @@
+<h2 mat-dialog-title id="endModalTitle">End room for everyone?</h2>
+<mat-dialog-content>
+  <p>Closes the room for everyone.</p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button matButton="text" type="button" mat-dialog-close>Cancel</button>
+  <button
+    matButton="filled"
+    class="btn-danger-filled"
+    type="button"
+    id="confirmEndRoom"
+    [mat-dialog-close]="true"
+  >
+    End room
+  </button>
+</mat-dialog-actions>
