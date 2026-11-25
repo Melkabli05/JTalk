@@ -34,44 +34,22 @@ export function orderPinnedRooms(
 
 export function toLiveRoomCard(
   room: VoiceRoomDto,
-  directory: ReadonlyMap<string, { displayName: string; avatarUrl?: string | null }>,
+  directory: ReadonlyMap<string, { displayName: string }>,
 ): LiveRoomCard {
   const chipKey = roomFilterKeyFor(room.targetLanguage);
   const lang: LiveRoomCard['lang'] = chipKey === 'all' ? 'other' : chipKey;
+  const visibleSpeakers = room.speakers.slice(0, ROOM_CARD_AVATAR_LIMIT);
+  const avatars: RoomAvatarItem[] = visibleSpeakers.map((userId) => ({
+    userId,
+    initial: (directory.get(userId)?.displayName?.trim()[0] ?? 'J').toUpperCase(),
+    chipClass: avatarChipClassFor(userId),
+  }));
 
-  // Separate host from other speakers; show non-host first, host last (right-side visual slot)
-  const otherSpeakers = room.speakers.filter((id) => id !== room.hostId);
-  const hostIsOnStage = room.speakers.includes(room.hostId);
-
-  // Visible cap: reserve one slot for host if on stage
-  const nonHostLimit = hostIsOnStage
-    ? Math.max(0, ROOM_CARD_AVATAR_LIMIT - 1)
-    : ROOM_CARD_AVATAR_LIMIT;
-  const visibleOthers = otherSpeakers.slice(0, nonHostLimit);
-  const visibleSpeakers = hostIsOnStage
-    ? [...visibleOthers, room.hostId]
-    : visibleOthers;
-
-  const toAvatar = (userId: string): RoomAvatarItem => {
-    const entry = directory.get(userId);
-    const name = entry?.displayName?.trim() || 'J';
-    return {
-      userId,
-      displayName: entry?.displayName ?? '',
-      initial: name[0]!.toUpperCase(),
-      avatarUrl: entry?.avatarUrl ?? null,
-      chipClass: avatarChipClassFor(userId),
-      isHost: userId === room.hostId,
-    };
-  };
-
-  const avatars = visibleSpeakers.map(toAvatar);
   const speakerCount = room.speakers.length;
   const overflow = Math.max(0, room.participantCount - visibleSpeakers.length);
 
   return {
     id: room.id,
-    hostId: room.hostId,
     lang,
     langLabel: languageLabelFor(room.targetLanguage),
     dotClass: ROOM_DOT_BY_LANG[lang] ?? 'dot-brand-blue',
