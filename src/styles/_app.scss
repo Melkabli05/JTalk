@@ -329,30 +329,16 @@ a[matIconButton] mat-icon {
   border-radius: var(--r-s);
 }
 
-.brand-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--sp-xxs);
-  height: 22px;
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
 }
 
-.brand-bars i {
+.brand-mark img {
   display: block;
-  width: 5px;
-  border-radius: var(--r-full);
-  background: var(--logo-grad);
-}
-
-.brand-bars i:nth-child(1) {
-  height: 12px;
-}
-
-.brand-bars i:nth-child(2) {
+  width: 24px;
   height: 20px;
-}
-
-.brand-bars i:nth-child(3) {
-  height: 15px;
 }
 
 .brand-name {
