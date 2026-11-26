@@ -31,6 +31,7 @@ export class Sidebar {
   readonly collapsed = input.required<boolean>();
   readonly liveRoomsCount = input(4);
   readonly profileName = input('Jilali');
+  readonly avatarUrl = input<string | null>(null);
   readonly inRoom = input(false);
   readonly activeView = input<AppView>('rooms');
   readonly activeRoomTitle = input('Practice room');

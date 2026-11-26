@@ -148,7 +148,13 @@
   [matTooltipDisabled]="!collapsed()"
   (click)="openProfileOverview.emit()"
 >
-  <span class="avatar grad" aria-hidden="true">{{ avatarInitial() }}</span>
+  <span class="avatar grad" aria-hidden="true">
+    @if (avatarUrl(); as url) {
+      <img [src]="url" alt="" referrerpolicy="no-referrer" />
+    } @else {
+      {{ avatarInitial() }}
+    }
+  </span>
   <span>
     <span class="account-name">{{ name }}</span>
     <span class="account-sub">Your account</span>

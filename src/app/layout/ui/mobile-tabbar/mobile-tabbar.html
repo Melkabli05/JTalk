@@ -36,7 +36,13 @@
     (click)="openProfileOverview.emit()"
   >
     <span class="mobile-tab-pill">
-      <span class="avatar grad" aria-hidden="true">{{ avatarInitial() }}</span>
+      <span class="avatar grad" aria-hidden="true">
+        @if (avatarUrl(); as url) {
+          <img [src]="url" alt="" referrerpolicy="no-referrer" />
+        } @else {
+          {{ avatarInitial() }}
+        }
+      </span>
     </span>
     <span class="mobile-tab-label">Profile</span>
   </button>

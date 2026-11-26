@@ -37,4 +37,16 @@ describe('Sidebar', () => {
     expect(fixture.nativeElement.querySelector('.inroom-card')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Spanish Café');
   });
+
+  it('should render profile picture in bottom account button when avatarUrl is provided', () => {
+    const fixture = TestBed.createComponent(Sidebar);
+    fixture.componentRef.setInput('collapsed', false);
+    fixture.componentRef.setInput('profileName', 'Amina');
+    fixture.componentRef.setInput('avatarUrl', '/avatars/avatar-03.svg');
+    fixture.detectChanges();
+
+    const img: HTMLImageElement | null = fixture.nativeElement.querySelector('.account .avatar img');
+    expect(img).toBeTruthy();
+    expect(img?.getAttribute('src')).toBe('/avatars/avatar-03.svg');
+  });
 });

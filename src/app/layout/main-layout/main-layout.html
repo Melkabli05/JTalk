@@ -1,4 +1,5 @@
 @let profileName = appState.profile().name;
+@let profileAvatarUrl = appState.profile().avatar.imageUrl ?? null;
 @let room = roomStore.room();
 @let inRoom = room !== null;
 @let isRoomView = appState.activeView() === 'room';
@@ -17,6 +18,7 @@
     [collapsed]="sidebarCollapsed()"
     [liveRoomsCount]="roomsStore.liveCount()"
     [profileName]="profileName"
+    [avatarUrl]="profileAvatarUrl"
     [inRoom]="inRoom"
     [activeView]="appState.activeView()"
     [activeRoomTitle]="room?.title ?? 'Live room'"
@@ -41,6 +43,7 @@
 @if (!isRoomView) {
   <app-mobile-tabbar
     [profileName]="profileName"
+    [avatarUrl]="profileAvatarUrl"
     (startRoom)="onOpenStartRoom()"
     (openProfileOverview)="onOpenProfileOverview()"
   />
