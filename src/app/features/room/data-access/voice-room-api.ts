@@ -112,6 +112,10 @@ export class VoiceRoomApi {
     return this.mutate('POST', roomId, `stage/mute/${encodeURIComponent(targetUserId)}`);
   }
 
+  updateSelfMute(roomId: string, muted: boolean): Promise<void> {
+    return this.mutate('PUT', roomId, 'stage/self-mute', { muted });
+  }
+
   updateNetworkMode(
     roomId: string,
     mode: NetworkMode,

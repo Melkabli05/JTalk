@@ -28,6 +28,7 @@ import {
   KrispFilterController,
   NoiseIsolationMode,
 } from './livekit-noise-filter';
+import { VoiceRoomApi } from './voice-room-api';
 
 export { CHAT_EVENTS_TOPIC, ROOM_EVENTS_TOPIC };
 
@@ -336,12 +337,14 @@ export class LiveKitAudioEngine {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly connector = inject(LIVEKIT_CONNECTOR);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly voiceRoomApi = inject(VoiceRoomApi, { optional: true });
 
   private readonly eventHandlers = new Set<LiveKitRoomEventHandlers>();
   private readonly activeConnection = signal<LiveKitConnectionHandle | null>(null);
   private generation = 0;
   private currentRoomId: string | null = null;
   private lastReportedNetworkMode: NetworkMode = 'OPTIMAL';
+  private muteSyncTimer: ReturnType<typeof setTimeout> | null = null;
 
   private readonly audioDevicesResource = resource({
     params: () => this.activeConnection() ?? undefined,
@@ -401,6 +404,7 @@ export class LiveKitAudioEngine {
     await this.closeCurrent();
     if (gen !== this.generation) return false;
     const mutedByHost = session.isMutedByHost ?? false;
+    const selfMuted = session.isSelfMuted ?? false;
     this.isMutedByHost.set(mutedByHost);
     this.canPublish.set(session.canPublishAudio && !mutedByHost);
     this.lastReportedNetworkMode = 'OPTIMAL';
@@ -423,10 +427,18 @@ export class LiveKitAudioEngine {
 
       this.activeConnection.set(handle);
       this.status.set('connected');
-      if (this.canPublish() && !mutedByHost && !this.wasMicMutedFor(session.room.id)) {
+      const shouldEnableMic =
+        this.canPublish() &&
+        !mutedByHost &&
+        !selfMuted &&
+        !this.wasMicMutedFor(session.room.id);
+      if (shouldEnableMic) {
         await this.setMicrophone(true);
       } else {
         this.micOn.set(false);
+        if (selfMuted) {
+          this.rememberMicMuted(session.room.id, true);
+        }
       }
       return true;
     } catch {
@@ -439,8 +451,14 @@ export class LiveKitAudioEngine {
   }
 
   async toggleMicrophone(): Promise<boolean> {
+    const roomId = this.currentRoomId;
     if (!this.canPublish() || this.isMutedByHost()) return false;
-    return this.setMicrophone(!this.micOn());
+    const nextMicEnabled = !this.micOn();
+    const ok = await this.setMicrophone(nextMicEnabled);
+    if (ok && roomId) {
+      this.scheduleSelfMuteSync(roomId, !nextMicEnabled);
+    }
+    return ok;
   }
 
   async setMicrophone(enabled: boolean): Promise<boolean> {
@@ -559,7 +577,31 @@ export class LiveKitAudioEngine {
     }
   }
 
+  private scheduleSelfMuteSync(roomId: string, muted: boolean): void {
+    this.clearMuteSyncTimer();
+    this.muteSyncTimer = setTimeout(() => {
+      this.muteSyncTimer = null;
+      void this.syncSelfMuteToBackend(roomId, muted);
+    }, 300);
+  }
+
+  private async syncSelfMuteToBackend(roomId: string, muted: boolean): Promise<void> {
+    try {
+      await this.voiceRoomApi?.updateSelfMute(roomId, muted);
+    } catch {
+      // Non-fatal: local LiveKit track state remains authoritative for the active session
+    }
+  }
+
+  private clearMuteSyncTimer(): void {
+    if (this.muteSyncTimer) {
+      clearTimeout(this.muteSyncTimer);
+      this.muteSyncTimer = null;
+    }
+  }
+
   private async closeCurrent(): Promise<void> {
+    this.clearMuteSyncTimer();
     const conn = this.activeConnection();
     this.activeConnection.set(null);
     this.micOn.set(false);

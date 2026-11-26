@@ -2,6 +2,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { RoomSessionDto } from '../../../shared/models/voice-room.model';
+import { VoiceRoomApi } from './voice-room-api';
 import {
   LIVEKIT_CONNECTOR,
   LiveKitAudioEngine,
@@ -50,11 +51,14 @@ describe('LiveKitAudioEngine', () => {
       return handle;
     });
 
+    const updateSelfMute = vi.fn().mockResolvedValue(undefined);
+
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
         LiveKitAudioEngine,
         { provide: LIVEKIT_CONNECTOR, useValue: connector },
+        { provide: VoiceRoomApi, useValue: { updateSelfMute } },
       ],
     });
 
@@ -62,6 +66,7 @@ describe('LiveKitAudioEngine', () => {
       engine: TestBed.inject(LiveKitAudioEngine),
       handle,
       connector,
+      updateSelfMute,
       getListener: () => capturedListener,
     };
   }
@@ -169,5 +174,36 @@ describe('LiveKitAudioEngine', () => {
     expect(engine.micOn()).toBe(false);
     expect(handle.setMicrophone).not.toHaveBeenCalledWith(true);
     expect(await engine.toggleMicrophone()).toBe(false);
+  });
+
+  it('respects backend isSelfMuted on reconnect while keeping canPublish true', async () => {
+    window.sessionStorage.clear();
+    const { engine, handle } = setupMockConnector();
+    await engine.connect({ ...session, canPublishAudio: true, isSelfMuted: true });
+
+    expect(engine.canPublish()).toBe(true);
+    expect(engine.isMutedByHost()).toBe(false);
+    expect(engine.micOn()).toBe(false);
+    expect(handle.setMicrophone).not.toHaveBeenCalledWith(true);
+  });
+
+  it('debounces self-mute backend sync by 300ms on rapid mic toggles', async () => {
+    vi.useFakeTimers();
+    try {
+      window.sessionStorage.clear();
+      const { engine, updateSelfMute } = setupMockConnector();
+      await engine.connect(session);
+
+      await engine.toggleMicrophone();
+      await engine.toggleMicrophone();
+      await engine.toggleMicrophone();
+      expect(updateSelfMute).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(300);
+      expect(updateSelfMute).toHaveBeenCalledTimes(1);
+      expect(updateSelfMute).toHaveBeenCalledWith('room-1', true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

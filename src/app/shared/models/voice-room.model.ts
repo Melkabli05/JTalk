@@ -75,6 +75,7 @@ export interface RoomSessionDto {
   readonly role: BackendRoomRole;
   readonly canPublishAudio: boolean;
   readonly isChatMuted?: boolean;
+  readonly isSelfMuted?: boolean;
   readonly isMutedByHost?: boolean;
   readonly snapshot?: RoomJoinSnapshot;
 }
