@@ -46,16 +46,6 @@ export interface AccountActionResult {
   readonly error?: string;
 }
 
-function generateDefaultUsername(displayName: string): string {
-  const base = displayName
-    .toLowerCase()
-    .replace(/[^a-z0-9_.]/g, '')
-    .slice(0, 18);
-  const suffix = Math.random().toString(36).slice(2, 8);
-  const candidate = `${base || 'speaker'}_${suffix}`;
-  return candidate.length < 3 ? `user_${suffix}` : candidate.slice(0, 30);
-}
-
 function buildProfilePatch(
   current: UserProfileResponse,
   input: ProfileSaveInput,
@@ -325,8 +315,9 @@ export class IdentityStore {
     input: ProfileSaveInput,
     requestedLearning: string | null,
   ): Promise<UserProfileResponse> {
+    const trimmedUsername = input.username.trim();
     const createReq: CreateProfileRequest = {
-      username: input.username.trim() || generateDefaultUsername(input.displayName),
+      ...(trimmedUsername ? { username: trimmedUsername } : {}),
       displayName: input.displayName.trim(),
       nativeLanguage: languageCodeFor(input.nativeLanguage),
       ...(requestedLearning ? { learningLanguages: [{ languageCode: requestedLearning }] } : {}),
@@ -339,17 +330,6 @@ export class IdentityStore {
     } catch (err) {
       if (err instanceof ApiError && err.type === 'urn:jtalk:user:problem:profile-already-exists') {
         this.loadMe();
-        throw err;
-      }
-      if (
-        err instanceof ApiError &&
-        err.type === 'urn:jtalk:user:problem:username-taken' &&
-        !input.username.trim()
-      ) {
-        return this.usersApi.createMe({
-          ...createReq,
-          username: generateDefaultUsername(input.displayName),
-        });
       }
       throw err;
     }

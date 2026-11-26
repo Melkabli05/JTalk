@@ -60,7 +60,7 @@ export interface SocialStatsResponse {
 }
 
 export interface CreateProfileRequest {
-  readonly username: string;
+  readonly username?: string;
   readonly displayName: string;
   readonly bio?: string | null;
   readonly avatarUrl?: string | null;

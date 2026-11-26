@@ -26,7 +26,9 @@
 
           <div class="info-banner" role="note">
             <mat-icon class="icon-20" aria-hidden="true">info</mat-icon>
-            <span>Handle, like &#64;mona.</span>
+            <span>
+              {{ onboarding() ? 'Leave blank to auto-generate a handle on signup, or set your own.' : 'Handle, like @mona.' }}
+            </span>
           </div>
 
           <mat-form-field class="full-width">

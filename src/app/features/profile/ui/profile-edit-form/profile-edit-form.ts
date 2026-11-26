@@ -122,7 +122,7 @@ export class ProfileEditForm {
     validate(schemaPath.username, ({ value }) => {
       const normalized = normalizeUsername(value());
       if (!normalized) {
-        return { kind: 'required', message: 'Enter a username.' };
+        return this.onboarding() ? undefined : { kind: 'required', message: 'Enter a username.' };
       }
       return isValidUsername(normalized)
         ? undefined
