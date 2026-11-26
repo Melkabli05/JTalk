@@ -158,4 +158,16 @@ describe('LiveKitAudioEngine', () => {
     expect(handle.setMicrophone).toHaveBeenCalledWith(true);
     expect(engine.micOn()).toBe(true);
   });
+
+  it('respects backend isMutedByHost on reconnect even if sessionStorage was not muted', async () => {
+    window.sessionStorage.clear();
+    const { engine, handle } = setupMockConnector();
+    await engine.connect({ ...session, canPublishAudio: false, isMutedByHost: true });
+
+    expect(engine.isMutedByHost()).toBe(true);
+    expect(engine.canPublish()).toBe(false);
+    expect(engine.micOn()).toBe(false);
+    expect(handle.setMicrophone).not.toHaveBeenCalledWith(true);
+    expect(await engine.toggleMicrophone()).toBe(false);
+  });
 });

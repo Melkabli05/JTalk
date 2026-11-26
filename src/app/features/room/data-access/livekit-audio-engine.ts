@@ -360,6 +360,7 @@ export class LiveKitAudioEngine {
   readonly status = signal<LiveKitConnectionStatus>('idle');
   readonly canPublish = signal(false);
   readonly micOn = signal(false);
+  readonly isMutedByHost = signal(false);
   readonly micError = signal<string | null>(null);
   readonly soundBlocked = signal(false);
   readonly speakingIds = signal<readonly string[]>([]);
@@ -399,7 +400,9 @@ export class LiveKitAudioEngine {
     this.status.set('connecting');
     await this.closeCurrent();
     if (gen !== this.generation) return false;
-    this.canPublish.set(session.canPublishAudio);
+    const mutedByHost = session.isMutedByHost ?? false;
+    this.isMutedByHost.set(mutedByHost);
+    this.canPublish.set(session.canPublishAudio && !mutedByHost);
     this.lastReportedNetworkMode = 'OPTIMAL';
 
     try {
@@ -420,12 +423,10 @@ export class LiveKitAudioEngine {
 
       this.activeConnection.set(handle);
       this.status.set('connected');
-      if (this.canPublish()) {
-        if (this.wasMicMutedFor(session.room.id)) {
-          this.micOn.set(false);
-        } else {
-          await this.setMicrophone(true);
-        }
+      if (this.canPublish() && !mutedByHost && !this.wasMicMutedFor(session.room.id)) {
+        await this.setMicrophone(true);
+      } else {
+        this.micOn.set(false);
       }
       return true;
     } catch {
@@ -438,7 +439,7 @@ export class LiveKitAudioEngine {
   }
 
   async toggleMicrophone(): Promise<boolean> {
-    if (!this.canPublish()) return false;
+    if (!this.canPublish() || this.isMutedByHost()) return false;
     return this.setMicrophone(!this.micOn());
   }
 
@@ -520,29 +521,39 @@ export class LiveKitAudioEngine {
 
   async disconnect(): Promise<void> {
     const gen = ++this.generation;
+    const roomId = this.currentRoomId;
     this.currentRoomId = null;
-    this.rememberMicMuted(null, false);
+    if (roomId) this.clearRoomMicPreference(roomId);
     await this.closeCurrent();
     if (gen === this.generation) this.status.set('idle');
+  }
+
+  clearRoomMicPreference(roomId: string): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      window.sessionStorage.removeItem(this.micStorageKey(roomId));
+    } catch {
+      /* Ignore storage restrictions. */
+    }
+  }
+
+  private micStorageKey(roomId: string): string {
+    return `${MIC_MUTED_STORAGE_KEY}:${roomId}`;
   }
 
   private wasMicMutedFor(roomId: string): boolean {
     if (!isPlatformBrowser(this.platformId)) return false;
     try {
-      return window.sessionStorage.getItem(MIC_MUTED_STORAGE_KEY) === roomId;
+      return window.sessionStorage.getItem(this.micStorageKey(roomId)) === 'true';
     } catch {
       return false;
     }
   }
 
   private rememberMicMuted(roomId: string | null, muted: boolean): void {
-    if (!isPlatformBrowser(this.platformId)) return;
+    if (!isPlatformBrowser(this.platformId) || !roomId) return;
     try {
-      if (muted && roomId) {
-        window.sessionStorage.setItem(MIC_MUTED_STORAGE_KEY, roomId);
-      } else {
-        window.sessionStorage.removeItem(MIC_MUTED_STORAGE_KEY);
-      }
+      window.sessionStorage.setItem(this.micStorageKey(roomId), String(muted));
     } catch {
       /* Ignore storage restrictions. */
     }
@@ -552,6 +563,7 @@ export class LiveKitAudioEngine {
     const conn = this.activeConnection();
     this.activeConnection.set(null);
     this.micOn.set(false);
+    this.isMutedByHost.set(false);
     this.micError.set(null);
     this.soundBlocked.set(false);
     this.speakingIds.set([]);
