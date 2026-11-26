@@ -57,8 +57,17 @@
   }
 
   .mainnav-list .tab-label,
-  .mainnav-list .tab-count {
+  .mainnav-list .tab-count,
+  .theme-pill-label {
     display: none;
+  }
+
+  .theme-pill-btn {
+    width: 44px;
+    padding: 0 !important;
+    justify-content: center !important;
+    align-self: center;
+    --mat-tonal-button-horizontal-padding: 0;
   }
 
   .golive-card {
@@ -563,14 +572,6 @@ a[matIconButton] mat-icon {
   --mat-tonal-button-horizontal-padding: 16px;
   --mat-tonal-button-container-color: var(--mat-sys-surface-container-low);
   --mat-tonal-button-label-text-color: var(--mat-sys-on-surface-variant);
-}
-
-.sidebar-collapsed .theme-pill-btn {
-  width: 44px;
-  padding: 0 !important;
-  justify-content: center !important;
-  align-self: center;
-  --mat-tonal-button-horizontal-padding: 0;
 }
 
 .theme-pill-btn mat-icon {
