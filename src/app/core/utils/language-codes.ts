@@ -146,6 +146,9 @@ export function countryCodeFor(location: string | null | undefined): string | nu
   if (!location) return null;
   const trimmed = location.trim();
   if (!trimmed) return null;
+  if (trimmed.toUpperCase() === 'EH' || trimmed.toLowerCase() === 'western sahara') {
+    return 'MA';
+  }
   if (/^[A-Z]{2}$/.test(trimmed)) return trimmed;
   return COUNTRY_BY_NAME.get(trimmed.toLowerCase())?.code ?? null;
 }
@@ -153,7 +156,8 @@ export function countryCodeFor(location: string | null | undefined): string | nu
 export function countryNameFor(code: string | null | undefined): string {
   if (!code) return '';
   const upper = code.trim().toUpperCase();
-  return COUNTRY_BY_CODE.get(upper)?.name ?? upper;
+  const normalized = upper === 'EH' ? 'MA' : upper;
+  return COUNTRY_BY_CODE.get(normalized)?.name ?? normalized;
 }
 
 export function countryFlagCodeFor(locationOrCode: string | null | undefined): string | null {
