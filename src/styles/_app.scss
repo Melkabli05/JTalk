@@ -3640,17 +3640,22 @@ app-room-card {
   gap: var(--sp-m);
 }
 
-// Intrinsic CSS Grid for avatar picker so rows distribute evenly at every width
 .avatar-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(60px, 72px));
-  gap: var(--sp-m);
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-l);
+  align-items: center;
 }
 
 .avatar-option {
   position: relative;
-  width: 100%;
+  width: 72px;
+  flex: 0 0 auto;
+}
+
+.avatar-upload-btn {
+  --mat-tonal-button-container-height: 44px;
+  --mat-tonal-button-horizontal-padding: 20px;
 }
 
 .avatar-choice {

@@ -209,18 +209,6 @@ export class ProfileEditForm {
     this.model.update((m) => ({ ...m, username: generated }));
   }
 
-  useDefaultAvatar(): void {
-    this.clearPendingAvatar();
-    this.selectedAvatar.set({
-      kind: 'own',
-      id: 'own',
-      bg: '#16121F',
-      label: 'Default picture',
-      imageUrl: null,
-    });
-    this.avatarPicked.emit();
-  }
-
   triggerAvatarUpload(): void {
     this.fileInputRef()?.nativeElement.click();
   }
