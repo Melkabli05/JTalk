@@ -28,7 +28,7 @@ import { trimmedRequired } from '../../../shared/utils/form-validators';
 export class StartRoomDialog {
   private readonly dialogRef = inject(MatDialogRef<StartRoomDialog, CreateVoiceRoomPayload>);
 
-  readonly languages = LANGUAGE_CATALOG.filter(language => ['en', 'es', 'fr', 'ar', 'ja', 'de'].includes(language.code));
+  readonly languages = LANGUAGE_CATALOG;
   readonly seatOptions = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
   private readonly model = signal({

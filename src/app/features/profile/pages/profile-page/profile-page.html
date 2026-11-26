@@ -97,11 +97,14 @@
 
       <mat-tab label="Account">
         <div class="profile-tab-content">
-          <label>Appearance
-            <select #scheme [value]="appState.colorScheme()" (change)="appState.setColorScheme(scheme.value)">
-              <option value="system">Use device theme</option><option value="light">Light</option><option value="dark">Dark</option>
-            </select>
-          </label>
+          <mat-form-field class="full-width">
+            <mat-label>Appearance</mat-label>
+            <mat-select [value]="appState.colorScheme()" (valueChange)="appState.setColorScheme($event)" aria-label="Appearance">
+              <mat-option value="system">Use device theme</mat-option>
+              <mat-option value="light">Light</mat-option>
+              <mat-option value="dark">Dark</mat-option>
+            </mat-select>
+          </mat-form-field>
           <app-profile-account
             [profile]="profile"
             (settingsClicked)="selectTab('edit')"
