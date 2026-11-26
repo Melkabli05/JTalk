@@ -609,6 +609,15 @@ a[matIconButton] mat-icon {
   color: var(--mat-sys-on-surface-variant);
   font-weight: 500;
   font-size: 0.9375rem;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
 }
 
 .avatar.grad {
@@ -1275,6 +1284,21 @@ app-room-card {
   display: flex;
   flex-direction: column;
   gap: var(--sp-m);
+}
+
+.room-avatars-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-m);
+  width: 100%;
+}
+
+.room-host-avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 0.8125rem;
+  border: 2px solid var(--mat-sys-primary);
 }
 
 .stack {

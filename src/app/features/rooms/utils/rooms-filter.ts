@@ -3,6 +3,7 @@ import {
   languageNameFor,
   roomFilterKeyFor,
 } from '../../../core/utils/language-codes';
+import { sanitizeAvatarUrl } from '../../../core/utils/safe-url';
 import { VoiceRoomDto } from '../../../shared/models/voice-room.model';
 import { avatarChipClassFor } from '../../../shared/utils/avatar-chip.utils';
 import { ROOM_CARD_AVATAR_LIMIT, ROOM_DOT_BY_LANG } from '../constants/rooms.constants';
@@ -32,24 +33,42 @@ export function orderPinnedRooms(
   return pinned.length === 0 ? rooms : [...pinned, ...byId.values()];
 }
 
+function buildRoomAvatar(
+  userId: string,
+  directory: ReadonlyMap<string, { displayName: string; avatarUrl?: string | null }>,
+  fallbackName: string,
+): RoomAvatarItem {
+  const entry = directory.get(userId);
+  const displayName = entry?.displayName?.trim() || fallbackName;
+  return {
+    userId,
+    displayName,
+    initial: (displayName[0] ?? 'J').toUpperCase(),
+    avatarUrl: sanitizeAvatarUrl(entry?.avatarUrl) ?? null,
+    chipClass: avatarChipClassFor(userId),
+  };
+}
+
 export function toLiveRoomCard(
   room: VoiceRoomDto,
-  directory: ReadonlyMap<string, { displayName: string }>,
+  directory: ReadonlyMap<string, { displayName: string; avatarUrl?: string | null }>,
 ): LiveRoomCard {
   const chipKey = roomFilterKeyFor(room.targetLanguage);
   const lang: LiveRoomCard['lang'] = chipKey === 'all' ? 'other' : chipKey;
-  const visibleSpeakers = room.speakers.slice(0, ROOM_CARD_AVATAR_LIMIT);
-  const avatars: RoomAvatarItem[] = visibleSpeakers.map((userId) => ({
-    userId,
-    initial: (directory.get(userId)?.displayName?.trim()[0] ?? 'J').toUpperCase(),
-    chipClass: avatarChipClassFor(userId),
-  }));
+  const visibleOthers = room.speakers
+    .filter((id) => id !== room.hostId)
+    .slice(0, ROOM_CARD_AVATAR_LIMIT);
+  const avatars = visibleOthers.map((userId) => buildRoomAvatar(userId, directory, 'Speaker'));
+  const hostAvatar = room.hostId ? buildRoomAvatar(room.hostId, directory, 'Host') : null;
 
   const speakerCount = room.speakers.length;
-  const overflow = Math.max(0, room.participantCount - visibleSpeakers.length);
+  const hostOnStage = Boolean(room.hostId && room.speakers.includes(room.hostId));
+  const shownCount = visibleOthers.length + (hostOnStage ? 1 : 0);
+  const overflow = Math.max(0, room.participantCount - shownCount);
 
   return {
     id: room.id,
+    hostAvatar,
     lang,
     langLabel: languageLabelFor(room.targetLanguage),
     dotClass: ROOM_DOT_BY_LANG[lang] ?? 'dot-brand-blue',

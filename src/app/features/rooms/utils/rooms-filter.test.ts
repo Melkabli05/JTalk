@@ -8,6 +8,7 @@ import {
 const SAMPLE_ROOMS: readonly LiveRoomCard[] = [
   {
     id: 'en-1',
+    hostAvatar: null,
     lang: 'en',
     langLabel: 'English · B1–B2',
     dotClass: 'dot-brand-blue',
@@ -19,6 +20,7 @@ const SAMPLE_ROOMS: readonly LiveRoomCard[] = [
   },
   {
     id: 'fr-1',
+    hostAvatar: null,
     lang: 'fr',
     langLabel: 'French · A2–B1',
     dotClass: 'dot-nb-error',
@@ -30,6 +32,7 @@ const SAMPLE_ROOMS: readonly LiveRoomCard[] = [
   },
   {
     id: 'ja-1',
+    hostAvatar: null,
     lang: 'ja',
     langLabel: 'Japanese · N5–N4',
     dotClass: 'dot-positive',
@@ -80,7 +83,9 @@ describe('rooms-filter', () => {
     );
 
     expect(card.lang).toBe('ja');
-    expect(card.avatars.map((a) => a.initial)).toEqual(['A', 'J']);
+    expect(card.hostAvatar?.initial).toBe('A');
+    expect(card.hostAvatar?.displayName).toBe('Amina');
+    expect(card.avatars.map((a) => a.initial)).toEqual(['S']);
     expect(card.moreCount).toBe('+3');
     expect(card.meta).toBe('2 speaking · 5 participants · 6 seats');
   });

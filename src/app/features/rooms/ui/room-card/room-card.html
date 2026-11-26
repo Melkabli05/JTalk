@@ -41,12 +41,40 @@
   <p class="desc">{{ item.description }}</p>
 
   <div class="room-foot">
-    <div class="stack" aria-hidden="true">
-      @for (av of item.avatars; track av.userId) {
-        <span class="avatar" [class]="av.chipClass">{{ av.initial }}</span>
-      }
-      @if (item.moreCount) {
-        <span class="avatar more">{{ item.moreCount }}</span>
+    <div class="room-avatars-row">
+      <div class="stack">
+        @for (av of item.avatars; track av.userId) {
+          <span
+            class="avatar"
+            [class]="av.chipClass"
+            [matTooltip]="av.displayName"
+            matTooltipPosition="above"
+          >
+            @if (av.avatarUrl; as url) {
+              <img [src]="url" [alt]="av.displayName" referrerpolicy="no-referrer" />
+            } @else {
+              {{ av.initial }}
+            }
+          </span>
+        }
+        @if (item.moreCount) {
+          <span class="avatar more">{{ item.moreCount }}</span>
+        }
+      </div>
+
+      @if (item.hostAvatar; as host) {
+        <span
+          class="avatar room-host-avatar"
+          [class]="host.chipClass"
+          [matTooltip]="host.displayName + ' (Host)'"
+          matTooltipPosition="above"
+        >
+          @if (host.avatarUrl; as url) {
+            <img [src]="url" [alt]="host.displayName" referrerpolicy="no-referrer" />
+          } @else {
+            {{ host.initial }}
+          }
+        </span>
       }
     </div>
     <p class="room-meta">{{ item.meta }}</p>

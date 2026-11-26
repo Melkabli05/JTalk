@@ -7,12 +7,27 @@ import { RoomCard } from './room-card';
 describe('RoomCard', () => {
   const sampleRoom: LiveRoomCard = {
     id: 'r1',
+    hostAvatar: {
+      userId: 'host',
+      displayName: 'Host User',
+      initial: 'H',
+      avatarUrl: null,
+      chipClass: 'chip-b',
+    },
     lang: 'fr',
     langLabel: 'French',
     dotClass: 'dot-nb-error',
     title: 'Coffee in Paris',
     description: 'Relaxed everyday conversation.',
-    avatars: [{ userId: 'speaker', initial: 'S', chipClass: 'chip-a' }],
+    avatars: [
+      {
+        userId: 'speaker',
+        displayName: 'Speaker User',
+        initial: 'S',
+        avatarUrl: null,
+        chipClass: 'chip-a',
+      },
+    ],
     moreCount: '+4',
     meta: '5 talking · 12 listening',
   };

@@ -175,8 +175,9 @@ describe('RoomPage', () => {
   it.each([204, 503])('logs out after the leave endpoint returns %i', async status => {
     const { store, http, base, header } = await joinForHeaderAction('LISTENER');
     expect(header.querySelector('#endRoomBtn')).toBeNull();
+    expect(header.querySelector('[aria-label="Log out"]')).toBeNull();
     const logout = vi.spyOn(TestBed.inject(AuthService), 'logout').mockReturnValue(from(Promise.resolve()));
-    header.querySelector<HTMLButtonElement>('[aria-label="Log out"]')!.click();
+    void store.signOut();
     const leave = await vi.waitFor(() => http.expectOne({ method: 'POST', url: base + '/participants/leave' }));
     expect(logout).not.toHaveBeenCalled();
     leave.flush(null, { status, statusText: status === 204 ? 'No Content' : 'Unavailable' });

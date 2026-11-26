@@ -229,7 +229,10 @@ export class RoomsStore {
               : room,
           ),
         );
-        void this.identity.resolveUsers(event.live.speakers.slice(0, ROOM_CARD_AVATAR_LIMIT));
+        void this.identity.resolveUsers(
+          event.live.speakers
+            .slice(0, ROOM_CARD_AVATAR_LIMIT + 1),
+        );
     }
   }
 
@@ -312,7 +315,12 @@ export class RoomsStore {
 
   private resolveRoomPeople(rooms: readonly VoiceRoomDto[]): void {
     void this.identity.resolveUsers(
-      rooms.flatMap((room) => room.speakers.slice(0, ROOM_CARD_AVATAR_LIMIT)),
+      rooms.flatMap((room) => [
+        ...room.speakers
+          .filter((id) => id !== room.hostId)
+          .slice(0, ROOM_CARD_AVATAR_LIMIT),
+        ...(room.hostId ? [room.hostId] : []),
+      ]),
     );
   }
 }

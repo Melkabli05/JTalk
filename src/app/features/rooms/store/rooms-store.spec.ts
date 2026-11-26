@@ -46,14 +46,15 @@ describe('RoomsStore', () => {
     const identity = TestBed.inject(IdentityStore);
     store.applyFeedEvent({ type: 'SNAPSHOT', rooms: [{ ...room, speakers: [] }] });
     expect(store.rooms()[0].avatars).toEqual([]);
-    expect(identity.resolveUsers).toHaveBeenLastCalledWith([]);
+    expect(store.rooms()[0].hostAvatar?.userId).toBe(room.hostId);
+    expect(identity.resolveUsers).toHaveBeenLastCalledWith([room.hostId]);
 
     store.applyFeedEvent({
       type: 'ROOM_STATS', roomId: room.id,
       live: { speakers: ['a', 'b', 'c', 'd'], participantCount: 5, handRaiseCount: 1 },
     });
     expect(store.rooms()[0].avatars.map(avatar => avatar.userId)).toEqual(['a', 'b', 'c']);
-    expect(identity.resolveUsers).toHaveBeenLastCalledWith(['a', 'b', 'c']);
+    expect(identity.resolveUsers).toHaveBeenLastCalledWith(['a', 'b', 'c', 'd']);
     expect(store.rooms()[0].meta).toBe('4 speaking · 5 participants · 8 seats');
   });
 

@@ -9,12 +9,15 @@ export interface LanguageFilterChip {
 
 export interface RoomAvatarItem {
   readonly userId: string;
+  readonly displayName: string;
   readonly initial: string;
+  readonly avatarUrl: string | null;
   readonly chipClass: string;
 }
 
 export interface LiveRoomCard {
   readonly id: string;
+  readonly hostAvatar: RoomAvatarItem | null;
   readonly lang: Exclude<RoomLangFilter, 'all'> | 'other';
   readonly langLabel: string;
   readonly dotClass: string;
