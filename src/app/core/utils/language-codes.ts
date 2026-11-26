@@ -73,6 +73,7 @@ export const LANGUAGE_CATALOG: readonly LanguageCatalogEntry[] = (
 export const COUNTRY_CATALOG: readonly CountryCatalogEntry[] = (
   Object.entries(countries) as [TCountryCode, (typeof countries)[TCountryCode]][]
 )
+  .filter(([code]) => code !== 'EH')
   .map(([code, data]) => ({
     code,
     name: data.name,
