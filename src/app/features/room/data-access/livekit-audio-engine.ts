@@ -11,6 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import type { Participant, TrackPublication } from 'livekit-client';
+import { MIC_MUTED_STORAGE_KEY } from '../../../shared/constants/storage-keys.constants';
 import {
   ChatRealtimeEvent,
   NetworkMode,
@@ -339,6 +340,7 @@ export class LiveKitAudioEngine {
   private readonly eventHandlers = new Set<LiveKitRoomEventHandlers>();
   private readonly activeConnection = signal<LiveKitConnectionHandle | null>(null);
   private generation = 0;
+  private currentRoomId: string | null = null;
   private lastReportedNetworkMode: NetworkMode = 'OPTIMAL';
 
   private readonly audioDevicesResource = resource({
@@ -393,6 +395,7 @@ export class LiveKitAudioEngine {
     }
 
     const gen = ++this.generation;
+    this.currentRoomId = session.room.id;
     this.status.set('connecting');
     await this.closeCurrent();
     if (gen !== this.generation) return false;
@@ -418,7 +421,11 @@ export class LiveKitAudioEngine {
       this.activeConnection.set(handle);
       this.status.set('connected');
       if (this.canPublish()) {
-        await this.setMicrophone(true);
+        if (this.wasMicMutedFor(session.room.id)) {
+          this.micOn.set(false);
+        } else {
+          await this.setMicrophone(true);
+        }
       }
       return true;
     } catch {
@@ -445,6 +452,7 @@ export class LiveKitAudioEngine {
       await connection.setMicrophone(enabled);
       if (connection !== this.activeConnection()) return false;
       this.micOn.set(enabled && this.activeConnection() !== null);
+      this.rememberMicMuted(this.currentRoomId, !enabled);
       this.micError.set(null);
       if (enabled) {
         this.refreshAudioInputDevices();
@@ -512,8 +520,32 @@ export class LiveKitAudioEngine {
 
   async disconnect(): Promise<void> {
     const gen = ++this.generation;
+    this.currentRoomId = null;
+    this.rememberMicMuted(null, false);
     await this.closeCurrent();
     if (gen === this.generation) this.status.set('idle');
+  }
+
+  private wasMicMutedFor(roomId: string): boolean {
+    if (!isPlatformBrowser(this.platformId)) return false;
+    try {
+      return window.sessionStorage.getItem(MIC_MUTED_STORAGE_KEY) === roomId;
+    } catch {
+      return false;
+    }
+  }
+
+  private rememberMicMuted(roomId: string | null, muted: boolean): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      if (muted && roomId) {
+        window.sessionStorage.setItem(MIC_MUTED_STORAGE_KEY, roomId);
+      } else {
+        window.sessionStorage.removeItem(MIC_MUTED_STORAGE_KEY);
+      }
+    } catch {
+      /* Ignore storage restrictions. */
+    }
   }
 
   private async closeCurrent(): Promise<void> {
@@ -556,6 +588,7 @@ export class LiveKitAudioEngine {
         );
         if (isLocal) {
           this.micOn.set(!muted && this.activeConnection() !== null);
+          this.rememberMicMuted(this.currentRoomId, muted);
         }
       }),
       onCanPublishChanged: guard((canPublish) => {

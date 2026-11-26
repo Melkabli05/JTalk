@@ -138,4 +138,24 @@ describe('LiveKitAudioEngine', () => {
     getListener().onSoundBlocked(true);
     expect(engine.soundBlocked()).toBe(false);
   });
+
+  it('keeps mic muted across page refresh in the same room and resets on disconnect', async () => {
+    window.sessionStorage.clear();
+    const { engine, handle } = setupMockConnector();
+    await engine.connect(session);
+    expect(engine.micOn()).toBe(true);
+
+    await engine.setMicrophone(false);
+    expect(engine.micOn()).toBe(false);
+
+    vi.mocked(handle.setMicrophone).mockClear();
+    await engine.connect(session);
+    expect(handle.setMicrophone).not.toHaveBeenCalledWith(true);
+    expect(engine.micOn()).toBe(false);
+
+    await engine.disconnect();
+    await engine.connect(session);
+    expect(handle.setMicrophone).toHaveBeenCalledWith(true);
+    expect(engine.micOn()).toBe(true);
+  });
 });
