@@ -158,11 +158,12 @@ export class RoomPage {
       },
     });
 
-    // Auto-redirect to rooms list when the room has ended (host closed it or user was removed)
+    // Auto-redirect to rooms list when the room has ended or user was removed
     effect(() => {
       const err = this.roomStore.roomError();
-      if (err) {
+      if (err === 'This room has ended.' || err === 'You were removed from this room.') {
         untracked(() => {
+          this.toast.show(err);
           void this.router.navigate(['/rooms']);
         });
       }

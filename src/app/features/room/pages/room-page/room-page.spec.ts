@@ -215,6 +215,21 @@ describe('RoomPage', () => {
     expect(toastSpy.show).toHaveBeenCalledWith('Join the stage to use your microphone.');
   });
 
+  it('redirects to /rooms and shows toast when roomError signals the room has ended', () => {
+    const store = TestBed.inject(LiveRoomStore);
+    vi.spyOn(store, 'enterRoom').mockResolvedValue(true);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(RoomPage);
+    fixture.componentRef.setInput('id', 'current');
+    fixture.detectChanges();
+
+    store.roomError.set('This room has ended.');
+    fixture.detectChanges();
+
+    expect(toastSpy.show).toHaveBeenCalledWith('This room has ended.');
+    expect(navigate).toHaveBeenCalledWith(['/rooms']);
+  });
+
   it('should report false from reloadMessages when not joined to an active room', () => {
     vi.spyOn(TestBed.inject(LiveRoomStore), 'enterRoom').mockResolvedValue(true);
     const fixture = TestBed.createComponent(RoomPage);
