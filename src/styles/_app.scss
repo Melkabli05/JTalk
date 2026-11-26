@@ -553,49 +553,34 @@ a[matIconButton] mat-icon {
   display: none !important;
 }
 
-.theme-toggle-group {
-  width: 100%;
+.theme-pill-btn {
   margin-top: auto;
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-radius: var(--r-full) !important;
-  border-color: var(--mat-sys-outline-variant) !important;
-  --mat-standard-button-toggle-height: 36px;
-  --mat-standard-button-toggle-shape: var(--r-full);
-  --mat-standard-button-toggle-background-color: var(--mat-sys-surface-container-low);
-  --mat-standard-button-toggle-selected-state-background-color: var(--mat-sys-secondary-container);
-  --mat-standard-button-toggle-selected-state-text-color: var(--mat-sys-on-secondary-container);
-  --mat-standard-button-toggle-text-color: var(--mat-sys-on-surface-variant);
-  --mat-standard-button-toggle-divider-color: var(--mat-sys-outline-variant);
-  overflow: hidden;
-}
-
-.theme-toggle-group .mat-button-toggle-button {
   width: 100%;
-  padding: 0 6px !important;
+  min-width: 0 !important;
+  justify-content: flex-start !important;
+  --mat-tonal-button-container-height: 44px;
+  --mat-tonal-button-container-shape: var(--r-full);
+  --mat-tonal-button-horizontal-padding: 16px;
+  --mat-tonal-button-container-color: var(--mat-sys-surface-container-low);
+  --mat-tonal-button-label-text-color: var(--mat-sys-on-surface-variant);
 }
 
-.theme-toggle-group .mat-button-toggle-label-content {
+.sidebar-collapsed .theme-pill-btn {
+  width: 44px;
+  padding: 0 !important;
+  justify-content: center !important;
+  align-self: center;
+  --mat-tonal-button-horizontal-padding: 0;
+}
+
+.theme-pill-btn mat-icon {
+  margin-right: 0 !important;
+}
+
+.theme-pill-btn .mdc-button__label {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 0 4px !important;
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1 !important;
-}
-
-.theme-toggle-group mat-icon {
-  width: 16px !important;
-  height: 16px !important;
-  font-size: 16px !important;
-}
-
-.theme-cycle-btn {
-  margin-top: auto;
-  align-self: center;
-  color: var(--mat-sys-on-surface-variant);
+  gap: 12px;
 }
 
 // Profile row in sidebar

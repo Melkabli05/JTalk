@@ -100,7 +100,6 @@
           <mat-form-field class="full-width">
             <mat-label>Appearance</mat-label>
             <mat-select [value]="theme.colorScheme()" (valueChange)="theme.setColorScheme($event)" aria-label="Appearance">
-              <mat-option value="system">Use device theme</mat-option>
               <mat-option value="light">Light</mat-option>
               <mat-option value="dark">Dark</mat-option>
             </mat-select>

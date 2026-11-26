@@ -50,19 +50,18 @@ describe('Sidebar', () => {
     expect(img?.getAttribute('src')).toBe('/avatars/avatar-03.svg');
   });
 
-  it('should emit colorSchemeChange when switching theme in sidebar', () => {
+  it('should emit toggleTheme when clicking the sidebar theme button', () => {
     const fixture = TestBed.createComponent(Sidebar);
     fixture.componentRef.setInput('collapsed', false);
-    fixture.componentRef.setInput('colorScheme', 'system');
+    fixture.componentRef.setInput('colorScheme', 'light');
     const spy = vi.fn();
-    fixture.componentInstance.colorSchemeChange.subscribe(spy);
+    fixture.componentInstance.toggleTheme.subscribe(spy);
     fixture.detectChanges();
 
-    const darkBtn = fixture.nativeElement.querySelector(
-      '.theme-toggle-group mat-button-toggle[value="dark"] button',
-    ) as HTMLButtonElement | null;
-    expect(darkBtn).toBeTruthy();
-    darkBtn?.click();
-    expect(spy).toHaveBeenCalledWith('dark');
+    const btn = fixture.nativeElement.querySelector('.theme-pill-btn') as HTMLButtonElement | null;
+    expect(btn).toBeTruthy();
+    expect(btn?.textContent).toContain('Dark mode');
+    btn?.click();
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 });

@@ -2,42 +2,21 @@ import { isPlatformBrowser } from '@angular/common';
 import { computed, inject, PLATFORM_ID, Service, signal } from '@angular/core';
 import { COLOR_SCHEME_STORAGE_KEY } from '../../shared/constants/storage-keys.constants';
 
-export type ColorScheme = 'light' | 'dark' | 'system';
+export type ColorScheme = 'light' | 'dark';
 
 @Service()
 export class ThemeService {
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly scheme = signal<ColorScheme>('system');
+  private readonly scheme = signal<ColorScheme>('light');
 
   readonly colorScheme = this.scheme.asReadonly();
-
-  readonly icon = computed(() => {
-    switch (this.scheme()) {
-      case 'light':
-        return 'light_mode';
-      case 'dark':
-        return 'dark_mode';
-      default:
-        return 'contrast';
-    }
-  });
-
-  readonly tooltip = computed(() => {
-    switch (this.scheme()) {
-      case 'light':
-        return 'Theme: Light (click to switch)';
-      case 'dark':
-        return 'Theme: Dark (click to switch)';
-      default:
-        return 'Theme: System (click to switch)';
-    }
-  });
+  readonly isDark = computed(() => this.scheme() === 'dark');
 
   constructor() {
     if (!isPlatformBrowser(this.platformId)) return;
     try {
       const saved = localStorage.getItem(COLOR_SCHEME_STORAGE_KEY);
-      if (saved === 'light' || saved === 'dark') {
+      if (saved === 'dark' || saved === 'light') {
         this.setColorScheme(saved);
       }
     } catch {
@@ -46,10 +25,10 @@ export class ThemeService {
   }
 
   setColorScheme(scheme: string): void {
-    if (scheme !== 'light' && scheme !== 'dark' && scheme !== 'system') return;
+    if (scheme !== 'light' && scheme !== 'dark') return;
     this.scheme.set(scheme);
     if (!isPlatformBrowser(this.platformId)) return;
-    document.documentElement.style.colorScheme = scheme === 'system' ? '' : scheme;
+    document.documentElement.style.colorScheme = scheme;
     try {
       localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, scheme);
     } catch {
@@ -57,9 +36,7 @@ export class ThemeService {
     }
   }
 
-  cycle(): void {
-    const next: ColorScheme =
-      this.scheme() === 'system' ? 'light' : this.scheme() === 'light' ? 'dark' : 'system';
-    this.setColorScheme(next);
+  toggle(): void {
+    this.setColorScheme(this.scheme() === 'dark' ? 'light' : 'dark');
   }
 }

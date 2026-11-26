@@ -12,17 +12,19 @@ describe('ThemeService', () => {
     });
   });
 
-  it('defaults to system and updates DOM + localStorage on setColorScheme', () => {
+  it('defaults to light and toggles between light and dark with persistence', () => {
     const theme = TestBed.inject(ThemeService);
-    expect(theme.colorScheme()).toBe('system');
+    expect(theme.colorScheme()).toBe('light');
+    expect(theme.isDark()).toBe(false);
 
-    theme.setColorScheme('dark');
+    theme.toggle();
     expect(theme.colorScheme()).toBe('dark');
+    expect(theme.isDark()).toBe(true);
     expect(document.documentElement.style.colorScheme).toBe('dark');
     expect(localStorage.getItem(COLOR_SCHEME_STORAGE_KEY)).toBe('dark');
 
-    theme.cycle();
-    expect(theme.colorScheme()).toBe('system');
-    expect(document.documentElement.style.colorScheme).toBe('');
+    theme.toggle();
+    expect(theme.colorScheme()).toBe('light');
+    expect(document.documentElement.style.colorScheme).toBe('light');
   });
 });
