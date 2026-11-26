@@ -166,23 +166,12 @@
           class="room-header-icon-btn room-header-end-btn"
           id="endRoomBtn"
           type="button"
-          aria-label="End room menu"
-          matTooltip="End room"
-          [matMenuTriggerFor]="endMenu"
+          aria-label="End room for everyone"
+          matTooltip="End room for everyone"
+          (click)="openEndRoom.emit()"
         >
           <mat-icon>power_settings_new</mat-icon>
         </button>
-        <mat-menu #endMenu="matMenu" class="jtalk-menu" xPosition="before">
-          <button
-            mat-menu-item
-            class="menu-item-danger"
-            type="button"
-            (click)="openEndRoom.emit()"
-          >
-            <mat-icon>power_settings_new</mat-icon>
-            <span>End room for everyone</span>
-          </button>
-        </mat-menu>
       }
     </div>
   </div>

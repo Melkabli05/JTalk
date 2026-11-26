@@ -146,10 +146,6 @@ describe('RoomPage', () => {
     const chooseEndRoom = () => {
       header.querySelector<HTMLButtonElement>('#endRoomBtn')!.click();
       fixture.detectChanges();
-      const item = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'))
-        .find(button => button.textContent.includes('End room for everyone'));
-      item!.click();
-      fixture.detectChanges();
     };
     dialogSpy.open.mockReturnValueOnce({ afterClosed: () => from(Promise.resolve(false)) });
     chooseEndRoom();
