@@ -12,8 +12,8 @@
       <button
         matButton="text"
         type="button"
-        [disabled]="peopleStore.loading()"
-        (click)="peopleStore.refresh()"
+        [disabled]="facade.loading()"
+        (click)="facade.refresh()"
       >
         <mat-icon aria-hidden="true">refresh</mat-icon>
         Refresh
@@ -28,25 +28,25 @@
         type="search"
         #searchField
         maxlength="50"
-        [value]="peopleStore.query()"
-        (input)="onQueryChange(searchField.value)"
+        [value]="facade.query()"
+        (input)="facade.setQuery(searchField.value)"
         placeholder="Type at least 2 characters"
       />
-      @if (peopleStore.query()) {
+      @if (facade.query()) {
         <button
           matIconButton
           matSuffix
           type="button"
           aria-label="Clear search"
-          (click)="onQueryChange('')"
+          (click)="facade.setQuery('')"
         >
           <mat-icon>close</mat-icon>
         </button>
       }
     </mat-form-field>
 
-    @let status = peopleStore.status();
-    @let people = peopleStore.people();
+    @let status = facade.status();
+    @let people = facade.people();
     @switch (status) {
       @case ('loading')
       @case ('reloading') {
@@ -69,8 +69,8 @@
       }
       @case ('error') {
         <div class="people-state-hint" role="alert">
-          <p>{{ peopleStore.error() }}</p>
-          <button matButton="outlined" type="button" (click)="peopleStore.refresh()">
+          <p>{{ facade.error() }}</p>
+          <button matButton="outlined" type="button" (click)="facade.refresh()">
             <mat-icon aria-hidden="true">refresh</mat-icon>
             Retry
           </button>
@@ -92,15 +92,15 @@
           }
           <app-person-row
             [person]="person"
-            [busy]="peopleStore.busyIds().has(person.id)"
-            (followToggle)="onFollowToggle($event)"
-            (blockUser)="onBlockUser($event)"
+            [busy]="facade.busyIds().has(person.id)"
+            (followToggle)="facade.toggleFollow($event)"
+            (blockUser)="facade.blockUser($event)"
           />
         } @empty {
           <div class="people-state-hint">
             <p>
               {{
-                peopleStore.searching()
+                facade.searching()
                   ? 'No users matched your search.'
                   : 'No language partners found yet. Try searching by name.'
               }}
@@ -109,13 +109,13 @@
         }
       </mat-list>
 
-      @if (peopleStore.hasMore()) {
+      @if (facade.hasMore()) {
         <div class="people-load-more">
           <button
             matButton="outlined"
             type="button"
-            [disabled]="peopleStore.loading()"
-            (click)="peopleStore.loadMore()"
+            [disabled]="facade.loading()"
+            (click)="facade.loadMore()"
           >
             <mat-icon aria-hidden="true">expand_more</mat-icon>
             Load more

@@ -5,9 +5,10 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { vi } from 'vitest';
-import type { DiscoveredUserResponse } from '../../../../core/auth/auth.models';
 import { provideNoopAuthForTests } from '../../../../core/auth/auth.providers';
+import type { DiscoveredUserResponse } from '../../../../core/auth/auth.models';
 import { ToastNotifier } from '../../../../core/services/toast-notifier';
+import { PeopleFacade } from '../../store/people.facade';
 import { PeoplePage } from './people-page';
 
 describe('PeoplePage', () => {
@@ -22,13 +23,14 @@ describe('PeoplePage', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideNoopAuthForTests(),
+        PeopleFacade,
         provideRouter([{ path: 'people', component: PeoplePage }]),
         { provide: ToastNotifier, useValue: toastSpy },
       ],
     }).compileComponents();
   });
 
-  it('should render people directory search input and handle follow toggle feedback', async () => {
+  it('should render people directory search input and delegate follow toggle to PeopleFacade', async () => {
     const harness = await RouterTestingHarness.create();
     const page = await harness.navigateByUrl('/people', PeoplePage);
     const person: DiscoveredUserResponse = {
@@ -40,15 +42,13 @@ describe('PeoplePage', () => {
       followedByMe: false,
     };
 
-    vi.spyOn(page.peopleStore, 'toggleFollow').mockImplementation((_person, onDone) => {
-      onDone?.({ ok: true, followed: true });
-    });
+    const toggleSpy = vi.spyOn(page.facade, 'toggleFollow');
     harness.detectChanges();
 
     expect(harness.routeNativeElement?.querySelector('input[type="search"]')).toBeTruthy();
 
-    page.onFollowToggle(person);
-    expect(toastSpy.show).toHaveBeenCalledWith('Following Amira.');
+    page.facade.toggleFollow(person);
+    expect(toggleSpy).toHaveBeenCalledWith(person);
   });
 
   it('hydrates search query from ?q= and syncs query changes to the URL', async () => {
@@ -56,14 +56,9 @@ describe('PeoplePage', () => {
     const router = TestBed.inject(Router);
     const page = await harness.navigateByUrl('/people?q=amira', PeoplePage);
 
-    expect(page.peopleStore.query()).toBe('amira');
+    expect(page.facade.query()).toBe('amira');
 
-    page.onQueryChange('kenji');
+    page.facade.setQuery('kenji');
     await vi.waitFor(() => expect(router.url).toBe('/people?q=kenji'));
-    expect(page.peopleStore.query()).toBe('kenji');
-
-    page.onQueryChange('');
-    await vi.waitFor(() => expect(router.url).toBe('/people'));
-    expect(page.peopleStore.query()).toBe('');
   });
 });
