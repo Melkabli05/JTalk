@@ -5,18 +5,17 @@ import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { from } from 'rxjs';
+import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { provideNoopAuthForTests } from '../../../../core/auth/auth.providers';
 import { IdentityStore } from '../../../../core/auth/identity';
 import { ToastNotifier } from '../../../../core/services/toast-notifier';
+import { ProfileFacade } from '../../store/profile.facade';
 import { ProfilePage } from './profile-page';
 
 describe('ProfilePage', () => {
   const toastSpy = { show: vi.fn() };
-  const dialogSpy = {
-    open: vi.fn(() => ({ afterClosed: () => from([true]) })),
-  };
+  const dialogSpy = { open: vi.fn(() => ({ afterClosed: () => of(true) })) };
 
   beforeEach(async () => {
     toastSpy.show.mockReset();
@@ -28,6 +27,7 @@ describe('ProfilePage', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideNoopAuthForTests(),
+        ProfileFacade,
         provideRouter([{ path: 'profile', component: ProfilePage }]),
         { provide: ToastNotifier, useValue: toastSpy },
         { provide: MatDialog, useValue: dialogSpy },
@@ -44,16 +44,16 @@ describe('ProfilePage', () => {
     });
 
     const page = await harness.navigateByUrl('/profile?tab=account', ProfilePage);
-    expect(page.activeTab()).toBe('account');
-    expect(page.selectedTabIndex()).toBe(2);
+    expect(page.facade.activeTab()).toBe('account');
+    expect(page.facade.selectedTabIndex()).toBe(2);
 
-    page.selectTab('edit');
+    page.facade.selectTab('edit');
     await vi.waitFor(() => expect(router.url).toBe('/profile?tab=edit'));
-    expect(page.selectedTabIndex()).toBe(1);
+    expect(page.facade.selectedTabIndex()).toBe(1);
 
-    page.selectTab('overview');
+    page.facade.selectTab('overview');
     await vi.waitFor(() => expect(router.url).toBe('/profile'));
-    expect(page.selectedTabIndex()).toBe(0);
+    expect(page.facade.selectedTabIndex()).toBe(0);
 
     page.openDeleteDialog();
     expect(dialogSpy.open).toHaveBeenCalled();
@@ -79,20 +79,20 @@ describe('ProfilePage', () => {
     const http = TestBed.inject(HttpTestingController);
     const page = await harness.navigateByUrl('/profile', ProfilePage);
 
-    page.loadConnections('followers');
+    page.facade.loadConnections('followers');
     TestBed.tick();
     http
       .expectOne('/api/v1/users/me-1/followers?page=0&size=30')
       .flush({ message: 'Unavailable' }, { status: 500, statusText: 'Server Error' });
 
-    await vi.waitFor(() => expect(page.connectionsStatus()).toBe('error'));
+    await vi.waitFor(() => expect(page.facade.connectionsStatus()).toBe('error'));
     harness.detectChanges();
 
-    expect(() => page.connections()).not.toThrow();
+    expect(() => page.facade.connections()).not.toThrow();
     const alert = harness.routeNativeElement?.querySelector('[role="alert"]');
     expect(alert?.textContent).toContain('Could not load accounts.');
 
-    page.retryConnections();
+    page.facade.retryConnections();
     TestBed.tick();
     http.expectOne('/api/v1/users/me-1/followers?page=0&size=30').flush({
       content: [
@@ -109,9 +109,9 @@ describe('ProfilePage', () => {
       total: 1,
     });
 
-    await vi.waitFor(() => expect(page.connectionsStatus()).toBe('resolved'));
+    await vi.waitFor(() => expect(page.facade.connectionsStatus()).toBe('resolved'));
     harness.detectChanges();
-    expect(page.connections().map((a) => a.displayName)).toEqual(['Amira']);
+    expect(page.facade.connections().map((a) => a.displayName)).toEqual(['Amira']);
     expect(harness.routeNativeElement?.textContent).toContain('Amira');
     http.verify();
   });

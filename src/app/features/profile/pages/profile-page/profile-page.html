@@ -1,18 +1,18 @@
-@let me = identity.me();
-@let stats = identity.socialStats() ?? null;
+@let me = facade.me();
+@let stats = facade.socialStats() ?? null;
 <div class="view view-profile">
   <div class="profile-wrap">
     <app-profile-header
       [profile]="me"
       [stats]="stats"
-      (editProfile)="selectTab('edit')"
+      (editProfile)="facade.selectTab('edit')"
     />
 
     <mat-tab-group
       animationDuration="0ms"
       mat-stretch-tabs="false"
-      [selectedIndex]="selectedTabIndex()"
-      (selectedIndexChange)="onSelectedIndexChange($event)"
+      [selectedIndex]="facade.selectedTabIndex()"
+      (selectedIndexChange)="facade.selectTabIndex($event)"
     >
       <mat-tab label="Overview">
         <div class="profile-tab-content">
@@ -25,30 +25,30 @@
                 <button
                   matButton="outlined"
                   type="button"
-                  (click)="loadConnections('followers')"
+                  (click)="facade.loadConnections('followers')"
                 >
                   Followers
                 </button>
                 <button
                   matButton="outlined"
                   type="button"
-                  (click)="loadConnections('following')"
+                  (click)="facade.loadConnections('following')"
                 >
                   Following
                 </button>
                 <button
                   matButton="outlined"
                   type="button"
-                  (click)="loadConnections('blocks')"
+                  (click)="facade.loadConnections('blocks')"
                 >
                   Blocked accounts
                 </button>
               </div>
-              @if (connectionList(); as list) {
+              @if (facade.connectionList(); as list) {
                 <section class="profile-connections-list" aria-live="polite">
                   <mat-divider class="profile-divider" />
-                  @let connStatus = connectionsStatus();
-                  @let accounts = connections();
+                  @let connStatus = facade.connectionsStatus();
+                  @let accounts = facade.connections();
                   <ng-template #connectionsRows>
                     @for (account of accounts; track account.id) {
                       <div class="profile-connection-row">
@@ -57,7 +57,7 @@
                           <span class="profile-connection-handle">(&#64;{{ account.username }})</span>
                         </span>
                         @if (list === 'blocks') {
-                          <button matButton="outlined" type="button" (click)="unblock(account.id)">
+                          <button matButton="outlined" type="button" (click)="facade.unblock(account.id)">
                             Unblock
                           </button>
                         }
@@ -65,13 +65,13 @@
                     } @empty {
                       <p class="profile-empty">No accounts to show.</p>
                     }
-                    @if (moreConnections()) {
+                    @if (facade.moreConnections()) {
                       <div class="profile-action-row">
                         <button
                           matButton="outlined"
                           type="button"
-                          [disabled]="connectionsBusy()"
-                          (click)="loadConnections(list, true)"
+                          [disabled]="facade.connectionsBusy()"
+                          (click)="facade.loadConnections(list, true)"
                         >
                           Load more
                         </button>
@@ -88,9 +88,9 @@
                     }
                     @case ('error') {
                       <div class="profile-empty" role="alert">
-                        <p>{{ connectionsError() }}</p>
+                        <p>{{ facade.connectionsError() }}</p>
                         <div class="profile-action-row">
-                          <button matButton="outlined" type="button" (click)="retryConnections()">
+                          <button matButton="outlined" type="button" (click)="facade.retryConnections()">
                             <mat-icon aria-hidden="true">refresh</mat-icon>
                             Retry
                           </button>
@@ -123,15 +123,15 @@
                 <button
                   matButton="outlined"
                   type="button"
-                  [attr.aria-expanded]="editingLanguages()"
-                  (click)="editingLanguages.update((v) => !v)"
+                  [attr.aria-expanded]="facade.editingLanguages()"
+                  (click)="facade.toggleEditingLanguages()"
                 >
                   <mat-icon aria-hidden="true">translate</mat-icon>
                   Manage languages
                 </button>
               </div>
-              @if (editingLanguages()) {
-                <fieldset class="profile-lang-fieldset" [disabled]="languageBusy()">
+              @if (facade.editingLanguages()) {
+                <fieldset class="profile-lang-fieldset" [disabled]="facade.languageBusy()">
                   <legend class="sr-only">Languages</legend>
                   <div class="profile-lang-items">
                     @for (code of me.nativeLanguages; track code) {
@@ -142,7 +142,7 @@
                         @if (code === me.nativeLanguage) {
                           <span class="profile-chip">Primary</span>
                         } @else {
-                          <button matButton="text" type="button" (click)="changeLanguage(code)">
+                          <button matButton="text" type="button" (click)="facade.changeLanguage(code)">
                             Remove
                           </button>
                         }
@@ -156,7 +156,7 @@
                         <button
                           matButton="text"
                           type="button"
-                          (click)="changeLanguage(entry.languageCode)"
+                          (click)="facade.changeLanguage(entry.languageCode)"
                         >
                           Remove
                         </button>
@@ -166,7 +166,7 @@
                   <div class="select-row">
                     <mat-form-field class="full-width">
                       <mat-label>Language</mat-label>
-                      <mat-select [formField]="addLanguageForm.code" aria-label="Language">
+                      <mat-select [formField]="facade.addLanguageForm.code" aria-label="Language">
                         @for (lang of languages; track lang.code) {
                           <mat-option [value]="lang.code">
                             @if (lang.flagCountryCode; as cc) {
@@ -179,7 +179,7 @@
                     </mat-form-field>
                     <mat-form-field class="full-width">
                       <mat-label>Level</mat-label>
-                      <mat-select [formField]="addLanguageForm.level" aria-label="Level">
+                      <mat-select [formField]="facade.addLanguageForm.level" aria-label="Level">
                         @for (option of levels; track option) {
                           <mat-option [value]="option">{{ formatLevel(option) }}</mat-option>
                         }
@@ -190,7 +190,7 @@
                     <button
                       matButton="outlined"
                       type="button"
-                      (click)="changeLanguage(addLanguageForm.code().value(), 'NATIVE')"
+                      (click)="facade.changeLanguage(facade.addLanguageForm.code().value(), 'NATIVE')"
                     >
                       Add native
                     </button>
@@ -198,10 +198,10 @@
                       matButton="tonal"
                       type="button"
                       (click)="
-                        changeLanguage(
-                          addLanguageForm.code().value(),
+                        facade.changeLanguage(
+                          facade.addLanguageForm.code().value(),
                           'LEARNING',
-                          addLanguageForm.level().value()
+                          facade.addLanguageForm.level().value()
                         )
                       "
                     >
@@ -212,26 +212,26 @@
               }
             </mat-card>
           }
-          @if (identity.profileError(); as error) {
+          @if (facade.profileError(); as error) {
             <mat-card class="profile-card" appearance="outlined" role="alert">
               <p class="profile-empty">{{ error }}</p>
               <div class="profile-action-row">
-                <button matButton="outlined" type="button" (click)="identity.loadMe()">
+                <button matButton="outlined" type="button" (click)="facade.loadMe()">
                   Retry profile
                 </button>
               </div>
             </mat-card>
           }
-          @if (identity.hasProfile() || identity.needsOnboarding()) {
+          @if (facade.hasProfile() || facade.needsOnboarding()) {
             <app-profile-edit-form
               [profile]="me"
               [stats]="stats"
-              [onboarding]="identity.needsOnboarding()"
-              [saving]="identity.savingProfile()"
+              [onboarding]="facade.needsOnboarding()"
+              [saving]="facade.savingProfile()"
               (saved)="onProfileSaved($event)"
-              (discarded)="onProfileDiscarded()"
-              (avatarPicked)="toast.show('Picture ready to save.')"
-              (uploadError)="toast.show($event)"
+              (discarded)="facade.discardProfile()"
+              (avatarPicked)="facade.notify('Picture ready to save.')"
+              (uploadError)="facade.notify($event)"
             />
           }
         </div>
@@ -245,8 +245,8 @@
             <mat-form-field class="full-width">
               <mat-label>Theme</mat-label>
               <mat-select
-                [value]="theme.colorScheme()"
-                (valueChange)="onColorSchemeChange($event)"
+                [value]="facade.colorScheme()"
+                (valueChange)="facade.setColorScheme($event)"
                 aria-label="Appearance"
               >
                 <mat-option value="light">Light</mat-option>
@@ -256,12 +256,12 @@
           </mat-card>
           <app-profile-account
             [profile]="me"
-            [canInstall]="pwa.canInstall()"
-            [showIosInstallHint]="pwa.isIosInstallable()"
-            (settingsClicked)="selectTab('edit')"
-            (helpClicked)="toast.show('Open the audio menu in a room to choose a microphone or check noise isolation.')"
-            (installClicked)="onInstallApp()"
-            (signOutClicked)="roomStore.signOut()"
+            [canInstall]="facade.canInstall()"
+            [showIosInstallHint]="facade.isIosInstallable()"
+            (settingsClicked)="facade.selectTab('edit')"
+            (helpClicked)="facade.notify('Open the audio menu in a room to choose a microphone or check noise isolation.')"
+            (installClicked)="facade.promptInstall()"
+            (signOutClicked)="facade.signOut()"
             (deleteClicked)="openDeleteDialog()"
           />
         </div>
