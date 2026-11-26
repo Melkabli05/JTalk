@@ -58,7 +58,7 @@ describe('Sidebar', () => {
     fixture.componentInstance.toggleTheme.subscribe(spy);
     fixture.detectChanges();
 
-    const btn = fixture.nativeElement.querySelector('.theme-pill-btn') as HTMLButtonElement | null;
+    const btn = fixture.nativeElement.querySelector('.theme-account-btn') as HTMLButtonElement | null;
     expect(btn).toBeTruthy();
     expect(btn?.textContent).toContain('Dark mode');
     btn?.click();

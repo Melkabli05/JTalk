@@ -136,8 +136,9 @@
 }
 
 <button
-  matButton="tonal"
-  class="theme-pill-btn"
+  class="account theme-account-btn"
+  [class.active]="colorScheme() === 'dark'"
+  matRipple
   type="button"
   [attr.aria-label]="themeLabel()"
   [matTooltip]="themeLabel()"
@@ -145,10 +146,13 @@
   [matTooltipDisabled]="!collapsed()"
   (click)="toggleTheme.emit()"
 >
-  <mat-icon aria-hidden="true">{{ themeIcon() }}</mat-icon>
-  @if (!collapsed()) {
-    <span class="theme-pill-label">{{ themeLabel() }}</span>
-  }
+  <span class="avatar" aria-hidden="true">
+    <mat-icon>{{ themeIcon() }}</mat-icon>
+  </span>
+  <span>
+    <span class="account-name">{{ themeLabel() }}</span>
+    <span class="account-sub">Appearance</span>
+  </span>
 </button>
 
 <button
