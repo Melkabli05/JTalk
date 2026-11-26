@@ -1,8 +1,8 @@
 <div class="room-controls" role="toolbar" aria-label="Voice room controls">
   <button
+    matButton="outlined"
     type="button"
     class="ctrl-leave-btn"
-    matRipple
     aria-label="Leave room menu"
     [matMenuTriggerFor]="leaveMenu"
   >
@@ -38,9 +38,9 @@
   <div class="room-controls-group">
     @if (soundBlocked()) {
       <button
+        matButton="tonal"
         type="button"
         class="ctrl-invite-accept-btn"
-        matRipple
         id="enableAudioBtn"
         (click)="enableAudio.emit()"
       >
@@ -79,9 +79,9 @@
 
     @if (canClaimStageSeat()) {
       <button
+        matButton="tonal"
         type="button"
         class="ctrl-invite-accept-btn"
-        matRipple
         id="joinStageBtn"
         (click)="claimStageSeat.emit()"
       >
@@ -92,9 +92,9 @@
 
     @if (canRaiseHand()) {
       <button
+        matButton="tonal"
         type="button"
         class="ctrl-hand-btn"
-        matRipple
         id="raiseHandBtn"
         [class.is-active]="handRaised()"
         [attr.aria-pressed]="handRaised()"
@@ -109,9 +109,9 @@
 
     @if (canUseMic()) {
       <button
+        matButton="filled"
         type="button"
         class="ctrl-mic-btn"
-        matRipple
         id="muteBtn"
         [class.is-muted]="muted()"
         [attr.aria-pressed]="muted()"

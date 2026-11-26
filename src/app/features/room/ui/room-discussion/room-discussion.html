@@ -176,10 +176,10 @@
   <div class="disc-footer">
     <div class="new-msgs-wrap" [hidden]="!hasMessages || !showNewMessagesPill()">
       <button
+        matButton="tonal"
         type="button"
         class="new-msgs-pill"
         id="newMsgsPill"
-        matRipple
         (click)="onJumpToNewest()"
       >
         <mat-icon aria-hidden="true">arrow_downward</mat-icon>
@@ -192,6 +192,7 @@
         <mat-icon aria-hidden="true">reply</mat-icon>
         <span>{{ correcting() ? 'Correcting' : 'Replying to' }} <strong>{{ replyingTo }}</strong></span>
         <button
+          matIconButton
           type="button"
           class="reply-banner-close"
           aria-label="Cancel reply"
