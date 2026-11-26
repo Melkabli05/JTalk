@@ -3,7 +3,6 @@ import { computed, inject, linkedSignal, PLATFORM_ID, Service, signal } from '@a
 import { Router } from '@angular/router';
 import {
   ACTIVE_ROOM_STORAGE_KEY,
-  COLOR_SCHEME_STORAGE_KEY,
 } from '../../shared/constants/storage-keys.constants';
 import { IdentityStore } from '../auth/identity';
 import {
@@ -51,7 +50,6 @@ export class AppState {
   });
 
   readonly activeView = computed<AppView>(() => resolveViewFromUrl(this.currentUrl()));
-  readonly colorScheme = signal<'light' | 'dark' | 'system'>('system');
   readonly requestedProfileTab = signal<ProfileTab>('overview');
   readonly focusStageTick = signal(0);
 
@@ -97,22 +95,6 @@ export class AppState {
       following: 0,
     };
   });
-
-  constructor() {
-    if (!isPlatformBrowser(this.platformId)) return;
-    try {
-      const saved = localStorage.getItem(COLOR_SCHEME_STORAGE_KEY);
-      if (saved === 'light' || saved === 'dark') this.setColorScheme(saved);
-    } catch { /* Storage may be unavailable. */ }
-  }
-
-  setColorScheme(scheme: string): void {
-    if (scheme !== 'light' && scheme !== 'dark' && scheme !== 'system') return;
-    this.colorScheme.set(scheme);
-    if (!isPlatformBrowser(this.platformId)) return;
-    document.documentElement.style.colorScheme = scheme === 'system' ? '' : scheme;
-    try { localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, scheme); } catch { /* Apply for this session. */ }
-  }
 
   rememberRoom(roomId: string | null): void {
     this.rememberedRoom.set(roomId);

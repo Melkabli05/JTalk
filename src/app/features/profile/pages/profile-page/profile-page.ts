@@ -19,6 +19,7 @@ import { lastValueFrom } from 'rxjs';
 import { LanguageType, ProficiencyLevel } from '../../../../core/auth/auth.models';
 import { IdentityStore } from '../../../../core/auth/identity';
 import { ProfileTab } from '../../../../core/models/session.model';
+import { ThemeService } from '../../../../core/services/theme';
 import { ToastNotifier } from '../../../../core/services/toast-notifier';
 import { AppState } from '../../../../core/state/app-state';
 import { LANGUAGE_CATALOG } from '../../../../core/utils/language-codes';
@@ -53,6 +54,7 @@ import { ProfileOverview } from '../../ui/profile-overview/profile-overview';
 })
 export class ProfilePage {
   readonly appState = inject(AppState);
+  readonly theme = inject(ThemeService);
   readonly identity = inject(IdentityStore);
   readonly profileStore = inject(ProfileStore);
   readonly toast = inject(ToastNotifier);

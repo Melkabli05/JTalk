@@ -5,6 +5,7 @@ import { Router, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
 import { IdentityStore } from '../../core/auth/identity';
 import { RoomLauncher } from '../../core/services/room-launcher';
+import { ThemeService } from '../../core/services/theme';
 import { ToastNotifier } from '../../core/services/toast-notifier';
 import { AppState } from '../../core/state/app-state';
 import { LiveRoomStore } from '../../features/room/store/live-room-store';
@@ -21,6 +22,7 @@ import { Sidebar } from '../ui/sidebar/sidebar';
 })
 export class MainLayout {
   readonly appState = inject(AppState);
+  readonly theme = inject(ThemeService);
   readonly roomsStore = inject(RoomsStore);
   readonly roomStore = inject(LiveRoomStore);
   private readonly breakpointObserver = inject(BreakpointObserver);
