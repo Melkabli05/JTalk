@@ -9,10 +9,3 @@ export interface ProfileFormSnapshot {
   location: string;
   about: string;
 }
-
-export interface PresetAvatarMeta {
-  id: string;
-  label: string;
-  bg: string;
-  extra: boolean;
-}

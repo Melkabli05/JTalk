@@ -76,4 +76,28 @@ describe('ProfileEditForm', () => {
     expect(form.canSubmit()).toBe(false);
   });
 
+  it('omits preset avatar selection and lets users reset to default or generate a username', () => {
+    const fixture = TestBed.createComponent(ProfileEditForm);
+    fixture.componentRef.setInput('profile', {
+      ...sampleProfile,
+      avatar: { kind: 'own', id: 'own', bg: '#16121F', label: 'Your picture', imageUrl: 'https://example.com/a.jpg' },
+    });
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('#avatarShowAll')).toBeNull();
+
+    host.querySelector<HTMLButtonElement>('#avatarDefaultBtn')!.click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selectedAvatar().imageUrl).toBeNull();
+    expect(fixture.componentInstance.dirty()).toBe(true);
+
+    const prevUsername = fixture.componentInstance.model().username;
+    host.querySelector<HTMLButtonElement>('#generateUsernameBtn')!.click();
+    fixture.detectChanges();
+    const generated = fixture.componentInstance.model().username;
+    expect(generated).toMatch(/^[a-z0-9_.]{3,30}$/);
+    expect(generated).not.toBe(prevUsername);
+  });
+
 });

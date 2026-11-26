@@ -19,18 +19,23 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AvatarSelection, UserProfile } from '../../../../core/models/session.model';
 import { trimmedRequired } from '../../../../shared/utils/form-validators';
 import { squareJpeg } from '../../../../core/utils/image-resize';
 import { AvatarArt } from '../../../../shared/ui/avatar-art/avatar-art';
 import {
-  PRESET_AVATARS,
   PROFILE_LEARN_OPTIONS,
   PROFILE_LOCATION_OPTIONS,
   PROFILE_SPEAK_OPTIONS,
 } from '../../constants/profile.constants';
-import { PresetAvatarMeta, ProfileFormSnapshot } from '../../models/profile.model';
-import { isProfileDirty, isValidUsername, normalizeUsername } from '../../utils/profile-validation';
+import { ProfileFormSnapshot } from '../../models/profile.model';
+import {
+  generateUsernameFor,
+  isProfileDirty,
+  isValidUsername,
+  normalizeUsername,
+} from '../../utils/profile-validation';
 
 export interface ProfileEditSaveEvent {
   readonly profile: UserProfile;
@@ -68,6 +73,7 @@ function toFormModel(p: UserProfile): ProfileFormModel {
     MatButtonModule,
     MatIconModule,
     MatRippleModule,
+    MatTooltipModule,
     AvatarArt,
   ],
   templateUrl: './profile-edit-form.html',
@@ -86,12 +92,9 @@ export class ProfileEditForm {
   readonly avatarPicked = output<void>();
   readonly uploadError = output<string>();
 
-  readonly presets = PRESET_AVATARS;
   readonly speakOptions = PROFILE_SPEAK_OPTIONS;
   readonly learnOptions = PROFILE_LEARN_OPTIONS;
   readonly locationOptions = PROFILE_LOCATION_OPTIONS;
-
-  readonly showAllAvatars = signal(false);
 
   private readonly selectedFile = signal<File | null>(null);
   private readonly encodedAvatar = resource({
@@ -201,26 +204,19 @@ export class ProfileEditForm {
     });
   }
 
-  pickOwnAvatar(): void {
+  generateUsername(): void {
+    const generated = generateUsernameFor(this.model().name);
+    this.model.update((m) => ({ ...m, username: generated }));
+  }
+
+  useDefaultAvatar(): void {
     this.clearPendingAvatar();
     this.selectedAvatar.set({
       kind: 'own',
       id: 'own',
       bg: '#16121F',
-      label: 'Your own picture',
-      imageUrl: this.profile().avatar.imageUrl ?? null,
-    });
-    this.avatarPicked.emit();
-  }
-
-  pickPresetAvatar(preset: PresetAvatarMeta): void {
-    this.clearPendingAvatar();
-    this.selectedAvatar.set({
-      kind: 'preset',
-      id: preset.id,
-      bg: preset.bg,
-      label: preset.label,
-      imageUrl: `/avatars/${preset.id}.svg`,
+      label: 'Default picture',
+      imageUrl: null,
     });
     this.avatarPicked.emit();
   }
@@ -241,10 +237,6 @@ export class ProfileEditForm {
     }
 
     this.selectedFile.set(file);
-  }
-
-  toggleShowAllAvatars(): void {
-    this.showAllAvatars.update((v) => !v);
   }
 
   clearAbout(): void {

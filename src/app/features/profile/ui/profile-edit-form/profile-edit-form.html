@@ -1,6 +1,5 @@
 @let p = profile();
 @let avatar = selectedAvatar();
-@let allAvatars = showAllAvatars();
 @let isDirty = dirty();
 <div class="edit-layout">
   <mat-card class="profile-card" appearance="outlined" aria-labelledby="edit-profile-h">
@@ -39,6 +38,17 @@
               [formField]="profileForm.username"
               autocomplete="username"
             />
+            <button
+              matIconButton
+              matSuffix
+              type="button"
+              id="generateUsernameBtn"
+              matTooltip="Generate username"
+              aria-label="Generate username"
+              (click)="generateUsername()"
+            >
+              <mat-icon>autorenew</mat-icon>
+            </button>
             @for (error of profileForm.username().errors(); track error.kind) {
               <mat-error>{{ error.message }}</mat-error>
             }
@@ -48,17 +58,19 @@
 
       <div class="form-section">
         <h4>Picture</h4>
-        <span class="field-label" id="pictureLabel">Choose your picture</span>
+        <span class="field-label" id="pictureLabel">Upload a picture or use the default</span>
         <div class="avatar-row" role="group" aria-labelledby="pictureLabel">
-          <div class="avatar-option" [class.selected]="avatar.id === 'own'">
+          <div class="avatar-option" [class.selected]="!previewImageUrl()">
             <button
               class="avatar-choice"
               type="button"
               matRipple
-              [class.selected]="avatar.id === 'own'"
-              aria-label="Your own picture"
-              [attr.aria-pressed]="avatar.id === 'own'"
-              (click)="pickOwnAvatar()"
+              id="avatarDefaultBtn"
+              [class.selected]="!previewImageUrl()"
+              matTooltip="Use default picture"
+              aria-label="Default picture"
+              [attr.aria-pressed]="!previewImageUrl()"
+              (click)="useDefaultAvatar()"
             >
               <app-avatar-art avatarId="own" variant="thumb" />
             </button>
@@ -67,22 +79,18 @@
             </span>
           </div>
 
-          @for (preset of presets; track preset.id) {
-            <div
-              class="avatar-option"
-              [class.selected]="avatar.id === preset.id"
-              [hidden]="preset.extra && !allAvatars"
-            >
+          @if (previewImageUrl(); as currentImg) {
+            <div class="avatar-option selected">
               <button
-                class="avatar-choice"
+                class="avatar-choice selected"
                 type="button"
                 matRipple
-                [class.selected]="avatar.id === preset.id"
-                [attr.aria-label]="preset.label"
-                [attr.aria-pressed]="avatar.id === preset.id"
-                (click)="pickPresetAvatar(preset)"
+                matTooltip="Uploaded picture"
+                aria-label="Uploaded picture"
+                aria-pressed="true"
+                (click)="triggerAvatarUpload()"
               >
-                <app-avatar-art [avatarId]="preset.id" />
+                <app-avatar-art avatarId="own" [imageUrl]="currentImg" variant="thumb" />
               </button>
               <span class="check-badge" aria-hidden="true">
                 <mat-icon class="icon-16">check</mat-icon>
@@ -90,40 +98,23 @@
             </div>
           }
 
-          <div class="avatar-option">
-            <input
-              #avatarFileInput
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              hidden
-              (change)="onFileSelected($event)"
-            />
-            <button
-              class="avatar-choice upload"
-              type="button"
-              matRipple
-              id="avatarUpload"
-              aria-label="Upload your own picture"
-              (click)="triggerAvatarUpload()"
-            >
-              <mat-icon class="icon-28" aria-hidden="true">photo_camera</mat-icon>
-            </button>
-          </div>
+          <input
+            #avatarFileInput
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            hidden
+            (change)="onFileSelected($event)"
+          />
+          <button
+            matButton="tonal"
+            type="button"
+            id="avatarUpload"
+            (click)="triggerAvatarUpload()"
+          >
+            <mat-icon aria-hidden="true">photo_camera</mat-icon>
+            <span>{{ previewImageUrl() ? 'Change picture' : 'Upload picture' }}</span>
+          </button>
         </div>
-
-        <button
-          matButton="text"
-          class="show-all-btn"
-          type="button"
-          id="avatarShowAll"
-          [attr.aria-expanded]="allAvatars"
-          (click)="toggleShowAllAvatars()"
-        >
-          {{ allAvatars ? 'Show fewer' : 'Show all 10' }}
-          <mat-icon aria-hidden="true">
-            {{ allAvatars ? 'expand_less' : 'expand_more' }}
-          </mat-icon>
-        </button>
         <p class="avatar-caption">Uploads are cropped to a square.</p>
       </div>
 
