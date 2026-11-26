@@ -203,45 +203,12 @@
       </div>
     }
 
-    <div
-      class="emoji-row"
-      id="emojiRow"
-      role="group"
-      aria-label="Add emoji"
-      [hidden]="!emojiDrawerOpen()"
-    >
-      @for (item of composerEmojis; track item.emoji) {
-        <button
-          type="button"
-          matRipple
-          [attr.aria-label]="item.label"
-          (click)="insertEmoji(item.emoji)"
-        >
-          {{ item.emoji }}
-        </button>
-      }
-    </div>
-
     <form
       class="composer composer-enhanced"
       id="composer"
       aria-label="Message the room"
       (submit)="onSendMessage($event)"
     >
-      <button
-        matIconButton
-        class="composer-emoji-btn"
-        type="button"
-        id="emojiBtn"
-        aria-label="Add emoji"
-        [disabled]="!canSend()"
-        [attr.aria-expanded]="emojiDrawerOpen()"
-        aria-controls="emojiRow"
-        (click)="emojiDrawerOpen.update((v) => !v)"
-      >
-        <mat-icon>mood</mat-icon>
-      </button>
-
       <textarea
         #composerInput
         rows="1"

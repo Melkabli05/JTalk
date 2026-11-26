@@ -16,7 +16,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SkeletonLoader } from '../../../../shared/ui/skeleton-loader/skeleton-loader';
-import { COMPOSER_EMOJIS } from '../../constants/room.constants';
 import { DiscussionMessage } from '../../models/live-room.model';
 
 @Component({
@@ -73,14 +72,12 @@ export class RoomDiscussion {
   ] as const;
 
   readonly reactionEmojis = REACTION_CATALOG;
-  readonly composerEmojis = COMPOSER_EMOJIS;
   readonly sending = input(false);
   readonly draftMessage = signal('');
   readonly messageField = form(this.draftMessage, (path) => {
     maxLength(path, 500);
     readonly(path, () => !this.canSend());
   });
-  readonly emojiDrawerOpen = signal(false);
 
   private hasInitialScrolled = false;
   private lastMessageCount = 0;
@@ -156,12 +153,6 @@ export class RoomDiscussion {
     this.replyCleared.emit();
   }
 
-  insertEmoji(emoji: string): void {
-    if (!this.canSend()) return;
-    this.draftMessage.update((curr) => curr + emoji);
-    this.composerInputRef()?.nativeElement.focus();
-  }
-
   onSendMessage(event: Event): void {
     event.preventDefault();
     if (!this.canSend() || this.sending() || this.messageField().invalid()) return;
@@ -173,7 +164,6 @@ export class RoomDiscussion {
     }
     this.forceScrollBottom = true;
     this.sendMessage.emit(text);
-    this.emojiDrawerOpen.set(false);
     const scrollEl = this.discScrollRef()?.nativeElement;
     if (scrollEl) {
       this.scrollToBottomSmooth(scrollEl);
