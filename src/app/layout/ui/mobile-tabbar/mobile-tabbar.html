@@ -1,8 +1,7 @@
-<div class="mobile-tab-dock">
-  <button
+<mat-toolbar class="mobile-tab-dock">
+  <a
+    matButton
     class="mobile-tab"
-    matRipple
-    type="button"
     routerLink="/rooms"
     routerLinkActive="active"
     ariaCurrentWhenActive="page"
@@ -11,11 +10,10 @@
       <mat-icon class="icon-24" aria-hidden="true">mic</mat-icon>
     </span>
     <span class="mobile-tab-label">Rooms</span>
-  </button>
-  <button
+  </a>
+  <a
+    matButton
     class="mobile-tab"
-    matRipple
-    type="button"
     routerLink="/people"
     routerLinkActive="active"
     ariaCurrentWhenActive="page"
@@ -24,11 +22,10 @@
       <mat-icon class="icon-24" aria-hidden="true">group</mat-icon>
     </span>
     <span class="mobile-tab-label">People</span>
-  </button>
-  <button
+  </a>
+  <a
+    matButton
     class="mobile-tab"
-    matRipple
-    type="button"
     routerLink="/profile"
     routerLinkActive="active"
     ariaCurrentWhenActive="page"
@@ -45,13 +42,14 @@
       </span>
     </span>
     <span class="mobile-tab-label">Profile</span>
-  </button>
-</div>
+  </a>
+</mat-toolbar>
 <button
-  matRipple
+  matFab
   class="mobile-golive-fab"
   type="button"
   aria-label="Go live: start a room"
+  matTooltip="Go live"
   (click)="startRoom.emit()"
 >
   <mat-icon aria-hidden="true">add</mat-icon>

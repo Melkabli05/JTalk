@@ -1,11 +1,20 @@
 import { Component, computed, input, output } from '@angular/core';
-import { MatRippleModule } from '@angular/material/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-mobile-tabbar',
-  imports: [RouterLink, RouterLinkActive, MatIconModule, MatRippleModule],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    MatButtonModule,
+    MatIconModule,
+    MatToolbarModule,
+    MatTooltipModule,
+  ],
   host: {
     class: 'mobile-tabbar',
     role: 'navigation',
