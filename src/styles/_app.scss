@@ -553,6 +553,51 @@ a[matIconButton] mat-icon {
   display: none !important;
 }
 
+.theme-toggle-group {
+  width: 100%;
+  margin-top: auto;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-radius: var(--r-full) !important;
+  border-color: var(--mat-sys-outline-variant) !important;
+  --mat-standard-button-toggle-height: 36px;
+  --mat-standard-button-toggle-shape: var(--r-full);
+  --mat-standard-button-toggle-background-color: var(--mat-sys-surface-container-low);
+  --mat-standard-button-toggle-selected-state-background-color: var(--mat-sys-secondary-container);
+  --mat-standard-button-toggle-selected-state-text-color: var(--mat-sys-on-secondary-container);
+  --mat-standard-button-toggle-text-color: var(--mat-sys-on-surface-variant);
+  --mat-standard-button-toggle-divider-color: var(--mat-sys-outline-variant);
+  overflow: hidden;
+}
+
+.theme-toggle-group .mat-button-toggle-button {
+  width: 100%;
+  padding: 0 6px !important;
+}
+
+.theme-toggle-group .mat-button-toggle-label-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 4px !important;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1 !important;
+}
+
+.theme-toggle-group mat-icon {
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 16px !important;
+}
+
+.theme-cycle-btn {
+  margin-top: auto;
+  align-self: center;
+  color: var(--mat-sys-on-surface-variant);
+}
+
 // Profile row in sidebar
 .account {
   display: flex;

@@ -24,10 +24,12 @@
     [activeRoomTitle]="room?.title ?? 'Live room'"
     [activeRoomLang]="roomStore.practiseLangLabel()"
     [activeRoomSeats]="room?.maxStageSeats ?? 8"
+    [colorScheme]="appState.colorScheme()"
     (toggleCollapse)="toggleSidebar()"
     (startRoom)="onOpenStartRoom()"
     (backToRoom)="onBackToRoom()"
     (openProfileOverview)="onOpenProfileOverview()"
+    (colorSchemeChange)="appState.setColorScheme($event)"
   />
 
   <main id="main-content" class="main">

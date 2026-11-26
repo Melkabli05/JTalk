@@ -135,6 +135,41 @@
   </mat-card>
 }
 
+@if (collapsed()) {
+  <button
+    matIconButton
+    class="theme-cycle-btn"
+    type="button"
+    [attr.aria-label]="themeTooltip()"
+    [matTooltip]="themeTooltip()"
+    matTooltipPosition="right"
+    (click)="cycleColorScheme()"
+  >
+    <mat-icon>{{ themeIcon() }}</mat-icon>
+  </button>
+} @else {
+  <mat-button-toggle-group
+    class="theme-toggle-group"
+    [value]="colorScheme()"
+    (change)="colorSchemeChange.emit($event.value)"
+    aria-label="Appearance theme"
+    hideSingleSelectionIndicator
+  >
+    <mat-button-toggle value="light" matTooltip="Light theme">
+      <mat-icon aria-hidden="true">light_mode</mat-icon>
+      <span>Light</span>
+    </mat-button-toggle>
+    <mat-button-toggle value="system" matTooltip="System theme">
+      <mat-icon aria-hidden="true">contrast</mat-icon>
+      <span>Auto</span>
+    </mat-button-toggle>
+    <mat-button-toggle value="dark" matTooltip="Dark theme">
+      <mat-icon aria-hidden="true">dark_mode</mat-icon>
+      <span>Dark</span>
+    </mat-button-toggle>
+  </mat-button-toggle-group>
+}
+
 <button
   class="account"
   matRipple

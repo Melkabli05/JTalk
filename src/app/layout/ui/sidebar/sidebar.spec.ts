@@ -49,4 +49,20 @@ describe('Sidebar', () => {
     expect(img).toBeTruthy();
     expect(img?.getAttribute('src')).toBe('/avatars/avatar-03.svg');
   });
+
+  it('should emit colorSchemeChange when switching theme in sidebar', () => {
+    const fixture = TestBed.createComponent(Sidebar);
+    fixture.componentRef.setInput('collapsed', false);
+    fixture.componentRef.setInput('colorScheme', 'system');
+    const spy = vi.fn();
+    fixture.componentInstance.colorSchemeChange.subscribe(spy);
+    fixture.detectChanges();
+
+    const darkBtn = fixture.nativeElement.querySelector(
+      '.theme-toggle-group mat-button-toggle[value="dark"] button',
+    ) as HTMLButtonElement | null;
+    expect(darkBtn).toBeTruthy();
+    darkBtn?.click();
+    expect(spy).toHaveBeenCalledWith('dark');
+  });
 });
