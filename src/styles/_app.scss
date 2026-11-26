@@ -63,11 +63,16 @@
   }
 
   .theme-pill-btn {
-    width: 44px;
+    width: 44px !important;
+    height: 44px !important;
     padding: 0 !important;
     justify-content: center !important;
     align-self: center;
     --mat-tonal-button-horizontal-padding: 0;
+  }
+
+  .theme-pill-btn .mdc-button__label {
+    gap: 0;
   }
 
   .golive-card {
@@ -574,8 +579,9 @@ a[matIconButton] mat-icon {
   --mat-tonal-button-label-text-color: var(--mat-sys-on-surface-variant);
 }
 
-.theme-pill-btn mat-icon {
-  margin-right: 0 !important;
+.theme-pill-btn mat-icon,
+.theme-pill-btn .mat-icon {
+  margin: 0 !important;
 }
 
 .theme-pill-btn .mdc-button__label {
