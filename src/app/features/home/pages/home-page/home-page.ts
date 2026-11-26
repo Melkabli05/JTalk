@@ -19,7 +19,7 @@ import { RoomLauncher } from '../../../../core/services/room-launcher';
 import { ThemeService } from '../../../../core/services/theme';
 import { languageLabelFor } from '../../../../core/utils/language-codes';
 import { VoiceRoomDto } from '../../../../shared/models/voice-room.model';
-import { RoomsStore } from '../../../rooms/store/rooms-store';
+import { RoomsFacade } from '../../../rooms/store/rooms.facade';
 import {
   EASE_EDITORIAL,
   EASE_SNAPPY,
@@ -54,7 +54,7 @@ export class HomePage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly roomLauncher = inject(RoomLauncher);
   readonly identity = inject(IdentityStore);
-  readonly roomsStore = inject(RoomsStore);
+  readonly roomsStore = inject(RoomsFacade);
   readonly theme = inject(ThemeService);
   readonly pwa = inject(PwaService);
 

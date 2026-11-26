@@ -6,9 +6,9 @@ import { vi } from 'vitest';
 import { IdentityStore } from '../../../core/auth/identity';
 import { httpErrorInterceptor } from '../../../core/http/http-error.interceptor';
 import { roomFeedTransport } from '../data-access/room-feed-transport';
-import { RoomsStore } from './rooms-store';
+import { RoomsFacade } from './rooms.facade';
 
-describe('RoomsStore', () => {
+describe('RoomsFacade', () => {
   const signedIn = signal(true);
   const feedUrl = '/api/v1/voice-rooms/feed';
   const listUrl = '/api/v1/voice-rooms?size=100&expand=speakers';
@@ -50,7 +50,7 @@ describe('RoomsStore', () => {
   });
 
   it('updates room stats and embedded speakerProfiles in place without batch user lookups', () => {
-    const store = TestBed.inject(RoomsStore);
+    const store = TestBed.inject(RoomsFacade);
     store.applyFeedEvent({ type: 'SNAPSHOT', rooms: [{ ...room, speakers: [], speakerProfiles: [] }] });
     expect(store.rooms()[0]?.speakers).toEqual([]);
     expect(store.rooms()[0]?.host?.displayName).toBe('Host');
@@ -71,7 +71,7 @@ describe('RoomsStore', () => {
   });
 
   it('reconnects SSE feed and REST refresh with ?targetLanguage= when filter changes', async () => {
-    const store = TestBed.inject(RoomsStore);
+    const store = TestBed.inject(RoomsFacade);
     const http = TestBed.inject(HttpTestingController);
     store.ensureLoaded();
     await flushResources();
@@ -108,7 +108,7 @@ describe('RoomsStore', () => {
   });
 
   it('discards a REST list superseded by a live room event', async () => {
-    const store = TestBed.inject(RoomsStore);
+    const store = TestBed.inject(RoomsFacade);
     const http = TestBed.inject(HttpTestingController);
     store.applyFeedEvent({ type: 'SNAPSHOT', rooms: [room] });
     let refreshed: boolean | undefined;
@@ -125,7 +125,7 @@ describe('RoomsStore', () => {
   });
 
   it('loads rooms across all languages on refresh and cancels the feed on sign-out', async () => {
-    const store = TestBed.inject(RoomsStore);
+    const store = TestBed.inject(RoomsFacade);
     const http = TestBed.inject(HttpTestingController);
     const spanishRoom = { ...room, id: 'room-es', targetLanguage: 'es', title: 'Café Español' };
     let refreshed: boolean | undefined;
@@ -147,7 +147,7 @@ describe('RoomsStore', () => {
   });
 
   it('keeps the existing directory if a REST response has the wrong shape', async () => {
-    const store = TestBed.inject(RoomsStore);
+    const store = TestBed.inject(RoomsFacade);
     const http = TestBed.inject(HttpTestingController);
     store.applyFeedEvent({ type: 'SNAPSHOT', rooms: [room] });
 
@@ -164,7 +164,7 @@ describe('RoomsStore', () => {
   });
 
   it('waits for a complete snapshot and discards an incomplete final event', async () => {
-    const store = TestBed.inject(RoomsStore);
+    const store = TestBed.inject(RoomsFacade);
     const http = TestBed.inject(HttpTestingController);
     store.ensureLoaded();
     await flushResources();
@@ -199,7 +199,7 @@ describe('RoomsStore', () => {
   });
 
   it('cancels the HTTP stream on sign-out', async () => {
-    const store = TestBed.inject(RoomsStore);
+    const store = TestBed.inject(RoomsFacade);
     const http = TestBed.inject(HttpTestingController);
     store.ensureLoaded();
     await flushResources();
@@ -213,7 +213,7 @@ describe('RoomsStore', () => {
   });
 
   it('starts the REST fallback immediately after a network failure', async () => {
-    const store = TestBed.inject(RoomsStore);
+    const store = TestBed.inject(RoomsFacade);
     const http = TestBed.inject(HttpTestingController);
     store.ensureLoaded();
     await flushResources();
@@ -228,7 +228,7 @@ describe('RoomsStore', () => {
   it('falls back if the server pings without sending its initial snapshot', async () => {
     vi.useFakeTimers();
     try {
-      const store = TestBed.inject(RoomsStore);
+      const store = TestBed.inject(RoomsFacade);
       const http = TestBed.inject(HttpTestingController);
       store.ensureLoaded();
       await flushResources();
@@ -252,7 +252,7 @@ describe('RoomsStore', () => {
   it('keeps the stream open for server pings and falls back when bytes stop arriving', async () => {
     vi.useFakeTimers();
     try {
-      const store = TestBed.inject(RoomsStore);
+      const store = TestBed.inject(RoomsFacade);
       const http = TestBed.inject(HttpTestingController);
       store.ensureLoaded();
       await flushResources();
@@ -290,7 +290,7 @@ describe('RoomsStore', () => {
   it('resumes the live feed after falling back to polling', async () => {
     vi.useFakeTimers();
     try {
-      const store = TestBed.inject(RoomsStore);
+      const store = TestBed.inject(RoomsFacade);
       const http = TestBed.inject(HttpTestingController);
       const interruptFeed = async () => {
         http.expectOne(feedUrl).flush('Unavailable', { status: 503, statusText: 'Unavailable' });

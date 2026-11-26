@@ -7,7 +7,7 @@ import { AuthService } from '@auth0/auth0-angular';
 import { from } from 'rxjs';
 import { vi } from 'vitest';
 import { RoomLauncher } from '../../../../core/services/room-launcher';
-import { RoomsStore } from '../../../rooms/store/rooms-store';
+import { RoomsFacade } from '../../../rooms/store/rooms.facade';
 import { HomePage } from './home-page';
 
 describe('HomePage', () => {
@@ -74,7 +74,7 @@ describe('HomePage', () => {
   it('cycles live rooms from the SSE snapshot and navigates to /room/:id when signed in', async () => {
     await setup(true);
     const fixture = TestBed.createComponent(HomePage);
-    const roomsStore = TestBed.inject(RoomsStore);
+    const roomsStore = TestBed.inject(RoomsFacade);
     const router = TestBed.inject(Router);
     const launcher = TestBed.inject(RoomLauncher);
     const navSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);

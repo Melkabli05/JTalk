@@ -1,6 +1,6 @@
-@let isLoading = roomsStore.loading();
+@let isLoading = facade.loading();
 @let currentHero = hero();
-@let visibleRooms = roomsStore.rooms();
+@let visibleRooms = facade.rooms();
 <div class="view view-rooms">
   <app-rooms-hero
     [liveCount]="visibleRooms.length"
@@ -22,7 +22,7 @@
         type="button"
         id="refreshRoomsBtn"
         [disabled]="isLoading"
-        (click)="onRefreshRooms()"
+        (click)="facade.refresh()"
       >
         <mat-icon [class.is-spinning]="isLoading" aria-hidden="true">refresh</mat-icon>
         Refresh
@@ -39,7 +39,7 @@
       @if (isLoading) {
         <span class="sr-only" role="status">Loading live rooms…</span>
       }
-      @if (isLoading && !roomsStore.hasLoaded()) {
+      @if (isLoading && !facade.hasLoaded()) {
         @for (slot of [0, 1, 2]; track slot) {
           <mat-card class="room-card room-skeleton" appearance="filled" aria-hidden="true">
             <div class="room-top">
@@ -66,10 +66,10 @@
           </mat-card>
         }
       } @else {
-        @if (roomsStore.error(); as error) {
+        @if (facade.error(); as error) {
           <div class="rooms-empty-hint" id="roomsErrorHint" role="alert">
             <p>{{ error }}</p>
-            <button matButton="outlined" type="button" (click)="onRefreshRooms()">
+            <button matButton="outlined" type="button" (click)="facade.refresh()">
               <mat-icon aria-hidden="true">refresh</mat-icon>
               Retry
             </button>
@@ -78,12 +78,12 @@
         @for (room of visibleRooms; track room.id) {
           <app-room-card
             [room]="room"
-            (join)="onJoinRoom($event)"
-            (pin)="onPinRoom($event)"
-            (notInterested)="onNotInterested($event)"
+            (join)="facade.joinRoom($event.id)"
+            (pin)="facade.pinRoom($event.id)"
+            (notInterested)="facade.hideRoom($event.id)"
           />
         } @empty {
-          @if (!roomsStore.error() && !isLoading) {
+          @if (!facade.error() && !isLoading) {
             <div class="rooms-empty-hint" id="roomsEmptyHint">
               <p>No matching rooms right now. Start one above or refresh to check again.</p>
               @if (selectedFilter() !== 'all') {
@@ -91,7 +91,7 @@
                   Show all languages
                 </button>
               } @else {
-                <button matButton="outlined" type="button" (click)="onRefreshRooms()">
+                <button matButton="outlined" type="button" (click)="facade.refresh()">
                   <mat-icon aria-hidden="true">refresh</mat-icon>
                   Refresh rooms
                 </button>

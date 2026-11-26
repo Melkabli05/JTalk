@@ -7,7 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { vi } from 'vitest';
 import { provideNoopAuthForTests } from '../../../../core/auth/auth.providers';
 import { ToastNotifier } from '../../../../core/services/toast-notifier';
-import { RoomsStore } from '../../store/rooms-store';
+import { RoomsFacade } from '../../store/rooms.facade';
 import { RoomsPage } from './rooms-page';
 
 describe('RoomsPage', () => {
@@ -23,7 +23,7 @@ describe('RoomsPage', () => {
         provideHttpClientTesting(),
         provideNoopAuthForTests(),
         provideRouter([{ path: 'rooms', component: RoomsPage }]),
-        RoomsStore,
+        RoomsFacade,
         { provide: ToastNotifier, useValue: toastSpy },
       ],
     }).compileComponents();
@@ -42,7 +42,7 @@ describe('RoomsPage', () => {
     const harness = await RouterTestingHarness.create();
     const page = await harness.navigateByUrl('/rooms?lang=ja', RoomsPage);
     const router = TestBed.inject(Router);
-    const store = page.roomsStore;
+    const store = page.facade;
 
     expect(page.selectedFilter()).toBe('ja');
     expect(store.targetLanguage()).toBe('ja');

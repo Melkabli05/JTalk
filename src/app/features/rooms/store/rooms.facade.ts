@@ -7,13 +7,17 @@ import {
   linkedSignal,
   PLATFORM_ID,
   Service,
+  type Signal,
   signal,
   untracked,
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, tap } from 'rxjs';
 import { IdentityStore } from '../../../core/auth/identity';
 import { errorMessage } from '../../../core/http/http-error.interceptor';
+import { RoomLauncher } from '../../../core/services/room-launcher';
+import { ToastNotifier } from '../../../core/services/toast-notifier';
 import type { VoiceRoomDto } from '../../../shared/models/voice-room.model';
 import {
   type RoomLangFilter,
@@ -28,11 +32,14 @@ import { RoomsApi } from '../data-access/rooms-api';
 import type { RoomFeedEvent } from '../models/room-feed.model';
 
 @Service()
-export class RoomsStore {
+export class RoomsFacade {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
   private readonly roomsApi = inject(RoomsApi);
   private readonly identity = inject(IdentityStore);
+  private readonly toast = inject(ToastNotifier, { optional: true });
+  private readonly router = inject(Router, { optional: true });
+  private readonly roomLauncher = inject(RoomLauncher, { optional: true });
 
   private readonly targetLanguageState = signal<RoomLangFilter>('all');
   private readonly activeTargetLanguage = computed<string | undefined>(() => {
@@ -102,15 +109,15 @@ export class RoomsStore {
     },
   });
 
-  readonly targetLanguage = this.targetLanguageState.asReadonly();
-  readonly hasLoaded = computed(() => this.rawRooms() !== null);
-  readonly error = this.errorState.asReadonly();
+  readonly targetLanguage: Signal<RoomLangFilter> = this.targetLanguageState.asReadonly();
+  readonly hasLoaded: Signal<boolean> = computed((): boolean => this.rawRooms() !== null);
+  readonly error: Signal<string | null> = this.errorState.asReadonly();
 
-  readonly loading = computed(
-    () => this.listLoading() || (this.feedRequested() && !this.hasLoaded()),
+  readonly loading: Signal<boolean> = computed(
+    (): boolean => this.listLoading() || (this.feedRequested() && !this.hasLoaded()),
   );
 
-  readonly rooms = computed<readonly VoiceRoomDto[]>(() => {
+  readonly rooms: Signal<readonly VoiceRoomDto[]> = computed((): readonly VoiceRoomDto[] => {
     const hidden = this.hiddenIds();
     const visible = (this.rawRooms() ?? []).filter((room) => !hidden.has(room.id));
     const pinned = this.pinnedIds();
@@ -127,7 +134,7 @@ export class RoomsStore {
     return ordered.length === 0 ? visible : [...ordered, ...byId.values()];
   });
 
-  readonly liveCount = computed(() => this.rooms().length);
+  readonly liveCount: Signal<number> = computed((): number => this.rooms().length);
 
   constructor() {
     effect(() => {
@@ -147,20 +154,29 @@ export class RoomsStore {
     this.feedRequested.set(true);
   }
 
-  setTargetLanguage(filter: RoomLangFilter): void {
-    if (filter === this.targetLanguageState()) return;
-    this.targetLanguageState.set(filter);
-    this.feedRevision++;
-    this.errorState.set(null);
-    if (this.feedActive()) {
-      this.rawRooms.set(null);
-      this.reconnectAttempts = 0;
-      if (this.reconnectTimer !== null) {
-        clearTimeout(this.reconnectTimer);
-        this.reconnectTimer = null;
+  setTargetLanguage(filter: RoomLangFilter, route?: ActivatedRoute): void {
+    if (filter !== this.targetLanguageState()) {
+      this.targetLanguageState.set(filter);
+      this.feedRevision++;
+      this.errorState.set(null);
+      if (this.feedActive()) {
+        this.rawRooms.set(null);
+        this.reconnectAttempts = 0;
+        if (this.reconnectTimer !== null) {
+          clearTimeout(this.reconnectTimer);
+          this.reconnectTimer = null;
+        }
+        this.stopPollingFallback();
+        this.feedRequested.set(true);
       }
-      this.stopPollingFallback();
-      this.feedRequested.set(true);
+    }
+    if (route && this.router) {
+      void this.router.navigate([], {
+        relativeTo: route,
+        queryParams: { lang: filter === 'all' ? null : filter },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
     }
   }
 
@@ -170,7 +186,20 @@ export class RoomsStore {
       return;
     }
     this.hiddenIds.set(new Set());
-    this.loadRoomsList(true, onDone);
+    this.loadRoomsList(true, (ok) => {
+      if (ok && !onDone) {
+        this.toast?.show('Rooms updated.');
+      }
+      onDone?.(ok);
+    });
+  }
+
+  startRoom(destroyRef?: DestroyRef): void {
+    this.roomLauncher?.openStartRoom(destroyRef ?? this.destroyRef);
+  }
+
+  joinRoom(roomId: string): void {
+    void this.router?.navigate(['/room', roomId]);
   }
 
   pinRoom(roomId: string): void {
@@ -178,10 +207,12 @@ export class RoomsStore {
       roomId,
       ...list.filter((id) => id !== roomId),
     ]);
+    this.toast?.show('Pinned to top.');
   }
 
   hideRoom(roomId: string): void {
     this.hiddenIds.update((prev): ReadonlySet<string> => new Set(prev).add(roomId));
+    this.toast?.show('Hidden from list.');
   }
 
   applyFeedEvent(event: RoomFeedEvent): void {

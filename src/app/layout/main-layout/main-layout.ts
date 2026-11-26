@@ -18,7 +18,7 @@ import { RoomLauncher } from '../../core/services/room-launcher';
 import { ThemeService } from '../../core/services/theme';
 import { ToastNotifier } from '../../core/services/toast-notifier';
 import { LiveRoomStore } from '../../features/room/store/live-room-store';
-import { RoomsStore } from '../../features/rooms/store/rooms-store';
+import { RoomsFacade } from '../../features/rooms/store/rooms.facade';
 import { InRoomBanner } from '../ui/inroom-banner/inroom-banner';
 import { MobileTabbar } from '../ui/mobile-tabbar/mobile-tabbar';
 import { Sidebar, type AppView } from '../ui/sidebar/sidebar';
@@ -33,7 +33,7 @@ export class MainLayout {
   readonly theme = inject(ThemeService);
   readonly pwa = inject(PwaService);
   readonly identity = inject(IdentityStore);
-  readonly roomsStore = inject(RoomsStore);
+  readonly roomsStore = inject(RoomsFacade);
   readonly roomStore = inject(LiveRoomStore);
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly toast = inject(ToastNotifier);
