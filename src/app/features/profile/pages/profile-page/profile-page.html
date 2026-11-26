@@ -51,13 +51,29 @@
                     <button matButton type="button" (click)="changeLanguage(entry.languageCode)">Remove</button>
                   </p>
                 }
-                <label>Language <input #code list="profile-language-codes" maxlength="10"></label>
-                <datalist id="profile-language-codes">@for (lang of languages; track lang.code) { <option [value]="lang.code">{{ lang.name }}</option> }</datalist>
-                <label>Level <select [formField]="level">
-                  @for (option of levels; track option) { <option [value]="option">{{ option }}</option> }
-                </select></label>
-                <button matButton type="button" (click)="changeLanguage(code.value, 'NATIVE')">Add native</button>
-                <button matButton type="button" (click)="changeLanguage(code.value, 'LEARNING', level().value())">Save learning language</button>
+                <mat-form-field>
+                  <mat-label>Language</mat-label>
+                  <mat-select [value]="selectedLangCode()" (valueChange)="selectedLangCode.set($event)" aria-label="Language">
+                    @for (lang of languages; track lang.code) {
+                      <mat-option [value]="lang.code">
+                        @if (lang.flagCountryCode; as cc) {
+                          <span [class]="'fi fi-' + cc" aria-hidden="true"></span>
+                        }
+                        {{ lang.name }}
+                      </mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field>
+                  <mat-label>Level</mat-label>
+                  <mat-select [formField]="level" aria-label="Level">
+                    @for (option of levels; track option) {
+                      <mat-option [value]="option">{{ option }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <button matButton type="button" (click)="changeLanguage(selectedLangCode(), 'NATIVE')">Add native</button>
+                <button matButton type="button" (click)="changeLanguage(selectedLangCode(), 'LEARNING', level().value())">Save learning language</button>
               </fieldset>
             }
           }

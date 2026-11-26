@@ -98,7 +98,12 @@
               <mat-label>I speak</mat-label>
               <mat-select [formField]="profileForm.speak" aria-label="I speak">
                 @for (lang of speakOptions; track lang) {
-                  <mat-option [value]="lang">{{ lang }}</mat-option>
+                  <mat-option [value]="lang">
+                    @if (flagForLanguage(lang); as cc) {
+                      <span [class]="'fi fi-' + cc" aria-hidden="true"></span>
+                    }
+                    {{ lang }}
+                  </mat-option>
                 }
               </mat-select>
             </mat-form-field>
@@ -107,7 +112,12 @@
               <mat-label>I am learning</mat-label>
               <mat-select [formField]="profileForm.learn" aria-label="I am learning">
                 @for (lang of learnOptions; track lang) {
-                  <mat-option [value]="lang">{{ lang }}</mat-option>
+                  <mat-option [value]="lang">
+                    @if (flagForLanguage(lang); as cc) {
+                      <span [class]="'fi fi-' + cc" aria-hidden="true"></span>
+                    }
+                    {{ lang }}
+                  </mat-option>
                 }
               </mat-select>
             </mat-form-field>
@@ -117,7 +127,12 @@
             <mat-label>Where you live</mat-label>
             <mat-select [formField]="profileForm.location" aria-label="Where you live">
               @for (city of locationOptions; track city) {
-                <mat-option [value]="city">{{ city }}</mat-option>
+                <mat-option [value]="city">
+                  @if (flagForCountry(city); as cc) {
+                    <span [class]="'fi fi-' + cc" aria-hidden="true"></span>
+                  }
+                  {{ city }}
+                </mat-option>
               }
             </mat-select>
           </mat-form-field>

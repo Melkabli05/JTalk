@@ -11,6 +11,8 @@ import {
 import { form, FormField } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { Router } from '@angular/router';
 import { lastValueFrom } from 'rxjs';
@@ -38,6 +40,8 @@ import { ProfileOverview } from '../../ui/profile-overview/profile-overview';
   imports: [
     FormField,
     MatButtonModule,
+    MatFormFieldModule,
+    MatSelectModule,
     MatTabsModule,
     ProfileHeader,
     ProfileOverview,
@@ -58,6 +62,7 @@ export class ProfilePage {
   protected readonly roomStore = inject(LiveRoomStore);
   private readonly editForm = viewChild(ProfileEditForm);
 
+  readonly selectedLangCode = signal('en');
   readonly level = form(signal<ProficiencyLevel>('BEGINNER'));
   readonly levels: readonly ProficiencyLevel[] = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'FLUENT'];
   readonly languages = LANGUAGE_CATALOG;

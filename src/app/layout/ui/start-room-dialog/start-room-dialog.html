@@ -47,7 +47,10 @@
           <mat-select [formField]="roomForm.targetLanguage" aria-label="I want to practise">
             @for (opt of languages; track opt.code) {
               <mat-option [value]="opt.code">
-                <span aria-hidden="true">{{ opt.flag }}</span> {{ opt.name }}
+                @if (opt.flagCountryCode; as cc) {
+                  <span [class]="'fi fi-' + cc" aria-hidden="true"></span>
+                }
+                {{ opt.name }}
               </mat-option>
             }
           </mat-select>
@@ -58,7 +61,10 @@
           <mat-select [formField]="roomForm.nativeLanguage" aria-label="For speakers of">
             @for (opt of languages; track opt.code) {
               <mat-option [value]="opt.code">
-                <span aria-hidden="true">{{ opt.flag }}</span> {{ opt.name }}
+                @if (opt.flagCountryCode; as cc) {
+                  <span [class]="'fi fi-' + cc" aria-hidden="true"></span>
+                }
+                {{ opt.name }}
               </mat-option>
             }
           </mat-select>

@@ -24,6 +24,7 @@ import { AvatarSelection, UserProfile } from '../../../../core/models/session.mo
 import { trimmedRequired } from '../../../../shared/utils/form-validators';
 import { squareJpeg } from '../../../../core/utils/image-resize';
 import { AvatarArt } from '../../../../shared/ui/avatar-art/avatar-art';
+import { countryFlagCodeFor, languageFlagCodeFor } from '../../../../core/utils/language-codes';
 import {
   PROFILE_LEARN_OPTIONS,
   PROFILE_LOCATION_OPTIONS,
@@ -95,6 +96,9 @@ export class ProfileEditForm {
   readonly speakOptions = PROFILE_SPEAK_OPTIONS;
   readonly learnOptions = PROFILE_LEARN_OPTIONS;
   readonly locationOptions = PROFILE_LOCATION_OPTIONS;
+
+  readonly flagForLanguage = languageFlagCodeFor;
+  readonly flagForCountry = countryFlagCodeFor;
 
   private readonly selectedFile = signal<File | null>(null);
   private readonly encodedAvatar = resource({
