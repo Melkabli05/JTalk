@@ -5,7 +5,6 @@ export type RoomLangChipKey = 'all' | 'es' | 'en' | 'fr' | 'ar' | 'ja' | 'de';
 export interface LanguageCatalogEntry {
   readonly code: string;
   readonly name: string;
-  readonly native: string;
   readonly flag: string;
   readonly flagCountryCode: string | null;
   readonly chipKey: RoomLangChipKey;
@@ -14,19 +13,10 @@ export interface LanguageCatalogEntry {
 export interface CountryCatalogEntry {
   readonly code: string;
   readonly name: string;
-  readonly native: string;
   readonly flagCode: string;
-  readonly emoji: string;
 }
 
-const CHIP_KEYS: Readonly<Record<string, RoomLangChipKey>> = {
-  en: 'en',
-  es: 'es',
-  fr: 'fr',
-  ar: 'ar',
-  ja: 'ja',
-  de: 'de',
-};
+const ROOM_CHIP_CODES = new Set<string>(['en', 'es', 'fr', 'ar', 'ja', 'de']);
 
 const PRIMARY_COUNTRY_FOR_LANGUAGE: Readonly<Record<string, TCountryCode>> = {
   en: 'GB',
@@ -46,13 +36,19 @@ const PRIMARY_COUNTRY_FOR_LANGUAGE: Readonly<Record<string, TCountryCode>> = {
 };
 
 const FIRST_COUNTRY_BY_LANG = new Map<string, TCountryCode>();
-for (const [countryCode, country] of Object.entries(countries) as [TCountryCode, (typeof countries)[TCountryCode]][]) {
-  for (const lang of country.languages) {
-    if (!FIRST_COUNTRY_BY_LANG.has(lang)) {
-      FIRST_COUNTRY_BY_LANG.set(lang, countryCode);
-    }
+const countryEntries: CountryCatalogEntry[] = [];
+
+for (const [code, data] of Object.entries(countries) as [TCountryCode, (typeof countries)[TCountryCode]][]) {
+  if (code === 'EH') continue;
+  countryEntries.push({ code, name: data.name, flagCode: code.toLowerCase() });
+  for (const lang of data.languages) {
+    if (!FIRST_COUNTRY_BY_LANG.has(lang)) FIRST_COUNTRY_BY_LANG.set(lang, code);
   }
 }
+
+export const COUNTRY_CATALOG: readonly CountryCatalogEntry[] = countryEntries.sort((a, b) =>
+  a.name.localeCompare(b.name),
+);
 
 export const LANGUAGE_CATALOG: readonly LanguageCatalogEntry[] = (
   Object.entries(languages) as [TLanguageCode, (typeof languages)[TLanguageCode]][]
@@ -62,105 +58,70 @@ export const LANGUAGE_CATALOG: readonly LanguageCatalogEntry[] = (
     return {
       code,
       name: data.name,
-      native: data.native,
       flag: countryCode ? getEmojiFlag(countryCode) : '🌐',
       flagCountryCode: countryCode ? countryCode.toLowerCase() : null,
-      chipKey: CHIP_KEYS[code] ?? 'all',
+      chipKey: ROOM_CHIP_CODES.has(code) ? (code as RoomLangChipKey) : 'all',
     };
   })
   .sort((a, b) => a.name.localeCompare(b.name));
 
-export const COUNTRY_CATALOG: readonly CountryCatalogEntry[] = (
-  Object.entries(countries) as [TCountryCode, (typeof countries)[TCountryCode]][]
-)
-  .filter(([code]) => code !== 'EH')
-  .map(([code, data]) => ({
-    code,
-    name: data.name,
-    native: data.native,
-    flagCode: code.toLowerCase(),
-    emoji: getEmojiFlag(code),
-  }))
-  .sort((a, b) => a.name.localeCompare(b.name));
+export const LANGUAGE_NAMES: readonly string[] = LANGUAGE_CATALOG.map((e) => e.name);
+export const COUNTRY_NAMES: readonly string[] = COUNTRY_CATALOG.map((e) => e.name);
 
-export const LANGUAGE_NAMES: readonly string[] = LANGUAGE_CATALOG.map((entry) => entry.name);
-export const COUNTRY_NAMES: readonly string[] = COUNTRY_CATALOG.map((entry) => entry.name);
+const LANG_BY_CODE = new Map(LANGUAGE_CATALOG.map((e) => [e.code.toLowerCase(), e]));
+const LANG_BY_NAME = new Map(LANGUAGE_CATALOG.map((e) => [e.name.toLowerCase(), e]));
+const COUNTRY_BY_CODE = new Map(COUNTRY_CATALOG.map((e) => [e.code, e]));
+const COUNTRY_BY_NAME = new Map(COUNTRY_CATALOG.map((e) => [e.name.toLowerCase(), e]));
 
-const LANG_BY_CODE = new Map(LANGUAGE_CATALOG.map((entry) => [entry.code.toLowerCase(), entry]));
-const LANG_BY_NAME = new Map(LANGUAGE_CATALOG.map((entry) => [entry.name.toLowerCase(), entry]));
-const COUNTRY_BY_CODE = new Map(COUNTRY_CATALOG.map((entry) => [entry.code.toUpperCase(), entry]));
-const COUNTRY_BY_NAME = new Map(COUNTRY_CATALOG.map((entry) => [entry.name.toLowerCase(), entry]));
+function findLanguage(codeOrName: string | null | undefined): LanguageCatalogEntry | null {
+  const trimmed = codeOrName?.trim();
+  if (!trimmed) return null;
+  const baseCode = trimmed.split('-')[0]?.toLowerCase() ?? '';
+  return LANG_BY_CODE.get(baseCode) ?? LANG_BY_NAME.get(trimmed.toLowerCase()) ?? null;
+}
 
 export function languageCodeFor(input: string | null | undefined): string {
-  if (!input) return 'en';
-  const trimmed = input.trim();
-  const baseCode = trimmed.split('-')[0]?.toLowerCase() ?? '';
-  if (LANG_BY_CODE.has(baseCode)) {
-    return baseCode;
-  }
-  const byName = LANG_BY_NAME.get(trimmed.toLowerCase());
-  if (byName) return byName.code;
-  if (/^[a-z]{2,3}(-[A-Z]{2})?$/.test(trimmed)) {
-    return trimmed;
-  }
-  return 'en';
+  const match = findLanguage(input);
+  if (match) return match.code;
+  const trimmed = input?.trim() ?? '';
+  return /^[a-z]{2,3}(-[A-Z]{2})?$/.test(trimmed) ? trimmed : 'en';
 }
 
 export function languageNameFor(codeOrName: string | null | undefined): string {
-  if (!codeOrName) return 'English';
-  const trimmed = codeOrName.trim();
-  const baseCode = trimmed.split('-')[0]?.toLowerCase() ?? '';
-  return LANG_BY_CODE.get(baseCode)?.name ?? LANG_BY_NAME.get(trimmed.toLowerCase())?.name ?? trimmed;
+  return findLanguage(codeOrName)?.name ?? (codeOrName?.trim() || 'English');
 }
 
 export function languageFlagFor(codeOrName: string | null | undefined): string {
-  if (!codeOrName) return '🌐';
-  const trimmed = codeOrName.trim();
-  const baseCode = trimmed.split('-')[0]?.toLowerCase() ?? '';
-  return LANG_BY_CODE.get(baseCode)?.flag ?? LANG_BY_NAME.get(trimmed.toLowerCase())?.flag ?? '🌐';
+  return findLanguage(codeOrName)?.flag ?? '🌐';
 }
 
 export function languageFlagCodeFor(codeOrName: string | null | undefined): string | null {
-  if (!codeOrName) return null;
-  const trimmed = codeOrName.trim();
-  const baseCode = trimmed.split('-')[0]?.toLowerCase() ?? '';
-  return (
-    LANG_BY_CODE.get(baseCode)?.flagCountryCode ??
-    LANG_BY_NAME.get(trimmed.toLowerCase())?.flagCountryCode ??
-    null
-  );
+  return findLanguage(codeOrName)?.flagCountryCode ?? null;
 }
 
 export function languageLabelFor(codeOrName: string | null | undefined): string {
-  const flag = languageFlagFor(codeOrName);
-  const name = languageNameFor(codeOrName);
-  return `${flag} ${name}`;
+  return `${languageFlagFor(codeOrName)} ${languageNameFor(codeOrName)}`;
 }
 
 export function roomFilterKeyFor(codeOrName: string | null | undefined): RoomLangChipKey {
-  const code = languageCodeFor(codeOrName);
-  return LANG_BY_CODE.get(code)?.chipKey ?? 'all';
+  return findLanguage(codeOrName)?.chipKey ?? 'all';
 }
 
 export function countryCodeFor(location: string | null | undefined): string | null {
-  if (!location) return null;
-  const trimmed = location.trim();
+  const trimmed = location?.trim();
   if (!trimmed) return null;
-  if (trimmed.toUpperCase() === 'EH' || trimmed.toLowerCase() === 'western sahara') {
-    return 'MA';
-  }
+  if (trimmed.toUpperCase() === 'EH' || trimmed.toLowerCase() === 'western sahara') return 'MA';
   if (/^[A-Z]{2}$/.test(trimmed)) return trimmed;
   return COUNTRY_BY_NAME.get(trimmed.toLowerCase())?.code ?? null;
 }
 
 export function countryNameFor(code: string | null | undefined): string {
-  if (!code) return '';
-  const upper = code.trim().toUpperCase();
+  const upper = code?.trim().toUpperCase();
+  if (!upper) return '';
   const normalized = upper === 'EH' ? 'MA' : upper;
   return COUNTRY_BY_CODE.get(normalized)?.name ?? normalized;
 }
 
 export function countryFlagCodeFor(locationOrCode: string | null | undefined): string | null {
-  const code = countryCodeFor(locationOrCode);
-  return code ? code.toLowerCase() : null;
+  return countryCodeFor(locationOrCode)?.toLowerCase() ?? null;
 }
