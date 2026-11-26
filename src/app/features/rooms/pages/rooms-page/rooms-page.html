@@ -1,10 +1,11 @@
 @let isLoading = roomsStore.loading();
 @let currentHero = hero();
+@let visibleRooms = roomsStore.rooms();
 <div class="view view-rooms">
   <app-rooms-hero
-    [liveCount]="roomsStore.filteredRooms().length"
-    [activeFilter]="roomsStore.selectedFilter()"
-    [activeFilterLabel]="roomsStore.activeFilterLabel()"
+    [liveCount]="visibleRooms.length"
+    [activeFilter]="selectedFilter()"
+    [activeFilterLabel]="activeFilterLabel()"
     [scenes]="currentHero.scenes"
     [activeScene]="currentHero.active"
     (nextScene)="cycleHeroScene()"
@@ -29,9 +30,9 @@
     </div>
 
     <app-language-chips
-      [chips]="roomsStore.filterChips"
-      [selected]="roomsStore.selectedFilter()"
-      (filterChange)="roomsStore.selectedFilter.set($event)"
+      [chips]="filterChips"
+      [selected]="selectedFilter()"
+      (filterChange)="onFilterChange($event)"
     />
 
     <div class="cards mt-sp-l" [attr.aria-busy]="isLoading">
@@ -74,7 +75,7 @@
             </button>
           </div>
         }
-        @for (room of roomsStore.filteredRooms(); track room.id) {
+        @for (room of visibleRooms; track room.id) {
           <app-room-card
             [room]="room"
             (join)="onJoinRoom($event)"
@@ -85,8 +86,8 @@
           @if (!roomsStore.error() && !isLoading) {
             <div class="rooms-empty-hint" id="roomsEmptyHint">
               <p>No matching rooms right now. Start one above or refresh to check again.</p>
-              @if (roomsStore.selectedFilter() !== 'all') {
-                <button matButton="outlined" type="button" (click)="roomsStore.selectedFilter.set('all')">
+              @if (selectedFilter() !== 'all') {
+                <button matButton="outlined" type="button" (click)="onFilterChange('all')">
                   Show all languages
                 </button>
               } @else {

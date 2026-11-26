@@ -1,8 +1,8 @@
-@let profileName = appState.profile().name;
-@let profileAvatarUrl = appState.profile().avatar.imageUrl ?? null;
+@let profileName = identity.me()?.displayName ?? 'Speaker';
+@let profileAvatarUrl = identity.me()?.avatarUrl ?? null;
 @let room = roomStore.room();
 @let inRoom = room !== null;
-@let isRoomView = appState.activeView() === 'room';
+@let isRoomView = activeView() === 'room';
 @let bannerVisible = inRoom && !isRoomView && isPhoneViewport();
 <div
   class="app"
@@ -20,7 +20,7 @@
     [profileName]="profileName"
     [avatarUrl]="profileAvatarUrl"
     [inRoom]="inRoom"
-    [activeView]="appState.activeView()"
+    [activeView]="activeView()"
     [activeRoomTitle]="room?.title ?? 'Live room'"
     [activeRoomLang]="roomStore.practiseLangLabel()"
     [activeRoomSeats]="room?.maxStageSeats ?? 8"
@@ -28,11 +28,16 @@
     (toggleCollapse)="toggleSidebar()"
     (startRoom)="onOpenStartRoom()"
     (backToRoom)="onBackToRoom()"
-    (openProfileOverview)="onOpenProfileOverview()"
     (toggleTheme)="theme.toggle()"
   />
 
   <main id="main-content" class="main">
+    @if (!pwa.isOnline()) {
+      <div class="offline-banner" role="status" aria-live="polite">
+        <mat-icon class="icon-18" aria-hidden="true">cloud_off</mat-icon>
+        <span>You're offline. Live rooms and updates will resume when you reconnect.</span>
+      </div>
+    }
     <app-inroom-banner
       [visible]="bannerVisible"
       [roomTitle]="room?.title ?? 'Live room'"
@@ -47,6 +52,5 @@
     [profileName]="profileName"
     [avatarUrl]="profileAvatarUrl"
     (startRoom)="onOpenStartRoom()"
-    (openProfileOverview)="onOpenProfileOverview()"
   />
 }

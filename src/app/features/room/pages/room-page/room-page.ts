@@ -20,18 +20,19 @@ import { UsersApi } from '../../../../core/auth/users-api';
 import { errorMessage } from '../../../../core/http/http-error.interceptor';
 import { AppTitleStrategy } from '../../../../core/routing/app-title-strategy';
 import { ToastNotifier } from '../../../../core/services/toast-notifier';
-import { AppState } from '../../../../core/state/app-state';
+import { BackendReaction, UpdateVoiceRoomPayload } from '../../../../shared/models/voice-room.model';
+import { SkeletonLoader } from '../../../../shared/ui/skeleton-loader/skeleton-loader';
 import { KEYBOARD_OFFSET_THRESHOLD_PX } from '../../constants/room.constants';
-import { ActionFeedback, LiveRoomStore } from '../../store/live-room-store';
-import { RoomChatStore } from '../../store/room-chat-store';
-import { RoomStageStore } from '../../store/room-stage-store';
+import { VoiceRoomApi } from '../../data-access/voice-room-api';
 import {
   DiscussionMessage,
   ProfilePreviewTarget,
   RoomListener,
   RoomSpeaker,
 } from '../../models/live-room.model';
-import { BackendReaction, UpdateVoiceRoomPayload } from '../../../../shared/models/voice-room.model';
+import { ActionFeedback, LiveRoomStore } from '../../store/live-room-store';
+import { RoomChatStore } from '../../store/room-chat-store';
+import { RoomStageStore } from '../../store/room-stage-store';
 import { EditRoomDialog } from '../../ui/edit-room-dialog/edit-room-dialog';
 import { EndRoomDialog } from '../../ui/end-room-dialog/end-room-dialog';
 import {
@@ -44,12 +45,6 @@ import { RoomDiscussion } from '../../ui/room-discussion/room-discussion';
 import { RoomStage, SpeakerMenuAction } from '../../ui/room-stage/room-stage';
 import { RoomToolbar } from '../../ui/room-toolbar/room-toolbar';
 
-interface ProfilePreviewRequest {
-  readonly target: ProfilePreviewTarget;
-  readonly id: string;
-  readonly seq: number;
-}
-
 @Component({
   selector: 'app-room-page',
   imports: [
@@ -60,6 +55,7 @@ interface ProfilePreviewRequest {
     RoomAudience,
     RoomControls,
     RoomDiscussion,
+    SkeletonLoader,
   ],
   templateUrl: './room-page.html',
   styleUrl: './room-page.scss',
@@ -67,11 +63,11 @@ interface ProfilePreviewRequest {
 export class RoomPage {
   readonly id = input.required<string>();
 
-  readonly appState = inject(AppState);
   readonly roomStore = inject(LiveRoomStore);
   readonly stageStore = inject(RoomStageStore);
   readonly chatStore = inject(RoomChatStore);
   readonly toast = inject(ToastNotifier);
+  private readonly voiceRoomApi = inject(VoiceRoomApi);
   private readonly usersApi = inject(UsersApi);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
@@ -80,18 +76,11 @@ export class RoomPage {
   private readonly roomStageRef = viewChild<RoomStage>('roomStage');
   private readonly discussion = viewChild(RoomDiscussion);
 
-  private readonly profilePreviewRequest = signal<ProfilePreviewRequest | null>(null);
   private profilePreviewSeq = 0;
-  private readonly previewProfileRes = this.usersApi.userResource(
-    () => this.profilePreviewRequest()?.id,
-  );
-  private readonly previewStatsRes = this.usersApi.socialStatsResource(
-    () => this.profilePreviewRequest()?.id,
-  );
 
   readonly sendingComment = signal(false);
   readonly keyboardOffset = signal(0);
-  private lastFocusTick = this.appState.focusStageTick();
+  private lastFocusTick = this.roomStore.focusStageTick();
   readonly isCurrentRoom = computed(() => this.roomStore.roomId() === this.id());
 
   readonly isHost = this.stageStore.isHost;
@@ -114,42 +103,13 @@ export class RoomPage {
       );
     });
 
-    effect(() => {
-      const req = this.profilePreviewRequest();
-      if (!req) return;
-      const profileError = this.previewProfileRes.error();
-      const statsError = this.previewStatsRes.error();
-      if (profileError || statsError) {
-        untracked(() => {
-          this.profilePreviewRequest.set(null);
-          this.toast.show(
-            errorMessage(profileError ?? statsError, 'Could not load this profile.'),
-          );
-        });
-        return;
-      }
-      if (
-        this.previewProfileRes.status() === 'resolved' &&
-        this.previewStatsRes.status() === 'resolved' &&
-        this.previewProfileRes.hasValue() &&
-        this.previewStatsRes.hasValue()
-      ) {
-        const profile = this.previewProfileRes.value();
-        const stats = this.previewStatsRes.value();
-        untracked(() => {
-          this.profilePreviewRequest.set(null);
-          void this.showProfileDialog(req, profile, stats);
-        });
-      }
-    });
-
     afterNextRender(() => {
       this.bindVisualViewportKeyboard();
     });
 
     afterRenderEffect({
       write: () => {
-        const tick = this.appState.focusStageTick();
+        const tick = this.roomStore.focusStageTick();
         const stage = this.roomStageRef();
         if (stage && tick > this.lastFocusTick) {
           this.lastFocusTick = tick;
@@ -158,7 +118,6 @@ export class RoomPage {
       },
     });
 
-    // Auto-redirect to rooms list when the room has ended or user was removed
     effect(() => {
       const err = this.roomStore.roomError();
       if (err === 'This room has ended.' || err === 'You were removed from this room.') {
@@ -252,19 +211,38 @@ export class RoomPage {
     }
   }
 
-  openProfilePreview(target: ProfilePreviewTarget, id: string): void {
-    const current = this.profilePreviewRequest();
-    if (current?.id === id) {
-      this.previewProfileRes.reload();
-      this.previewStatsRes.reload();
+  async openProfilePreview(target: ProfilePreviewTarget, id: string): Promise<void> {
+    const seq = ++this.profilePreviewSeq;
+    try {
+      const [profile, stats] = await Promise.all([
+        this.usersApi.getUser(id),
+        this.usersApi.getSocialStats(id),
+      ]);
+      if (this.destroyRef.destroyed || seq !== this.profilePreviewSeq) return;
+      const isYou = id === this.stageStore.currentUserId();
+      const ref = this.dialog.open<HostProfileDialog, HostProfileDialogData, string>(
+        HostProfileDialog,
+        {
+          width: '560px',
+          maxWidth: 'calc(100vw - 24px)',
+          data: { profile, stats, target, isYou },
+        },
+      );
+      const action = await lastValueFrom(ref.afterClosed());
+      if (!this.destroyRef.destroyed && isYou && action === 'view-profile') {
+        void this.router.navigate(['/profile']);
+      }
+    } catch (err) {
+      if (!this.destroyRef.destroyed && seq === this.profilePreviewSeq) {
+        this.toast.show(errorMessage(err, 'Could not load this profile.'));
+      }
     }
-    this.profilePreviewRequest.set({ target, id, seq: ++this.profilePreviewSeq });
   }
 
   async onSpeakerAction(event: { action: SpeakerMenuAction; speaker: RoomSpeaker }): Promise<void> {
     const { action, speaker } = event;
     if (action === 'profile') {
-      this.openProfilePreview({ kind: speaker.role, muted: speaker.muted }, speaker.id);
+      void this.openProfilePreview({ kind: speaker.role, muted: speaker.muted }, speaker.id);
       return;
     }
 
@@ -276,7 +254,10 @@ export class RoomPage {
         } else {
           this.handleFeedback(
             roomId,
-            await this.stageStore.remoteMuteSpeaker(speaker.id),
+            await this.stageStore.runRoomCommand(
+              (id) => this.voiceRoomApi.muteSpeaker(id, speaker.id),
+              'Could not mute speaker.',
+            ),
             `Muted ${speaker.name}.`,
           );
         }
@@ -287,21 +268,30 @@ export class RoomPage {
       case 'audience':
         this.handleFeedback(
           roomId,
-          await this.stageStore.demoteToAudience(speaker.id),
+          await this.stageStore.runRoomCommand(
+            (id) => this.voiceRoomApi.demoteSpeaker(id, speaker.id),
+            'Could not move speaker to audience.',
+          ),
           `${speaker.name} moved to audience.`,
         );
         return;
       case 'remove':
         this.handleFeedback(
           roomId,
-          await this.stageStore.removeParticipant(speaker.id),
+          await this.stageStore.runRoomCommand(
+            (id) => this.voiceRoomApi.kickParticipant(id, speaker.id),
+            'Could not remove participant.',
+          ),
           `${speaker.name} removed from the room.`,
         );
         return;
       case 'transfer-host':
         this.handleFeedback(
           roomId,
-          await this.stageStore.transferHost(speaker.id),
+          await this.stageStore.runRoomCommand(
+            (id) => this.voiceRoomApi.transferHost(id, speaker.id),
+            'Could not transfer host role.',
+          ),
           `Host role transferred to ${speaker.name}.`,
         );
         return;
@@ -312,18 +302,12 @@ export class RoomPage {
 
   async onToggleMute(): Promise<void> {
     const roomId = this.id();
-    this.handleFeedback(
-      roomId,
-      await this.roomStore.toggleSelfMic(),
-    );
+    this.handleFeedback(roomId, await this.roomStore.toggleSelfMic());
   }
 
   async onToggleHand(): Promise<void> {
     const roomId = this.id();
-    this.handleFeedback(
-      roomId,
-      await this.stageStore.toggleHandRaised(),
-    );
+    this.handleFeedback(roomId, await this.stageStore.toggleHandRaised());
   }
 
   async onClaimStageSeat(): Promise<void> {
@@ -338,12 +322,25 @@ export class RoomPage {
 
   async onApproveRequest(targetId: string): Promise<void> {
     const roomId = this.id();
-    this.handleFeedback(roomId, await this.stageStore.promoteToStage(targetId), 'Promoted to stage.');
+    this.handleFeedback(
+      roomId,
+      await this.stageStore.runRoomCommand(
+        (id) => this.voiceRoomApi.promoteSpeaker(id, targetId),
+        'Could not promote to stage.',
+      ),
+      'Promoted to stage.',
+    );
   }
 
   async onStageReaction(reaction: BackendReaction): Promise<void> {
     const roomId = this.id();
-    this.handleFeedback(roomId, await this.stageStore.triggerStageReaction(reaction));
+    this.handleFeedback(
+      roomId,
+      await this.stageStore.runRoomCommand(
+        (id) => this.voiceRoomApi.sendReaction(id, reaction),
+        'Could not send reaction.',
+      ),
+    );
   }
 
   async onListenerAction(event: {
@@ -352,7 +349,7 @@ export class RoomPage {
   }): Promise<void> {
     const { action, listener } = event;
     if (action === 'profile') {
-      this.openProfilePreview({ kind: 'listener' }, listener.id);
+      void this.openProfilePreview({ kind: 'listener' }, listener.id);
       return;
     }
 
@@ -362,14 +359,20 @@ export class RoomPage {
       case 'approve':
         this.handleFeedback(
           roomId,
-          await this.stageStore.promoteToStage(listener.id),
+          await this.stageStore.runRoomCommand(
+            (id) => this.voiceRoomApi.promoteSpeaker(id, listener.id),
+            'Could not promote to stage.',
+          ),
           `${listener.name} moved to stage.`,
         );
         return;
       case 'remove':
         this.handleFeedback(
           roomId,
-          await this.stageStore.removeParticipant(listener.id),
+          await this.stageStore.runRoomCommand(
+            (id) => this.voiceRoomApi.kickParticipant(id, listener.id),
+            'Could not remove participant.',
+          ),
           `${listener.name} removed from room.`,
         );
         return;
@@ -378,9 +381,9 @@ export class RoomPage {
     }
   }
 
-  onLoadMoreAudience(): void {
+  async onLoadMoreAudience(): Promise<void> {
     const roomId = this.id();
-    this.stageStore.loadMoreAudience((res) => this.handleFeedback(roomId, res));
+    this.handleFeedback(roomId, await this.stageStore.loadMoreAudience());
   }
 
   async onChatTopic(text: string): Promise<void> {
@@ -388,16 +391,16 @@ export class RoomPage {
     this.handleFeedback(roomId, await this.chatStore.setChatTopic(text), 'Chat topic updated.');
   }
 
-  onRetryChat(): void {
-    this.chatStore.reloadMessages((ok) => {
-      if (ok && !this.destroyRef.destroyed) this.toast.show('Chat loaded.');
-    });
+  async onRetryChat(): Promise<void> {
+    if ((await this.chatStore.reloadMessages()) && !this.destroyRef.destroyed) {
+      this.toast.show('Chat loaded.');
+    }
   }
 
-  onRefreshChat(): void {
-    this.chatStore.reloadMessages((ok) => {
-      if (ok && !this.destroyRef.destroyed) this.toast.show('Chat updated.');
-    });
+  async onRefreshChat(): Promise<void> {
+    if ((await this.chatStore.reloadMessages()) && !this.destroyRef.destroyed) {
+      this.toast.show('Chat updated.');
+    }
   }
 
   async onSendMessage(text: string): Promise<void> {
@@ -478,26 +481,6 @@ export class RoomPage {
     this.handleFeedback(roomId, await this.roomStore.leaveRoom(), 'Left the room.');
     if (!this.destroyRef.destroyed && this.id() === roomId) {
       void this.router.navigate(['/rooms']);
-    }
-  }
-
-  private async showProfileDialog(
-    req: ProfilePreviewRequest,
-    profile: HostProfileDialogData['profile'],
-    stats: HostProfileDialogData['stats'],
-  ): Promise<void> {
-    const isYou = req.id === this.stageStore.currentUserId();
-    const ref = this.dialog.open<HostProfileDialog, HostProfileDialogData, string>(
-      HostProfileDialog,
-      {
-        width: '560px',
-        maxWidth: 'calc(100vw - 24px)',
-        data: { profile, stats, target: req.target, isYou },
-      },
-    );
-    const action = await lastValueFrom(ref.afterClosed());
-    if (!this.destroyRef.destroyed && isYou && action === 'view-profile') {
-      void this.router.navigate(['/profile']);
     }
   }
 

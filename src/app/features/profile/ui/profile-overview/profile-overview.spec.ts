@@ -1,20 +1,20 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { UserProfile } from '../../../../core/models/session.model';
+import { UserProfileResponse } from '../../../../core/auth/auth.models';
 import { ProfileOverview } from './profile-overview';
 
 describe('ProfileOverview', () => {
-  const baseProfile: UserProfile = {
-    name: 'Jilali',
+  const baseProfile: UserProfileResponse = {
+    id: 'u-1',
+    displayName: 'Jilali',
     username: 'jilali',
-    joined: 'May 2024',
-    speak: 'Arabic',
-    learn: 'English',
-    location: 'Not set',
-    about: '',
-    followers: 4,
-    following: 5,
-    avatar: { kind: 'own', id: 'own', bg: '#16121F', label: 'Your own picture' },
+    bio: null,
+    avatarUrl: null,
+    nativeLanguage: 'ar',
+    nativeLanguages: ['ar'],
+    learningLanguages: [{ languageCode: 'en', proficiencyLevel: 'BEGINNER' }],
+    countryCode: null,
+    createdAt: '2024-05-01T00:00:00Z',
   };
 
   beforeEach(async () => {
@@ -31,7 +31,7 @@ describe('ProfileOverview', () => {
 
     expect(fixture.nativeElement.querySelector('#aboutEmptyText')).toBeTruthy();
 
-    fixture.componentRef.setInput('profile', { ...baseProfile, about: 'Hello world!' });
+    fixture.componentRef.setInput('profile', { ...baseProfile, bio: 'Hello world!' });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('#aboutBioText')?.textContent).toContain('Hello world!');
   });

@@ -1,32 +1,41 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { afterNextRender, Component, DestroyRef, effect, inject, signal } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { MatIconModule } from '@angular/material/icon';
 import { Router, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
 import { IdentityStore } from '../../core/auth/identity';
+import { PwaService } from '../../core/services/pwa';
 import { RoomLauncher } from '../../core/services/room-launcher';
 import { ThemeService } from '../../core/services/theme';
 import { ToastNotifier } from '../../core/services/toast-notifier';
-import { AppState } from '../../core/state/app-state';
 import { LiveRoomStore } from '../../features/room/store/live-room-store';
 import { RoomsStore } from '../../features/rooms/store/rooms-store';
 import { InRoomBanner } from '../ui/inroom-banner/inroom-banner';
 import { MobileTabbar } from '../ui/mobile-tabbar/mobile-tabbar';
-import { Sidebar } from '../ui/sidebar/sidebar';
+import { Sidebar, type AppView } from '../ui/sidebar/sidebar';
 
 @Component({
   selector: 'app-main-layout',
-  imports: [RouterOutlet, Sidebar, MobileTabbar, InRoomBanner],
+  imports: [RouterOutlet, MatIconModule, Sidebar, MobileTabbar, InRoomBanner],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.scss',
 })
 export class MainLayout {
-  readonly appState = inject(AppState);
   readonly theme = inject(ThemeService);
+  readonly pwa = inject(PwaService);
+  readonly identity = inject(IdentityStore);
   readonly roomsStore = inject(RoomsStore);
   readonly roomStore = inject(LiveRoomStore);
   private readonly breakpointObserver = inject(BreakpointObserver);
-  private readonly identity = inject(IdentityStore);
   private readonly toast = inject(ToastNotifier);
   private readonly router = inject(Router);
   private readonly roomLauncher = inject(RoomLauncher);
@@ -40,11 +49,18 @@ export class MainLayout {
     { initialValue: false },
   );
 
+  readonly activeView = computed<AppView>(() => {
+    const finalUrl = this.router.lastSuccessfulNavigation()?.finalUrl;
+    const url = finalUrl ? this.router.serializeUrl(finalUrl) : this.router.url;
+    const path = (url.split('?')[0] ?? '').split('#')[0] ?? '';
+    const seg = path.replace(/^\/+/, '').split('/')[0] ?? '';
+    return seg === 'room' || seg === 'people' || seg === 'profile' ? seg : 'rooms';
+  });
+
   constructor() {
     afterNextRender(() => this.roomsStore.ensureLoaded());
     effect(() => {
-      if (this.identity.needsOnboarding() && this.appState.activeView() !== 'profile') {
-        this.appState.requestProfileTab('edit');
+      if (this.identity.needsOnboarding() && this.activeView() !== 'profile') {
         void this.router.navigate(['/profile']);
       }
     });
@@ -58,15 +74,11 @@ export class MainLayout {
     this.roomLauncher.openStartRoom(this.destroyRef);
   }
 
-  onOpenProfileOverview(): void {
-    this.appState.requestProfileTab('overview');
-  }
-
   async onBackToRoom(): Promise<void> {
     const roomId = this.roomStore.roomId();
     await this.router.navigate(roomId ? ['/room', roomId] : ['/rooms']);
     if (roomId && !this.destroyRef.destroyed) {
-      this.appState.triggerStageFocus();
+      this.roomStore.triggerStageFocus();
       this.toast.show('Back in the room.');
     }
   }

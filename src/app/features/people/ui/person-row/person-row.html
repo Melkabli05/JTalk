@@ -5,16 +5,16 @@
       matListItemAvatar
       class="avatar"
       [src]="p.avatarUrl"
-      [alt]="p.name"
+      [alt]="p.displayName"
       referrerpolicy="no-referrer"
     />
   } @else {
-    <span matListItemAvatar class="avatar" [class]="p.chipClass" aria-hidden="true">
-      {{ p.initial }}
+    <span matListItemAvatar class="avatar" [class]="chipClass()" aria-hidden="true">
+      {{ initial() }}
     </span>
   }
-  <span matListItemTitle>{{ p.name }} <span class="person-handle">&#64;{{ p.username }}</span></span>
-  <span matListItemLine>{{ p.languages }}</span>
+  <span matListItemTitle>{{ p.displayName }} <span class="person-handle">&#64;{{ p.username }}</span></span>
+  <span matListItemLine>{{ languages() }}</span>
   <span matListItemMeta class="directory-list-meta">
     <button
       [matButton]="p.followedByMe ? 'outlined' : 'tonal'"
@@ -28,7 +28,7 @@
     <button
       matIconButton
       type="button"
-      [attr.aria-label]="'More options for ' + p.name"
+      [attr.aria-label]="'More options for ' + p.displayName"
       [matMenuTriggerFor]="personMenu"
     >
       <mat-icon>more_vert</mat-icon>

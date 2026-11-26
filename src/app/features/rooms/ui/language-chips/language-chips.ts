@@ -11,10 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { MatChipListboxChange, MatChipsModule } from '@angular/material/chips';
-import {
-  LanguageFilterChip,
-  RoomLangFilter,
-} from '../../models/room-card.model';
+import { LanguageFilterChip, RoomLangFilter } from '../../constants/rooms.constants';
 
 @Component({
   selector: 'app-language-chips',

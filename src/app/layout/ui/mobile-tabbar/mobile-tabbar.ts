@@ -28,7 +28,6 @@ export class MobileTabbar {
   readonly avatarUrl = input<string | null>(null);
 
   readonly startRoom = output<void>();
-  readonly openProfileOverview = output<void>();
 
   readonly avatarInitial = computed(() => {
     const trimmed = this.profileName().trim();

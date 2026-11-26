@@ -1,49 +1,50 @@
-<mat-toolbar class="mobile-tab-dock">
-  <a
-    matButton
-    class="mobile-tab"
-    routerLink="/rooms"
-    routerLinkActive="active"
-    ariaCurrentWhenActive="page"
-  >
-    <span class="mobile-tab-pill">
-      <mat-icon class="icon-24" aria-hidden="true">mic</mat-icon>
-    </span>
-    <span class="mobile-tab-label">Rooms</span>
-  </a>
-  <a
-    matButton
-    class="mobile-tab"
-    routerLink="/people"
-    routerLinkActive="active"
-    ariaCurrentWhenActive="page"
-  >
-    <span class="mobile-tab-pill">
-      <mat-icon class="icon-24" aria-hidden="true">group</mat-icon>
-    </span>
-    <span class="mobile-tab-label">People</span>
-  </a>
-  <a
-    matButton
-    class="mobile-tab"
-    routerLink="/profile"
-    routerLinkActive="active"
-    ariaCurrentWhenActive="page"
-    [attr.aria-label]="'Profile — ' + profileName()"
-    (click)="openProfileOverview.emit()"
-  >
-    <span class="mobile-tab-pill">
-      <span class="avatar grad" aria-hidden="true">
-        @if (avatarUrl(); as url) {
-          <img [src]="url" alt="" referrerpolicy="no-referrer" />
-        } @else {
-          {{ avatarInitial() }}
-        }
+<nav class="mobile-tab-nav" aria-label="Primary">
+  <mat-toolbar class="mobile-tab-dock">
+    <a
+      matButton
+      class="mobile-tab"
+      routerLink="/rooms"
+      routerLinkActive="active"
+      ariaCurrentWhenActive="page"
+    >
+      <span class="mobile-tab-pill">
+        <mat-icon class="icon-24" aria-hidden="true">mic</mat-icon>
       </span>
-    </span>
-    <span class="mobile-tab-label">Profile</span>
-  </a>
-</mat-toolbar>
+      <span class="mobile-tab-label">Rooms</span>
+    </a>
+    <a
+      matButton
+      class="mobile-tab"
+      routerLink="/people"
+      routerLinkActive="active"
+      ariaCurrentWhenActive="page"
+    >
+      <span class="mobile-tab-pill">
+        <mat-icon class="icon-24" aria-hidden="true">group</mat-icon>
+      </span>
+      <span class="mobile-tab-label">People</span>
+    </a>
+    <a
+      matButton
+      class="mobile-tab"
+      routerLink="/profile"
+      routerLinkActive="active"
+      ariaCurrentWhenActive="page"
+      [attr.aria-label]="'Profile — ' + profileName()"
+    >
+      <span class="mobile-tab-pill">
+        <span class="avatar grad" aria-hidden="true">
+          @if (avatarUrl(); as url) {
+            <img [src]="url" alt="" referrerpolicy="no-referrer" />
+          } @else {
+            {{ avatarInitial() }}
+          }
+        </span>
+      </span>
+      <span class="mobile-tab-label">Profile</span>
+    </a>
+  </mat-toolbar>
+</nav>
 <button
   matFab
   class="mobile-golive-fab"

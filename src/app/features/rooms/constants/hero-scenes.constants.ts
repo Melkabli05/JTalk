@@ -95,5 +95,13 @@ export const SEASONAL_HERO_SCENES: readonly HeroScene[] = SEASONAL_SCENE_DEFS.ma
   }),
 );
 
+const FALLBACK_HERO_SCENE: HeroScene = {
+  id: 'evening-4',
+  period: 'evening',
+  src: '/assets/hero-lake.jpg',
+  alt: 'Sunset over a calm mountain lake',
+  ...HERO_PERIOD_META.evening,
+};
+
 export const DEFAULT_HERO_SCENE: HeroScene =
-  HERO_SCENES.find((scene) => scene.id === 'evening-4') ?? HERO_SCENES[0];
+  HERO_SCENES.find((scene) => scene.id === 'evening-4') ?? HERO_SCENES[0] ?? FALLBACK_HERO_SCENE;

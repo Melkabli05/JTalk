@@ -23,6 +23,7 @@ export interface UserProfileResponse {
   readonly learningLanguages: readonly LearningLanguageEntry[];
   readonly nativeLanguages: readonly string[];
   readonly createdAt: string;
+  readonly socialStats?: SocialStatsResponse | null;
 }
 
 export interface UserSummaryResponse {

@@ -57,6 +57,18 @@ describe('HomePage', () => {
 
     (el.querySelector('.home-signin-btn') as HTMLButtonElement).click();
     expect(loginSpy).toHaveBeenCalledTimes(1);
+
+    const themeBtn = el.querySelector('.home-theme-btn') as HTMLButtonElement | null;
+    const brandImg = el.querySelector('.home-brand img.brand-mark') as HTMLImageElement | null;
+    expect(themeBtn).toBeTruthy();
+    expect(brandImg?.getAttribute('src')).toBe('brand/jtalk-mark.svg');
+
+    themeBtn?.click();
+    fixture.detectChanges();
+    expect(brandImg?.getAttribute('src')).toBe('brand/jtalk-mark-dark.svg');
+    themeBtn?.click();
+    fixture.detectChanges();
+    expect(brandImg?.getAttribute('src')).toBe('brand/jtalk-mark.svg');
   });
 
   it('cycles live rooms from the SSE snapshot and navigates to /room/:id when signed in', async () => {

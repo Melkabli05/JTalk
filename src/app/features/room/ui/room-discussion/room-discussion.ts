@@ -12,7 +12,9 @@ import {
 import { form, FormField, maxLength, readonly } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatRippleModule } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SkeletonLoader } from '../../../../shared/ui/skeleton-loader/skeleton-loader';
@@ -23,7 +25,9 @@ import { DiscussionMessage } from '../../models/live-room.model';
   imports: [
     FormField,
     MatButtonModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatMenuModule,
     MatRippleModule,
     MatTooltipModule,

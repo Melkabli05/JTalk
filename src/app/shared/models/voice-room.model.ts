@@ -54,6 +54,15 @@ export function labelForReaction(code: BackendReaction): string {
   return REACTION_BY_CODE.get(code)?.label ?? 'Reaction';
 }
 
+export interface RoomSpeakerSummary {
+  readonly id: string;
+  readonly username?: string | null;
+  readonly displayName?: string | null;
+  readonly avatarUrl?: string | null;
+  readonly countryCode?: string | null;
+  readonly nativeLanguage?: string | null;
+}
+
 export interface VoiceRoomDto {
   readonly id: string;
   readonly title: string;
@@ -66,6 +75,8 @@ export interface VoiceRoomDto {
   readonly participantCount: number;
   readonly handRaiseCount: number;
   readonly createdAt?: string;
+  readonly host?: RoomSpeakerSummary | null;
+  readonly speakerProfiles?: readonly RoomSpeakerSummary[] | null;
 }
 
 export interface RoomSessionDto {
@@ -167,45 +178,59 @@ export interface ReactionBurstDto {
   readonly reaction: BackendReaction;
 }
 
-export type RoomRealtimeEvent =
-  | {
-      readonly type: 'STAGE_UPDATED' | 'HAND_RAISED' | 'HAND_LOWERED';
-      readonly at: number;
-      readonly stage: StageDto;
-    }
-  | { readonly type: 'SPEAKER_RECONNECTING' | 'SPEAKER_RECONNECTED'; readonly userId: string }
-  | {
-      readonly type: 'PRESENCE_CHANGED';
-      readonly participantCount: number;
-      readonly audienceCount?: number;
-      readonly joined: readonly string[];
-      readonly left: readonly string[];
-    }
-  | {
-      readonly type: 'ROOM_UPDATED';
-      readonly title: string;
-      readonly topic: string;
-      readonly maxStageSeats: number;
-      readonly hostId?: string;
-    }
-  | { readonly type: 'REACTIONS'; readonly reactions: readonly ReactionBurstDto[] }
-  | {
-      readonly type: 'PARTICIPANT_PROFILE_UPDATED';
-      readonly userId: string;
-      readonly avatarUrl: string;
-    };
+export interface RoomRealtimeEvent {
+  readonly type:
+    | 'STAGE_UPDATED'
+    | 'HAND_RAISED'
+    | 'HAND_LOWERED'
+    | 'SPEAKER_RECONNECTING'
+    | 'SPEAKER_RECONNECTED'
+    | 'PRESENCE_CHANGED'
+    | 'ROOM_UPDATED'
+    | 'REACTIONS'
+    | 'PARTICIPANT_PROFILE_UPDATED'
+    | 'COMMENT_PINNED'
+    | 'COMMENT_UNPINNED';
+  readonly roomId?: string;
+  readonly targetUserId?: string | null;
+  readonly timestamp?: string;
+  readonly stage?: StageDto | null;
+  readonly presence?: {
+    readonly participantCount: number;
+    readonly audienceCount?: number;
+    readonly joined: readonly string[];
+    readonly left: readonly string[];
+  } | null;
+  readonly reactions?: readonly ReactionBurstDto[] | null;
+  readonly settings?: {
+    readonly title: string;
+    readonly topic?: string | null;
+    readonly maxStageSeats: number;
+    readonly hostId?: string;
+  } | null;
+  readonly profileUpdate?: {
+    readonly userId: string;
+    readonly avatarUrl: string;
+  } | null;
+  readonly commentId?: string | null;
+}
 
-export type ChatRealtimeEvent =
-  | { readonly type: 'COMMENT_POSTED'; readonly comment: RoomCommentDto }
-  | { readonly type: 'COMMENT_DELETED'; readonly commentId: string }
-  | {
-      readonly type: 'COMMENT_REACTED';
-      readonly commentId: string;
-      readonly userId: string;
-      readonly reaction: BackendReaction | null;
-      readonly previous: BackendReaction | null;
-    }
-  | { readonly type: 'COMMENT_PINNED'; readonly commentId: string }
-  | { readonly type: 'COMMENT_UNPINNED'; readonly commentId: string | null }
-  | { readonly type: 'CHAT_MUTED' | 'CHAT_UNMUTED'; readonly userId: string }
-  | { readonly type: 'TOPIC_CHANGED'; readonly topic: string | null };
+export interface ChatRealtimeEvent {
+  readonly type:
+    | 'COMMENT_POSTED'
+    | 'COMMENT_DELETED'
+    | 'COMMENT_REACTED'
+    | 'COMMENT_PINNED'
+    | 'COMMENT_UNPINNED'
+    | 'CHAT_MUTED'
+    | 'CHAT_UNMUTED'
+    | 'TOPIC_CHANGED';
+  readonly roomId?: string;
+  readonly timestamp?: string;
+  readonly comment?: RoomCommentDto | null;
+  readonly commentId?: string | null;
+  readonly targetUserId?: string | null;
+  readonly topic?: string | null;
+  readonly reaction?: BackendReaction | null;
+  readonly previous?: BackendReaction | null;
+}

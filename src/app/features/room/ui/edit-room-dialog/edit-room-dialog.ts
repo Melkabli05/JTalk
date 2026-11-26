@@ -4,8 +4,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { UpdateVoiceRoomPayload } from '../../../../shared/models/voice-room.model';
+import type { UpdateVoiceRoomPayload } from '../../../../shared/models/voice-room.model';
 import { trimmedRequired } from '../../../../shared/utils/form-validators';
+
+interface EditRoomFormModel {
+  title: string;
+  topic: string;
+  maxStageSeats: number | null;
+}
 
 @Component({
   selector: 'app-edit-room-dialog',
@@ -17,9 +23,10 @@ export class EditRoomDialog {
   private readonly dialogRef = inject(MatDialogRef<EditRoomDialog, UpdateVoiceRoomPayload>);
   private readonly data = inject<Required<UpdateVoiceRoomPayload>>(MAT_DIALOG_DATA);
 
-  private readonly model = signal({
-    ...this.data,
-    maxStageSeats: this.data.maxStageSeats as number | null,
+  private readonly model = signal<EditRoomFormModel>({
+    title: this.data.title,
+    topic: this.data.topic,
+    maxStageSeats: this.data.maxStageSeats,
   });
 
   readonly roomForm = form(this.model, (path) => {

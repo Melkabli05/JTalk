@@ -6,8 +6,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { AppView } from '../../../core/models/session.model';
 import { ColorScheme } from '../../../core/services/theme';
+
+export type AppView = 'rooms' | 'room' | 'people' | 'profile';
 
 @Component({
   selector: 'app-sidebar',
@@ -43,7 +44,6 @@ export class Sidebar {
   readonly toggleCollapse = output<void>();
   readonly startRoom = output<void>();
   readonly backToRoom = output<void>();
-  readonly openProfileOverview = output<void>();
   readonly toggleTheme = output<void>();
 
   readonly showInRoomCard = computed(() => this.inRoom() && this.activeView() !== 'room');

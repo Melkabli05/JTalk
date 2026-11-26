@@ -6,22 +6,47 @@
 
   <header class="home-header">
     <a class="home-brand" routerLink="/" aria-label="Jtalk home">
-      <picture class="brand-mark" aria-hidden="true">
-        <source srcset="brand/jtalk-mark-dark.svg" media="(prefers-color-scheme: dark)" />
-        <img src="brand/jtalk-mark.svg" alt="" width="24" height="20" />
-      </picture>
+      <img
+        class="brand-mark"
+        [src]="theme.isDark() ? 'brand/jtalk-mark-dark.svg' : 'brand/jtalk-mark.svg'"
+        alt=""
+        width="24"
+        height="20"
+        aria-hidden="true"
+      />
       <span class="home-brand-name">Jtalk</span>
     </a>
 
-    <button
-      matButton="outlined"
-      type="button"
-      class="home-signin-btn"
-      (click)="enterRooms()"
-    >
-      {{ identity.isAuthenticated() ? 'Open rooms' : 'Sign in' }}
-    </button>
+    <div class="home-header-actions">
+      <button
+        matIconButton
+        type="button"
+        class="home-theme-btn"
+        [attr.aria-label]="themeToggleLabel()"
+        [attr.aria-pressed]="theme.isDark()"
+        [matTooltip]="themeToggleLabel()"
+        (click)="theme.toggle()"
+      >
+        <mat-icon aria-hidden="true">{{ theme.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+
+      <button
+        matButton="outlined"
+        type="button"
+        class="home-signin-btn"
+        (click)="enterRooms()"
+      >
+        {{ identity.isAuthenticated() ? 'Open rooms' : 'Sign in' }}
+      </button>
+    </div>
   </header>
+
+  @if (!pwa.isOnline()) {
+    <div class="offline-banner home-offline-banner" role="status" aria-live="polite">
+      <mat-icon class="icon-18" aria-hidden="true">cloud_off</mat-icon>
+      <span>You're offline. Live voice rooms need an internet connection.</span>
+    </div>
+  }
 
   <main id="main-content" class="home-main">
     <section class="home-hero" aria-labelledby="homeHeroHeading">
@@ -88,18 +113,18 @@
           <div #liveStrip class="home-live-info">
             <span class="home-live-title">{{ currentRoom.title }}</span>
             <span class="home-live-meta">
-              {{ currentRoom.langLabel }} · {{ currentRoom.meta }}
+              {{ selectedRoomMeta() }}
             </span>
           </div>
 
           <button
-            matButton="filled"
+            matButton="text"
             type="button"
             class="home-live-join"
             (click)="joinRoom(currentRoom)"
           >
             <span>Join</span>
-            <mat-icon class="home-live-join-icon" aria-hidden="true">arrow_outward</mat-icon>
+            <mat-icon class="home-live-join-icon" iconPositionEnd aria-hidden="true">arrow_outward</mat-icon>
           </button>
         </div>
       }
@@ -108,7 +133,20 @@
 
   <footer class="home-footer home-anim-fade">
     <div class="home-footer-inner">
-      <span class="home-footer-note">Audio only · No camera</span>
+      <div class="home-footer-left">
+        <span class="home-footer-note">Audio only · No camera</span>
+        @if (pwa.canInstall()) {
+          <button
+            matButton="text"
+            type="button"
+            class="home-install-btn"
+            (click)="onInstallApp()"
+          >
+            <mat-icon aria-hidden="true">download</mat-icon>
+            <span>Install app</span>
+          </button>
+        }
+      </div>
 
       <button
         type="button"

@@ -26,12 +26,17 @@ describe('form-validators', () => {
 
       expect(field().invalid()).toBe(true);
       expect(field().required()).toBe(true);
+      expect(field().errors()).toHaveLength(1);
+      expect(field().errors()[0]?.kind).toBe('required');
 
       model.set('   ');
       expect(field().invalid()).toBe(true);
+      expect(field().errors()).toHaveLength(1);
+      expect(field().errors()[0]?.kind).toBe('whitespace');
 
       model.set('  Café  ');
       expect(field().invalid()).toBe(false);
+      expect(field().errors()).toHaveLength(0);
     });
   });
 });

@@ -1,7 +1,7 @@
 @let p = profile();
 <mat-card class="profile-card" appearance="outlined" aria-labelledby="account-h">
   <h3 id="account-h">Account</h3>
-  <p class="card-sub">Signed in as {{ p.name }} (&#64;{{ p.username }}).</p>
+  <p class="card-sub">Signed in as {{ p?.displayName || 'Speaker' }} (&#64;{{ p?.username ?? '' }}).</p>
   <mat-action-list>
     <button mat-list-item type="button" (click)="settingsClicked.emit()">
       <mat-icon matListItemIcon aria-hidden="true">settings</mat-icon>
@@ -12,12 +12,25 @@
       <mat-icon matListItemIcon aria-hidden="true">help_outline</mat-icon>
       <span matListItemTitle>Help and support</span>
     </button>
+    @if (canInstall()) {
+      <mat-divider />
+      <button mat-list-item type="button" id="installAppBtn" (click)="installClicked.emit()">
+        <mat-icon matListItemIcon aria-hidden="true">download</mat-icon>
+        <span matListItemTitle>Install Jtalk app</span>
+      </button>
+    }
     <mat-divider />
     <button mat-list-item type="button" id="signOutBtn" (click)="signOutClicked.emit()">
       <mat-icon matListItemIcon aria-hidden="true">logout</mat-icon>
       <span matListItemTitle>Sign out</span>
     </button>
   </mat-action-list>
+  @if (showIosInstallHint()) {
+    <p class="pwa-ios-hint">
+      <mat-icon class="icon-18" aria-hidden="true">ios_share</mat-icon>
+      <span>To install on iPhone or iPad, tap Share in Safari and choose Add to Home Screen.</span>
+    </p>
+  }
 </mat-card>
 
 <mat-card

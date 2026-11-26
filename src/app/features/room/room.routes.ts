@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
-import { AppState } from '../../core/state/app-state';
+import { LiveRoomStore } from './store/live-room-store';
 
 export const ROOM_ROUTES: Routes = [
   {
@@ -12,7 +12,7 @@ export const ROOM_ROUTES: Routes = [
     path: '',
     pathMatch: 'full',
     redirectTo: () => {
-      const roomId = inject(AppState).resumeRoomId();
+      const roomId = inject(LiveRoomStore).resumeRoomId();
       const router = inject(Router);
       return router.createUrlTree(roomId ? ['/room', roomId] : ['/rooms']);
     },

@@ -37,12 +37,32 @@
   </div>
 
   @if (editingTopic() && isHost()) {
-    <form class="composer" (submit)="$event.preventDefault(); topicChange.emit(topic.value); editingTopic.set(false)">
-      <input #topic aria-label="Pinned chat topic" maxlength="200" [value]="pinnedTopic() ?? ''" placeholder="Pinned chat topic">
-      <button matButton type="submit">Save</button>
-      @if (pinnedTopic()) {
-        <button matButton type="button" (click)="topicChange.emit(''); editingTopic.set(false)">Unpin</button>
-      }
+    <form
+      class="topic-editor-form"
+      (submit)="$event.preventDefault(); topicChange.emit(topic.value); editingTopic.set(false)"
+    >
+      <mat-form-field class="topic-editor-field" subscriptSizing="dynamic">
+        <mat-label>Pinned chat topic</mat-label>
+        <input
+          #topic
+          matInput
+          maxlength="200"
+          [value]="pinnedTopic() ?? ''"
+          placeholder="Set a topic for the chat"
+        />
+      </mat-form-field>
+      <div class="topic-editor-actions">
+        <button matButton="tonal" type="submit">Save</button>
+        @if (pinnedTopic()) {
+          <button
+            matButton="text"
+            type="button"
+            (click)="topicChange.emit(''); editingTopic.set(false)"
+          >
+            Unpin
+          </button>
+        }
+      </div>
     </form>
   }
   <div class="chat-error" id="chatError" role="alert" [hidden]="!hasError || isLoading">

@@ -10,8 +10,8 @@ import { AuthService } from '@auth0/auth0-angular';
 import { from } from 'rxjs';
 import { vi } from 'vitest';
 import { provideNoopAuthForTests } from '../../../../core/auth/auth.providers';
-import { AppState } from '../../../../core/state/app-state';
 import { ToastNotifier } from '../../../../core/services/toast-notifier';
+import { LIVEKIT_CONNECTOR, type LiveKitListener } from '../../data-access/livekit-audio-engine';
 import { LiveRoomStore } from '../../store/live-room-store';
 import { ROOM_ROUTES } from '../../room.routes';
 import { RoomPage } from './room-page';
@@ -20,7 +20,7 @@ import { RoomPage } from './room-page';
 class HallwayRoute {}
 
 describe('RoomPage', () => {
-  afterEach(() => TestBed.inject(AppState).rememberRoom(null));
+  afterEach(() => TestBed.inject(LiveRoomStore).rememberRoom(null));
   const toastSpy = { show: vi.fn() };
   const dialogSpy = {
     open: vi.fn(),
@@ -44,7 +44,7 @@ describe('RoomPage', () => {
         { provide: MatDialog, useValue: dialogSpy },
       ],
     }).compileComponents();
-    TestBed.inject(AppState).rememberRoom(null);
+    TestBed.inject(LiveRoomStore).rememberRoom(null);
   });
 
   it('hydrates the room from join and fetches audience pages only on demand', async () => {
@@ -186,12 +186,11 @@ describe('RoomPage', () => {
     const router = TestBed.inject(Router);
     const store = TestBed.inject(LiveRoomStore);
     const enterRoom = vi.spyOn(store, 'enterRoom').mockResolvedValue(true);
-    const appState = TestBed.inject(AppState);
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/room', HallwayRoute);
     expect(router.url).toBe('/rooms');
 
-    appState.rememberRoom('saved');
+    store.rememberRoom('saved');
     const restored = await harness.navigateByUrl('/room', RoomPage);
     expect(router.url).toBe('/room/saved');
     expect(restored.id()).toBe('saved');
@@ -211,31 +210,82 @@ describe('RoomPage', () => {
     expect(toastSpy.show).toHaveBeenCalledWith('Join the stage to use your microphone.');
   });
 
-  it('redirects to /rooms and shows toast when roomError signals the room has ended', () => {
-    const store = TestBed.inject(LiveRoomStore);
-    vi.spyOn(store, 'enterRoom').mockResolvedValue(true);
+  it('redirects to /rooms and shows toast when the room ends over LiveKit', async () => {
+    let listener!: LiveKitListener;
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [RoomPage],
+      providers: [
+        provideHttpClient(withInterceptors([httpErrorInterceptor])),
+        provideHttpClientTesting(),
+        provideNoopAuthForTests(),
+        provideRouter([
+          { path: 'room', children: ROOM_ROUTES },
+          { path: 'rooms', component: HallwayRoute },
+        ], withComponentInputBinding()),
+        LiveRoomStore,
+        {
+          provide: LIVEKIT_CONNECTOR,
+          useValue: async (
+            _url: string,
+            _token: string,
+            _options: unknown,
+            events: LiveKitListener,
+          ) => {
+            listener = events;
+            return {
+              setMicrophone: async () => undefined,
+              setNoiseIsolation: async () => 'webrtc-fallback' as const,
+              selectAudioInputDevice: async () => undefined,
+              listAudioInputDevices: async () => [],
+              startAudio: async () => undefined,
+              disconnect: async () => undefined,
+            };
+          },
+        },
+        { provide: ToastNotifier, useValue: toastSpy },
+        { provide: MatDialog, useValue: dialogSpy },
+      ],
+    }).compileComponents();
+
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const http = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(RoomPage);
     fixture.componentRef.setInput('id', 'current');
     fixture.detectChanges();
 
-    store.roomError.set('This room has ended.');
+    const join = await vi.waitFor(() =>
+      http.expectOne('/api/v1/voice-rooms/current/participants/join'),
+    );
+    join.flush({
+      room: {
+        id: 'current', title: 'Practice', hostId: 'host', targetLanguage: 'ar', nativeLanguage: 'en',
+        maxStageSeats: 8, speakers: ['host'], participantCount: 1, handRaiseCount: 0,
+      },
+      role: 'LISTENER', canPublishAudio: false, liveKitUrl: 'wss://example.invalid', liveKitToken: 'token',
+      snapshot: {
+        speakers: [{ userId: 'host', displayName: 'Host', isReconnecting: false }], audienceCount: 0,
+        audience: { audiencePreview: [], nextCursor: null, hasMoreAudience: false }, handRaiseQueue: [],
+        chat: { comments: [], muted: false, mutedUsers: [], reactions: [], topic: null },
+      },
+    });
+    await vi.waitFor(() => expect(listener).toBeDefined());
+    fixture.detectChanges();
+
+    listener.onDisconnected('This room has ended.');
     fixture.detectChanges();
 
     expect(toastSpy.show).toHaveBeenCalledWith('Room closed.');
     expect(navigate).toHaveBeenCalledWith(['/rooms']);
+    http.verify();
   });
 
-  it('should report false from reloadMessages when not joined to an active room', () => {
+  it('should report false from reloadMessages when not joined to an active room', async () => {
     vi.spyOn(TestBed.inject(LiveRoomStore), 'enterRoom').mockResolvedValue(true);
     const fixture = TestBed.createComponent(RoomPage);
     fixture.componentRef.setInput('id', 'current');
     fixture.detectChanges();
 
-    let ok: boolean | undefined;
-    fixture.componentInstance.chatStore.reloadMessages((result) => {
-      ok = result;
-    });
-    expect(ok).toBe(false);
+    expect(await fixture.componentInstance.chatStore.reloadMessages()).toBe(false);
   });
 });

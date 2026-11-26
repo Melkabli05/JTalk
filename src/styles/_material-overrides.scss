@@ -7,12 +7,12 @@
 // ============================================================================
 
 :root {
-  // Buttons: mobile-first 44px touch targets; refined to 40px on desktop pointer devices
+  // Buttons: mobile-first 48px touch targets; refined to 40px on desktop pointer devices
   @include mat.button-overrides((
     tonal-container-color: var(--primary-btn),
     tonal-label-text-color: var(--on-primary-btn),
     tonal-container-shape: 9999px,
-    tonal-container-height: 44px,
+    tonal-container-height: 48px,
     tonal-horizontal-padding: 20px,
     tonal-label-text-font: var(--font),
     tonal-label-text-size: 0.9375rem,
@@ -20,7 +20,7 @@
     tonal-label-text-tracking: 0,
 
     filled-container-shape: 9999px,
-    filled-container-height: 44px,
+    filled-container-height: 48px,
     filled-horizontal-padding: 20px,
     filled-label-text-font: var(--font),
     filled-label-text-size: 0.9375rem,
@@ -28,7 +28,7 @@
     filled-label-text-tracking: 0,
 
     outlined-container-shape: 9999px,
-    outlined-container-height: 44px,
+    outlined-container-height: 48px,
     outlined-horizontal-padding: 16px,
     outlined-outline-color: var(--mat-sys-outline-variant),
     outlined-label-text-color: var(--mat-sys-on-surface),
@@ -38,7 +38,7 @@
     outlined-label-text-tracking: 0,
 
     text-container-shape: 9999px,
-    text-container-height: 44px,
+    text-container-height: 48px,
     text-horizontal-padding: 14px,
     text-label-text-color: var(--mat-sys-primary),
     text-label-text-font: var(--font),
@@ -47,13 +47,13 @@
     text-label-text-tracking: 0,
   ));
 
-  // Icon buttons: mobile-first 44px circular touch targets
+  // Icon buttons: mobile-first 48px circular touch targets
   @include mat.icon-button-overrides((
     container-shape: 9999px,
     icon-color: var(--mat-sys-on-surface-variant),
     icon-size: 20px,
-    state-layer-size: 44px,
-    touch-target-size: 44px,
+    state-layer-size: 48px,
+    touch-target-size: 48px,
   ));
 
   // Mini FAB (used for mobile bottom bar "Go live" + control)
@@ -79,10 +79,10 @@
     outlined-container-elevation: none,
   ));
 
-  // Filter chips: mobile-first 44px touch height, refined to 36px at tablet+
+  // Filter chips: mobile-first 48px touch height, refined to 36px at tablet+
   @include mat.chips-overrides((
     container-shape-radius: 9999px,
-    container-height: 44px,
+    container-height: 48px,
     outline-width: 0px,
     flat-selected-outline-width: 0px,
     elevated-container-color: var(--mat-sys-surface-container),
@@ -192,7 +192,7 @@
     inactive-label-text-color: var(--mat-sys-on-surface-variant),
     inactive-hover-label-text-color: var(--mat-sys-on-surface),
     divider-color: var(--mat-sys-outline),
-    container-height: 44px,
+    container-height: 48px,
     label-text-font: var(--font),
     label-text-size: 0.9375rem,
     label-text-weight: 500,
@@ -294,10 +294,10 @@
   ));
 }
 
-// Compact 32px banner button ("Back to the room" on mobile in-room bar)
+// Compact banner button ("Back to the room" on mobile in-room bar)
 .btn-banner-pill {
   @include mat.button-overrides((
-    tonal-container-height: 32px,
+    tonal-container-height: 36px,
     tonal-horizontal-padding: 14px,
     tonal-label-text-size: 0.875rem,
     tonal-label-text-weight: 500,

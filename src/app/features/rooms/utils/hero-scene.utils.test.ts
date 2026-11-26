@@ -102,8 +102,8 @@ describe('hero-scene.utils', () => {
         expect(pool.length).toBe(7);
         const seasonalEntries = pool.filter((s) => s.season === season);
         expect(seasonalEntries.length).toBe(1);
-        expect(seasonalEntries[0].id).toBe(`${season}-${period}`);
-        expect(seasonalEntries[0].src).toBe(`/assets/seasonal/${season}-${period}.jpg`);
+        expect(seasonalEntries[0]?.id).toBe(`${season}-${period}`);
+        expect(seasonalEntries[0]?.src).toBe(`/assets/seasonal/${season}-${period}.jpg`);
       }
     }
 

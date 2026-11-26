@@ -2,8 +2,7 @@ import { Component, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { provideRouter, Router, TitleStrategy } from '@angular/router';
-import { APP_DEFAULT_TITLE } from './app-title.utils';
-import { AppTitleStrategy } from './app-title-strategy';
+import { APP_DEFAULT_TITLE, AppTitleStrategy } from './app-title-strategy';
 
 @Component({ template: '' })
 class DummyRouteView {}

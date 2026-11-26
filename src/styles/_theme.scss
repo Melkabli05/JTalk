@@ -60,7 +60,7 @@ html {
     secondary-container: light-dark(#C2E7FF, #004A77),
     on-secondary-container: light-dark(#001D35, #C2E7FF),
 
-    tertiary: light-dark(#0EBC5F, #6DD58C),
+    tertiary: light-dark(#0A7D3F, #6DD58C),
     on-tertiary: light-dark(#FFFFFF, #072711),
     tertiary-container: light-dark(#C4EED0, #0F5223),
     on-tertiary-container: light-dark(#072711, #C4EED0),
@@ -123,7 +123,8 @@ html {
   --primary-btn: #C2E7FF;
   --on-primary-btn: #001D35;
   --brand-blue: #3186FF;
-  --positive: #0EBC5F;
+  --positive: light-dark(#0A7D3F, #6DD58C);
+  --on-positive: light-dark(#FFFFFF, #072711);
   --positive-ink: light-dark(#0A3818, #6DD58C);
   --host-ring: light-dark(#0F5223, #6DD58C);
 
@@ -160,7 +161,7 @@ html {
   --sp-above: 28px;
 
   // Mobile-first fluid layout, shell & touch-target tokens
-  --touch-min: 44px;
+  --touch-min: 48px;
   --sidebar-rail-width: 76px;
   --sidebar-full-width: 300px;
   --content-max-width: 92rem;

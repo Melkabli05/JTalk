@@ -1,21 +1,21 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { UserProfile } from '../../../../core/models/session.model';
+import { UserProfileResponse } from '../../../../core/auth/auth.models';
 import { ProfileAccount } from './profile-account';
 
 describe('ProfileAccount', () => {
-  const sampleProfile: UserProfile = {
-    name: 'Jilali',
+  const sampleProfile: UserProfileResponse = {
+    id: 'u-1',
+    displayName: 'Jilali',
     username: 'jilali_dev',
-    joined: 'May 2024',
-    speak: 'Arabic',
-    learn: 'English',
-    location: 'Casablanca',
-    about: '',
-    followers: 4,
-    following: 2,
-    avatar: { kind: 'own', id: 'own', bg: '#16121F', label: 'Your own picture' },
+    bio: null,
+    avatarUrl: null,
+    nativeLanguage: 'ar',
+    nativeLanguages: ['ar'],
+    learningLanguages: [{ languageCode: 'en', proficiencyLevel: 'BEGINNER' }],
+    countryCode: 'MA',
+    createdAt: '2024-05-01T00:00:00Z',
   };
 
   beforeEach(async () => {

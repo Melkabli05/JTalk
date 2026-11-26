@@ -10,11 +10,10 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '@auth0/auth0-angular';
 import { lastValueFrom } from 'rxjs';
-import { asRecord } from '../http/as-record';
 import { ApiError, errorMessage } from '../http/http-error.interceptor';
-import { countryCodeFor, languageCodeFor, languageNameFor } from '../utils/language-codes';
-import {
+import type {
   CreateProfileRequest,
+  LanguageMatrixResponse,
   ProfileLoadStatus,
   SocialStatsResponse,
   UpdateProfileRequest,
@@ -29,8 +28,8 @@ export interface ProfileSaveInput {
   readonly displayName: string;
   readonly username: string;
   readonly nativeLanguage: string;
-  readonly learningLanguage: string;
-  readonly location: string;
+  readonly learningLanguage: string | null;
+  readonly countryCode: string | null;
   readonly bio: string;
   readonly avatarUrl?: string | null;
 }
@@ -49,18 +48,20 @@ export interface AccountActionResult {
 function buildProfilePatch(
   current: UserProfileResponse,
   input: ProfileSaveInput,
-  requestedLearning: string | null,
 ): UpdateProfileRequest {
+  const currentNativeBase = current.nativeLanguage.split('-')[0]?.toLowerCase() ?? '';
   const nextNative =
-    input.nativeLanguage === languageNameFor(current.nativeLanguage)
+    input.nativeLanguage.toLowerCase() === currentNativeBase
       ? current.nativeLanguage
-      : languageCodeFor(input.nativeLanguage);
+      : input.nativeLanguage;
+
   const currentLearning = current.learningLanguages[0]?.languageCode ?? null;
+  const currentLearningBase = currentLearning?.split('-')[0]?.toLowerCase() ?? null;
   const nextLearning =
-    currentLearning && input.learningLanguage === languageNameFor(currentLearning)
+    currentLearning && input.learningLanguage?.toLowerCase() === currentLearningBase
       ? currentLearning
-      : requestedLearning;
-  const nextCountry = countryCodeFor(input.location);
+      : input.learningLanguage;
+
   const trimmedUsername = input.username.trim();
   const displayName = input.displayName.trim();
   const bio = input.bio.trim();
@@ -88,7 +89,9 @@ function buildProfilePatch(
           ],
         }
       : {}),
-    ...(nextCountry && nextCountry !== current.countryCode ? { countryCode: nextCountry } : {}),
+    ...(input.countryCode && input.countryCode !== current.countryCode
+      ? { countryCode: input.countryCode }
+      : {}),
     ...(input.avatarUrl !== undefined && input.avatarUrl !== current.avatarUrl
       ? { avatarUrl: input.avatarUrl ?? '' }
       : {}),
@@ -124,30 +127,24 @@ export class IdentityStore {
   );
   private readonly meResource = this.usersApi.meResource(() => this.meEnabled());
 
-  readonly me = linkedSignal<UserProfileResponse | null>(() => {
-    if (!this.isAuthenticated()) return null;
-    return this.meResource.hasValue() ? this.meResource.value() : null;
-  });
-
-  private readonly socialUserId = computed(() =>
-    isPlatformBrowser(this.platformId) && this.isAuthenticated() ? this.me()?.id : undefined,
-  );
-  private readonly socialRevision = signal(0);
-  private readonly socialResource = this.usersApi.socialStatsResource(() => {
-    this.socialRevision();
-    return this.socialUserId();
-  });
-  readonly socialStats = linkedSignal<
-    { id?: string; stats?: SocialStatsResponse },
-    SocialStatsResponse | undefined
+  private readonly meState = linkedSignal<
+    { signedIn: boolean; profile: UserProfileResponse | undefined },
+    UserProfileResponse | null
   >({
     source: () => ({
-      id: this.socialUserId(),
-      stats: this.socialResource.hasValue() ? this.socialResource.value() : undefined,
+      signedIn: this.isAuthenticated(),
+      profile: this.meResource.hasValue() ? this.meResource.value() : undefined,
     }),
-    computation: ({ id, stats }, previous) =>
-      stats ?? (id && id === previous?.source.id ? previous.value : undefined),
-  }).asReadonly();
+    computation: ({ signedIn, profile }, previous) => {
+      if (!signedIn) return null;
+      return profile !== undefined ? profile : (previous?.value ?? null);
+    },
+  });
+  readonly me = this.meState.asReadonly();
+
+  readonly socialStats = computed<SocialStatsResponse | undefined>(
+    () => this.me()?.socialStats ?? undefined,
+  );
 
   readonly profileStatus = computed<ProfileLoadStatus>(() => {
     if (!this.isAuthenticated()) return 'unauthenticated';
@@ -166,7 +163,8 @@ export class IdentityStore {
     return err ? errorMessage(err, 'Could not load your profile.') : null;
   });
 
-  readonly savingProfile = signal(false);
+  private readonly savingProfileState = signal(false);
+  readonly savingProfile = this.savingProfileState.asReadonly();
 
   private readonly directoryCache = signal<ReadonlyMap<string, UserSummaryResponse>>(new Map());
   private readonly inFlightBatchIds = new Set<string>();
@@ -183,8 +181,9 @@ export class IdentityStore {
   readonly userId = computed<string | null>(() => {
     const profileId = this.me()?.id;
     if (profileId) return profileId;
-    const claims = asRecord(this.authUser());
-    const claimId = claims?.[JTALK_USER_ID_CLAIM];
+    const user = this.authUser();
+    const claimId: unknown =
+      user && typeof user === 'object' ? Reflect.get(user, JTALK_USER_ID_CLAIM) : null;
     return typeof claimId === 'string' && claimId.length > 0 ? claimId : null;
   });
 
@@ -199,49 +198,72 @@ export class IdentityStore {
     }
   }
 
+  setProfile(profile: UserProfileResponse | null): void {
+    this.meState.set(profile);
+  }
+
+  applyLanguageMatrix(matrix: LanguageMatrixResponse): void {
+    this.meState.update(
+      (profile): UserProfileResponse | null =>
+        profile?.id === matrix.userId
+          ? {
+              ...profile,
+              nativeLanguages: matrix.nativeLanguages,
+              learningLanguages: matrix.learningLanguages,
+            }
+          : profile,
+    );
+  }
+
   refreshSocialStats(): void {
-    this.socialRevision.update((value) => value + 1);
+    this.loadMe();
   }
 
   async saveProfile(
     input: ProfileSaveInput,
     avatarBlob?: Blob | null,
   ): Promise<ProfileSaveResult> {
-    if (this.savingProfile()) {
+    if (this.savingProfileState()) {
       return { ok: false, error: 'A profile save is already in progress.' };
     }
     if (!this.hasProfile() && !this.needsOnboarding()) {
       return { ok: false, error: 'Load your profile before making changes.' };
     }
 
-    this.savingProfile.set(true);
+    this.savingProfileState.set(true);
     try {
       const current = this.me();
-      const requestedLearning =
-        input.learningLanguage === 'Not set' ? null : languageCodeFor(input.learningLanguage);
+      const preserveSocialStats = (profile: UserProfileResponse): UserProfileResponse =>
+        profile.socialStats !== undefined
+          ? profile
+          : current?.socialStats
+            ? { ...profile, socialStats: current.socialStats }
+            : profile;
 
-      let saved = current
-        ? await this.updateExistingProfile(current, input, requestedLearning)
-        : await this.createInitialProfile(input, requestedLearning);
+      let saved = preserveSocialStats(
+        current
+          ? await this.updateExistingProfile(current, input)
+          : await this.createInitialProfile(input),
+      );
 
       if (avatarBlob) {
-        this.me.set(saved);
-        saved = await this.usersApi.uploadAvatar(avatarBlob);
+        this.meState.set(saved);
+        saved = preserveSocialStats(await this.usersApi.uploadAvatar(avatarBlob));
       }
 
-      this.me.set(saved);
+      this.meState.set(saved);
       return { ok: true, profile: saved };
     } catch (err) {
       return { ok: false, error: errorMessage(err, 'Could not save profile.') };
     } finally {
-      this.savingProfile.set(false);
+      this.savingProfileState.set(false);
     }
   }
 
   async deleteAccount(): Promise<AccountActionResult> {
     try {
       await this.usersApi.deleteMe();
-      this.me.set(null);
+      this.meState.set(null);
       await this.signOut();
       return { ok: true };
     } catch (err) {
@@ -293,7 +315,7 @@ export class IdentityStore {
 
   mergeUserSummaries(summaries: readonly UserSummaryResponse[]): void {
     if (summaries.length === 0) return;
-    this.directoryCache.update((existing) => {
+    this.directoryCache.update((existing): ReadonlyMap<string, UserSummaryResponse> => {
       const next = new Map(existing);
       for (const user of summaries) next.set(user.id, user);
       return next;
@@ -302,28 +324,29 @@ export class IdentityStore {
 
   updateCachedAvatar(userId: string, avatarUrl: string): void {
     if (this.me()?.id === userId) {
-      this.me.update((profile) => (profile ? { ...profile, avatarUrl } : profile));
+      this.meState.update((profile): UserProfileResponse | null =>
+        profile ? { ...profile, avatarUrl } : profile,
+      );
     }
-    this.directoryCache.update((existing) => {
+    this.directoryCache.update((existing): ReadonlyMap<string, UserSummaryResponse> => {
       const current = existing.get(userId);
       if (!current) return existing;
       return new Map(existing).set(userId, { ...current, avatarUrl });
     });
   }
 
-  private async createInitialProfile(
-    input: ProfileSaveInput,
-    requestedLearning: string | null,
-  ): Promise<UserProfileResponse> {
+  private async createInitialProfile(input: ProfileSaveInput): Promise<UserProfileResponse> {
     const trimmedUsername = input.username.trim();
     const createReq: CreateProfileRequest = {
       ...(trimmedUsername ? { username: trimmedUsername } : {}),
       displayName: input.displayName.trim(),
-      nativeLanguage: languageCodeFor(input.nativeLanguage),
-      ...(requestedLearning ? { learningLanguages: [{ languageCode: requestedLearning }] } : {}),
+      nativeLanguage: input.nativeLanguage,
+      ...(input.learningLanguage
+        ? { learningLanguages: [{ languageCode: input.learningLanguage }] }
+        : {}),
       ...(input.bio.trim() ? { bio: input.bio.trim() } : {}),
       ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
-      ...(countryCodeFor(input.location) ? { countryCode: countryCodeFor(input.location) } : {}),
+      ...(input.countryCode ? { countryCode: input.countryCode } : {}),
     };
     try {
       return await this.usersApi.createMe(createReq);
@@ -338,9 +361,8 @@ export class IdentityStore {
   private updateExistingProfile(
     current: UserProfileResponse,
     input: ProfileSaveInput,
-    requestedLearning: string | null,
   ): Promise<UserProfileResponse> {
-    const patch = buildProfilePatch(current, input, requestedLearning);
+    const patch = buildProfilePatch(current, input);
     return Object.keys(patch).length > 0 ? this.usersApi.updateMe(patch) : Promise.resolve(current);
   }
 }

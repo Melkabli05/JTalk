@@ -4,8 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { lastValueFrom } from 'rxjs';
 import { vi } from 'vitest';
 import { httpErrorInterceptor } from './http-error.interceptor';
-import { countryCodeFor, countryNameFor, languageCodeFor, languageNameFor } from '../utils/language-codes';
-import { isSafeAvatarUrl, sanitizeAvatarUrl } from '../utils/safe-url';
+import { countryNameFor, languageNameFor } from '../utils/language-codes';
 
 describe('httpErrorInterceptor', () => {
   beforeEach(() => TestBed.configureTestingModule({ providers: [
@@ -61,6 +60,22 @@ describe('httpErrorInterceptor', () => {
     await expect(result).rejects.toThrow('Try again in 15s');
   });
 
+  it('preserves backend RFC 9457 detail on 429 when Retry-After is absent', async () => {
+    const result = lastValueFrom(TestBed.inject(HttpClient).post('/api/v1/voice-rooms/1/reactions', {}));
+    TestBed.inject(HttpTestingController).expectOne('/api/v1/voice-rooms/1/reactions').flush(
+      {
+        type: 'urn:jtalk:live-communication:problem:reacting-too-fast',
+        status: 429,
+        detail: 'Wait a moment before reacting again',
+      },
+      { status: 429, statusText: 'Too Many Requests' },
+    );
+    await expect(result).rejects.toMatchObject({
+      status: 429,
+      message: 'Wait a moment before reacting again',
+    });
+  });
+
   it.each([
     ['error', 'Unable to reach JTalk'],
     ['timeout', 'The request timed out'],
@@ -73,20 +88,9 @@ describe('httpErrorInterceptor', () => {
   });
 });
 
-describe('Language codes and avatar URLs', () => {
-  it('maps language names and ISO codes bidirectionally', () => {
-    expect(languageCodeFor('Japanese')).toBe('ja');
-    expect(languageCodeFor('es-MX')).toBe('es');
+describe('Language codes', () => {
+  it('maps ISO codes to display names', () => {
     expect(languageNameFor('ar')).toBe('Arabic');
-    expect(countryCodeFor('Morocco')).toBe('MA');
     expect(countryNameFor('JP')).toBe('Japan');
-  });
-
-  it('rejects unsafe avatar URLs and accepts https and safe relative paths', () => {
-    expect(isSafeAvatarUrl('https://cdn.example.com/avatar.jpg')).toBe(true);
-    expect(isSafeAvatarUrl('/api/v1/users/123/avatar/1')).toBe(true);
-    expect(sanitizeAvatarUrl('javascript:alert(1)')).toBeNull();
-    expect(sanitizeAvatarUrl('//evil.example/x.png')).toBeNull();
-    expect(sanitizeAvatarUrl('/api/../secret')).toBeNull();
   });
 });

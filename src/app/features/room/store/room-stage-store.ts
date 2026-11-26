@@ -1,28 +1,18 @@
-import {
-  computed,
-  DestroyRef,
-  effect,
-  inject,
-  Service,
-  signal,
-  untracked,
-} from '@angular/core';
+import { computed, DestroyRef, inject, Service, signal } from '@angular/core';
 import { IdentityStore } from '../../../core/auth/identity';
 import { errorMessage } from '../../../core/http/http-error.interceptor';
-import { AppState } from '../../../core/state/app-state';
 import { languageNameFor } from '../../../core/utils/language-codes';
-import { sanitizeAvatarUrl } from '../../../core/utils/safe-url';
 import {
-  BackendReaction,
-  BackendRoomRole,
   emojiForReaction,
-  ParticipantPreview,
-  RoomJoinSnapshot,
-  RoomRealtimeEvent,
-  RoomSessionDto,
-  RoomSnapshotDto,
-  StageDto,
-  VoiceRoomDto,
+  isBackendReaction,
+  type BackendRoomRole,
+  type ParticipantPreview,
+  type RoomJoinSnapshot,
+  type RoomRealtimeEvent,
+  type RoomSessionDto,
+  type RoomSnapshotDto,
+  type StageDto,
+  type VoiceRoomDto,
 } from '../../../shared/models/voice-room.model';
 import { avatarChipClassFor } from '../../../shared/utils/avatar-chip.utils';
 import {
@@ -30,17 +20,12 @@ import {
   DEFAULT_MAX_STAGE_SEATS,
 } from '../constants/room.constants';
 import { LiveKitAudioEngine } from '../data-access/livekit-audio-engine';
-import { AudienceResourceTrigger, VoiceRoomApi } from '../data-access/voice-room-api';
-import { RoomListener, RoomSpeaker } from '../models/live-room.model';
+import { VoiceRoomApi } from '../data-access/voice-room-api';
+import type { RoomListener, RoomSpeaker } from '../models/live-room.model';
 
 export interface ActionFeedback {
   readonly ok: boolean;
   readonly message?: string;
-}
-
-interface AudienceLoadRequest extends AudienceResourceTrigger {
-  readonly generation: number;
-  readonly onResult?: (feedback: ActionFeedback) => void;
 }
 
 @Service()
@@ -48,24 +33,24 @@ export class RoomStageStore {
   private readonly destroyRef = inject(DestroyRef);
   private readonly voiceRoomApi = inject(VoiceRoomApi);
   private readonly identity = inject(IdentityStore);
-  private readonly appState = inject(AppState);
   private readonly audio = inject(LiveKitAudioEngine);
 
   private sessionGeneration = 0;
   private lastStageEventAt = 0;
-  private audienceSeq = 0;
   private reactionTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  private readonly audienceRequest = signal<AudienceLoadRequest | null>(null);
-  private readonly audienceRes = this.voiceRoomApi.audienceResource(
-    () => this.audienceRequest() ?? undefined,
-  );
 
   private readonly roomState = signal<VoiceRoomDto | null>(null);
   private readonly roleState = signal<BackendRoomRole>('LISTENER');
-  private readonly roomProfilesState = signal<ReadonlyMap<string, ParticipantPreview>>(new Map());
   private readonly audienceCursor = signal<string | null>(null);
   private readonly audienceLimit = signal(AUDIENCE_INITIAL_LIMIT);
+
+  private readonly stageState = signal<StageDto>({ speakers: [], handRaiseQueue: [] });
+  private readonly audienceIdsState = signal<readonly string[]>([]);
+  private readonly audienceCountState = signal(0);
+  private readonly hasMoreAudienceState = signal(false);
+  private readonly audienceLoadingState = signal(false);
+  private readonly stageReactionState = signal<string | null>(null);
+  private readonly stageReactionKeyState = signal(0);
 
   readonly room = this.roomState.asReadonly();
   readonly roomId = computed(() => this.room()?.id ?? null);
@@ -73,13 +58,13 @@ export class RoomStageStore {
   readonly isHost = computed(() => this.roleState() === 'HOST');
   readonly isCurrentUserOnStage = computed(() => this.roleState() !== 'LISTENER');
 
-  readonly stage = signal<StageDto>({ speakers: [], handRaiseQueue: [] });
-  readonly audienceIds = signal<readonly string[]>([]);
-  readonly audienceCount = signal(0);
-  readonly hasMoreAudience = signal(false);
-  readonly audienceLoading = this.audienceRes.isLoading;
-  readonly stageReaction = signal<string | null>(null);
-  readonly stageReactionKey = signal(0);
+  readonly stage = this.stageState.asReadonly();
+  readonly audienceIds = this.audienceIdsState.asReadonly();
+  readonly audienceCount = this.audienceCountState.asReadonly();
+  readonly hasMoreAudience = this.hasMoreAudienceState.asReadonly();
+  readonly audienceLoading = this.audienceLoadingState.asReadonly();
+  readonly stageReaction = this.stageReactionState.asReadonly();
+  readonly stageReactionKey = this.stageReactionKeyState.asReadonly();
 
   readonly effectiveRoomTitle = computed(() => this.room()?.title || 'Live room');
   readonly effectiveMaxSeats = computed(
@@ -89,7 +74,9 @@ export class RoomStageStore {
 
   readonly hostName = computed(() => {
     const hostId = this.room()?.hostId;
-    return hostId ? this.resolveDisplayName(hostId, 'Host') : this.appState.profile().name;
+    return hostId
+      ? this.resolveDisplayName(hostId, 'Host')
+      : (this.identity.me()?.displayName ?? 'Speaker');
   });
 
   readonly speakers = computed<readonly RoomSpeaker[]>(() => {
@@ -98,13 +85,13 @@ export class RoomStageStore {
     const activeIds = new Set(this.audio.speakingIds());
     const mutedIds = new Set(this.audio.mutedIds());
     return this.stage().speakers.map((userId) => {
-      const summary = this.profileFor(userId);
+      const summary = this.identity.userDirectory().get(userId);
       const isYou = userId === myId;
       const name = this.resolveDisplayName(userId, 'Speaker');
       const muted = isYou ? !this.audio.micOn() : mutedIds.has(userId);
       return {
         id: userId,
-        avatarUrl: sanitizeAvatarUrl(summary?.avatarUrl),
+        avatarUrl: summary?.avatarUrl ?? null,
         name,
         initial: (name.trim()[0] ?? 'S').toUpperCase(),
         chipClass: avatarChipClassFor(userId),
@@ -125,7 +112,7 @@ export class RoomStageStore {
         const name = this.resolveDisplayName(userId, 'Listener');
         return {
           id: userId,
-          avatarUrl: sanitizeAvatarUrl(this.profileFor(userId)?.avatarUrl),
+          avatarUrl: this.identity.userDirectory().get(userId)?.avatarUrl ?? null,
           name,
           initial: (name.trim()[0] ?? 'L').toUpperCase(),
           chipClass: avatarChipClassFor(userId),
@@ -136,11 +123,10 @@ export class RoomStageStore {
 
   readonly pendingRequests = computed(() =>
     this.stage().handRaiseQueue.map((userId) => {
-      const profile = this.profileFor(userId);
       const name = this.resolveDisplayName(userId, 'Listener');
       return {
         id: userId,
-        avatarUrl: sanitizeAvatarUrl(profile?.avatarUrl),
+        avatarUrl: this.identity.userDirectory().get(userId)?.avatarUrl ?? null,
         name,
         initial: (name.trim()[0] ?? 'L').toUpperCase(),
       };
@@ -157,43 +143,6 @@ export class RoomStageStore {
   );
 
   constructor() {
-    effect(() => {
-      const req = this.audienceRequest();
-      if (!req) return;
-      const status = this.audienceRes.status();
-      if (status === 'resolved' && this.audienceRes.hasValue()) {
-        const page = this.audienceRes.value();
-        untracked(() => {
-          this.audienceRequest.set(null);
-          if (req.generation !== this.sessionGeneration || this.audienceCursor() !== req.cursor) {
-            req.onResult?.({ ok: true });
-            return;
-          }
-          this.cachePreviews(page.audiencePreview);
-          this.audienceIds.update((ids) => {
-            const existing = new Set(ids);
-            const additions = page.audiencePreview
-              .map(({ userId }) => userId)
-              .filter((userId) => !existing.has(userId));
-            return [...ids, ...additions];
-          });
-          this.audienceCursor.set(page.nextCursor);
-          this.hasMoreAudience.set(page.hasMoreAudience);
-          this.audienceLimit.update((limit) => Math.max(limit, this.audienceIds().length));
-          req.onResult?.({ ok: true });
-        });
-      } else if (status === 'error') {
-        const err = this.audienceRes.error();
-        untracked(() => {
-          this.audienceRequest.set(null);
-          req.onResult?.({
-            ok: false,
-            message: errorMessage(err, 'Could not load more listeners.'),
-          });
-        });
-      }
-    });
-
     this.destroyRef.onDestroy(() => this.clearReactionTimer());
   }
 
@@ -207,14 +156,14 @@ export class RoomStageStore {
 
   resolveDisplayName(userId: string, fallback: string): string {
     return (
-      this.profileFor(userId)?.displayName ??
-      (userId === this.currentUserId() ? this.appState.profile().name : fallback)
+      this.identity.userDirectory().get(userId)?.displayName ??
+      (userId === this.currentUserId() ? (this.identity.me()?.displayName ?? fallback) : fallback)
     );
   }
 
   resolveMissingUsers(ids: readonly string[]): void {
-    const profiles = this.roomProfilesState();
-    const missing = ids.filter((id) => !profiles.get(id)?.displayName);
+    const directory = this.identity.userDirectory();
+    const missing = ids.filter((id) => !directory.get(id)?.displayName);
     if (missing.length > 0) {
       void this.identity.resolveUsers(missing);
     }
@@ -239,12 +188,12 @@ export class RoomStageStore {
   applySessionStart(session: RoomSessionDto): void {
     this.roleState.set(session.role);
     this.roomState.set(session.room);
-    this.stage.set({ speakers: session.room.speakers, handRaiseQueue: [] });
+    this.stageState.set({ speakers: session.room.speakers, handRaiseQueue: [] });
   }
 
   applyJoinSnapshot(snapshot: RoomJoinSnapshot): void {
     this.cachePreviews([...snapshot.speakers, ...snapshot.audience.audiencePreview]);
-    this.stage.set({
+    this.stageState.set({
       speakers: snapshot.speakers.map(({ userId }) => userId),
       handRaiseQueue: snapshot.handRaiseQueue,
     });
@@ -263,7 +212,7 @@ export class RoomStageStore {
     }
     this.cachePreviews([...res.snapshot.speakers, ...res.snapshot.audience.audiencePreview]);
     if (this.stage() === before.stage) {
-      this.stage.set({
+      this.stageState.set({
         speakers: res.snapshot.speakers.map(({ userId }) => userId),
         handRaiseQueue: res.snapshot.handRaiseQueue,
       });
@@ -274,31 +223,46 @@ export class RoomStageStore {
   }
 
   patchRoom(updated: Pick<VoiceRoomDto, 'title' | 'topic' | 'maxStageSeats'>): void {
-    this.roomState.update(
-      (room) =>
-        room && {
-          ...room,
-          title: updated.title,
-          topic: updated.topic,
-          maxStageSeats: updated.maxStageSeats,
-        },
+    this.roomState.update((room): VoiceRoomDto | null =>
+      room
+        ? {
+            ...room,
+            title: updated.title,
+            topic: updated.topic,
+            maxStageSeats: updated.maxStageSeats,
+          }
+        : null,
     );
   }
 
-  loadMoreAudience(onResult?: (feedback: ActionFeedback) => void): void {
+  async loadMoreAudience(): Promise<ActionFeedback> {
     const roomId = this.roomId();
     const cursor = this.audienceCursor();
-    if (!roomId || !this.hasMoreAudience() || this.audienceRequest() !== null) {
-      onResult?.({ ok: true });
-      return;
+    if (!roomId || !this.hasMoreAudience() || this.audienceLoading()) return { ok: true };
+    const generation = this.sessionGeneration;
+    this.audienceLoadingState.set(true);
+    try {
+      const page = await this.voiceRoomApi.getAudience(roomId, cursor);
+      if (generation !== this.sessionGeneration || this.audienceCursor() !== cursor) {
+        return { ok: true };
+      }
+      this.cachePreviews(page.audiencePreview);
+      this.audienceIdsState.update((ids): readonly string[] => {
+        const existing = new Set(ids);
+        return [
+          ...ids,
+          ...page.audiencePreview.map(({ userId }) => userId).filter((id) => !existing.has(id)),
+        ];
+      });
+      this.audienceCursor.set(page.nextCursor);
+      this.hasMoreAudienceState.set(page.hasMoreAudience);
+      this.audienceLimit.update((limit): number => Math.max(limit, this.audienceIds().length));
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, message: errorMessage(err, 'Could not load more listeners.') };
+    } finally {
+      if (generation === this.sessionGeneration) this.audienceLoadingState.set(false);
     }
-    this.audienceRequest.set({
-      roomId,
-      cursor,
-      seq: ++this.audienceSeq,
-      generation: this.sessionGeneration,
-      onResult,
-    });
   }
 
   async claimStageSeat(): Promise<ActionFeedback> {
@@ -311,7 +275,7 @@ export class RoomStageStore {
       if (generation !== this.sessionGeneration) return { ok: false };
       if (this.stage() === stage) {
         this.roleState.set(session.role);
-        this.stage.set({
+        this.stageState.set({
           speakers: session.room.speakers,
           handRaiseQueue: stage.handRaiseQueue.filter((userId) => userId !== this.currentUserId()),
         });
@@ -349,181 +313,142 @@ export class RoomStageStore {
     );
   }
 
-  promoteToStage(targetUserId: string): Promise<ActionFeedback> {
-    return this.runRoomCommand(
-      (id) => this.voiceRoomApi.promoteSpeaker(id, targetUserId),
-      'Could not promote to stage.',
-    );
-  }
-
-  demoteToAudience(targetUserId: string): Promise<ActionFeedback> {
-    return this.runRoomCommand(
-      (id) => this.voiceRoomApi.demoteSpeaker(id, targetUserId),
-      'Could not move speaker to audience.',
-    );
-  }
-
-  remoteMuteSpeaker(targetUserId: string): Promise<ActionFeedback> {
-    return this.runRoomCommand(
-      (id) => this.voiceRoomApi.muteSpeaker(id, targetUserId),
-      'Could not mute speaker.',
-    );
-  }
-
-  removeParticipant(targetUserId: string): Promise<ActionFeedback> {
-    return this.runRoomCommand(
-      (id) => this.voiceRoomApi.kickParticipant(id, targetUserId),
-      'Could not remove participant.',
-    );
-  }
-
-  transferHost(targetUserId: string): Promise<ActionFeedback> {
-    return this.runRoomCommand(
-      (id) => this.voiceRoomApi.transferHost(id, targetUserId),
-      'Could not transfer host role.',
-    );
-  }
-
-  triggerStageReaction(reaction: BackendReaction): Promise<ActionFeedback> {
-    return this.runRoomCommand(
-      (id) => this.voiceRoomApi.sendReaction(id, reaction),
-      'Could not send reaction.',
-    );
-  }
-
   applyRoomRealtimeEvent(event: RoomRealtimeEvent): void {
     switch (event.type) {
       case 'STAGE_UPDATED':
       case 'HAND_RAISED':
-      case 'HAND_LOWERED':
-        if (event.at >= this.lastStageEventAt) {
-          this.lastStageEventAt = event.at;
-          this.stage.set(event.stage);
-          if (!this.isHost()) {
-            this.roleState.set(
-              event.stage.speakers.includes(this.currentUserId()) ? 'SPEAKER' : 'LISTENER',
-            );
-          }
-          this.roomState.update(
-            (room) => room && { ...room, handRaiseCount: event.stage.handRaiseQueue.length },
+      case 'HAND_LOWERED': {
+        const nextStage = event.stage;
+        if (!nextStage) return;
+        const at = event.timestamp ? Date.parse(event.timestamp) : NaN;
+        if (Number.isFinite(at) && at < this.lastStageEventAt) return;
+        if (Number.isFinite(at)) this.lastStageEventAt = at;
+        this.stageState.set(nextStage);
+        if (!this.isHost()) {
+          this.roleState.set(
+            nextStage.speakers.includes(this.currentUserId()) ? 'SPEAKER' : 'LISTENER',
           );
-          this.resolveMissingUsers([...event.stage.speakers, ...event.stage.handRaiseQueue]);
         }
-        return;
-      case 'SPEAKER_RECONNECTING':
-      case 'SPEAKER_RECONNECTED':
-        this.roomProfilesState.update((profiles) => {
-          const current = profiles.get(event.userId);
-          return current
-            ? new Map(profiles).set(event.userId, {
-                ...current,
-                isReconnecting: event.type === 'SPEAKER_RECONNECTING',
-              })
-            : profiles;
-        });
-        return;
-      case 'PRESENCE_CHANGED': {
-        const speakers = new Set(this.stage().speakers);
-        if (event.audienceCount !== undefined) this.audienceCount.set(event.audienceCount);
-        this.roomState.update((curr) =>
-          curr ? { ...curr, participantCount: event.participantCount } : curr,
+        this.roomState.update((room): VoiceRoomDto | null =>
+          room ? { ...room, handRaiseCount: nextStage.handRaiseQueue.length } : null,
         );
-        const leftSet = new Set(event.left);
+        this.resolveMissingUsers([...nextStage.speakers, ...nextStage.handRaiseQueue]);
+        return;
+      }
+      case 'PRESENCE_CHANGED': {
+        const presence = event.presence;
+        if (!presence) return;
+        const speakers = new Set(this.stage().speakers);
+        if (presence.audienceCount !== undefined) this.audienceCountState.set(presence.audienceCount);
+        this.roomState.update((curr): VoiceRoomDto | null =>
+          curr ? { ...curr, participantCount: presence.participantCount } : curr,
+        );
+        const leftSet = new Set(presence.left);
         const kept = this.audienceIds().filter((uid) => !leftSet.has(uid) && !speakers.has(uid));
         const existingIds = new Set(kept);
-        const additions = event.joined.filter(
+        const additions = presence.joined.filter(
           (uid) => !existingIds.has(uid) && !speakers.has(uid),
         );
         const nextAudience = [...kept, ...additions].slice(0, this.audienceLimit());
-        this.audienceIds.set(nextAudience);
+        this.audienceIdsState.set(nextAudience);
         const addedVisible = nextAudience.slice(kept.length);
         if (addedVisible.length > 0) this.resolveMissingUsers(addedVisible);
         return;
       }
-      case 'ROOM_UPDATED':
-        if (event.hostId === this.currentUserId()) this.roleState.set('HOST');
-        else if (event.hostId && this.isHost()) {
+      case 'ROOM_UPDATED': {
+        const settings = event.settings;
+        if (!settings) return;
+        if (settings.hostId === this.currentUserId()) this.roleState.set('HOST');
+        else if (settings.hostId && this.isHost()) {
           this.roleState.set(
             this.stage().speakers.includes(this.currentUserId()) ? 'SPEAKER' : 'LISTENER',
           );
         }
-        this.roomState.update((curr) =>
+        this.roomState.update((curr): VoiceRoomDto | null =>
           curr
             ? {
                 ...curr,
-                title: event.title,
-                topic: event.topic,
-                maxStageSeats: event.maxStageSeats,
-                ...(event.hostId ? { hostId: event.hostId } : {}),
+                title: settings.title,
+                topic: settings.topic ?? '',
+                maxStageSeats: settings.maxStageSeats,
+                ...(settings.hostId ? { hostId: settings.hostId } : {}),
               }
             : curr,
         );
         return;
+      }
       case 'REACTIONS': {
-        const latest = event.reactions[event.reactions.length - 1];
-        if (latest) this.flashStageReaction(emojiForReaction(latest.reaction));
+        const latest = event.reactions?.at(-1);
+        if (latest && isBackendReaction(latest.reaction)) {
+          this.flashStageReaction(emojiForReaction(latest.reaction));
+        }
         return;
       }
       case 'PARTICIPANT_PROFILE_UPDATED':
-        this.identity.updateCachedAvatar(event.userId, event.avatarUrl);
-        this.roomProfilesState.update((profiles) => {
-          const current = profiles.get(event.userId);
-          return current
-            ? new Map(profiles).set(event.userId, { ...current, avatarUrl: event.avatarUrl })
-            : profiles;
-        });
+        if (event.profileUpdate) {
+          this.identity.updateCachedAvatar(
+            event.profileUpdate.userId,
+            event.profileUpdate.avatarUrl,
+          );
+        }
         return;
-      default: {
-        const exhaustive: never = event;
-        void exhaustive;
-      }
+      case 'SPEAKER_RECONNECTING':
+      case 'SPEAKER_RECONNECTED':
+      case 'COMMENT_PINNED':
+      case 'COMMENT_UNPINNED':
+        return;
     }
   }
 
   reset(): void {
     this.sessionGeneration++;
-    this.audienceRequest.set(null);
+    this.audienceLoadingState.set(false);
     this.clearReactionTimer();
-    this.stageReaction.set(null);
+    this.stageReactionState.set(null);
     this.roleState.set('LISTENER');
     this.roomState.set(null);
-    this.audienceIds.set([]);
-    this.roomProfilesState.set(new Map());
-    this.audienceCount.set(0);
+    this.audienceIdsState.set([]);
+    this.audienceCountState.set(0);
     this.audienceCursor.set(null);
-    this.hasMoreAudience.set(false);
+    this.hasMoreAudienceState.set(false);
     this.audienceLimit.set(AUDIENCE_INITIAL_LIMIT);
-    this.stage.set({ speakers: [], handRaiseQueue: [] });
+    this.stageState.set({ speakers: [], handRaiseQueue: [] });
     this.lastStageEventAt = 0;
   }
 
-  private profileFor(userId: string) {
-    return this.identity.userDirectory().get(userId) ?? this.roomProfilesState().get(userId);
-  }
-
   private applySnapshotAudience(snapshot: RoomJoinSnapshot): void {
-    this.audienceIds.set(snapshot.audience.audiencePreview.map(({ userId }) => userId));
-    this.audienceCount.set(snapshot.audienceCount);
+    this.audienceIdsState.set(snapshot.audience.audiencePreview.map(({ userId }) => userId));
+    this.audienceCountState.set(snapshot.audienceCount);
     this.audienceCursor.set(snapshot.audience.nextCursor);
-    this.hasMoreAudience.set(snapshot.audience.hasMoreAudience);
+    this.hasMoreAudienceState.set(snapshot.audience.hasMoreAudience);
     this.audienceLimit.set(AUDIENCE_INITIAL_LIMIT);
   }
 
   private cachePreviews(previews: readonly ParticipantPreview[]): void {
-    this.roomProfilesState.update(
-      (existing) =>
-        new Map([
-          ...existing,
-          ...previews.map((preview) => [preview.userId, preview] as const),
-        ]),
-    );
+    const existing = this.identity.userDirectory();
+    const summaries = previews
+      .filter((preview): preview is ParticipantPreview & { readonly displayName: string } =>
+        Boolean(preview.displayName),
+      )
+      .map((preview) => {
+        const prev = existing.get(preview.userId);
+        return {
+          id: preview.userId,
+          username: prev?.username ?? '',
+          displayName: preview.displayName,
+          avatarUrl: preview.avatarUrl ?? prev?.avatarUrl ?? null,
+          countryCode: prev?.countryCode ?? null,
+          nativeLanguage: preview.nativeLanguage ?? prev?.nativeLanguage ?? 'en',
+        };
+      });
+    this.identity.mergeUserSummaries(summaries);
   }
 
   private flashStageReaction(emoji: string): void {
-    this.stageReaction.set(emoji);
-    this.stageReactionKey.update((k) => k + 1);
+    this.stageReactionState.set(emoji);
+    this.stageReactionKeyState.update((k): number => k + 1);
     this.clearReactionTimer();
-    this.reactionTimeout = setTimeout(() => this.stageReaction.set(null), 1800);
+    this.reactionTimeout = setTimeout(() => this.stageReactionState.set(null), 1800);
   }
 
   private clearReactionTimer(): void {

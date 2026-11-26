@@ -2,10 +2,14 @@
 @let collapseText = toggleLabel();
 <div class="brand">
   <a class="brand-link" routerLink="/" aria-label="Jtalk home">
-    <picture class="brand-mark" aria-hidden="true">
-      <source srcset="brand/jtalk-mark-dark.svg" media="(prefers-color-scheme: dark)" />
-      <img src="brand/jtalk-mark.svg" alt="" width="24" height="20" />
-    </picture>
+    <img
+      class="brand-mark"
+      [src]="colorScheme() === 'dark' ? 'brand/jtalk-mark-dark.svg' : 'brand/jtalk-mark.svg'"
+      alt=""
+      width="24"
+      height="20"
+      aria-hidden="true"
+    />
     <span class="brand-name">Jtalk</span>
   </a>
   <button
@@ -155,10 +159,9 @@
   </span>
 </button>
 
-<button
+<a
   class="account"
   matRipple
-  type="button"
   routerLink="/profile"
   routerLinkActive="active"
   ariaCurrentWhenActive="page"
@@ -166,7 +169,6 @@
   [matTooltip]="name"
   matTooltipPosition="right"
   [matTooltipDisabled]="!collapsed()"
-  (click)="openProfileOverview.emit()"
 >
   <span class="avatar grad" aria-hidden="true">
     @if (avatarUrl(); as url) {
@@ -179,4 +181,4 @@
     <span class="account-name">{{ name }}</span>
     <span class="account-sub">Your account</span>
   </span>
-</button>
+</a>

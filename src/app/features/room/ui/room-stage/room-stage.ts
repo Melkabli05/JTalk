@@ -11,7 +11,6 @@ import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { DiscussionMessage, RoomSpeaker } from '../../models/live-room.model';
-import { computeSpeakerGridColumns } from '../../utils/room-logic';
 
 export type SpeakerMenuAction =
   | 'profile'
@@ -44,11 +43,10 @@ export class RoomStage {
   readonly claimSeat = output<void>();
   readonly unpinMessage = output<void>();
 
-  readonly stageColumns = computed(() =>
-    computeSpeakerGridColumns(
-      this.speakers().length + (this.hasOpenSeat() ? 1 : 0),
-    ),
-  );
+  readonly stageColumns = computed<2 | 3 | 4>(() => {
+    const slots = this.speakers().length + (this.hasOpenSeat() ? 1 : 0);
+    return slots <= 2 ? 2 : slots === 3 ? 3 : 4;
+  });
 
   canModerateTarget(speaker: RoomSpeaker): boolean {
     return this.isHost() && !speaker.isYou && speaker.role !== 'host';

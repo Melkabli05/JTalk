@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MatChipListboxChange } from '@angular/material/chips';
 import { vi } from 'vitest';
-import { LanguageFilterChip } from '../../models/room-card.model';
+import { LanguageFilterChip } from '../../constants/rooms.constants';
 import { LanguageChips } from './language-chips';
 
 describe('LanguageChips', () => {

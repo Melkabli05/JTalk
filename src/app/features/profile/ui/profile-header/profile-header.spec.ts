@@ -1,21 +1,28 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { UserProfile } from '../../../../core/models/session.model';
+import { SocialStatsResponse, UserProfileResponse } from '../../../../core/auth/auth.models';
 import { ProfileHeader } from './profile-header';
 
 describe('ProfileHeader', () => {
-  const sampleProfile: UserProfile = {
-    name: 'Jilali',
+  const sampleProfile: UserProfileResponse = {
+    id: 'u-1',
+    displayName: 'Jilali',
     username: 'jilali_dev',
-    joined: 'May 2024',
-    speak: 'Arabic',
-    learn: 'English',
-    location: 'Casablanca',
-    about: 'Practising daily.',
-    followers: 12,
-    following: 9,
-    avatar: { kind: 'own', id: 'own', bg: '#16121F', label: 'Your own picture' },
+    bio: 'Practising daily.',
+    avatarUrl: null,
+    nativeLanguage: 'ar',
+    nativeLanguages: ['ar'],
+    learningLanguages: [{ languageCode: 'en', proficiencyLevel: 'BEGINNER' }],
+    countryCode: 'MA',
+    createdAt: '2024-05-01T00:00:00Z',
+  };
+
+  const sampleStats: SocialStatsResponse = {
+    followerCount: 12,
+    followingCount: 9,
+    followedByMe: false,
+    followsMe: false,
   };
 
   beforeEach(async () => {
@@ -28,6 +35,7 @@ describe('ProfileHeader', () => {
   it('should render profile identity and emit editProfile on click', () => {
     const fixture = TestBed.createComponent(ProfileHeader);
     fixture.componentRef.setInput('profile', sampleProfile);
+    fixture.componentRef.setInput('stats', sampleStats);
     const spy = vi.fn();
     fixture.componentInstance.editProfile.subscribe(spy);
     fixture.detectChanges();

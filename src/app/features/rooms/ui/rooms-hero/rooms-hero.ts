@@ -3,7 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HeroScene } from '../../models/hero-scene.model';
-import { RoomLangFilter } from '../../models/room-card.model';
+import { RoomLangFilter } from '../../constants/rooms.constants';
 import { formatHeroStatusPill, formatHeroSubtitle } from '../../utils/hero-scene.utils';
 
 @Component({

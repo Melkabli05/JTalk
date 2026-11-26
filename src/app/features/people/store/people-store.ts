@@ -7,39 +7,32 @@ import {
   Injectable,
   linkedSignal,
   PLATFORM_ID,
+  type ResourceStatus,
   signal,
   untracked,
 } from '@angular/core';
-import { DiscoveredUserResponse, UserPageResponse } from '../../../core/auth/auth.models';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
+import type { DiscoveredUserResponse, UserPageResponse } from '../../../core/auth/auth.models';
 import { IdentityStore } from '../../../core/auth/identity';
 import { UsersApi } from '../../../core/auth/users-api';
 import { errorMessage } from '../../../core/http/http-error.interceptor';
-import { languageNameFor } from '../../../core/utils/language-codes';
-import { sanitizeAvatarUrl } from '../../../core/utils/safe-url';
-import { avatarChipClassFor } from '../../../shared/utils/avatar-chip.utils';
 import {
   PEOPLE_MATCHMAKING_PAGE_SIZE,
   PEOPLE_MIN_SEARCH_LENGTH,
   PEOPLE_SEARCH_DEBOUNCE_MS,
 } from '../constants/people.constants';
-import { PractisingPerson } from '../models/person.model';
-
-export interface FollowToggleResult {
-  readonly ok: boolean;
-  readonly followed: boolean;
-  readonly error?: string;
-}
-
-export interface BlockUserResult {
-  readonly ok: boolean;
-  readonly error?: string;
-}
 
 @Injectable()
 export class PeopleStore {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly usersApi = inject(UsersApi);
   private readonly identity = inject(IdentityStore);
+  private readonly route = inject(ActivatedRoute, { optional: true });
+
+  private readonly queryParamMap = this.route
+    ? toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap })
+    : null;
 
   private readonly cursor = linkedSignal<boolean, { afterCreatedAt: string; afterId: string } | null>({
     source: () => this.identity.isAuthenticated(),
@@ -80,7 +73,8 @@ export class PeopleStore {
   });
   private readonly pendingIds = signal<ReadonlySet<string>>(new Set());
 
-  readonly query = signal('');
+  private readonly queryState = linkedSignal<string>(() => this.queryParamMap?.().get('q') ?? '');
+  readonly query = this.queryState.asReadonly();
   private readonly normalizedQuery = computed(() => this.query().trim());
   readonly searching = computed(() => this.normalizedQuery().length >= PEOPLE_MIN_SEARCH_LENGTH);
 
@@ -103,10 +97,14 @@ export class PeopleStore {
       : undefined;
   });
 
-  readonly loading = computed(() =>
-    this.searching()
-      ? this.normalizedQuery() !== this.settledQuery() || this.search.isLoading()
-      : this.matches.isLoading(),
+  readonly status = computed<ResourceStatus>(() => {
+    if (this.searching()) {
+      return this.normalizedQuery() !== this.settledQuery() ? 'loading' : this.search.status();
+    }
+    return this.matches.status();
+  });
+  readonly loading = computed(
+    () => this.status() === 'loading' || this.status() === 'reloading',
   );
   readonly error = computed(() => {
     const err = this.searching() ? this.search.error() : this.matches.error();
@@ -119,7 +117,7 @@ export class PeopleStore {
   );
   readonly busyIds = this.pendingIds.asReadonly();
 
-  readonly people = computed<readonly PractisingPerson[]>(() => {
+  readonly people = computed<readonly DiscoveredUserResponse[]>(() => {
     const overrides = this.followOverrides();
     const blocked = this.blockedIds();
     const users = this.searching()
@@ -130,16 +128,12 @@ export class PeopleStore {
 
     return users
       .filter((u) => !blocked.has(u.id))
-      .map((u) => ({
-        id: u.id,
-        name: u.displayName,
-        username: u.username,
-        initial: (u.displayName.trim()[0] ?? u.username[0] ?? 'U').toUpperCase(),
-        chipClass: avatarChipClassFor(u.id),
-        languages: `Speaks ${languageNameFor(u.nativeLanguage)}`,
-        avatarUrl: sanitizeAvatarUrl(u.avatarUrl),
-        followedByMe: overrides.get(u.id) ?? u.followedByMe,
-      }));
+      .map((u) => {
+        const override = overrides.get(u.id);
+        return override === undefined || override === u.followedByMe
+          ? u
+          : { ...u, followedByMe: override };
+      });
   });
 
   constructor() {
@@ -149,6 +143,17 @@ export class PeopleStore {
         untracked(() => this.identity.mergeUserSummaries(content));
       }
     });
+
+    effect(() => {
+      if (this.search.hasValue()) {
+        const results = this.search.value();
+        untracked(() => this.identity.mergeUserSummaries(results));
+      }
+    });
+  }
+
+  setQuery(query: string): void {
+    this.queryState.set(query);
   }
 
   refresh(): void {
@@ -159,14 +164,16 @@ export class PeopleStore {
   }
 
   loadMore(): void {
-    if (!this.hasMore() || !this.matches.hasValue()) return;
+    if (!this.hasMore() || this.matches.isLoading() || !this.matches.hasValue()) return;
     const { nextAfterCreatedAt, nextAfterId } = this.matches.value();
     if (nextAfterCreatedAt && nextAfterId) {
       this.cursor.set({ afterCreatedAt: nextAfterCreatedAt, afterId: nextAfterId });
     }
   }
 
-  async toggleFollow(person: PractisingPerson): Promise<FollowToggleResult> {
+  async toggleFollow(
+    person: DiscoveredUserResponse,
+  ): Promise<{ ok: boolean; followed: boolean; error?: string }> {
     if (this.pendingIds().has(person.id)) {
       return { ok: false, followed: person.followedByMe };
     }
@@ -174,7 +181,9 @@ export class PeopleStore {
     const followed = !person.followedByMe;
     try {
       await (followed ? this.usersApi.follow(person.id) : this.usersApi.unfollow(person.id));
-      this.followOverrides.update((prev) => new Map(prev).set(person.id, followed));
+      this.followOverrides.update(
+        (prev): ReadonlyMap<string, boolean> => new Map(prev).set(person.id, followed),
+      );
       this.identity.refreshSocialStats();
       return { ok: true, followed };
     } catch (err) {
@@ -188,13 +197,13 @@ export class PeopleStore {
     }
   }
 
-  async blockUser(person: PractisingPerson): Promise<BlockUserResult> {
+  async blockUser(person: DiscoveredUserResponse): Promise<{ ok: boolean; error?: string }> {
     if (this.pendingIds().has(person.id)) return { ok: false };
     this.togglePending(person.id, true);
     try {
       await this.usersApi.block(person.id);
-      this.blockedIds.update((prev) => new Set(prev).add(person.id));
-      this.followOverrides.update((prev) => {
+      this.blockedIds.update((prev): ReadonlySet<string> => new Set(prev).add(person.id));
+      this.followOverrides.update((prev): ReadonlyMap<string, boolean> => {
         const next = new Map(prev);
         next.delete(person.id);
         return next;
@@ -209,7 +218,7 @@ export class PeopleStore {
   }
 
   private togglePending(id: string, busy: boolean): void {
-    this.pendingIds.update((prev) => {
+    this.pendingIds.update((prev): ReadonlySet<string> => {
       const next = new Set(prev);
       if (busy) next.add(id);
       else next.delete(id);

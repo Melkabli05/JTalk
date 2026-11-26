@@ -1,7 +1,8 @@
 import { Component, computed, input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
-import { UserProfile } from '../../../../core/models/session.model';
+import { UserProfileResponse } from '../../../../core/auth/auth.models';
+import { languageNameFor } from '../../../../core/utils/language-codes';
 
 @Component({
   selector: 'app-profile-overview',
@@ -10,6 +11,11 @@ import { UserProfile } from '../../../../core/models/session.model';
   styleUrl: './profile-overview.scss',
 })
 export class ProfileOverview {
-  readonly profile = input.required<UserProfile>();
-  readonly trimmedBio = computed(() => this.profile().about.trim());
+  readonly profile = input<UserProfileResponse | null>(null);
+  readonly trimmedBio = computed(() => this.profile()?.bio?.trim() ?? '');
+  readonly speak = computed(() => languageNameFor(this.profile()?.nativeLanguage));
+  readonly learn = computed(() => {
+    const code = this.profile()?.learningLanguages[0]?.languageCode;
+    return code ? languageNameFor(code) : 'Not set';
+  });
 }

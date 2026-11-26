@@ -1,35 +1,26 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { LiveRoomCard } from '../../models/room-card.model';
+import { VoiceRoomDto } from '../../../../shared/models/voice-room.model';
 import { RoomCard } from './room-card';
 
 describe('RoomCard', () => {
-  const sampleRoom: LiveRoomCard = {
+  const sampleRoom: VoiceRoomDto = {
     id: 'r1',
-    hostAvatar: {
-      userId: 'host',
-      displayName: 'Host User',
-      initial: 'H',
-      avatarUrl: null,
-      chipClass: 'chip-b',
-    },
-    lang: 'fr',
-    langLabel: 'French',
-    dotClass: 'dot-nb-error',
+    hostId: 'host',
+    targetLanguage: 'fr',
+    nativeLanguage: 'en',
     title: 'Coffee in Paris',
-    description: 'Relaxed everyday conversation.',
-    avatars: [
-      {
-        userId: 'speaker',
-        displayName: 'Speaker User',
-        initial: 'S',
-        avatarUrl: null,
-        chipClass: 'chip-a',
-      },
+    topic: 'Relaxed everyday conversation.',
+    maxStageSeats: 8,
+    speakers: ['host', 'speaker'],
+    participantCount: 6,
+    handRaiseCount: 0,
+    host: { id: 'host', displayName: 'Camille', username: 'camille', avatarUrl: null },
+    speakerProfiles: [
+      { id: 'host', displayName: 'Camille', username: 'camille', avatarUrl: null },
+      { id: 'speaker', displayName: 'Nadia', username: 'nadia', avatarUrl: '/avatars/nadia.jpg' },
     ],
-    moreCount: '+4',
-    meta: '5 talking · 12 listening',
   };
 
   beforeEach(async () => {
@@ -39,7 +30,7 @@ describe('RoomCard', () => {
     }).compileComponents();
   });
 
-  it('should render room info and emit join when Join room is clicked', () => {
+  it('should render room info, embedded host/speaker avatars, and emit join when Join room is clicked', () => {
     const fixture = TestBed.createComponent(RoomCard);
     fixture.componentRef.setInput('room', sampleRoom);
     const spy = vi.fn();
@@ -47,6 +38,11 @@ describe('RoomCard', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Coffee in Paris');
+    expect(fixture.nativeElement.textContent).toContain('2 speaking · 6 participants · 8 seats');
+    expect(fixture.componentInstance.hostAvatar()?.displayName).toBe('Camille');
+    expect(fixture.componentInstance.avatars().map((a) => a.displayName)).toEqual(['Nadia']);
+    expect(fixture.nativeElement.querySelector('img[alt="Nadia"]')).toBeTruthy();
+
     const joinBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector('.join-btn');
     joinBtn?.click();
     expect(spy).toHaveBeenCalledWith(sampleRoom);

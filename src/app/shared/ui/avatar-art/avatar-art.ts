@@ -6,8 +6,10 @@ import { Component, computed, input } from '@angular/core';
   styleUrl: './avatar-art.scss',
 })
 export class AvatarArt {
-  readonly avatarId = input.required<string>();
+  readonly avatarId = input('own');
   readonly imageUrl = input<string | null>();
-  readonly presetUrl = computed(() => /^preset-(?:[1-9]|10)$/.test(this.avatarId()) ? `/avatars/${this.avatarId()}.svg` : null);
+  readonly presetUrl = computed(() =>
+    /^preset-(?:[1-9]|10)$/.test(this.avatarId()) ? `/avatars/${this.avatarId()}.svg` : null,
+  );
   readonly variant = input<'full' | 'thumb'>('full');
 }

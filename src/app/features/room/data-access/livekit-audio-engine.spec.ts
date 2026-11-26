@@ -206,4 +206,33 @@ describe('LiveKitAudioEngine', () => {
       vi.useRealTimers();
     }
   });
+
+  it('clears isMutedByHost and allows mic toggling once publish permission is restored', async () => {
+    window.sessionStorage.clear();
+    const { engine, handle, getListener } = setupMockConnector();
+    await engine.connect({ ...session, canPublishAudio: false, isMutedByHost: true });
+    expect(engine.isMutedByHost()).toBe(true);
+    expect(await engine.toggleMicrophone()).toBe(false);
+
+    getListener().onCanPublishChanged(true);
+    await vi.waitFor(() => expect(engine.micOn()).toBe(true));
+
+    expect(engine.isMutedByHost()).toBe(false);
+    expect(engine.canPublish()).toBe(true);
+    expect(handle.setMicrophone).toHaveBeenCalledWith(true);
+    expect(await engine.toggleMicrophone()).toBe(true);
+    expect(engine.micOn()).toBe(false);
+  });
+
+  it('honors explicit backend isSelfMuted=false over stale sessionStorage mute state', async () => {
+    window.sessionStorage.clear();
+    const { engine, handle } = setupMockConnector();
+    await engine.connect(session);
+    await engine.setMicrophone(false);
+    vi.mocked(handle.setMicrophone).mockClear();
+
+    await engine.connect({ ...session, canPublishAudio: true, isSelfMuted: false });
+    expect(handle.setMicrophone).toHaveBeenCalledWith(true);
+    expect(engine.micOn()).toBe(true);
+  });
 });

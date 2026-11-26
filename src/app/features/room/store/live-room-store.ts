@@ -2,46 +2,42 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   computed,
   DestroyRef,
-  effect,
   inject,
+  linkedSignal,
   PLATFORM_ID,
   Service,
   signal,
-  untracked,
 } from '@angular/core';
 import { IdentityStore } from '../../../core/auth/identity';
 import { errorMessage } from '../../../core/http/http-error.interceptor';
-import { AppState } from '../../../core/state/app-state';
-import {
+import { BrowserStorage } from '../../../core/services/browser-storage';
+import { ACTIVE_ROOM_STORAGE_KEY } from '../../../shared/constants/storage-keys.constants';
+import type {
   RoomJoinSnapshot,
-  StageDto,
   UpdateVoiceRoomPayload,
-  VoiceRoomDto,
 } from '../../../shared/models/voice-room.model';
 import { RoomsApi } from '../../rooms/data-access/rooms-api';
-import { LiveKitAudioEngine, NetworkModeChange } from '../data-access/livekit-audio-engine';
-import { RoomResourceTrigger, VoiceRoomApi } from '../data-access/voice-room-api';
+import { LiveKitAudioEngine, type NetworkModeChange } from '../data-access/livekit-audio-engine';
+import { VoiceRoomApi } from '../data-access/voice-room-api';
 import { RoomChatStore } from './room-chat-store';
-import { ActionFeedback, RoomStageStore } from './room-stage-store';
+import { type ActionFeedback, RoomStageStore } from './room-stage-store';
 
 export type { ActionFeedback };
 
-interface SnapshotLoadRequest extends RoomResourceTrigger {
-  readonly generation: number;
-  readonly roomBefore: VoiceRoomDto;
-  readonly stageBefore: StageDto;
-  readonly audienceBefore: readonly string[];
-  readonly chatRevisionBefore: number;
-}
+export type RoomConnectionState =
+  | { readonly status: 'idle' }
+  | { readonly status: 'joining'; readonly roomId: string }
+  | { readonly status: 'connected'; readonly roomId: string }
+  | { readonly status: 'error'; readonly message: string };
 
 @Service()
 export class LiveRoomStore {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly storage = inject(BrowserStorage);
   private readonly roomsApi = inject(RoomsApi);
   private readonly voiceRoomApi = inject(VoiceRoomApi);
   private readonly identity = inject(IdentityStore);
-  private readonly appState = inject(AppState);
 
   readonly stage = inject(RoomStageStore);
   readonly chat = inject(RoomChatStore);
@@ -50,61 +46,52 @@ export class LiveRoomStore {
   private unbindAudioEvents: (() => void) | null = null;
   private networkModeQueue: NetworkModeChange[] = [];
   private flushingNetworkMode = false;
-  private snapshotSeq = 0;
   private signingOut = false;
   private transitionQueue: Promise<void> = Promise.resolve();
+  private readonly snapshotLoading = signal(false);
 
-  private readonly snapshotRequest = signal<SnapshotLoadRequest | null>(null);
-  private readonly snapshotRes = this.voiceRoomApi.snapshotResource(
-    () => this.snapshotRequest() ?? undefined,
-  );
+  private readonly rememberedRoom = linkedSignal<boolean, string | null>({
+    source: () => this.identity.isAuthenticated(),
+    computation: (signedIn, previous) =>
+      signedIn ? (previous?.value ?? this.readStoredActiveRoomId()) : null,
+  });
+  readonly resumeRoomId = this.rememberedRoom.asReadonly();
 
-  // Shell-facing session references & genuine cross-store aggregations
+  private readonly focusStageTickState = signal(0);
+  readonly focusStageTick = this.focusStageTickState.asReadonly();
+
+  private readonly connectionStateSignal = signal<RoomConnectionState>({ status: 'idle' });
+  readonly connectionState = this.connectionStateSignal.asReadonly();
+
   readonly room = this.stage.room;
   readonly roomId = this.stage.roomId;
   readonly practiseLangLabel = this.stage.practiseLangLabel;
-  readonly roomLoading = signal(false);
-  readonly roomError = signal<string | null>(null);
+  readonly roomLoading = computed(() => this.connectionStateSignal().status === 'joining');
+  readonly roomError = computed<string | null>(() => {
+    const state = this.connectionStateSignal();
+    return state.status === 'error' ? state.message : null;
+  });
   readonly muted = computed(() => !this.audio.micOn());
   readonly effectiveRoomTopic = computed(
     () => this.chat.pinnedTopic() || this.stage.room()?.topic || '',
   );
-  readonly messagesLoading = computed(
-    () => this.snapshotRes.isLoading() || this.chat.loading(),
-  );
+  readonly messagesLoading = computed(() => this.snapshotLoading() || this.chat.loading());
 
   constructor() {
-    effect(() => {
-      const req = this.snapshotRequest();
-      if (!req) return;
-      const status = this.snapshotRes.status();
-      if (status === 'resolved' && this.snapshotRes.hasValue()) {
-        const res = this.snapshotRes.value();
-        untracked(() => {
-          this.snapshotRequest.set(null);
-          if (req.generation !== this.stage.generation()) return;
-          this.stage.applyResyncSnapshot(res, {
-            room: req.roomBefore,
-            stage: req.stageBefore,
-            audience: req.audienceBefore,
-          });
-          if (this.chat.revision() === req.chatRevisionBefore) {
-            this.chat.applyChatState(res.snapshot.chat);
-          } else {
-            this.chat.reloadMessages();
-          }
-        });
-      } else if (status === 'error') {
-        untracked(() => {
-          this.snapshotRequest.set(null);
-          if (req.generation === this.stage.generation()) {
-            this.chat.chatError.set(true);
-          }
-        });
-      }
-    });
-
     this.destroyRef.onDestroy(() => this.teardownAudioEvents());
+  }
+
+  rememberRoom(roomId: string | null): void {
+    this.rememberedRoom.set(roomId);
+    if (roomId) {
+      this.storage.setString('session', ACTIVE_ROOM_STORAGE_KEY, roomId);
+    } else {
+      this.storage.remove('session', ACTIVE_ROOM_STORAGE_KEY);
+    }
+  }
+
+  triggerStageFocus(): void {
+    this.focusStageTickState.update((n): number => n + 1);
   }
 
   enterRoom(roomId: string): Promise<boolean> {
@@ -137,7 +124,7 @@ export class LiveRoomStore {
       const session = await this.voiceRoomApi.join(id);
       if (generation !== this.stage.generation()) return { ok: false };
       if (session.isChatMuted !== undefined && chatRevision === this.chat.revision()) {
-        this.chat.isChatMuted.set(session.isChatMuted);
+        this.chat.setChatMuted(session.isChatMuted);
       }
       const snapshot =
         chatRevision === this.chat.revision() &&
@@ -151,7 +138,10 @@ export class LiveRoomStore {
       }
       const connected = await this.audio.connect(session);
       if (generation !== this.stage.generation()) return { ok: false };
-      if (connected && !snapshot) this.resyncRoomSnapshot(id);
+      if (connected) {
+        this.connectionStateSignal.set({ status: 'connected', roomId: id });
+        if (!snapshot) void this.resyncRoomSnapshot(id);
+      }
       return connected
         ? { ok: true }
         : { ok: false, message: 'Could not reconnect audio stream.' };
@@ -170,7 +160,7 @@ export class LiveRoomStore {
       this.teardownAudioEvents();
       const disconnected = this.audio.disconnect();
       this.resetAll();
-      this.appState.rememberRoom(null);
+      this.rememberRoom(null);
       await disconnected;
       return { ok: true };
     } catch (err) {
@@ -220,13 +210,15 @@ export class LiveRoomStore {
     if (this.roomId() && this.roomId() !== roomId) {
       const left = await this.exitRoom();
       if (!left.ok) {
-        this.roomError.set(left.message ?? 'Could not leave the previous room.');
+        this.connectionStateSignal.set({
+          status: 'error',
+          message: left.message ?? 'Could not leave the previous room.',
+        });
         return false;
       }
     }
 
-    this.roomLoading.set(true);
-    this.roomError.set(null);
+    this.connectionStateSignal.set({ status: 'joining', roomId });
     this.teardownAudioEvents();
     const generation = this.stage.bumpGeneration();
 
@@ -234,30 +226,41 @@ export class LiveRoomStore {
       const session = await this.voiceRoomApi.join(roomId);
       if (generation !== this.stage.generation()) return false;
       this.stage.applySessionStart(session);
-      if (session.isChatMuted !== undefined) this.chat.isChatMuted.set(session.isChatMuted);
+      if (session.isChatMuted !== undefined) this.chat.setChatMuted(session.isChatMuted);
       if (session.snapshot) this.applyJoinSnapshot(session.snapshot);
-      this.appState.rememberRoom(session.room.id);
+      this.rememberRoom(session.room.id);
       this.bindRealtimeStreams(session.room.id);
-      if (!session.snapshot) this.resyncRoomSnapshot(session.room.id);
+      if (!session.snapshot) void this.resyncRoomSnapshot(session.room.id);
 
       const connected = await this.audio.connect(session);
       if (generation !== this.stage.generation()) return false;
-      if (!connected) {
-        this.roomError.set(
-          'Connected to room, but LiveKit audio could not start. Tap Retry audio.',
-        );
+      if (connected) {
+        this.connectionStateSignal.set({ status: 'connected', roomId: session.room.id });
+      } else {
+        this.connectionStateSignal.set({
+          status: 'error',
+          message: 'Connected to room, but LiveKit audio could not start. Tap Retry audio.',
+        });
       }
       return true;
     } catch (err) {
       if (generation === this.stage.generation()) {
         this.teardownAudioEvents();
         this.resetAll();
-        this.appState.rememberRoom(null);
-        this.roomError.set(errorMessage(err, 'Could not join this voice room.'));
+        this.rememberRoom(null);
+        this.connectionStateSignal.set({
+          status: 'error',
+          message: errorMessage(err, 'Could not join this voice room.'),
+        });
       }
       return false;
     } finally {
-      this.roomLoading.set(false);
+      if (
+        generation === this.stage.generation() &&
+        this.connectionStateSignal().status === 'joining'
+      ) {
+        this.connectionStateSignal.set({ status: 'idle' });
+      }
     }
   }
 
@@ -266,7 +269,7 @@ export class LiveRoomStore {
     this.teardownAudioEvents();
     const disconnected = this.audio.disconnect();
     this.resetAll();
-    this.appState.rememberRoom(null);
+    this.rememberRoom(null);
     await disconnected;
     if (!id) return { ok: true };
     try {
@@ -288,19 +291,34 @@ export class LiveRoomStore {
     this.chat.applyChatState(snapshot.chat);
   }
 
-  private resyncRoomSnapshot(roomId: string): void {
-    const currentRoom = this.room();
-    if (currentRoom?.id !== roomId) return;
-    this.chat.chatError.set(false);
-    this.snapshotRequest.set({
-      roomId,
-      seq: ++this.snapshotSeq,
-      generation: this.stage.generation(),
-      roomBefore: currentRoom,
-      stageBefore: this.stage.stage(),
-      audienceBefore: this.stage.audienceIds(),
-      chatRevisionBefore: this.chat.revision(),
-    });
+  private async resyncRoomSnapshot(roomId: string): Promise<void> {
+    const roomBefore = this.room();
+    if (roomBefore?.id !== roomId) return;
+    const generation = this.stage.generation();
+    const stageBefore = this.stage.stage();
+    const audienceBefore = this.stage.audienceIds();
+    const chatRevisionBefore = this.chat.revision();
+
+    this.chat.setChatError(false);
+    this.snapshotLoading.set(true);
+    try {
+      const res = await this.voiceRoomApi.getSnapshot(roomId);
+      if (generation !== this.stage.generation()) return;
+      this.stage.applyResyncSnapshot(res, {
+        room: roomBefore,
+        stage: stageBefore,
+        audience: audienceBefore,
+      });
+      if (this.chat.revision() === chatRevisionBefore) {
+        this.chat.applyChatState(res.snapshot.chat);
+      } else {
+        void this.chat.reloadMessages();
+      }
+    } catch {
+      if (generation === this.stage.generation()) this.chat.setChatError(true);
+    } finally {
+      if (generation === this.stage.generation()) this.snapshotLoading.set(false);
+    }
   }
 
   private bindRealtimeStreams(roomId: string): void {
@@ -310,10 +328,10 @@ export class LiveRoomStore {
       onRoomEnded: (message) => {
         this.teardownAudioEvents();
         this.resetAll();
-        this.appState.rememberRoom(null);
-        this.roomError.set(message);
+        this.rememberRoom(null);
+        this.connectionStateSignal.set({ status: 'error', message });
       },
-      onReconnected: () => this.resyncRoomSnapshot(roomId),
+      onReconnected: () => void this.resyncRoomSnapshot(roomId),
       onRoomEvent: (event) => this.stage.applyRoomRealtimeEvent(event),
       onChatEvent: (event) => this.chat.applyChatRealtimeEvent(event),
       onNetworkModeChange: (change) => {
@@ -330,8 +348,10 @@ export class LiveRoomStore {
     if (this.flushingNetworkMode) return;
     this.flushingNetworkMode = true;
     try {
-      while (this.networkModeQueue.length > 0 && generation === this.stage.generation()) {
-        const { mode, primarySids, secondarySids } = this.networkModeQueue.shift()!;
+      while (generation === this.stage.generation()) {
+        const next = this.networkModeQueue.shift();
+        if (!next) break;
+        const { mode, primarySids, secondarySids } = next;
         try {
           await this.voiceRoomApi.updateNetworkMode(roomId, mode, secondarySids, primarySids);
         } catch {
@@ -350,9 +370,13 @@ export class LiveRoomStore {
   }
 
   private resetAll(): void {
-    this.snapshotRequest.set(null);
-    this.roomError.set(null);
+    this.snapshotLoading.set(false);
+    this.connectionStateSignal.set({ status: 'idle' });
     this.stage.reset();
     this.chat.reset();
+  }
+
+  private readStoredActiveRoomId(): string | null {
+    return this.storage.getString('session', ACTIVE_ROOM_STORAGE_KEY);
   }
 }

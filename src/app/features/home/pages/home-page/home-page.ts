@@ -11,10 +11,14 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { IdentityStore } from '../../../../core/auth/identity';
+import { PwaService } from '../../../../core/services/pwa';
 import { RoomLauncher } from '../../../../core/services/room-launcher';
-import { LiveRoomCard } from '../../../rooms/models/room-card.model';
+import { ThemeService } from '../../../../core/services/theme';
+import { languageLabelFor } from '../../../../core/utils/language-codes';
+import { VoiceRoomDto } from '../../../../shared/models/voice-room.model';
 import { RoomsStore } from '../../../rooms/store/rooms-store';
 import {
   EASE_EDITORIAL,
@@ -22,16 +26,25 @@ import {
   GREETING_INTERVAL_MS,
   ROOM_CYCLE_INTERVAL_MS,
 } from '../../constants/home.constants';
-import {
-  formatEditorialIndex,
-  formatLiveRoomsSummary,
-  HOME_GREETINGS,
-  nextCyclicIndex,
-} from '../../utils/home-greetings';
+
+interface HomeGreeting {
+  readonly text: string;
+  readonly lang: string;
+  readonly dir?: 'ltr' | 'rtl';
+}
+
+const HOME_GREETINGS: readonly [HomeGreeting, ...HomeGreeting[]] = [
+  { text: 'Hola', lang: 'es', dir: 'ltr' },
+  { text: 'Hello', lang: 'en', dir: 'ltr' },
+  { text: 'مرحبا', lang: 'ar', dir: 'rtl' },
+  { text: 'こんにちは', lang: 'ja', dir: 'ltr' },
+  { text: 'Bonjour', lang: 'fr', dir: 'ltr' },
+  { text: 'Ciao', lang: 'it', dir: 'ltr' },
+];
 
 @Component({
   selector: 'app-home-page',
-  imports: [RouterLink, MatButtonModule, MatIconModule],
+  imports: [RouterLink, MatButtonModule, MatIconModule, MatTooltipModule],
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss',
 })
@@ -42,6 +55,12 @@ export class HomePage {
   private readonly roomLauncher = inject(RoomLauncher);
   readonly identity = inject(IdentityStore);
   readonly roomsStore = inject(RoomsStore);
+  readonly theme = inject(ThemeService);
+  readonly pwa = inject(PwaService);
+
+  readonly themeToggleLabel = computed(() =>
+    this.theme.isDark() ? 'Switch to light mode' : 'Switch to dark mode',
+  );
 
   private readonly shellRef = viewChild<ElementRef<HTMLElement>>('homeShell');
   private readonly liveStripRef = viewChild<ElementRef<HTMLElement>>('liveStrip');
@@ -58,24 +77,30 @@ export class HomePage {
   );
 
   readonly liveSummary = computed(() => {
-    if (!this.identity.isAuthenticated()) {
-      return 'Drop-in voice rooms';
-    }
-    return formatLiveRoomsSummary(this.roomsStore.liveCount());
+    if (!this.identity.isAuthenticated()) return 'Drop-in voice rooms';
+    const count = this.roomsStore.liveCount();
+    if (count <= 0) return 'Start the first room';
+    return count === 1 ? '1 open now' : `${count} open now`;
   });
 
-  readonly selectedRoom = computed<LiveRoomCard | null>(() => {
+  readonly selectedRoom = computed<VoiceRoomDto | null>(() => {
     const list = this.rooms();
     if (list.length === 0) return null;
     const idx = this.selectedRoomIndex() % list.length;
     return list[idx] ?? list[0] ?? null;
   });
 
+  readonly selectedRoomMeta = computed(() => {
+    const room = this.selectedRoom();
+    if (!room) return '';
+    return `${languageLabelFor(room.targetLanguage)} · ${room.speakers.length} speaking · ${room.participantCount} participant${room.participantCount === 1 ? '' : 's'} · ${room.maxStageSeats} seats`;
+  });
+
   readonly activeCounterLabel = computed(() => {
     const total = this.rooms().length;
     if (total === 0) return '00 / 00';
-    const current = this.selectedRoomIndex() % total;
-    return `${formatEditorialIndex(current)} / ${formatEditorialIndex(total - 1)}`;
+    const current = (this.selectedRoomIndex() % total) + 1;
+    return `${String(current).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
   });
 
   constructor() {
@@ -102,7 +127,7 @@ export class HomePage {
         if (this.autoCyclePaused()) return;
         const total = this.rooms().length;
         if (total < 2) return;
-        this.selectedRoomIndex.update((i) => nextCyclicIndex(i, total));
+        this.selectedRoomIndex.update((i) => (i + 1) % total);
         this.animateLiveStrip();
       }, ROOM_CYCLE_INTERVAL_MS);
 
@@ -117,12 +142,12 @@ export class HomePage {
     const total = this.rooms().length;
     if (total < 2) return;
     this.autoCyclePaused.set(true);
-    this.selectedRoomIndex.update((i) => nextCyclicIndex(i, total));
+    this.selectedRoomIndex.update((i) => (i + 1) % total);
     this.animateLiveStrip();
   }
 
   cycleGreeting(): void {
-    this.greetingIndex.update((i) => nextCyclicIndex(i, this.greetings.length));
+    this.greetingIndex.update((i) => (i + 1) % this.greetings.length);
   }
 
   onPrimaryMagnetMove(event: PointerEvent): void {
@@ -158,12 +183,16 @@ export class HomePage {
     this.roomLauncher.openStartRoom(this.destroyRef);
   }
 
-  joinRoom(room: LiveRoomCard): void {
+  joinRoom(room: VoiceRoomDto): void {
     if (!this.identity.isAuthenticated()) {
       this.identity.signIn('login', `/room/${room.id}`);
       return;
     }
     void this.router.navigate(['/room', room.id]);
+  }
+
+  onInstallApp(): void {
+    void this.pwa.promptInstall();
   }
 
   private prefersReducedMotion(): boolean {

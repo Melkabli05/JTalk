@@ -22,7 +22,10 @@
   top: 12px;
   left: 12px;
   z-index: 40;
-  padding: 10px 16px;
+  min-height: var(--touch-min);
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
   border-radius: var(--r-full);
   background: var(--mat-sys-inverse-surface);
   color: var(--mat-sys-inverse-on-surface);
@@ -80,9 +83,26 @@
   letter-spacing: -0.02em;
 }
 
+.home-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.home-theme-btn {
+  flex-shrink: 0;
+}
+
 .home-signin-btn {
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.home-offline-banner {
+  width: calc(100% - 2rem);
+  max-width: 63rem;
+  margin: 4px auto 0;
 }
 
 // ----------------------------------------------------------------------------
@@ -335,34 +355,10 @@
 }
 
 .home-live-join {
-  appearance: none;
-  border: 0;
-  background: transparent;
   min-height: var(--touch-min);
-  padding: 0 10px;
   margin-inline-end: -10px;
-  border-radius: var(--r-full);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 520;
-  color: var(--mat-sys-primary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
   white-space: nowrap;
-  cursor: pointer;
-  touch-action: manipulation;
-  transition: background-color 0.16s ease;
-}
-
-.home-live-join:hover {
-  background: var(--state-hover);
-}
-
-.home-live-join:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+  flex-shrink: 0;
 }
 
 .home-live-join-icon {
@@ -400,8 +396,19 @@
   color: var(--muted);
 }
 
+.home-footer-left {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
 .home-footer-note {
   white-space: nowrap;
+}
+
+.home-install-btn {
+  margin-inline-start: -8px;
 }
 
 .home-greeting-btn {

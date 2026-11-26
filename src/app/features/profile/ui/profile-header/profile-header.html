@@ -1,4 +1,5 @@
 @let p = profile();
+@let s = stats();
 <mat-card
   class="profile-card profile-header-card"
   appearance="outlined"
@@ -13,23 +14,23 @@
       id="profileHeaderAvatar"
       role="img"
       [attr.aria-label]="avatarAriaLabel()"
-      [style.background]="p.avatar.bg"
+      style="background: var(--photo-bg)"
     >
-      <app-avatar-art [avatarId]="p.avatar.id" [imageUrl]="p.avatar.imageUrl" />
+      <app-avatar-art [imageUrl]="p?.avatarUrl ?? null" />
     </div>
-    <h2 class="profile-name" id="profileName">{{ p.name }}</h2>
+    <h1 class="profile-name" id="profileName">{{ name() }}</h1>
     <p class="profile-meta">
-      <span id="profileHandle">&#64;{{ p.username }}</span> · Joined {{ p.joined }}
+      <span id="profileHandle">&#64;{{ username() }}</span> · Joined {{ joined() }}
     </p>
     <div class="profile-chips">
-      <span class="profile-chip" id="profileSpeakChip">Speaks {{ p.speak }}</span>
-      @if (p.learn !== 'Not set') {
-        <span class="profile-chip" id="profileLearnChip">Learning {{ p.learn }}</span>
+      <span class="profile-chip" id="profileSpeakChip">Speaks {{ speak() }}</span>
+      @if (learn(); as learning) {
+        <span class="profile-chip" id="profileLearnChip">Learning {{ learning }}</span>
       }
     </div>
     <div class="profile-stats">
-      <span><b>{{ p.followers }}</b> Followers</span>
-      <span><b>{{ p.following }}</b> Following</span>
+      <span><b>{{ s?.followerCount ?? 0 }}</b> Followers</span>
+      <span><b>{{ s?.followingCount ?? 0 }}</b> Following</span>
     </div>
     <div class="profile-header-actions">
       <button matButton="tonal" type="button" (click)="editProfile.emit()">

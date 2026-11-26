@@ -4,7 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
-import { UserProfile } from '../../../../core/models/session.model';
+import { UserProfileResponse } from '../../../../core/auth/auth.models';
 
 @Component({
   selector: 'app-profile-account',
@@ -13,9 +13,12 @@ import { UserProfile } from '../../../../core/models/session.model';
   styleUrl: './profile-account.scss',
 })
 export class ProfileAccount {
-  readonly profile = input.required<UserProfile>();
+  readonly profile = input<UserProfileResponse | null>(null);
+  readonly canInstall = input(false);
+  readonly showIosInstallHint = input(false);
   readonly settingsClicked = output<void>();
   readonly helpClicked = output<void>();
+  readonly installClicked = output<void>();
   readonly signOutClicked = output<void>();
   readonly deleteClicked = output<void>();
 }

@@ -5,7 +5,6 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { UserProfileResponse, SocialStatsResponse } from '../../../../core/auth/auth.models';
 import { languageFlagFor, languageNameFor } from '../../../../core/utils/language-codes';
-import { sanitizeAvatarUrl } from '../../../../core/utils/safe-url';
 import { AvatarArt } from '../../../../shared/ui/avatar-art/avatar-art';
 import { ProfilePreviewTarget } from '../../models/live-room.model';
 
@@ -15,7 +14,6 @@ export interface HostProfileDialogData {
   stats: SocialStatsResponse;
   isYou: boolean;
 }
-
 
 @Component({
   selector: 'app-host-profile-dialog',
@@ -28,11 +26,15 @@ export class HostProfileDialog {
 
   readonly previewData = computed(() => {
     const { target, profile, isYou } = this.data;
-    const languages = profile.nativeLanguages.map(code => ({
-      name: languageNameFor(code), level: '(Native)',
+    const languages = profile.nativeLanguages.map((code) => ({
+      name: languageNameFor(code),
+      level: '(Native)',
     }));
     for (const entry of profile.learningLanguages) {
-      languages.push({ name: languageNameFor(entry.languageCode), level: entry.proficiencyLevel?.toLowerCase() ?? '' });
+      languages.push({
+        name: languageNameFor(entry.languageCode),
+        level: entry.proficiencyLevel?.toLowerCase() ?? '',
+      });
     }
     const role = target.kind === 'host' ? 'Host' : target.kind === 'speaker' ? 'Speaker' : 'Listener';
     const audio = target.kind === 'listener' ? 'In audience' : target.muted ? 'Muted' : 'On mic';
@@ -40,9 +42,9 @@ export class HostProfileDialog {
       status: [role, audio, ...(isYou ? ['You'] : [])].join(' · '),
       name: profile.displayName,
       meta: '@' + profile.username,
-      avatarUrl: sanitizeAvatarUrl(profile.avatarUrl),
+      avatarUrl: profile.avatarUrl ?? null,
       initial: profile.displayName.charAt(0).toUpperCase(),
-      langs: languages.map(lang => ({ ...lang, flag: languageFlagFor(lang.name) })),
+      langs: languages.map((lang) => ({ ...lang, flag: languageFlagFor(lang.name) })),
     };
   });
 }

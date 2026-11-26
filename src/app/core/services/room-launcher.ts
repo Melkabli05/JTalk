@@ -5,7 +5,6 @@ import { lastValueFrom } from 'rxjs';
 import { IdentityStore } from '../auth/identity';
 import { errorMessage } from '../http/http-error.interceptor';
 import { CreateVoiceRoomPayload } from '../../shared/models/voice-room.model';
-import { AppState } from '../state/app-state';
 import { ToastNotifier } from './toast-notifier';
 import { RoomsApi } from '../../features/rooms/data-access/rooms-api';
 
@@ -13,7 +12,6 @@ import { RoomsApi } from '../../features/rooms/data-access/rooms-api';
 export class RoomLauncher {
   private readonly dialog = inject(MatDialog);
   private readonly identity = inject(IdentityStore);
-  private readonly appState = inject(AppState);
   private readonly roomsApi = inject(RoomsApi);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastNotifier);
@@ -28,7 +26,6 @@ export class RoomLauncher {
     }
 
     if (this.identity.needsOnboarding()) {
-      this.appState.requestProfileTab('edit');
       this.toast.show('Create your profile first to start a room.');
       void this.router.navigate(['/profile']);
       return;

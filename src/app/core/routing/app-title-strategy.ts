@@ -1,33 +1,38 @@
-import { inject, InjectionToken, Service } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RouterStateSnapshot, TitleStrategy } from '@angular/router';
-import {
-  AppTitleConfig,
-  DEFAULT_APP_TITLE_CONFIG,
-  formatDocumentTitle,
-} from './app-title.utils';
 
-export const APP_TITLE_CONFIG = new InjectionToken<AppTitleConfig>('APP_TITLE_CONFIG', {
-  providedIn: 'root',
-  factory: () => DEFAULT_APP_TITLE_CONFIG,
-});
+export const APP_BRAND_NAME = 'Jtalk';
+export const APP_DEFAULT_TITLE = 'Jtalk — Language Speaking Practice Rooms';
+const TITLE_SUFFIX = ` · ${APP_BRAND_NAME}`;
 
-/**
- * Centralized Angular TitleStrategy for all routes (CSR and SSR).
- * Formats static route titles and dynamic title resolvers consistently as `<Page> · Jtalk`
- * and exposes `setPageTitle()` for live in-page title updates (e.g., renaming an active room).
- */
+export function formatDocumentTitle(pageTitle: string | undefined | null): string {
+  const trimmed = pageTitle?.trim() ?? '';
+  if (!trimmed) return APP_DEFAULT_TITLE;
+
+  const lower = trimmed.toLowerCase();
+  const brand = APP_BRAND_NAME.toLowerCase();
+  if (lower === brand) return APP_BRAND_NAME;
+  if (
+    lower.endsWith(TITLE_SUFFIX.toLowerCase()) ||
+    lower.startsWith(`${brand} — `) ||
+    lower.startsWith(`${brand} - `) ||
+    lower.startsWith(`${brand} · `)
+  ) {
+    return trimmed;
+  }
+  return `${trimmed}${TITLE_SUFFIX}`;
+}
+
 @Service()
 export class AppTitleStrategy extends TitleStrategy {
   private readonly title = inject(Title);
-  private readonly config = inject(APP_TITLE_CONFIG);
 
   override updateTitle(routerState: RouterStateSnapshot): void {
-    const resolvedTitle = this.buildTitle(routerState);
-    this.setPageTitle(resolvedTitle);
+    this.setPageTitle(this.buildTitle(routerState));
   }
 
   setPageTitle(pageTitle: string | undefined | null): void {
-    this.title.setTitle(formatDocumentTitle(pageTitle, this.config));
+    this.title.setTitle(formatDocumentTitle(pageTitle));
   }
 }

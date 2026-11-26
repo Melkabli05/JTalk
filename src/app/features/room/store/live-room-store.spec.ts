@@ -6,6 +6,7 @@ import { vi } from 'vitest';
 import { provideNoopAuthForTests } from '../../../core/auth/auth.providers';
 import { IdentityStore } from '../../../core/auth/identity';
 import { LIVEKIT_CONNECTOR, LiveKitListener } from '../data-access/livekit-audio-engine';
+import { VoiceRoomApi } from '../data-access/voice-room-api';
 import { LiveRoomStore } from './live-room-store';
 
 describe('room session', () => {
@@ -67,7 +68,7 @@ describe('room session', () => {
         { provide: LIVEKIT_CONNECTOR, useValue: connector },
       ],
     });
-    TestBed.inject(IdentityStore).me.set({
+    TestBed.inject(IdentityStore).setProfile({
       id: 'host',
       username: 'host',
       displayName: 'Host',
@@ -85,7 +86,7 @@ describe('room session', () => {
     const entering = store.enterRoom(room.id);
     await vi.waitFor(() => http.expectOne(base + '/participants/join').flush(session));
     expect(await entering).toBe(true);
-    expect(connector.mock.calls[0].slice(0, 2)).toEqual(['wss://example.invalid', 'join-token']);
+    expect(connector.mock.calls[0]?.slice(0, 2)).toEqual(['wss://example.invalid', 'join-token']);
     expect(microphone).toHaveBeenCalledWith(true);
     expect(store.stage.audienceIds()).toEqual(['guest']);
     expect(store.stage.isHost()).toBe(true);
@@ -105,19 +106,25 @@ describe('room session', () => {
     expect(restoreBandwidth.request.body.mode).toBe('OPTIMAL');
     restoreBandwidth.flush(null);
 
-    const promoting = store.stage.promoteToStage('guest');
+    const api = TestBed.inject(VoiceRoomApi);
+    const promoting = store.stage.runRoomCommand(
+      (id) => api.promoteSpeaker(id, 'guest'),
+      'Could not promote to stage.',
+    );
     http.expectOne({ method: 'POST', url: base + '/stage/promote/guest' }).flush(null);
     expect((await promoting).ok).toBe(true);
 
     listener.onLinkStatus('reconnecting');
     listener.onLinkStatus('connected');
-    await flushResources();
     const snapshotReq = http.expectOne(base + '/participants/snapshot');
-    listener.onRoomEvent({ type: 'ROOM_UPDATED', title: 'Live title', topic: '', maxStageSeats: 8 });
+    listener.onRoomEvent({
+      type: 'ROOM_UPDATED',
+      settings: { title: 'Live title', topic: '', maxStageSeats: 8 },
+    });
     listener.onRoomEvent({
       type: 'STAGE_UPDATED',
       stage: { speakers: ['host', 'guest'], handRaiseQueue: [] },
-      at: 1,
+      timestamp: '2026-01-01T00:00:01Z',
     });
     snapshotReq.flush(null, { status: 503, statusText: 'Unavailable' });
     await flushResources();
@@ -126,11 +133,7 @@ describe('room session', () => {
     expect(store.room()?.title).toBe('Live title');
     expect(store.chat.chatError()).toBe(true);
 
-    let reloaded: boolean | undefined;
-    store.chat.reloadMessages((ok) => {
-      reloaded = ok;
-    });
-    await flushResources();
+    const reloading = store.chat.reloadMessages();
     const staleChat = http.expectOne(base + '/comments');
     const incoming = {
       id: 'message',
@@ -141,14 +144,13 @@ describe('room session', () => {
     };
     listener.onChatEvent({ type: 'COMMENT_POSTED', comment: incoming });
     staleChat.flush(chat);
-    await flushResources();
-    http.expectOne(base + '/comments').flush({
+    const freshChat = await vi.waitFor(() => http.expectOne(base + '/comments'));
+    freshChat.flush({
       ...chat,
       comments: [{ ...incoming, pinnedAt: incoming.createdAt }],
       reactions: [{ commentId: incoming.id, counts: { HEART: 2 }, mine: 'HEART' }],
     });
-    await flushResources();
-    expect(reloaded).toBe(true);
+    expect(await reloading).toBe(true);
     expect(store.chat.messages().map((message) => message.text)).toEqual(['Welcome']);
     expect(store.chat.chatError()).toBe(false);
     expect(store.chat.pinnedCommentId()).toBe(incoming.id);
@@ -235,7 +237,11 @@ describe('room session', () => {
     http.expectNone(base + '/comments');
     expect(store.chat.pinnedTopic()).toBeNull();
 
-    const reacting = store.stage.triggerStageReaction('CLAP');
+    const api = TestBed.inject(VoiceRoomApi);
+    const reacting = store.stage.runRoomCommand(
+      (id) => api.sendReaction(id, 'CLAP'),
+      'Could not send reaction.',
+    );
     const request = http.expectOne({ method: 'POST', url: base + '/reactions' });
     expect(request.request.body).toEqual({ reaction: 'CLAP' });
     listener.onRoomEvent({ type: 'REACTIONS', reactions: [{ userId: 'host', reaction: 'CLAP' }] });
@@ -246,14 +252,15 @@ describe('room session', () => {
 
     listener.onLinkStatus('reconnecting');
     listener.onLinkStatus('connected');
-    await flushResources();
     const snapshot = http.expectOne(base + '/participants/snapshot');
     listener.onRoomEvent({
       type: 'PRESENCE_CHANGED',
-      joined: ['new-listener'],
-      left: [],
-      participantCount: 3,
-      audienceCount: 2,
+      presence: {
+        joined: ['new-listener'],
+        left: [],
+        participantCount: 3,
+        audienceCount: 2,
+      },
     });
     snapshot.flush({ room, role: 'HOST', snapshot: makeSnapshot() });
     await flushResources();
@@ -363,10 +370,12 @@ describe('room session', () => {
 
     listener.onRoomEvent({
       type: 'PRESENCE_CHANGED',
-      joined: ['new-listener'],
-      left: [],
-      participantCount: 3,
-      audienceCount: 2,
+      presence: {
+        joined: ['new-listener'],
+        left: [],
+        participantCount: 3,
+        audienceCount: 2,
+      },
     });
     expect(resolveUsers).toHaveBeenCalledWith(['new-listener']);
     resolveUsers.mockClear();
@@ -396,8 +405,7 @@ describe('room session', () => {
     expect(resolveUsers).toHaveBeenCalledWith(['outsider']);
 
     resolveUsers.mockClear();
-    store.chat.reloadMessages();
-    await flushResources();
+    const reloading = store.chat.reloadMessages();
     http.expectOne(base + '/comments').flush({
       ...chat,
       comments: [
@@ -406,8 +414,59 @@ describe('room session', () => {
         { id: 'c3', type: 'TEXT', authorId: 'former-speaker', content: 'Left', createdAt: '2026-01-01T00:01:00Z' },
       ],
     });
-    await flushResources();
+    await reloading;
     expect(resolveUsers).toHaveBeenCalledWith(['former-speaker']);
+    http.verify();
+  });
+
+  it('tracks RoomConnectionState transitions across joining, connected, error, and idle', async () => {
+    const connector = vi.fn(async () => ({
+      setMicrophone: async () => undefined,
+      setNoiseIsolation: async () => 'webrtc-fallback' as const,
+      selectAudioInputDevice: async () => undefined,
+      listAudioInputDevices: async () => [],
+      startAudio: async () => undefined,
+      disconnect: async () => undefined,
+    }));
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAuthForTests(),
+        { provide: LIVEKIT_CONNECTOR, useValue: connector },
+      ],
+    });
+    const store = TestBed.inject(LiveRoomStore);
+    const http = TestBed.inject(HttpTestingController);
+
+    expect(store.connectionState()).toEqual({ status: 'idle' });
+    expect(store.roomLoading()).toBe(false);
+    expect(store.roomError()).toBeNull();
+
+    const failedJoin = store.enterRoom(room.id);
+    await vi.waitFor(() => {
+      expect(store.connectionState()).toEqual({ status: 'joining', roomId: room.id });
+      expect(store.roomLoading()).toBe(true);
+      http.expectOne(base + '/participants/join').flush(null, { status: 500, statusText: 'Error' });
+    });
+    expect(await failedJoin).toBe(false);
+    expect(store.connectionState().status).toBe('error');
+    expect(store.roomLoading()).toBe(false);
+    expect(store.roomError()).toBeTruthy();
+
+    const okJoin = store.enterRoom(room.id);
+    await vi.waitFor(() => http.expectOne(base + '/participants/join').flush(session));
+    expect(await okJoin).toBe(true);
+    expect(store.connectionState()).toEqual({ status: 'connected', roomId: room.id });
+    expect(store.roomError()).toBeNull();
+
+    const leaving = store.leaveRoom();
+    await vi.waitFor(() =>
+      http.expectOne({ method: 'POST', url: base + '/participants/leave' }).flush(null),
+    );
+    await leaving;
+    expect(store.connectionState()).toEqual({ status: 'idle' });
     http.verify();
   });
 });

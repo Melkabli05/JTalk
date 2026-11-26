@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#F8F7F4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#131314" media="(prefers-color-scheme: dark)" />
+    <title>Offline — Jtalk</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: light-dark(#F8F7F4, #131314);
+        --surface: light-dark(#FFFFFF, #1E1F20);
+        --outline: light-dark(#E5E3DE, #444746);
+        --ink: light-dark(#1F1F1F, #E6E6E6);
+        --muted: light-dark(#5F6368, rgba(255, 255, 255, 0.68));
+        --btn-bg: #C2E7FF;
+        --btn-ink: #001D35;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+        background: var(--bg);
+        color: var(--ink);
+        font-family: 'Google Sans Flex', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        line-height: 1.5;
+      }
+      main {
+        width: 100%;
+        max-width: 24rem;
+        padding: 28px 24px;
+        border-radius: 24px;
+        background: var(--surface);
+        border: 1px solid var(--outline);
+        text-align: center;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.5rem;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+      }
+      p {
+        margin: 0 0 24px;
+        color: var(--muted);
+        font-size: 0.9375rem;
+      }
+      button {
+        min-height: 48px;
+        padding: 0 24px;
+        border: 0;
+        border-radius: 9999px;
+        background: var(--btn-bg);
+        color: var(--btn-ink);
+        font: inherit;
+        font-size: 0.9375rem;
+        font-weight: 500;
+        cursor: pointer;
+        touch-action: manipulation;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>You're offline</h1>
+      <p>Live voice rooms need an internet connection. Reconnect and try again.</p>
+      <button type="button" onclick="window.location.reload()">Try again</button>
+    </main>
+  </body>
+</html>

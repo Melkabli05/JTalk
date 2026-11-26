@@ -3,7 +3,18 @@
   [style.--room-kb-offset.px]="keyboardOffset()"
 >
   @if (!isCurrentRoom() && (!roomStore.roomError() || roomStore.roomLoading())) {
-    <p role="status">Joining room…</p>
+    <div class="room-joining-state" role="status" aria-busy="true">
+      <div class="room-joining-card">
+        <p class="room-joining-label">Joining room…</p>
+        <div class="room-joining-avatars" aria-hidden="true">
+          @for (slot of [0, 1, 2, 3]; track slot) {
+            <app-skeleton-loader variant="circle" width="52px" height="52px" />
+          }
+        </div>
+        <app-skeleton-loader variant="text" width="60%" height="16px" />
+        <app-skeleton-loader variant="text" width="40%" height="13px" />
+      </div>
+    </div>
   } @else if (!isCurrentRoom()) {
     <div class="rooms-empty-hint" role="alert">
       <p>{{ roomStore.roomError() }}</p>

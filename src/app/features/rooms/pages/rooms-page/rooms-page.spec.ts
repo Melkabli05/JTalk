@@ -2,7 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { vi } from 'vitest';
 import { provideNoopAuthForTests } from '../../../../core/auth/auth.providers';
 import { ToastNotifier } from '../../../../core/services/toast-notifier';
@@ -21,7 +22,7 @@ describe('RoomsPage', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideNoopAuthForTests(),
-        provideRouter([]),
+        provideRouter([{ path: 'rooms', component: RoomsPage }]),
         RoomsStore,
         { provide: ToastNotifier, useValue: toastSpy },
       ],
@@ -37,9 +38,14 @@ describe('RoomsPage', () => {
     expect(fixture.nativeElement.querySelector('#live-h')?.textContent).toContain('Live rooms');
   });
 
-  it('should apply SSE feed snapshots and filter rooms by language', () => {
-    const fixture = TestBed.createComponent(RoomsPage);
-    const store = fixture.componentInstance.roomsStore;
+  it('hydrates language filter from URL query param and delegates filtering to RoomsStore', async () => {
+    const harness = await RouterTestingHarness.create();
+    const page = await harness.navigateByUrl('/rooms?lang=ja', RoomsPage);
+    const router = TestBed.inject(Router);
+    const store = page.roomsStore;
+
+    expect(page.selectedFilter()).toBe('ja');
+    expect(store.targetLanguage()).toBe('ja');
 
     store.applyFeedEvent({
       type: 'SNAPSHOT',
@@ -55,30 +61,22 @@ describe('RoomsPage', () => {
           speakers: ['u-1'],
           participantCount: 3,
           handRaiseCount: 0,
-        },
-        {
-          id: 'room-2',
-          title: 'Café Français',
-          topic: 'Films & voyage',
-          hostId: 'u-2',
-          targetLanguage: 'fr',
-          nativeLanguage: 'en',
-          maxStageSeats: 8,
-          speakers: ['u-2'],
-          participantCount: 5,
-          handRaiseCount: 1,
+          host: { id: 'u-1', displayName: 'Yuki', username: 'yuki', avatarUrl: null },
         },
       ],
     });
-    fixture.detectChanges();
+    harness.detectChanges();
 
-    expect(store.liveCount()).toBe(2);
-    store.selectedFilter.set('ja');
-    expect(store.filteredRooms().map((r) => r.id)).toEqual(['room-1']);
-
-    fixture.detectChanges();
-    const cards = fixture.nativeElement.querySelectorAll('app-room-card');
+    const cards = harness.routeNativeElement?.querySelectorAll('app-room-card');
     expect(cards).toHaveLength(1);
-    expect(cards[0].textContent).toContain('Tokyo Night Chat');
+    expect(cards?.[0]?.textContent).toContain('Tokyo Night Chat');
+
+    page.onFilterChange('fr');
+    await vi.waitFor(() => expect(router.url).toBe('/rooms?lang=fr'));
+    expect(store.targetLanguage()).toBe('fr');
+
+    page.onFilterChange('all');
+    await vi.waitFor(() => expect(router.url).toBe('/rooms'));
+    expect(store.targetLanguage()).toBe('all');
   });
 });

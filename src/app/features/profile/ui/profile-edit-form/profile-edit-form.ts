@@ -2,11 +2,10 @@ import {
   Component,
   computed,
   effect,
-  ElementRef,
+  type ElementRef,
   input,
   linkedSignal,
   output,
-  resource,
   signal,
   untracked,
   viewChild,
@@ -19,48 +18,76 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { AvatarSelection, UserProfile } from '../../../../core/models/session.model';
-import { trimmedRequired } from '../../../../shared/utils/form-validators';
-import { squareJpeg } from '../../../../core/utils/image-resize';
+import type { SocialStatsResponse, UserProfileResponse } from '../../../../core/auth/auth.models';
+import type { ProfileSaveInput } from '../../../../core/auth/identity';
+import {
+  COUNTRY_CATALOG,
+  LANGUAGE_CATALOG,
+  languageNameFor,
+} from '../../../../core/utils/language-codes';
 import { AvatarArt } from '../../../../shared/ui/avatar-art/avatar-art';
-import { countryFlagCodeFor, languageFlagCodeFor } from '../../../../core/utils/language-codes';
-import {
-  PROFILE_LEARN_OPTIONS,
-  PROFILE_LOCATION_OPTIONS,
-  PROFILE_SPEAK_OPTIONS,
-} from '../../constants/profile.constants';
-import { ProfileFormSnapshot } from '../../models/profile.model';
-import {
-  generateUsernameFor,
-  isProfileDirty,
-  isValidUsername,
-  normalizeUsername,
-} from '../../utils/profile-validation';
+import { trimmedRequired } from '../../../../shared/utils/form-validators';
 
 export interface ProfileEditSaveEvent {
-  readonly profile: UserProfile;
-  readonly avatarBlob?: Blob | null;
+  readonly input: ProfileSaveInput;
+  readonly avatarBlob: Blob | null;
 }
 
 interface ProfileFormModel {
-  name: string;
+  displayName: string;
   username: string;
-  speak: string;
-  learn: string;
-  location: string;
-  about: string;
+  nativeLanguage: string;
+  learningLanguage: string;
+  countryCode: string;
+  bio: string;
 }
 
-function toFormModel(p: UserProfile): ProfileFormModel {
+const USERNAME_PATTERN = /^[a-z0-9_.]{3,30}$/;
+const MAX_AVATAR_UPLOAD_BYTES = 5 * 1024 * 1024;
+const ACCEPTED_AVATAR_TYPES: ReadonlySet<string> = new Set(['image/jpeg', 'image/png']);
+
+function normalizeUsername(raw: string): string {
+  return raw.trim().replace(/^@+/, '').toLowerCase();
+}
+
+function toFormModel(p: UserProfileResponse | null): ProfileFormModel {
+  if (!p) {
+    return {
+      displayName: '',
+      username: '',
+      nativeLanguage: 'en',
+      learningLanguage: 'es',
+      countryCode: '',
+      bio: '',
+    };
+  }
   return {
-    name: p.name,
+    displayName: p.displayName,
     username: p.username,
-    speak: p.speak,
-    learn: p.learn,
-    location: p.location,
-    about: p.about,
+    nativeLanguage: p.nativeLanguage.split('-')[0]?.toLowerCase() || 'en',
+    learningLanguage: p.learningLanguages[0]?.languageCode.split('-')[0]?.toLowerCase() ?? '',
+    countryCode: p.countryCode?.toUpperCase() ?? '',
+    bio: p.bio ?? '',
   };
+}
+
+function modelsEqual(a: ProfileFormModel, b: ProfileFormModel): boolean {
+  return (
+    a.displayName.trim() === b.displayName.trim() &&
+    normalizeUsername(a.username) === normalizeUsername(b.username) &&
+    a.nativeLanguage === b.nativeLanguage &&
+    a.learningLanguage === b.learningLanguage &&
+    a.countryCode === b.countryCode &&
+    a.bio.trim() === b.bio.trim()
+  );
+}
+
+function formatJoinedMonth(isoDate: string | undefined): string {
+  if (!isoDate) return '';
+  const parsed = new Date(isoDate);
+  return Number.isNaN(parsed.getTime())
+    ? ''
+    : parsed.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
 @Component({
@@ -74,7 +101,6 @@ function toFormModel(p: UserProfile): ProfileFormModel {
     MatButtonModule,
     MatIconModule,
     MatRippleModule,
-    MatTooltipModule,
     AvatarArt,
   ],
   templateUrl: './profile-edit-form.html',
@@ -84,7 +110,8 @@ export class ProfileEditForm {
   private readonly aboutTextareaRef = viewChild<ElementRef<HTMLTextAreaElement>>('aboutTextarea');
   private readonly fileInputRef = viewChild<ElementRef<HTMLInputElement>>('avatarFileInput');
 
-  readonly profile = input.required<UserProfile>();
+  readonly profile = input<UserProfileResponse | null>(null);
+  readonly stats = input<SocialStatsResponse | null>(null);
   readonly onboarding = input(false);
   readonly saving = input(false);
 
@@ -93,124 +120,81 @@ export class ProfileEditForm {
   readonly avatarPicked = output<void>();
   readonly uploadError = output<string>();
 
-  readonly speakOptions = PROFILE_SPEAK_OPTIONS;
-  readonly learnOptions = PROFILE_LEARN_OPTIONS;
-  readonly locationOptions = PROFILE_LOCATION_OPTIONS;
-
-  readonly flagForLanguage = languageFlagCodeFor;
-  readonly flagForCountry = countryFlagCodeFor;
+  readonly languages = LANGUAGE_CATALOG;
+  readonly countries = COUNTRY_CATALOG;
 
   private readonly selectedFile = signal<File | null>(null);
-  private readonly encodedAvatar = resource({
-    params: () => this.selectedFile() ?? undefined,
-    loader: ({ params: file, abortSignal }) => squareJpeg(file, abortSignal),
-  });
-
-  readonly pendingAvatarBlob = computed(() =>
-    this.encodedAvatar.hasValue() ? this.encodedAvatar.value() : null,
-  );
+  readonly pendingAvatarBlob = this.selectedFile.asReadonly();
   readonly pendingPreviewUrl = signal<string | null>(null);
 
-  private readonly savedFields = computed(() => this.profile(), {
-    equal: (previous, current) =>
-      previous.id === current.id &&
-      previous.avatar.imageUrl === current.avatar.imageUrl &&
-      !isProfileDirty(previous, current),
-  });
-  readonly selectedAvatar = linkedSignal<AvatarSelection>(() => this.savedFields().avatar);
-  readonly model = linkedSignal<ProfileFormModel>(() => toFormModel(this.savedFields()));
+  private readonly savedModel = computed(() => toFormModel(this.profile()), { equal: modelsEqual });
+  readonly model = linkedSignal<ProfileFormModel>(() => ({ ...this.savedModel() }));
 
   readonly profileForm = form(this.model, (schemaPath) => {
-    trimmedRequired(schemaPath.name, 'Display name is required.');
-    maxLength(schemaPath.name, 50, { message: 'Use 50 characters or fewer.' });
+    trimmedRequired(schemaPath.displayName, 'Display name is required.');
+    maxLength(schemaPath.displayName, 50, { message: 'Use 50 characters or fewer.' });
     validate(schemaPath.username, ({ value }) => {
       const normalized = normalizeUsername(value());
       if (!normalized) {
         return this.onboarding() ? undefined : { kind: 'required', message: 'Enter a username.' };
       }
-      return isValidUsername(normalized)
+      return USERNAME_PATTERN.test(normalized)
         ? undefined
         : {
             kind: 'pattern',
             message: 'Use 3–30 lowercase letters, numbers, dots, or underscores.',
           };
     });
-    maxLength(schemaPath.about, 300, { message: 'Use 300 characters or fewer.' });
-  });
-
-  readonly currentSnapshot = computed<ProfileFormSnapshot>(() => {
-    const val = this.model();
-    return {
-      name: val.name,
-      username: normalizeUsername(val.username),
-      avatar: this.selectedAvatar(),
-      speak: val.speak,
-      learn: val.learn,
-      location: val.location,
-      about: val.about,
-    };
+    validate(schemaPath.learningLanguage, ({ value }) => {
+      const learn = value();
+      return learn && learn === this.model().nativeLanguage
+        ? {
+            kind: 'conflict',
+            message: 'Choose a different language from the one you speak.',
+          }
+        : undefined;
+    });
+    maxLength(schemaPath.bio, 300, { message: 'Use 300 characters or fewer.' });
   });
 
   readonly dirty = computed(
     () =>
       this.onboarding() ||
       this.pendingAvatarBlob() !== null ||
-      isProfileDirty(this.currentSnapshot(), this.savedFields()),
+      !modelsEqual(this.model(), this.savedModel()),
   );
 
   readonly canSubmit = computed(
     () => !this.saving() && this.dirty() && this.profileForm().valid(),
   );
 
-  readonly aboutLength = computed(() => this.model().about.length);
-
-  readonly previewName = computed(() => this.model().name.trim() || 'Speaker');
+  readonly aboutLength = computed(() => this.model().bio.length);
+  readonly previewName = computed(() => this.model().displayName.trim() || 'Speaker');
   readonly previewHandle = computed(() => normalizeUsername(this.model().username) || 'username');
-  readonly previewSpeak = computed(() => this.model().speak);
-  readonly previewLearn = computed(() => this.model().learn);
-  readonly previewBio = computed(() => this.model().about.trim());
-
+  readonly previewSpeak = computed(() => languageNameFor(this.model().nativeLanguage));
+  readonly previewLearn = computed(() =>
+    this.model().learningLanguage ? languageNameFor(this.model().learningLanguage) : null,
+  );
+  readonly previewBio = computed(() => this.model().bio.trim());
+  readonly joinedLabel = computed(() => formatJoinedMonth(this.profile()?.createdAt));
   readonly previewImageUrl = computed(
-    () => this.pendingPreviewUrl() ?? this.selectedAvatar().imageUrl ?? null,
+    () => this.pendingPreviewUrl() ?? this.profile()?.avatarUrl ?? null,
   );
 
   constructor() {
     effect((onCleanup) => {
-      const blob = this.pendingAvatarBlob();
-      if (!blob) {
+      const file = this.selectedFile();
+      if (!file) {
         this.pendingPreviewUrl.set(null);
         return;
       }
-      const objectUrl = URL.createObjectURL(blob);
+      const objectUrl = URL.createObjectURL(file);
       untracked(() => {
         this.pendingPreviewUrl.set(objectUrl);
-        this.selectedAvatar.set({
-          kind: 'own',
-          id: 'own',
-          bg: '#16121F',
-          label: 'Uploaded picture',
-          imageUrl: objectUrl,
-        });
         this.avatarPicked.emit();
       });
       onCleanup(() => URL.revokeObjectURL(objectUrl));
     });
-
-    effect(() => {
-      const err = this.encodedAvatar.error();
-      if (!err) return;
-      untracked(() => {
-        this.selectedFile.set(null);
-        this.uploadError.emit(
-          err instanceof Error ? err.message : 'Could not process the selected image.',
-        );
-      });
-    });
-  }
-
-  generateUsername(): void {
-    const generated = generateUsernameFor(this.model().name);
-    this.model.update((m) => ({ ...m, username: generated }));
   }
 
   triggerAvatarUpload(): void {
@@ -223,8 +207,13 @@ export class ProfileEditForm {
     if (inputEl) inputEl.value = '';
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
+    if (!ACCEPTED_AVATAR_TYPES.has(file.type)) {
       this.uploadError.emit('Please select a JPEG or PNG image.');
+      return;
+    }
+
+    if (file.size === 0 || file.size > MAX_AVATAR_UPLOAD_BYTES) {
+      this.uploadError.emit('The picture must be at most 5 MB.');
       return;
     }
 
@@ -232,33 +221,28 @@ export class ProfileEditForm {
   }
 
   clearAbout(): void {
-    this.model.update((m) => ({ ...m, about: '' }));
+    this.model.update((m) => ({ ...m, bio: '' }));
     this.aboutTextareaRef()?.nativeElement.focus();
   }
 
   onDiscard(): void {
-    const p = this.profile();
     this.clearPendingAvatar();
-    this.model.set(toFormModel(p));
-    this.selectedAvatar.set(p.avatar);
+    this.model.set({ ...this.savedModel() });
     this.discarded.emit();
   }
 
   onSave(event?: Event): void {
     event?.preventDefault();
     if (!this.canSubmit()) return;
-    const snap = this.currentSnapshot();
-    const base = this.profile();
+    const val = this.model();
     this.saved.emit({
-      profile: {
-        ...base,
-        name: snap.name.trim() || base.name,
-        username: snap.username || base.username,
-        avatar: snap.avatar,
-        speak: snap.speak,
-        learn: snap.learn,
-        location: snap.location,
-        about: snap.about,
+      input: {
+        displayName: val.displayName.trim(),
+        username: normalizeUsername(val.username),
+        nativeLanguage: val.nativeLanguage,
+        learningLanguage: val.learningLanguage || null,
+        countryCode: val.countryCode || null,
+        bio: val.bio,
       },
       avatarBlob: this.pendingAvatarBlob(),
     });

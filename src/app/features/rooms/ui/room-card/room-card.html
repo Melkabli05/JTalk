@@ -3,11 +3,11 @@
   class="room-card"
   appearance="filled"
   role="article"
-  [attr.data-lang]="item.lang"
+  [attr.data-lang]="langKey()"
 >
   <div class="room-top">
     <span class="lang-chip">
-      <span class="lang-dot" [class]="item.dotClass"></span>{{ item.langLabel }}
+      <span class="lang-dot" [class]="dotClass()"></span>{{ langLabel() }}
     </span>
     <span class="badge-live">LIVE</span>
 
@@ -38,12 +38,12 @@
   </div>
 
   <h3>{{ item.title }}</h3>
-  <p class="desc">{{ item.description }}</p>
+  <p class="desc">{{ description() }}</p>
 
   <div class="room-foot">
     <div class="room-avatars-row">
       <div class="stack">
-        @for (av of item.avatars; track av.userId) {
+        @for (av of avatars(); track av.userId) {
           <span
             class="avatar"
             [class]="av.chipClass"
@@ -57,12 +57,12 @@
             }
           </span>
         }
-        @if (item.moreCount) {
-          <span class="avatar more">{{ item.moreCount }}</span>
+        @if (moreCount(); as more) {
+          <span class="avatar more">{{ more }}</span>
         }
       </div>
 
-      @if (item.hostAvatar; as host) {
+      @if (hostAvatar(); as host) {
         <span
           class="avatar room-host-avatar"
           [class]="host.chipClass"
@@ -77,8 +77,14 @@
         </span>
       }
     </div>
-    <p class="room-meta">{{ item.meta }}</p>
-    <button matButton="tonal" class="join-btn" type="button" [attr.aria-label]="'Join room: ' + item.title" (click)="join.emit(item)">
+    <p class="room-meta">{{ meta() }}</p>
+    <button
+      matButton="tonal"
+      class="join-btn"
+      type="button"
+      [attr.aria-label]="'Join room: ' + item.title"
+      (click)="join.emit(item)"
+    >
       Join room
     </button>
   </div>

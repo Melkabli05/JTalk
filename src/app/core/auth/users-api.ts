@@ -26,13 +26,16 @@ export class UsersApi {
     );
   }
 
-  userResource(userId: () => string | undefined) {
-    return httpResource<UserProfileResponse>(() => {
-      const id = userId();
-      return id
-        ? { url: `${this.base}/${encodeURIComponent(id)}`, transferCache: false }
-        : undefined;
-    });
+  getUser(userId: string): Promise<UserProfileResponse> {
+    return lastValueFrom(
+      this.http.get<UserProfileResponse>(`${this.base}/${encodeURIComponent(userId)}`),
+    );
+  }
+
+  getSocialStats(userId: string): Promise<SocialStatsResponse> {
+    return lastValueFrom(
+      this.http.get<SocialStatsResponse>(`${this.base}/${encodeURIComponent(userId)}/social`),
+    );
   }
 
   createMe(payload: CreateProfileRequest): Promise<UserProfileResponse> {
@@ -48,7 +51,11 @@ export class UsersApi {
   }
 
   uploadAvatar(imageBlob: Blob): Promise<UserProfileResponse> {
-    return lastValueFrom(this.http.put<UserProfileResponse>(`${this.base}/me/avatar`, imageBlob));
+    return lastValueFrom(
+      this.http.put<UserProfileResponse>(`${this.base}/me/avatar`, imageBlob, {
+        headers: { 'Content-Type': imageBlob.type || 'image/jpeg' },
+      }),
+    );
   }
 
   getBatch(ids: readonly string[]): Promise<UserSummaryResponse[]> {
@@ -119,13 +126,6 @@ export class UsersApi {
         params: { page: String(req.page), size: String(req.size) },
         transferCache: false,
       };
-    });
-  }
-
-  socialStatsResource(userId: () => string | undefined) {
-    return httpResource<SocialStatsResponse>(() => {
-      const id = userId();
-      return id ? { url: `${this.base}/${encodeURIComponent(id)}/social`, transferCache: false } : undefined;
     });
   }
 

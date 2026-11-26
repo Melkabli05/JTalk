@@ -5,7 +5,7 @@ import {
   SEASONAL_HERO_SCENES,
 } from '../constants/hero-scenes.constants';
 import { DayPeriod, HeroScene, HeroSeason } from '../models/hero-scene.model';
-import { RoomLangFilter } from '../models/room-card.model';
+import { RoomLangFilter } from '../constants/rooms.constants';
 
 export function resolveDayPeriod(hour: number): DayPeriod {
   if (hour >= 5 && hour < 12) return 'morning';
@@ -46,7 +46,7 @@ export function selectHeroScene(date: Date, offset = 0): HeroScene {
     Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000,
   );
   const index = (((dayNumber + offset) % pool.length) + pool.length) % pool.length;
-  return pool[index];
+  return pool[index] ?? DEFAULT_HERO_SCENE;
 }
 
 export function formatHeroStatusPill(

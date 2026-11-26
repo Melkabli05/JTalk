@@ -1,30 +1,25 @@
-import { computed, effect, inject, Service, signal, untracked } from '@angular/core';
+import { computed, inject, Service, signal } from '@angular/core';
 import { errorMessage } from '../../../core/http/http-error.interceptor';
 import {
-  BackendReaction,
-  ChatRealtimeEvent,
-  ChatStateDto,
-  CommentReactionTallyDto,
   emojiForReaction,
+  isBackendReaction,
   labelForReaction,
-  RoomCommentDto,
+  type BackendReaction,
+  type ChatRealtimeEvent,
+  type ChatStateDto,
+  type CommentReactionTallyDto,
+  type RoomCommentDto,
 } from '../../../shared/models/voice-room.model';
 import { avatarChipClassFor } from '../../../shared/utils/avatar-chip.utils';
-import { RoomResourceTrigger, VoiceRoomApi } from '../data-access/voice-room-api';
-import { DiscussionMessage, MessageReaction } from '../models/live-room.model';
-import { ActionFeedback, RoomStageStore } from './room-stage-store';
-
-interface ChatLoadRequest extends RoomResourceTrigger {
-  readonly generation: number;
-  readonly revisionBefore: number;
-  readonly attempt: number;
-  readonly onDone?: (ok: boolean) => void;
-}
+import { VoiceRoomApi } from '../data-access/voice-room-api';
+import type { DiscussionMessage, MessageReaction } from '../models/live-room.model';
+import { type ActionFeedback, RoomStageStore } from './room-stage-store';
 
 function formatTimeLabel(isoDate: string): string {
   const date = new Date(isoDate);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return Number.isNaN(date.getTime())
+    ? ''
+    : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 @Service()
@@ -33,22 +28,26 @@ export class RoomChatStore {
   private readonly stageStore = inject(RoomStageStore);
 
   private chatRevision = 0;
-  private chatSeq = 0;
 
-  private readonly chatRequest = signal<ChatLoadRequest | null>(null);
-  private readonly chatRes = this.voiceRoomApi.chatStateResource(
-    () => this.chatRequest() ?? undefined,
+  private readonly loadingState = signal(false);
+  private readonly rawCommentsState = signal<readonly RoomCommentDto[]>([]);
+  private readonly commentReactionsState = signal<ReadonlyMap<string, CommentReactionTallyDto>>(
+    new Map(),
   );
-
-  readonly loading = this.chatRes.isLoading;
-  readonly rawComments = signal<readonly RoomCommentDto[]>([]);
-  readonly commentReactions = signal<ReadonlyMap<string, CommentReactionTallyDto>>(new Map());
-  readonly pinnedTopic = signal<string | null>(null);
+  private readonly pinnedTopicState = signal<string | null>(null);
   private readonly pinnedCommentIds = signal<readonly string[]>([]);
+  private readonly chatMutedUsersState = signal<ReadonlySet<string>>(new Set());
+  private readonly isChatMutedState = signal(false);
+  private readonly chatErrorState = signal(false);
+
+  readonly loading = this.loadingState.asReadonly();
+  readonly rawComments = this.rawCommentsState.asReadonly();
+  readonly commentReactions = this.commentReactionsState.asReadonly();
+  readonly pinnedTopic = this.pinnedTopicState.asReadonly();
   readonly pinnedCommentId = computed(() => this.pinnedCommentIds()[0] ?? null);
-  readonly chatMutedUsers = signal<ReadonlySet<string>>(new Set());
-  readonly isChatMuted = signal(false);
-  readonly chatError = signal(false);
+  readonly chatMutedUsers = this.chatMutedUsersState.asReadonly();
+  readonly isChatMuted = this.isChatMutedState.asReadonly();
+  readonly chatError = this.chatErrorState.asReadonly();
 
   private readonly reply = signal<{
     author: string;
@@ -66,22 +65,20 @@ export class RoomChatStore {
     return this.rawComments().map((comment) => {
       const name = this.stageStore.resolveDisplayName(comment.authorId, 'Speaker');
       const tally = reactionsMap.get(comment.id);
-      const reactions: MessageReaction[] = tally
-        ? (Object.entries(tally.counts) as [BackendReaction, number][])
-            .filter(([, count]) => count > 0)
-            .map(([code, count]) => ({
+      const reactions: MessageReaction[] = [];
+      if (tally) {
+        for (const [code, count] of Object.entries(tally.counts)) {
+          if (isBackendReaction(code) && typeof count === 'number' && count > 0) {
+            reactions.push({
               code,
               emoji: emojiForReaction(code),
               count,
               active: tally.mine === code,
               label: labelForReaction(code),
-            }))
-        : [];
-
-      const text =
-        comment.type === 'CORRECTION' && comment.correctedContent
-          ? `${comment.content} → ${comment.correctedContent}`
-          : comment.content;
+            });
+          }
+        }
+      }
 
       return {
         id: comment.id,
@@ -93,7 +90,10 @@ export class RoomChatStore {
         isYou: comment.authorId === myId,
         isThreadReply: Boolean(comment.replyTo),
         timeLabel: formatTimeLabel(comment.createdAt),
-        text,
+        text:
+          comment.type === 'CORRECTION' && comment.correctedContent
+            ? `${comment.content} → ${comment.correctedContent}`
+            : comment.content,
         reactions,
       };
     });
@@ -109,91 +109,64 @@ export class RoomChatStore {
     return count === 1 ? '1 message' : `${count} messages`;
   });
 
-  constructor() {
-    effect(() => {
-      const req = this.chatRequest();
-      if (!req) return;
-      const status = this.chatRes.status();
-      if (status === 'resolved' && this.chatRes.hasValue()) {
-        const chatState = this.chatRes.value();
-        untracked(() => {
-          if (req.generation !== this.stageStore.generation()) {
-            this.chatRequest.set(null);
-            req.onDone?.(false);
-            return;
-          }
-          if (req.revisionBefore !== this.chatRevision) {
-            if (req.attempt === 0) {
-              this.chatRequest.set({
-                ...req,
-                seq: ++this.chatSeq,
-                revisionBefore: this.chatRevision,
-                attempt: 1,
-              });
-            } else {
-              this.chatError.set(true);
-              this.chatRequest.set(null);
-              req.onDone?.(false);
-            }
-            return;
-          }
-          this.applyChatState(chatState);
-          this.chatRequest.set(null);
-          req.onDone?.(true);
-        });
-      } else if (status === 'error') {
-        untracked(() => {
-          if (req.generation === this.stageStore.generation()) {
-            this.chatError.set(true);
-          }
-          this.chatRequest.set(null);
-          req.onDone?.(false);
-        });
-      }
-    });
-  }
-
   revision(): number {
     return this.chatRevision;
   }
 
+  setChatMuted(muted: boolean): void {
+    this.isChatMutedState.set(muted);
+  }
+
+  setChatError(hasError: boolean): void {
+    this.chatErrorState.set(hasError);
+  }
+
   applyChatState(chatState: ChatStateDto): void {
-    this.rawComments.set(chatState.comments);
-    this.pinnedTopic.set(chatState.topic);
+    this.rawCommentsState.set(chatState.comments);
+    this.pinnedTopicState.set(chatState.topic);
     this.pinnedCommentIds.set(
       chatState.comments
         .flatMap(({ id, pinnedAt }) => (pinnedAt ? [{ id, at: Date.parse(pinnedAt) }] : []))
         .sort((a, b) => b.at - a.at)
         .map(({ id }) => id),
     );
-    this.isChatMuted.set(chatState.muted);
-    this.chatMutedUsers.set(new Set(chatState.mutedUsers));
-    this.commentReactions.set(
+    this.isChatMutedState.set(chatState.muted);
+    this.chatMutedUsersState.set(new Set(chatState.mutedUsers));
+    this.commentReactionsState.set(
       new Map(
         chatState.reactions.map(
           ({ commentId, counts, mine }) => [commentId, { counts, mine: mine ?? null }] as const,
         ),
       ),
     );
-    this.chatError.set(false);
+    this.chatErrorState.set(false);
     this.stageStore.resolveMissingUsers(chatState.comments.map((c) => c.authorId));
   }
 
-  reloadMessages(onDone?: (ok: boolean) => void): void {
+  async reloadMessages(): Promise<boolean> {
     const id = this.stageStore.roomId();
-    if (!id) {
-      onDone?.(false);
-      return;
+    if (!id) return false;
+    const generation = this.stageStore.generation();
+    this.chatErrorState.set(false);
+    this.loadingState.set(true);
+    try {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const revisionBefore = this.chatRevision;
+        const chatState = await this.voiceRoomApi.getChatState(id);
+        if (generation !== this.stageStore.generation()) return false;
+        if (revisionBefore === this.chatRevision) {
+          this.applyChatState(chatState);
+          return true;
+        }
+      }
+      this.chatErrorState.set(true);
+      return false;
+    } catch {
+      if (generation === this.stageStore.generation()) this.chatErrorState.set(true);
+      return false;
+    } finally {
+      if (generation === this.stageStore.generation()) this.loadingState.set(false);
     }
-    this.chatError.set(false);
-    this.chatRequest.set({
-      roomId: id,
-      seq: ++this.chatSeq,
-      generation: this.stageStore.generation(),
-      revisionBefore: this.chatRevision,
-      attempt: 0,
-      onDone,
-    });
   }
 
   async sendMessage(content: string): Promise<ActionFeedback> {
@@ -310,89 +283,111 @@ export class RoomChatStore {
     this.chatRevision++;
     switch (event.type) {
       case 'COMMENT_POSTED':
-        this.appendCommentIfNew(event.comment);
-        this.stageStore.resolveMissingUsers([event.comment.authorId]);
+        if (event.comment) {
+          this.appendCommentIfNew(event.comment);
+          this.stageStore.resolveMissingUsers([event.comment.authorId]);
+        }
         return;
-      case 'COMMENT_DELETED':
-        this.rawComments.update((list) => list.filter((c) => c.id !== event.commentId));
-        this.commentReactions.update((prev) => {
-          if (!prev.has(event.commentId)) return prev;
-          const next = new Map(prev);
-          next.delete(event.commentId);
-          return next;
-        });
-        this.updatePin(event.commentId, false);
+      case 'COMMENT_DELETED': {
+        const commentId = event.commentId;
+        if (!commentId) return;
+        this.rawCommentsState.update((list): readonly RoomCommentDto[] =>
+          list.filter((c) => c.id !== commentId),
+        );
+        this.commentReactionsState.update(
+          (prev): ReadonlyMap<string, CommentReactionTallyDto> => {
+            if (!prev.has(commentId)) return prev;
+            const next = new Map(prev);
+            next.delete(commentId);
+            return next;
+          },
+        );
+        this.updatePin(commentId, false);
         return;
+      }
       case 'COMMENT_REACTED': {
+        const commentId = event.commentId;
+        const userId = event.targetUserId;
+        if (!commentId || !userId) return;
+        const reaction = isBackendReaction(event.reaction) ? event.reaction : null;
+        const previous = isBackendReaction(event.previous) ? event.previous : null;
         const myId = this.stageStore.currentUserId();
-        this.commentReactions.update((prev) => {
-          const next = new Map(prev);
-          const existing = next.get(event.commentId) ?? { counts: {}, mine: null };
-          const counts: Partial<Record<BackendReaction, number>> = { ...existing.counts };
+        this.commentReactionsState.update(
+          (prev): ReadonlyMap<string, CommentReactionTallyDto> => {
+            const next = new Map(prev);
+            const existing = next.get(commentId) ?? { counts: {}, mine: null };
+            const counts: Partial<Record<BackendReaction, number>> = { ...existing.counts };
 
-          if (event.previous) {
-            const dec = (counts[event.previous] ?? 1) - 1;
-            if (dec > 0) counts[event.previous] = dec;
-            else delete counts[event.previous];
-          }
-          if (event.reaction) {
-            counts[event.reaction] = (counts[event.reaction] ?? 0) + 1;
-          }
+            if (previous) {
+              const dec = (counts[previous] ?? 1) - 1;
+              if (dec > 0) counts[previous] = dec;
+              else delete counts[previous];
+            }
+            if (reaction) {
+              counts[reaction] = (counts[reaction] ?? 0) + 1;
+            }
 
-          next.set(event.commentId, {
-            counts,
-            mine: event.userId === myId ? event.reaction : existing.mine,
-          });
-          return next;
-        });
+            next.set(commentId, {
+              counts,
+              mine: userId === myId ? reaction : existing.mine,
+            });
+            return next;
+          },
+        );
         return;
       }
       case 'COMMENT_PINNED':
-        this.updatePin(event.commentId, true);
+        if (event.commentId) this.updatePin(event.commentId, true);
         return;
       case 'COMMENT_UNPINNED':
         if (event.commentId) this.updatePin(event.commentId, false);
         return;
-      case 'CHAT_MUTED':
-        this.chatMutedUsers.update((prev) => new Set(prev).add(event.userId));
-        if (event.userId === this.stageStore.currentUserId()) this.isChatMuted.set(true);
+      case 'CHAT_MUTED': {
+        const targetUserId = event.targetUserId;
+        if (!targetUserId) return;
+        this.chatMutedUsersState.update((prev): ReadonlySet<string> => new Set(prev).add(targetUserId));
+        if (targetUserId === this.stageStore.currentUserId()) this.isChatMutedState.set(true);
         return;
-      case 'CHAT_UNMUTED':
-        this.chatMutedUsers.update((prev) => {
+      }
+      case 'CHAT_UNMUTED': {
+        const targetUserId = event.targetUserId;
+        if (!targetUserId) return;
+        this.chatMutedUsersState.update((prev): ReadonlySet<string> => {
           const next = new Set(prev);
-          next.delete(event.userId);
+          next.delete(targetUserId);
           return next;
         });
-        if (event.userId === this.stageStore.currentUserId()) this.isChatMuted.set(false);
+        if (targetUserId === this.stageStore.currentUserId()) this.isChatMutedState.set(false);
         return;
+      }
       case 'TOPIC_CHANGED':
-        this.pinnedTopic.set(event.topic);
+        this.pinnedTopicState.set(event.topic ?? null);
     }
   }
 
   reset(): void {
-    this.chatRequest.set(null);
-    this.chatError.set(false);
+    this.loadingState.set(false);
+    this.chatErrorState.set(false);
     this.setReplyTarget(null);
-    this.rawComments.set([]);
-    this.commentReactions.set(new Map());
-    this.pinnedTopic.set(null);
+    this.rawCommentsState.set([]);
+    this.commentReactionsState.set(new Map());
+    this.pinnedTopicState.set(null);
     this.pinnedCommentIds.set([]);
-    this.chatMutedUsers.set(new Set());
-    this.isChatMuted.set(false);
+    this.chatMutedUsersState.set(new Set());
+    this.isChatMutedState.set(false);
   }
 
   private updatePin(id: string, pinned: boolean): void {
-    this.pinnedCommentIds.update((ids) => {
+    this.pinnedCommentIds.update((ids): readonly string[] => {
       const remaining = ids.filter((existing) => existing !== id);
       return pinned ? [id, ...remaining] : remaining;
     });
   }
 
   private appendCommentIfNew(comment: RoomCommentDto): void {
-    const comments = this.rawComments();
+    const comments = this.rawCommentsState();
     if (comments.some((existing) => existing.id === comment.id)) return;
     this.chatRevision++;
-    this.rawComments.set([...comments, comment]);
+    this.rawCommentsState.set([...comments, comment]);
   }
 }

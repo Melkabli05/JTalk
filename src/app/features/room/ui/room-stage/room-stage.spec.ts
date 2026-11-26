@@ -43,8 +43,8 @@ describe('RoomStage', () => {
     const tiles: NodeListOf<HTMLButtonElement> =
       fixture.nativeElement.querySelectorAll('.speaker-tile:not(.speaker-tile-open)');
     expect(tiles.length).toBe(2);
-    expect(tiles[0].classList.contains('is-muted')).toBe(true);
-    expect(tiles[1].classList.contains('is-speaking')).toBe(true);
+    expect(tiles[0]?.classList.contains('is-muted')).toBe(true);
+    expect(tiles[1]?.classList.contains('is-speaking')).toBe(true);
     const claim = vi.fn();
     fixture.componentInstance.claimSeat.subscribe(claim);
     fixture.nativeElement.querySelector('#openSeatButton').click();

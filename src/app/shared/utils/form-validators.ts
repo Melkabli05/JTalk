@@ -1,7 +1,6 @@
 import {
   PathKind,
   required,
-  requiredError,
   SchemaPath,
   SchemaPathRules,
   validate,
@@ -16,7 +15,10 @@ export function trimmedRequired<TPathKind extends PathKind = PathKind.Root>(
   message: string,
 ): void {
   required(path, { message });
-  validate(path, ({ value }) =>
-    isTrimmedNonEmpty(value()) ? undefined : requiredError({ message }),
-  );
+  validate(path, ({ value }) => {
+    const current = value();
+    return current.length === 0 || isTrimmedNonEmpty(current)
+      ? undefined
+      : { kind: 'whitespace', message };
+  });
 }

@@ -14,11 +14,9 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { finalize, tap } from 'rxjs';
 import { IdentityStore } from '../../../core/auth/identity';
 import { errorMessage } from '../../../core/http/http-error.interceptor';
-import { VoiceRoomDto } from '../../../shared/models/voice-room.model';
+import type { VoiceRoomDto } from '../../../shared/models/voice-room.model';
 import {
-  LANGUAGE_FILTER_CHIPS,
-  ROOM_CARD_AVATAR_LIMIT,
-  ROOMS_LIST_TIMEOUT_MS,
+  type RoomLangFilter,
   ROOMS_POLL_AFTER_ATTEMPTS,
   ROOMS_POLL_INTERVAL_MS,
   ROOMS_RECONNECT_BASE_DELAY_MS,
@@ -27,18 +25,7 @@ import {
   ROOMS_SSE_IDLE_TIMEOUT_MS,
 } from '../constants/rooms.constants';
 import { RoomsApi } from '../data-access/rooms-api';
-import { LiveRoomCard, RoomLangFilter } from '../models/room-card.model';
-import { RoomFeedEvent } from '../models/room-feed.model';
-import {
-  filterRoomsByLanguage,
-  orderPinnedRooms,
-  toLiveRoomCard,
-} from '../utils/rooms-filter';
-
-interface ListRequest {
-  readonly revision: number;
-  readonly notify: boolean;
-}
+import type { RoomFeedEvent } from '../models/room-feed.model';
 
 @Service()
 export class RoomsStore {
@@ -46,6 +33,12 @@ export class RoomsStore {
   private readonly destroyRef = inject(DestroyRef);
   private readonly roomsApi = inject(RoomsApi);
   private readonly identity = inject(IdentityStore);
+
+  private readonly targetLanguageState = signal<RoomLangFilter>('all');
+  private readonly activeTargetLanguage = computed<string | undefined>(() => {
+    const lang = this.targetLanguageState();
+    return lang === 'all' ? undefined : lang;
+  });
 
   private readonly rawRooms = linkedSignal<boolean, readonly VoiceRoomDto[] | null>({
     source: () => this.identity.isAuthenticated(),
@@ -59,41 +52,36 @@ export class RoomsStore {
     source: () => this.identity.isAuthenticated(),
     computation: (signedIn, previous) => (signedIn ? (previous?.value ?? new Set()) : new Set()),
   });
-  private readonly listRequest = linkedSignal<boolean, ListRequest | null>({
+  private readonly errorState = linkedSignal<boolean, string | null>({
     source: () => this.identity.isAuthenticated(),
     computation: (signedIn, previous) => (signedIn ? (previous?.value ?? null) : null),
   });
+  private readonly listLoading = signal(false);
   private readonly feedActive = signal(false);
   private readonly feedRequested = signal(false);
-  private readonly refreshTickState = signal(0);
 
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private reconnectAttempts = 0;
   private feedRevision = 0;
 
-  private readonly listResource = this.roomsApi.listRoomsResource(
-    () => this.canFetch() && this.listRequest() !== null,
-    () => {
-      const f = this.selectedFilter();
-      return f === 'all' ? undefined : f;
-    },
-  );
-
   // Bridge external ngx-sse-client Observable via rxResource so teardown is automatic.
   private readonly feedResource = rxResource({
-    params: () => (this.canFetch() && this.feedRequested() ? true : undefined),
+    params: () =>
+      this.canFetch() && this.feedRequested()
+        ? { targetLanguage: this.activeTargetLanguage() }
+        : undefined,
     equal: () => false,
-    stream: () => {
+    stream: ({ params }) => {
       let receivedSnapshot = false;
-      const disconnected = () => this.handleFeedDisconnect();
+      const disconnected = (): void => this.handleFeedDisconnect();
       let timer = setTimeout(disconnected, ROOMS_SSE_FIRST_EVENT_TIMEOUT_MS);
-      const activity = () => {
+      const activity = (): void => {
         if (!receivedSnapshot) return;
         clearTimeout(timer);
         timer = setTimeout(disconnected, ROOMS_SSE_IDLE_TIMEOUT_MS);
       };
-      return this.roomsApi.roomFeed({ activity, disconnected }).pipe(
+      return this.roomsApi.roomFeed({ activity, disconnected }, params.targetLanguage).pipe(
         tap({
           next: (event) => {
             if (!this.canFetch() || !this.feedRequested()) return;
@@ -114,54 +102,37 @@ export class RoomsStore {
     },
   });
 
-  readonly selectedFilter = signal<RoomLangFilter>('all');
-  readonly filterChips = LANGUAGE_FILTER_CHIPS;
+  readonly targetLanguage = this.targetLanguageState.asReadonly();
   readonly hasLoaded = computed(() => this.rawRooms() !== null);
-  readonly refreshTick = this.refreshTickState.asReadonly();
-  readonly error = linkedSignal<boolean, string | null>({
-    source: () => this.identity.isAuthenticated(),
-    computation: (signedIn, previous) => (signedIn ? (previous?.value ?? null) : null),
-  });
+  readonly error = this.errorState.asReadonly();
 
   readonly loading = computed(
-    () => this.listRequest() !== null || (this.feedRequested() && !this.hasLoaded()),
+    () => this.listLoading() || (this.feedRequested() && !this.hasLoaded()),
   );
 
-  readonly rooms = computed<readonly LiveRoomCard[]>(() => {
-    const directory = this.identity.userDirectory();
+  readonly rooms = computed<readonly VoiceRoomDto[]>(() => {
     const hidden = this.hiddenIds();
-    const visible = (this.rawRooms() ?? [])
-      .filter((room) => !hidden.has(room.id))
-      .map((room) => toLiveRoomCard(room, directory));
-    return orderPinnedRooms(visible, this.pinnedIds());
+    const visible = (this.rawRooms() ?? []).filter((room) => !hidden.has(room.id));
+    const pinned = this.pinnedIds();
+    if (pinned.length === 0 || visible.length <= 1) return visible;
+    const byId = new Map(visible.map((room) => [room.id, room]));
+    const ordered: VoiceRoomDto[] = [];
+    for (const id of pinned) {
+      const match = byId.get(id);
+      if (match) {
+        ordered.push(match);
+        byId.delete(id);
+      }
+    }
+    return ordered.length === 0 ? visible : [...ordered, ...byId.values()];
   });
 
   readonly liveCount = computed(() => this.rooms().length);
-  readonly filteredRooms = computed(() =>
-    filterRoomsByLanguage(this.rooms(), this.selectedFilter()),
-  );
-  readonly activeFilterLabel = computed(
-    () => this.filterChips.find((c) => c.value === this.selectedFilter())?.label ?? 'All languages',
-  );
 
   constructor() {
     effect(() => {
       if (isPlatformBrowser(this.platformId) && !this.identity.isAuthenticated()) {
         untracked(() => this.stopLiveFeed());
-      }
-    });
-
-    effect((onCleanup) => {
-      const request = this.listRequest();
-      if (!request) return;
-      const status = this.listResource.status();
-      if (status === 'loading') {
-        const timer = setTimeout(() => this.finishList(request), ROOMS_LIST_TIMEOUT_MS);
-        onCleanup(() => clearTimeout(timer));
-      } else if (status === 'resolved' || status === 'error') {
-        const rooms = status === 'resolved' ? this.listResource.value() : undefined;
-        const error = this.listResource.error();
-        untracked(() => this.finishList(request, rooms, error));
       }
     });
 
@@ -172,52 +143,72 @@ export class RoomsStore {
     if (!this.canFetch() || this.feedActive()) return;
     this.feedRevision++;
     this.feedActive.set(true);
-    this.error.set(null);
+    this.errorState.set(null);
     this.feedRequested.set(true);
   }
 
-  refresh(): void {
-    if (!this.canFetch()) return;
+  setTargetLanguage(filter: RoomLangFilter): void {
+    if (filter === this.targetLanguageState()) return;
+    this.targetLanguageState.set(filter);
+    this.feedRevision++;
+    this.errorState.set(null);
+    if (this.feedActive()) {
+      this.rawRooms.set(null);
+      this.reconnectAttempts = 0;
+      if (this.reconnectTimer !== null) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
+      this.stopPollingFallback();
+      this.feedRequested.set(true);
+    }
+  }
+
+  refresh(): Promise<boolean> {
+    if (!this.canFetch()) return Promise.resolve(false);
     this.hiddenIds.set(new Set());
-    this.requestRoomsList(true);
+    return this.loadRoomsList(true);
   }
 
   pinRoom(roomId: string): void {
-    this.pinnedIds.update((list) => [roomId, ...list.filter((id) => id !== roomId)]);
+    this.pinnedIds.update((list): readonly string[] => [
+      roomId,
+      ...list.filter((id) => id !== roomId),
+    ]);
   }
 
   hideRoom(roomId: string): void {
-    this.hiddenIds.update((prev) => new Set(prev).add(roomId));
+    this.hiddenIds.update((prev): ReadonlySet<string> => new Set(prev).add(roomId));
   }
 
   applyFeedEvent(event: RoomFeedEvent): void {
     this.feedRevision++;
     switch (event.type) {
       case 'SNAPSHOT':
-        this.setSnapshot(event.rooms);
-        this.error.set(null);
+        this.rawRooms.set(event.rooms);
+        this.errorState.set(null);
         return;
       case 'ROOM_OPENED':
-        this.rawRooms.update((list) => [
+        this.rawRooms.update((list): readonly VoiceRoomDto[] => [
           event.room,
           ...(list ?? []).filter((room) => room.id !== event.room.id),
         ]);
-        this.resolveRoomPeople([event.room]);
         return;
       case 'ROOM_UPDATED':
-        this.rawRooms.update((list) => {
+        this.rawRooms.update((list): readonly VoiceRoomDto[] => {
           const current = list ?? [];
           return current.some((room) => room.id === event.room.id)
             ? current.map((room) => (room.id === event.room.id ? event.room : room))
             : [event.room, ...current];
         });
-        this.resolveRoomPeople([event.room]);
         return;
       case 'ROOM_CLOSED':
-        this.rawRooms.update((list) => (list ?? []).filter((room) => room.id !== event.roomId));
+        this.rawRooms.update((list): readonly VoiceRoomDto[] =>
+          (list ?? []).filter((room) => room.id !== event.roomId),
+        );
         return;
       case 'ROOM_STATS':
-        this.rawRooms.update((list) =>
+        this.rawRooms.update((list): readonly VoiceRoomDto[] =>
           (list ?? []).map((room) =>
             room.id === event.roomId
               ? {
@@ -225,13 +216,10 @@ export class RoomsStore {
                   speakers: event.live.speakers,
                   participantCount: event.live.participantCount,
                   handRaiseCount: event.live.handRaiseCount,
+                  ...(event.speakerProfiles ? { speakerProfiles: event.speakerProfiles } : {}),
                 }
               : room,
           ),
-        );
-        void this.identity.resolveUsers(
-          event.live.speakers
-            .slice(0, ROOM_CARD_AVATAR_LIMIT + 1),
         );
     }
   }
@@ -245,7 +233,7 @@ export class RoomsStore {
 
     this.feedRequested.set(false);
     this.reconnectAttempts++;
-    this.requestRoomsList(false);
+    void this.loadRoomsList(false);
 
     const polling = this.reconnectAttempts >= ROOMS_POLL_AFTER_ATTEMPTS;
     if (polling) this.startPollingFallback();
@@ -259,38 +247,32 @@ export class RoomsStore {
     }, delayMs);
   }
 
-  private requestRoomsList(notify: boolean): void {
-    if (this.listRequest()) return;
-    this.error.set(null);
-    this.listRequest.set({ revision: this.feedRevision, notify });
-  }
-
-  private finishList(request: ListRequest, rooms?: readonly VoiceRoomDto[], error?: unknown): void {
-    if (request !== this.listRequest()) return;
-    const current = this.identity.isAuthenticated() && request.revision === this.feedRevision;
-    if (current) {
-      if (rooms) {
-        this.setSnapshot(rooms);
-        if (request.notify) {
-          this.refreshTickState.update((n) => n + 1);
-          this.ensureLoaded();
-        }
-      } else {
-        this.error.set(errorMessage(error, 'Could not load live rooms right now.'));
+  private async loadRoomsList(ensureFeed: boolean): Promise<boolean> {
+    if (this.listLoading() || !this.canFetch()) return false;
+    const revision = this.feedRevision;
+    const targetLanguage = this.activeTargetLanguage();
+    this.listLoading.set(true);
+    this.errorState.set(null);
+    try {
+      const rooms = await this.roomsApi.listRooms(targetLanguage);
+      if (!this.identity.isAuthenticated() || revision !== this.feedRevision) return false;
+      this.rawRooms.set(rooms);
+      if (ensureFeed) this.ensureLoaded();
+      return true;
+    } catch (err) {
+      if (this.identity.isAuthenticated() && revision === this.feedRevision) {
+        this.errorState.set(errorMessage(err, 'Could not load live rooms right now.'));
       }
+      return false;
+    } finally {
+      this.listLoading.set(false);
     }
-    this.listRequest.set(null);
-  }
-
-  private setSnapshot(rooms: readonly VoiceRoomDto[]): void {
-    this.rawRooms.set(rooms);
-    this.resolveRoomPeople(rooms);
   }
 
   private startPollingFallback(): void {
     if (this.pollTimer !== null) return;
     this.pollTimer = setInterval(() => {
-      if (this.feedActive() && this.identity.isAuthenticated()) this.requestRoomsList(false);
+      if (this.feedActive() && this.identity.isAuthenticated()) void this.loadRoomsList(false);
     }, ROOMS_POLL_INTERVAL_MS);
   }
 
@@ -311,16 +293,5 @@ export class RoomsStore {
       this.reconnectTimer = null;
     }
     this.stopPollingFallback();
-  }
-
-  private resolveRoomPeople(rooms: readonly VoiceRoomDto[]): void {
-    void this.identity.resolveUsers(
-      rooms.flatMap((room) => [
-        ...room.speakers
-          .filter((id) => id !== room.hostId)
-          .slice(0, ROOM_CARD_AVATAR_LIMIT),
-        ...(room.hostId ? [room.hostId] : []),
-      ]),
-    );
   }
 }

@@ -1,47 +1,77 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   Component,
   computed,
   DestroyRef,
-  effect,
   inject,
   linkedSignal,
   signal,
   viewChild,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { form, FormField } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { lastValueFrom } from 'rxjs';
-import { LanguageType, ProficiencyLevel } from '../../../../core/auth/auth.models';
+import type {
+  FollowListResponse,
+  LanguageType,
+  ProficiencyLevel,
+  UserSummaryResponse,
+} from '../../../../core/auth/auth.models';
 import { IdentityStore } from '../../../../core/auth/identity';
-import { ProfileTab } from '../../../../core/models/session.model';
-import { ThemeService } from '../../../../core/services/theme';
+import { UsersApi } from '../../../../core/auth/users-api';
+import { errorMessage } from '../../../../core/http/http-error.interceptor';
+import { PwaService } from '../../../../core/services/pwa';
+import { isColorScheme, ThemeService } from '../../../../core/services/theme';
 import { ToastNotifier } from '../../../../core/services/toast-notifier';
-import { AppState } from '../../../../core/state/app-state';
-import { LANGUAGE_CATALOG } from '../../../../core/utils/language-codes';
+import { LANGUAGE_CATALOG, languageNameFor } from '../../../../core/utils/language-codes';
 import { LiveRoomStore } from '../../../room/store/live-room-store';
-import { PROFILE_TAB_ORDER } from '../../constants/profile.constants';
-import { ProfileStore } from '../../store/profile-store';
+import {
+  parseProfileTab,
+  PROFILE_CONNECTIONS_PAGE_SIZE,
+  PROFILE_TAB_ORDER,
+  type ProfileTab,
+} from '../../constants/profile.constants';
 import { DeleteAccountDialog } from '../../ui/delete-account-dialog/delete-account-dialog';
 import { ProfileAccount } from '../../ui/profile-account/profile-account';
 import {
   ProfileEditForm,
-  ProfileEditSaveEvent,
+  type ProfileEditSaveEvent,
 } from '../../ui/profile-edit-form/profile-edit-form';
 import { ProfileHeader } from '../../ui/profile-header/profile-header';
 import { ProfileOverview } from '../../ui/profile-overview/profile-overview';
 
+export type ProfileConnectionList = 'followers' | 'following' | 'blocks';
+
+interface ConnectionsRequest {
+  readonly userId: string;
+  readonly list: ProfileConnectionList;
+  readonly page: number;
+}
+
+interface AddLanguageFormModel {
+  code: string;
+  level: ProficiencyLevel;
+}
+
 @Component({
   selector: 'app-profile-page',
-  providers: [ProfileStore],
   imports: [
+    NgTemplateOutlet,
     FormField,
     MatButtonModule,
+    MatCardModule,
+    MatDividerModule,
     MatFormFieldModule,
+    MatIconModule,
     MatSelectModule,
     MatTabsModule,
     ProfileHeader,
@@ -53,24 +83,78 @@ import { ProfileOverview } from '../../ui/profile-overview/profile-overview';
   styleUrl: './profile-page.scss',
 })
 export class ProfilePage {
-  readonly appState = inject(AppState);
   readonly theme = inject(ThemeService);
+  readonly pwa = inject(PwaService);
   readonly identity = inject(IdentityStore);
-  readonly profileStore = inject(ProfileStore);
   readonly toast = inject(ToastNotifier);
+  private readonly usersApi = inject(UsersApi);
   private readonly dialog = inject(MatDialog);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly roomStore = inject(LiveRoomStore);
   private readonly editForm = viewChild(ProfileEditForm);
 
-  readonly selectedLangCode = signal('en');
-  readonly level = form(signal<ProficiencyLevel>('BEGINNER'));
+  private readonly queryParams = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+
+  private readonly addLanguageModel = signal<AddLanguageFormModel>({
+    code: 'en',
+    level: 'BEGINNER',
+  });
+  readonly addLanguageForm = form(this.addLanguageModel);
   readonly levels: readonly ProficiencyLevel[] = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'FLUENT'];
   readonly languages = LANGUAGE_CATALOG;
+  readonly languageName = languageNameFor;
+  readonly editingLanguages = signal(false);
+  readonly languageBusy = signal(false);
 
-  readonly activeTab = linkedSignal<ProfileTab>(() =>
-    this.identity.needsOnboarding() ? 'edit' : this.appState.requestedProfileTab(),
+  private readonly connectionsRequest = signal<ConnectionsRequest | null>(null);
+  private readonly connectionsRes = this.usersApi.connectionsResource(() => {
+    const req = this.connectionsRequest();
+    return req
+      ? { userId: req.userId, list: req.list, page: req.page, size: PROFILE_CONNECTIONS_PAGE_SIZE }
+      : undefined;
+  });
+
+  readonly connectionList = computed(() => this.connectionsRequest()?.list ?? null);
+  readonly connectionsStatus = this.connectionsRes.status;
+  readonly connectionsBusy = this.connectionsRes.isLoading;
+  readonly connectionsError = computed<string | null>(() => {
+    const err = this.connectionsRes.error();
+    return err ? errorMessage(err, 'Could not load accounts.') : null;
+  });
+  readonly connections = linkedSignal<
+    {
+      request: ConnectionsRequest | null;
+      page: FollowListResponse | UserSummaryResponse[] | undefined;
+    },
+    readonly UserSummaryResponse[]
+  >({
+    source: () => ({
+      request: this.connectionsRequest(),
+      page: this.connectionsRes.hasValue() ? this.connectionsRes.value() : undefined,
+    }),
+    computation: ({ request, page }, previous) => {
+      if (!request) return [];
+      if (!page) return request.page > 0 ? (previous?.value ?? []) : [];
+      if (previous && page === previous.source.page) return previous.value;
+      if (Array.isArray(page)) return page;
+      return request.page > 0 ? [...(previous?.value ?? []), ...page.content] : page.content;
+    },
+  });
+
+  readonly moreConnections = computed(() => {
+    if (!this.connectionsRes.hasValue()) return false;
+    const page = this.connectionsRes.value();
+    return !Array.isArray(page) && (page.page + 1) * page.size < page.total;
+  });
+
+  readonly activeTab = linkedSignal<ProfileTab>(
+    () =>
+      parseProfileTab(this.queryParams().get('tab')) ??
+      (this.identity.needsOnboarding() ? 'edit' : 'overview'),
   );
 
   readonly selectedTabIndex = computed(() => {
@@ -78,47 +162,97 @@ export class ProfilePage {
     return idx === -1 ? 0 : idx;
   });
 
-  constructor() {
-    effect(() => {
-      const error = this.profileStore.connectionsError();
-      if (error) this.toast.show(error);
-    });
+  retryConnections(): void {
+    this.connectionsRes.reload();
+  }
+
+  loadConnections(list: ProfileConnectionList, append = false): void {
+    const userId = this.identity.me()?.id;
+    if (!userId) return;
+
+    const current = this.connectionsRequest();
+    if (append && (!this.moreConnections() || this.connectionsBusy() || current?.list !== list)) {
+      return;
+    }
+    const previousPage = this.connectionsRes.hasValue() ? this.connectionsRes.value() : undefined;
+    const page = append && previousPage && !Array.isArray(previousPage) ? previousPage.page + 1 : 0;
+    if (current?.userId === userId && current.list === list && current.page === page) {
+      this.connectionsRes.reload();
+    } else {
+      this.connectionsRequest.set({ userId, list, page });
+    }
   }
 
   async unblock(id: string): Promise<void> {
-    const error = await this.profileStore.unblock(id);
-    if (error && !this.destroyRef.destroyed) this.toast.show(error);
+    try {
+      await this.usersApi.unblock(id);
+      if (this.connectionList() === 'blocks') this.loadConnections('blocks');
+    } catch (err) {
+      if (!this.destroyRef.destroyed) {
+        this.toast.show(errorMessage(err, 'Could not unblock account.'));
+      }
+    }
   }
 
-  async changeLanguage(code: string, type?: LanguageType, level?: ProficiencyLevel): Promise<void> {
-    const error = await this.profileStore.changeLanguage(code, type, level);
-    if (error && !this.destroyRef.destroyed) this.toast.show(error);
+  formatLevel(value: ProficiencyLevel | null | undefined): string {
+    return value ? value.charAt(0) + value.slice(1).toLowerCase() : '';
+  }
+
+  async onInstallApp(): Promise<void> {
+    const outcome = await this.pwa.promptInstall();
+    if (outcome === 'accepted' && !this.destroyRef.destroyed) {
+      this.toast.show('Jtalk installed.');
+    }
+  }
+
+  async changeLanguage(
+    code: string,
+    type?: LanguageType,
+    proficiencyLevel?: ProficiencyLevel,
+  ): Promise<void> {
+    if (this.languageBusy()) return;
+    this.languageBusy.set(true);
+    try {
+      const matrix = type
+        ? await this.usersApi.addMyLanguage({
+            languageCode: code,
+            languageType: type,
+            ...(type === 'LEARNING' && proficiencyLevel ? { proficiencyLevel } : {}),
+          })
+        : await this.usersApi.removeMyLanguage(code);
+      this.identity.applyLanguageMatrix(matrix);
+    } catch (err) {
+      if (!this.destroyRef.destroyed) {
+        this.toast.show(errorMessage(err, 'Could not update languages.'));
+      }
+    } finally {
+      this.languageBusy.set(false);
+    }
   }
 
   selectTab(tab: ProfileTab): void {
     this.activeTab.set(tab);
-    this.appState.requestProfileTab(tab);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab === 'overview' ? null : tab },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   onSelectedIndexChange(index: number): void {
     this.selectTab(PROFILE_TAB_ORDER[index] ?? 'overview');
   }
 
+  onColorSchemeChange(value: unknown): void {
+    if (isColorScheme(value)) {
+      this.theme.setColorScheme(value);
+    }
+  }
+
   async onProfileSaved(event: ProfileEditSaveEvent): Promise<void> {
     const wasOnboarding = this.identity.needsOnboarding();
-    const { profile, avatarBlob } = event;
-    const res = await this.identity.saveProfile(
-      {
-        displayName: profile.name,
-        username: profile.username,
-        nativeLanguage: profile.speak,
-        learningLanguage: profile.learn,
-        location: profile.location === 'Not set' ? '' : profile.location,
-        bio: profile.about,
-        avatarUrl: avatarBlob ? undefined : profile.avatar.imageUrl,
-      },
-      avatarBlob,
-    );
+    const res = await this.identity.saveProfile(event.input, event.avatarBlob);
     if (this.destroyRef.destroyed) return;
     if (res.ok) {
       this.editForm()?.clearPendingAvatar();
@@ -145,7 +279,7 @@ export class ProfilePage {
     if (!confirmed || this.destroyRef.destroyed) return;
     const res = await this.identity.deleteAccount();
     if (res.ok) {
-      this.appState.rememberRoom(null);
+      this.roomStore.rememberRoom(null);
     } else if (res.error && !this.destroyRef.destroyed) {
       this.toast.show(res.error);
     }

@@ -1,8 +1,10 @@
-@let profile = appState.profile();
+@let me = identity.me();
+@let stats = identity.socialStats() ?? null;
 <div class="view view-profile">
   <div class="profile-wrap">
     <app-profile-header
-      [profile]="profile"
+      [profile]="me"
+      [stats]="stats"
       (editProfile)="selectTab('edit')"
     />
 
@@ -14,76 +16,216 @@
     >
       <mat-tab label="Overview">
         <div class="profile-tab-content">
-          <app-profile-overview [profile]="profile" />
-          @if (identity.me(); as me) {
-            <button matButton type="button" (click)="profileStore.loadConnections('followers')">Followers</button>
-            <button matButton type="button" (click)="profileStore.loadConnections('following')">Following</button>
-            <button matButton type="button" (click)="profileStore.loadConnections('blocks')">Blocked accounts</button>
-            @if (profileStore.connectionList(); as list) {
-              <section aria-live="polite">
-                @if (profileStore.connectionsBusy()) { <p>Loading accounts…</p> }
-                @for (account of profileStore.connections(); track account.id) {
-                  <p>{{ account.displayName }} (&#64;{{ account.username }})
-                    @if (list === 'blocks') { <button matButton type="button" (click)="unblock(account.id)">Unblock</button> }
-                  </p>
-                } @empty { @if (!profileStore.connectionsBusy()) { <p>No accounts to show.</p> } }
-                @if (profileStore.moreConnections()) { <button matButton type="button" (click)="profileStore.loadConnections(list, true)">Load more</button> }
-              </section>
-            }
+          <app-profile-overview [profile]="me" />
+          @if (me) {
+            <mat-card class="profile-card" appearance="outlined" aria-labelledby="connections-h">
+              <h3 id="connections-h">Connections</h3>
+              <p class="card-sub">View followers, people you follow, or blocked accounts.</p>
+              <div class="profile-action-row">
+                <button
+                  matButton="outlined"
+                  type="button"
+                  (click)="loadConnections('followers')"
+                >
+                  Followers
+                </button>
+                <button
+                  matButton="outlined"
+                  type="button"
+                  (click)="loadConnections('following')"
+                >
+                  Following
+                </button>
+                <button
+                  matButton="outlined"
+                  type="button"
+                  (click)="loadConnections('blocks')"
+                >
+                  Blocked accounts
+                </button>
+              </div>
+              @if (connectionList(); as list) {
+                <section class="profile-connections-list" aria-live="polite">
+                  <mat-divider class="profile-divider" />
+                  @let connStatus = connectionsStatus();
+                  @let accounts = connections();
+                  <ng-template #connectionsRows>
+                    @for (account of accounts; track account.id) {
+                      <div class="profile-connection-row">
+                        <span>
+                          <strong>{{ account.displayName }}</strong>
+                          <span class="profile-connection-handle">(&#64;{{ account.username }})</span>
+                        </span>
+                        @if (list === 'blocks') {
+                          <button matButton="outlined" type="button" (click)="unblock(account.id)">
+                            Unblock
+                          </button>
+                        }
+                      </div>
+                    } @empty {
+                      <p class="profile-empty">No accounts to show.</p>
+                    }
+                    @if (moreConnections()) {
+                      <div class="profile-action-row">
+                        <button
+                          matButton="outlined"
+                          type="button"
+                          [disabled]="connectionsBusy()"
+                          (click)="loadConnections(list, true)"
+                        >
+                          Load more
+                        </button>
+                      </div>
+                    }
+                  </ng-template>
+                  @switch (connStatus) {
+                    @case ('loading')
+                    @case ('reloading') {
+                      <p class="profile-empty" role="status">Loading accounts…</p>
+                      @if (accounts.length > 0) {
+                        <ng-container [ngTemplateOutlet]="connectionsRows" />
+                      }
+                    }
+                    @case ('error') {
+                      <div class="profile-empty" role="alert">
+                        <p>{{ connectionsError() }}</p>
+                        <div class="profile-action-row">
+                          <button matButton="outlined" type="button" (click)="retryConnections()">
+                            <mat-icon aria-hidden="true">refresh</mat-icon>
+                            Retry
+                          </button>
+                        </div>
+                      </div>
+                    }
+                    @case ('idle')
+                    @case ('resolved')
+                    @case ('local') {
+                      <ng-container [ngTemplateOutlet]="connectionsRows" />
+                    }
+                    @default never;
+                  }
+                </section>
+              }
+            </mat-card>
           }
         </div>
       </mat-tab>
 
       <mat-tab label="Edit profile">
         <div class="profile-tab-content">
-          @if (identity.me(); as me) {
-            <button matButton type="button" (click)="profileStore.editingLanguages.update((v) => !v)">Manage languages</button>
-            @if (profileStore.editingLanguages()) {
-              <fieldset [disabled]="profileStore.languageBusy()">
-                <legend>Languages</legend>
-                @for (code of me.nativeLanguages; track code) {
-                  <p>{{ code }} · Native
-                    <button matButton type="button" (click)="changeLanguage(code)">Remove</button>
-                  </p>
-                }
-                @for (entry of me.learningLanguages; track entry.languageCode) {
-                  <p>{{ entry.languageCode }} · Learning {{ entry.proficiencyLevel }}
-                    <button matButton type="button" (click)="changeLanguage(entry.languageCode)">Remove</button>
-                  </p>
-                }
-                <mat-form-field>
-                  <mat-label>Language</mat-label>
-                  <mat-select [value]="selectedLangCode()" (valueChange)="selectedLangCode.set($event)" aria-label="Language">
-                    @for (lang of languages; track lang.code) {
-                      <mat-option [value]="lang.code">
-                        @if (lang.flagCountryCode; as cc) {
-                          <span [class]="'fi fi-' + cc" aria-hidden="true"></span>
+          @if (me) {
+            <mat-card class="profile-card" appearance="outlined" aria-labelledby="manage-langs-h">
+              <div class="profile-langs-head">
+                <div>
+                  <h3 id="manage-langs-h">Additional languages</h3>
+                  <p class="card-sub">Add native or learning languages with proficiency levels.</p>
+                </div>
+                <button
+                  matButton="outlined"
+                  type="button"
+                  [attr.aria-expanded]="editingLanguages()"
+                  (click)="editingLanguages.update((v) => !v)"
+                >
+                  <mat-icon aria-hidden="true">translate</mat-icon>
+                  Manage languages
+                </button>
+              </div>
+              @if (editingLanguages()) {
+                <fieldset class="profile-lang-fieldset" [disabled]="languageBusy()">
+                  <legend class="sr-only">Languages</legend>
+                  <div class="profile-lang-items">
+                    @for (code of me.nativeLanguages; track code) {
+                      <div class="profile-lang-item">
+                        <span>
+                          <strong>{{ languageName(code) }}</strong> · Native
+                        </span>
+                        @if (code === me.nativeLanguage) {
+                          <span class="profile-chip">Primary</span>
+                        } @else {
+                          <button matButton="text" type="button" (click)="changeLanguage(code)">
+                            Remove
+                          </button>
                         }
-                        {{ lang.name }}
-                      </mat-option>
+                      </div>
                     }
-                  </mat-select>
-                </mat-form-field>
-                <mat-form-field>
-                  <mat-label>Level</mat-label>
-                  <mat-select [formField]="level" aria-label="Level">
-                    @for (option of levels; track option) {
-                      <mat-option [value]="option">{{ option }}</mat-option>
+                    @for (entry of me.learningLanguages; track entry.languageCode) {
+                      <div class="profile-lang-item">
+                        <span>
+                          <strong>{{ languageName(entry.languageCode) }}</strong> · Learning@if (formatLevel(entry.proficiencyLevel); as lvl) { ({{ lvl }})}
+                        </span>
+                        <button
+                          matButton="text"
+                          type="button"
+                          (click)="changeLanguage(entry.languageCode)"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     }
-                  </mat-select>
-                </mat-form-field>
-                <button matButton type="button" (click)="changeLanguage(selectedLangCode(), 'NATIVE')">Add native</button>
-                <button matButton type="button" (click)="changeLanguage(selectedLangCode(), 'LEARNING', level().value())">Save learning language</button>
-              </fieldset>
-            }
+                  </div>
+                  <div class="select-row">
+                    <mat-form-field class="full-width">
+                      <mat-label>Language</mat-label>
+                      <mat-select [formField]="addLanguageForm.code" aria-label="Language">
+                        @for (lang of languages; track lang.code) {
+                          <mat-option [value]="lang.code">
+                            @if (lang.flagCountryCode; as cc) {
+                              <span [class]="'fi fi-' + cc" aria-hidden="true"></span>
+                            }
+                            {{ lang.name }}
+                          </mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                    <mat-form-field class="full-width">
+                      <mat-label>Level</mat-label>
+                      <mat-select [formField]="addLanguageForm.level" aria-label="Level">
+                        @for (option of levels; track option) {
+                          <mat-option [value]="option">{{ formatLevel(option) }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <div class="profile-action-row">
+                    <button
+                      matButton="outlined"
+                      type="button"
+                      (click)="changeLanguage(addLanguageForm.code().value(), 'NATIVE')"
+                    >
+                      Add native
+                    </button>
+                    <button
+                      matButton="tonal"
+                      type="button"
+                      (click)="
+                        changeLanguage(
+                          addLanguageForm.code().value(),
+                          'LEARNING',
+                          addLanguageForm.level().value()
+                        )
+                      "
+                    >
+                      Save learning language
+                    </button>
+                  </div>
+                </fieldset>
+              }
+            </mat-card>
           }
           @if (identity.profileError(); as error) {
-            <p role="alert">{{ error }}</p>
-            <button matButton type="button" (click)="identity.loadMe()">Retry profile</button>
+            <mat-card class="profile-card" appearance="outlined" role="alert">
+              <p class="profile-empty">{{ error }}</p>
+              <div class="profile-action-row">
+                <button matButton="outlined" type="button" (click)="identity.loadMe()">
+                  Retry profile
+                </button>
+              </div>
+            </mat-card>
           }
           @if (identity.hasProfile() || identity.needsOnboarding()) {
             <app-profile-edit-form
-              [profile]="profile"
+              [profile]="me"
+              [stats]="stats"
               [onboarding]="identity.needsOnboarding()"
               [saving]="identity.savingProfile()"
               (saved)="onProfileSaved($event)"
@@ -97,17 +239,28 @@
 
       <mat-tab label="Account">
         <div class="profile-tab-content">
-          <mat-form-field class="full-width">
-            <mat-label>Appearance</mat-label>
-            <mat-select [value]="theme.colorScheme()" (valueChange)="theme.setColorScheme($event)" aria-label="Appearance">
-              <mat-option value="light">Light</mat-option>
-              <mat-option value="dark">Dark</mat-option>
-            </mat-select>
-          </mat-form-field>
+          <mat-card class="profile-card" appearance="outlined" aria-labelledby="appearance-h">
+            <h3 id="appearance-h">Appearance</h3>
+            <p class="card-sub">Choose light or dark mode across Jtalk.</p>
+            <mat-form-field class="full-width">
+              <mat-label>Theme</mat-label>
+              <mat-select
+                [value]="theme.colorScheme()"
+                (valueChange)="onColorSchemeChange($event)"
+                aria-label="Appearance"
+              >
+                <mat-option value="light">Light</mat-option>
+                <mat-option value="dark">Dark</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </mat-card>
           <app-profile-account
-            [profile]="profile"
+            [profile]="me"
+            [canInstall]="pwa.canInstall()"
+            [showIosInstallHint]="pwa.isIosInstallable()"
             (settingsClicked)="selectTab('edit')"
             (helpClicked)="toast.show('Open the audio menu in a room to choose a microphone or check noise isolation.')"
+            (installClicked)="onInstallApp()"
             (signOutClicked)="roomStore.signOut()"
             (deleteClicked)="openDeleteDialog()"
           />

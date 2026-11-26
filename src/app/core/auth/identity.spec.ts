@@ -43,14 +43,14 @@ describe('IdentityStore profile edits', () => {
       learningLanguages: [],
       createdAt: '2026-01-01T00:00:00Z',
     };
-    identity.me.set({ ...profile, bio: null, avatarUrl: null, countryCode: null });
+    identity.setProfile({ ...profile, bio: null, avatarUrl: null, countryCode: null });
 
     const saving = identity.saveProfile({
       displayName: 'Person',
       username: 'person',
-      nativeLanguage: 'Portuguese',
-      learningLanguage: 'Not set',
-      location: '',
+      nativeLanguage: 'pt',
+      learningLanguage: null,
+      countryCode: null,
       bio: 'Updated bio',
     });
     const request = http.expectOne({ method: 'PATCH', url: '/api/v1/users/me' });
@@ -106,9 +106,9 @@ describe('IdentityStore profile edits', () => {
     const saving = identity.saveProfile({
       displayName: 'Person',
       username: '',
-      nativeLanguage: 'English',
-      learningLanguage: 'French',
-      location: '',
+      nativeLanguage: 'en',
+      learningLanguage: 'fr',
+      countryCode: null,
       bio: '',
     });
     http
@@ -130,22 +130,29 @@ describe('IdentityStore profile edits', () => {
       nativeLanguages: ['en'],
       learningLanguages: [],
       createdAt: '2026-01-01T00:00:00Z',
+      socialStats: {
+        followerCount: 0,
+        followingCount: 0,
+        followedByMe: false,
+        followsMe: false,
+      },
     });
     await flushResources();
-    http.expectOne('/api/v1/users/person/social').flush({
-      followerCount: 0,
-      followingCount: 0,
-      followedByMe: false,
-      followsMe: false,
-    });
     expect(identity.me()?.username).toBe('existing');
     expect(identity.hasProfile()).toBe(true);
+    expect(identity.socialStats()?.followerCount).toBe(0);
     http.verify();
   });
 
-  it('keeps counts during refresh and cancels obsolete profile requests', async () => {
+  it('reads socialStats from /me, keeps counts during refresh, and preserves them across PATCH saves', async () => {
     const identity = TestBed.inject(IdentityStore);
     const http = TestBed.inject(HttpTestingController);
+    const stats = {
+      followerCount: 7,
+      followingCount: 3,
+      followedByMe: false,
+      followsMe: false,
+    };
     const profile = {
       id: 'first',
       username: 'first',
@@ -154,33 +161,44 @@ describe('IdentityStore profile edits', () => {
       nativeLanguages: ['en'],
       learningLanguages: [],
       createdAt: '2026-01-01T00:00:00Z',
+      socialStats: stats,
     };
     await flushResources();
     http.expectOne('/api/v1/users/me').flush(profile);
     await flushResources();
-    http.expectOne('/api/v1/users/first/social').flush({
-      followerCount: 7,
-      followingCount: 3,
-      followedByMe: false,
-      followsMe: false,
+    expect(identity.socialStats()?.followerCount).toBe(7);
+
+    const saving = identity.saveProfile({
+      displayName: 'First Updated',
+      username: 'first',
+      nativeLanguage: 'en',
+      learningLanguage: null,
+      countryCode: null,
+      bio: '',
     });
-    await flushResources();
+    http.expectOne({ method: 'PATCH', url: '/api/v1/users/me' }).flush({
+      id: 'first',
+      username: 'first',
+      displayName: 'First Updated',
+      nativeLanguage: 'en',
+      nativeLanguages: ['en'],
+      learningLanguages: [],
+      createdAt: '2026-01-01T00:00:00Z',
+    });
+    expect((await saving).ok).toBe(true);
     expect(identity.socialStats()?.followerCount).toBe(7);
 
     identity.refreshSocialStats();
     TestBed.tick();
-    const refresh = http.expectOne('/api/v1/users/first/social');
+    const refresh = http.expectOne('/api/v1/users/me');
     expect(identity.socialStats()?.followerCount).toBe(7);
-    identity.me.set({ ...profile, id: 'second' });
-    TestBed.tick();
-    expect(refresh.cancelled).toBe(true);
-    expect(identity.socialStats()).toBeUndefined();
-    http.expectOne('/api/v1/users/second/social').flush({
-      followerCount: 1,
-      followingCount: 0,
-      followedByMe: false,
-      followsMe: false,
+    refresh.flush({
+      ...profile,
+      displayName: 'First Updated',
+      socialStats: { ...stats, followerCount: 9 },
     });
+    await flushResources();
+    expect(identity.socialStats()?.followerCount).toBe(9);
     http.verify();
   });
 });

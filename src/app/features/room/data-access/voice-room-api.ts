@@ -1,4 +1,4 @@
-import { HttpClient, httpResource } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../../../core/http/api-base-url.token';
@@ -12,15 +12,6 @@ import {
   RoomSessionDto,
   RoomSnapshotDto,
 } from '../../../shared/models/voice-room.model';
-
-export interface RoomResourceTrigger {
-  readonly roomId: string;
-  readonly seq: number;
-}
-
-export interface AudienceResourceTrigger extends RoomResourceTrigger {
-  readonly cursor: string | null;
-}
 
 @Service()
 export class VoiceRoomApi {
@@ -42,33 +33,20 @@ export class VoiceRoomApi {
     );
   }
 
-  // Reactive HTTP GET reads (Angular 22 httpResource)
-  snapshotResource(trigger: () => RoomResourceTrigger | undefined) {
-    return httpResource<RoomSnapshotDto>(() => {
-      const req = trigger();
-      return req
-        ? { url: this.url(req.roomId, 'participants/snapshot'), transferCache: false }
-        : undefined;
-    });
+  getSnapshot(roomId: string): Promise<RoomSnapshotDto> {
+    return lastValueFrom(this.http.get<RoomSnapshotDto>(this.url(roomId, 'participants/snapshot')));
   }
 
-  audienceResource(trigger: () => AudienceResourceTrigger | undefined) {
-    return httpResource<AudiencePage>(() => {
-      const req = trigger();
-      if (!req) return undefined;
-      return {
-        url: this.url(req.roomId, 'participants/audience'),
-        ...(req.cursor ? { params: { cursor: req.cursor } } : {}),
-        transferCache: false,
-      };
-    });
+  getAudience(roomId: string, cursor: string | null): Promise<AudiencePage> {
+    return lastValueFrom(
+      this.http.get<AudiencePage>(this.url(roomId, 'participants/audience'), {
+        ...(cursor ? { params: { cursor } } : {}),
+      }),
+    );
   }
 
-  chatStateResource(trigger: () => RoomResourceTrigger | undefined) {
-    return httpResource<ChatStateDto>(() => {
-      const req = trigger();
-      return req ? { url: this.url(req.roomId, 'comments'), transferCache: false } : undefined;
-    });
+  getChatState(roomId: string): Promise<ChatStateDto> {
+    return lastValueFrom(this.http.get<ChatStateDto>(this.url(roomId, 'comments')));
   }
 
   // Imperative mutations (async/await over HttpClient so interceptors & testing stay intact)

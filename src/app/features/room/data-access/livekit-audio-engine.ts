@@ -11,22 +11,19 @@ import {
   signal,
 } from '@angular/core';
 import type { Participant, TrackPublication } from 'livekit-client';
+import { BrowserStorage } from '../../../core/services/browser-storage';
 import { MIC_MUTED_STORAGE_KEY } from '../../../shared/constants/storage-keys.constants';
-import {
+import type {
   ChatRealtimeEvent,
   NetworkMode,
   RoomRealtimeEvent,
   RoomSessionDto,
 } from '../../../shared/models/voice-room.model';
-import {
-  parseChatRealtimeEvent,
-  parseRoomRealtimeEvent,
-} from '../../../shared/data-access/voice-room-parsers';
 import { CHAT_EVENTS_TOPIC, ROOM_EVENTS_TOPIC } from '../constants/room.constants';
 import {
   attachKrispNoiseIsolation,
-  KrispFilterController,
-  NoiseIsolationMode,
+  type KrispFilterController,
+  type NoiseIsolationMode,
 } from './livekit-noise-filter';
 import { VoiceRoomApi } from './voice-room-api';
 
@@ -98,9 +95,54 @@ export type LiveKitConnectorFn = (
   listener: LiveKitListener,
 ) => Promise<LiveKitConnectionHandle>;
 
-function decodeDataPayload(payload: Uint8Array): unknown {
+const ROOM_EVENT_TYPES = new Set<string>([
+  'STAGE_UPDATED',
+  'HAND_RAISED',
+  'HAND_LOWERED',
+  'SPEAKER_RECONNECTING',
+  'SPEAKER_RECONNECTED',
+  'PRESENCE_CHANGED',
+  'ROOM_UPDATED',
+  'REACTIONS',
+  'PARTICIPANT_PROFILE_UPDATED',
+  'COMMENT_PINNED',
+  'COMMENT_UNPINNED',
+]);
+
+const CHAT_EVENT_TYPES = new Set<string>([
+  'COMMENT_POSTED',
+  'COMMENT_DELETED',
+  'COMMENT_REACTED',
+  'COMMENT_PINNED',
+  'COMMENT_UNPINNED',
+  'CHAT_MUTED',
+  'CHAT_UNMUTED',
+  'TOPIC_CHANGED',
+]);
+
+function isBoolean(value: unknown): value is boolean {
+  return typeof value === 'boolean';
+}
+
+function isRoomRealtimeEvent(value: unknown): value is RoomRealtimeEvent {
+  if (typeof value !== 'object' || value === null) return false;
+  const type: unknown = Reflect.get(value, 'type');
+  return typeof type === 'string' && ROOM_EVENT_TYPES.has(type);
+}
+
+function isChatRealtimeEvent(value: unknown): value is ChatRealtimeEvent {
+  if (typeof value !== 'object' || value === null) return false;
+  const type: unknown = Reflect.get(value, 'type');
+  return typeof type === 'string' && CHAT_EVENT_TYPES.has(type);
+}
+
+function decodeDataEvent<T>(
+  payload: Uint8Array,
+  guard: (value: unknown) => value is T,
+): T | undefined {
   try {
-    return JSON.parse(new TextDecoder().decode(payload));
+    const parsed: unknown = JSON.parse(new TextDecoder().decode(payload));
+    return guard(parsed) ? parsed : undefined;
   } catch {
     return undefined;
   }
@@ -140,7 +182,7 @@ export async function defaultLiveKitConnector(
   let desiredNoiseIsolation = options.initialNoiseIsolation;
   let lastActiveSpeakerIds = new Set<string>();
 
-  const reportMicState = (publication: TrackPublication, participant: Participant) => {
+  const reportMicState = (publication: TrackPublication, participant: Participant): void => {
     if (publication.source === Track.Source.Microphone) {
       listener.onMicrophoneMuted(
         participant.identity,
@@ -150,7 +192,7 @@ export async function defaultLiveKitConnector(
     }
   };
 
-  const collectRemoteAudioSids = () => {
+  const collectRemoteAudioSids = (): { primarySids: string[]; secondarySids: string[] } => {
     const primarySids: string[] = [];
     const secondarySids: string[] = [];
     for (const participant of room.remoteParticipants.values()) {
@@ -205,10 +247,10 @@ export async function defaultLiveKitConnector(
     .on(RoomEvent.DataReceived, (payload, participant, _kind, topic) => {
       if (participant !== undefined) return;
       if (topic === ROOM_EVENTS_TOPIC) {
-        const event = parseRoomRealtimeEvent(decodeDataPayload(payload));
+        const event = decodeDataEvent(payload, isRoomRealtimeEvent);
         if (event) listener.onRoomEvent(event);
       } else if (topic === CHAT_EVENTS_TOPIC) {
-        const event = parseChatRealtimeEvent(decodeDataPayload(payload));
+        const event = decodeDataEvent(payload, isChatRealtimeEvent);
         if (event) listener.onChatEvent(event);
       }
     })
@@ -337,6 +379,7 @@ export class LiveKitAudioEngine {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly connector = inject(LIVEKIT_CONNECTOR);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly storage = inject(BrowserStorage);
   private readonly voiceRoomApi = inject(VoiceRoomApi, { optional: true });
 
   private readonly eventHandlers = new Set<LiveKitRoomEventHandlers>();
@@ -346,9 +389,12 @@ export class LiveKitAudioEngine {
   private lastReportedNetworkMode: NetworkMode = 'OPTIMAL';
   private muteSyncTimer: ReturnType<typeof setTimeout> | null = null;
 
-  private readonly audioDevicesResource = resource({
+  private readonly audioDevicesResource = resource<
+    readonly AudioDeviceOption[],
+    LiveKitConnectionHandle | undefined
+  >({
     params: () => this.activeConnection() ?? undefined,
-    defaultValue: [] as readonly AudioDeviceOption[],
+    defaultValue: [],
     loader: async ({ params: connection, abortSignal }) => {
       try {
         const devices = await connection.listAudioInputDevices();
@@ -360,25 +406,42 @@ export class LiveKitAudioEngine {
     },
   });
 
-  readonly status = signal<LiveKitConnectionStatus>('idle');
-  readonly canPublish = signal(false);
-  readonly micOn = signal(false);
-  readonly isMutedByHost = signal(false);
-  readonly micError = signal<string | null>(null);
-  readonly soundBlocked = signal(false);
-  readonly speakingIds = signal<readonly string[]>([]);
-  readonly mutedIds = signal<readonly string[]>([]);
-  readonly connectionQuality = signal<AudioQualityLevel>('unknown');
-  readonly lastNetworkModeChange = signal<NetworkModeChange | null>(null);
-  readonly noiseIsolationEnabled = signal(true);
-  readonly noiseIsolationMode = signal<NoiseIsolationMode>('webrtc-fallback');
+  private readonly statusState = signal<LiveKitConnectionStatus>('idle');
+  private readonly canPublishState = signal(false);
+  private readonly micOnState = signal(false);
+  private readonly isMutedByHostState = signal(false);
+  private readonly micErrorState = signal<string | null>(null);
+  private readonly soundBlockedState = signal(false);
+  private readonly speakingIdsState = signal<readonly string[]>([]);
+  private readonly mutedIdsState = signal<readonly string[]>([]);
+  private readonly connectionQualityState = signal<AudioQualityLevel>('unknown');
+  private readonly lastNetworkModeChangeState = signal<NetworkModeChange | null>(null);
+  private readonly noiseIsolationEnabledState = signal(true);
+  private readonly noiseIsolationModeState = signal<NoiseIsolationMode>('webrtc-fallback');
+
+  readonly status = this.statusState.asReadonly();
+  readonly canPublish = this.canPublishState.asReadonly();
+  readonly micOn = this.micOnState.asReadonly();
+  readonly isMutedByHost = this.isMutedByHostState.asReadonly();
+  readonly micError = this.micErrorState.asReadonly();
+  readonly soundBlocked = this.soundBlockedState.asReadonly();
+  readonly speakingIds = this.speakingIdsState.asReadonly();
+  readonly mutedIds = this.mutedIdsState.asReadonly();
+  readonly connectionQuality = this.connectionQualityState.asReadonly();
+  readonly lastNetworkModeChange = this.lastNetworkModeChangeState.asReadonly();
+  readonly noiseIsolationEnabled = this.noiseIsolationEnabledState.asReadonly();
+  readonly noiseIsolationMode = this.noiseIsolationModeState.asReadonly();
   readonly audioInputDevices = computed<readonly AudioDeviceOption[]>(() =>
     this.audioDevicesResource.hasValue() ? this.audioDevicesResource.value() : [],
   );
-  readonly selectedAudioInputId = linkedSignal<readonly AudioDeviceOption[], string | null>({
+  private readonly selectedAudioInputIdState = linkedSignal<
+    readonly AudioDeviceOption[],
+    string | null
+  >({
     source: () => this.audioInputDevices(),
     computation: (devices, previous) => previous?.value ?? devices[0]?.deviceId ?? null,
   });
+  readonly selectedAudioInputId = this.selectedAudioInputIdState.asReadonly();
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -400,13 +463,12 @@ export class LiveKitAudioEngine {
 
     const gen = ++this.generation;
     this.currentRoomId = session.room.id;
-    this.status.set('connecting');
+    this.statusState.set('connecting');
     await this.closeCurrent();
     if (gen !== this.generation) return false;
     const mutedByHost = session.isMutedByHost ?? false;
-    const selfMuted = session.isSelfMuted ?? false;
-    this.isMutedByHost.set(mutedByHost);
-    this.canPublish.set(session.canPublishAudio && !mutedByHost);
+    this.isMutedByHostState.set(mutedByHost);
+    this.canPublishState.set(session.canPublishAudio && !mutedByHost);
     this.lastReportedNetworkMode = 'OPTIMAL';
 
     try {
@@ -426,25 +488,26 @@ export class LiveKitAudioEngine {
       }
 
       this.activeConnection.set(handle);
-      this.status.set('connected');
+      this.statusState.set('connected');
+      const effectivelySelfMuted =
+        session.isSelfMuted !== undefined
+          ? session.isSelfMuted
+          : this.wasMicMutedFor(session.room.id);
       const shouldEnableMic =
-        this.canPublish() &&
-        !mutedByHost &&
-        !selfMuted &&
-        !this.wasMicMutedFor(session.room.id);
+        this.canPublish() && !mutedByHost && !effectivelySelfMuted;
       if (shouldEnableMic) {
         await this.setMicrophone(true);
       } else {
-        this.micOn.set(false);
-        if (selfMuted) {
-          this.rememberMicMuted(session.room.id, true);
+        this.micOnState.set(false);
+        if (session.isSelfMuted !== undefined) {
+          this.rememberMicMuted(session.room.id, effectivelySelfMuted);
         }
       }
       return true;
     } catch {
       if (gen === this.generation) {
-        this.canPublish.set(false);
-        this.status.set('failed');
+        this.canPublishState.set(false);
+        this.statusState.set('failed');
       }
       return false;
     }
@@ -464,23 +527,23 @@ export class LiveKitAudioEngine {
   async setMicrophone(enabled: boolean): Promise<boolean> {
     const connection = this.activeConnection();
     if (!connection || (enabled && !this.canPublish())) {
-      this.micOn.set(false);
+      this.micOnState.set(false);
       return false;
     }
     try {
       await connection.setMicrophone(enabled);
       if (connection !== this.activeConnection()) return false;
-      this.micOn.set(enabled && this.activeConnection() !== null);
+      this.micOnState.set(enabled && this.activeConnection() !== null);
       this.rememberMicMuted(this.currentRoomId, !enabled);
-      this.micError.set(null);
+      this.micErrorState.set(null);
       if (enabled) {
         this.refreshAudioInputDevices();
       }
       return true;
     } catch (err) {
       if (connection !== this.activeConnection()) return false;
-      this.micOn.set(false);
-      this.micError.set(
+      this.micOnState.set(false);
+      this.micErrorState.set(
         err instanceof Error && err.message
           ? 'Microphone access was blocked or unavailable.'
           : 'Could not enable microphone.',
@@ -491,12 +554,12 @@ export class LiveKitAudioEngine {
 
   async toggleNoiseIsolation(): Promise<NoiseIsolationMode> {
     const next = !this.noiseIsolationEnabled();
-    this.noiseIsolationEnabled.set(next);
+    this.noiseIsolationEnabledState.set(next);
     const connection = this.activeConnection();
     if (connection) {
       const mode = await connection.setNoiseIsolation(next);
       if (connection === this.activeConnection() && next === this.noiseIsolationEnabled()) {
-        this.noiseIsolationMode.set(mode);
+        this.noiseIsolationModeState.set(mode);
       }
     }
     return this.noiseIsolationMode();
@@ -511,13 +574,13 @@ export class LiveKitAudioEngine {
   async selectAudioInputDevice(deviceId: string): Promise<boolean> {
     const connection = this.activeConnection();
     if (!connection) {
-      this.selectedAudioInputId.set(deviceId);
+      this.selectedAudioInputIdState.set(deviceId);
       return true;
     }
     try {
       await connection.selectAudioInputDevice(deviceId);
       if (connection !== this.activeConnection()) return false;
-      this.selectedAudioInputId.set(deviceId);
+      this.selectedAudioInputIdState.set(deviceId);
       return true;
     } catch {
       return false;
@@ -530,7 +593,7 @@ export class LiveKitAudioEngine {
     try {
       await connection.startAudio();
       if (connection !== this.activeConnection()) return false;
-      this.soundBlocked.set(false);
+      this.soundBlockedState.set(false);
       return true;
     } catch {
       return false;
@@ -543,16 +606,11 @@ export class LiveKitAudioEngine {
     this.currentRoomId = null;
     if (roomId) this.clearRoomMicPreference(roomId);
     await this.closeCurrent();
-    if (gen === this.generation) this.status.set('idle');
+    if (gen === this.generation) this.statusState.set('idle');
   }
 
   clearRoomMicPreference(roomId: string): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    try {
-      window.sessionStorage.removeItem(this.micStorageKey(roomId));
-    } catch {
-      /* Ignore storage restrictions. */
-    }
+    this.storage.remove('session', this.micStorageKey(roomId));
   }
 
   private micStorageKey(roomId: string): string {
@@ -560,21 +618,12 @@ export class LiveKitAudioEngine {
   }
 
   private wasMicMutedFor(roomId: string): boolean {
-    if (!isPlatformBrowser(this.platformId)) return false;
-    try {
-      return window.sessionStorage.getItem(this.micStorageKey(roomId)) === 'true';
-    } catch {
-      return false;
-    }
+    return this.storage.getJson('session', this.micStorageKey(roomId), isBoolean, false);
   }
 
   private rememberMicMuted(roomId: string | null, muted: boolean): void {
-    if (!isPlatformBrowser(this.platformId) || !roomId) return;
-    try {
-      window.sessionStorage.setItem(this.micStorageKey(roomId), String(muted));
-    } catch {
-      /* Ignore storage restrictions. */
-    }
+    if (!roomId) return;
+    this.storage.setJson('session', this.micStorageKey(roomId), muted);
   }
 
   private scheduleSelfMuteSync(roomId: string, muted: boolean): void {
@@ -604,16 +653,16 @@ export class LiveKitAudioEngine {
     this.clearMuteSyncTimer();
     const conn = this.activeConnection();
     this.activeConnection.set(null);
-    this.micOn.set(false);
-    this.isMutedByHost.set(false);
-    this.micError.set(null);
-    this.soundBlocked.set(false);
-    this.speakingIds.set([]);
-    this.mutedIds.set([]);
-    this.canPublish.set(false);
-    this.connectionQuality.set('unknown');
-    this.lastNetworkModeChange.set(null);
-    this.noiseIsolationMode.set('webrtc-fallback');
+    this.micOnState.set(false);
+    this.isMutedByHostState.set(false);
+    this.micErrorState.set(null);
+    this.soundBlockedState.set(false);
+    this.speakingIdsState.set([]);
+    this.mutedIdsState.set([]);
+    this.canPublishState.set(false);
+    this.connectionQualityState.set('unknown');
+    this.lastNetworkModeChangeState.set(null);
+    this.noiseIsolationModeState.set('webrtc-fallback');
     if (conn) {
       try {
         await conn.disconnect();
@@ -626,14 +675,14 @@ export class LiveKitAudioEngine {
   private createListener(gen: number): LiveKitListener {
     const guard =
       <Args extends unknown[]>(fn: (...args: Args) => void) =>
-      (...args: Args) => {
+      (...args: Args): void => {
         if (gen === this.generation) fn(...args);
       };
 
     return {
-      onActiveSpeakers: guard((ids) => this.speakingIds.set(ids)),
+      onActiveSpeakers: guard((ids) => this.speakingIdsState.set(ids)),
       onMicrophoneMuted: guard((identity, muted, isLocal) => {
-        this.mutedIds.update((list) =>
+        this.mutedIdsState.update((list): readonly string[] =>
           muted
             ? list.includes(identity)
               ? list
@@ -641,25 +690,28 @@ export class LiveKitAudioEngine {
             : list.filter((id) => id !== identity),
         );
         if (isLocal) {
-          this.micOn.set(!muted && this.activeConnection() !== null);
+          this.micOnState.set(!muted && this.activeConnection() !== null);
           this.rememberMicMuted(this.currentRoomId, muted);
         }
       }),
       onCanPublishChanged: guard((canPublish) => {
+        if (canPublish) {
+          this.isMutedByHostState.set(false);
+        }
         if (canPublish === this.canPublish()) return;
-        this.canPublish.set(canPublish);
+        this.canPublishState.set(canPublish);
         void this.setMicrophone(canPublish);
       }),
-      onSoundBlocked: guard((blocked) => this.soundBlocked.set(blocked)),
+      onSoundBlocked: guard((blocked) => this.soundBlockedState.set(blocked)),
       onLinkStatus: guard((status) => {
         const reconnected = status === 'connected' && this.status() === 'reconnecting';
-        this.status.set(status);
+        this.statusState.set(status);
         if (reconnected) {
           for (const h of [...this.eventHandlers]) h.onReconnected?.();
         }
       }),
       onConnectionQuality: guard((quality, tracks) => {
-        this.connectionQuality.set(quality);
+        this.connectionQualityState.set(quality);
         const nextMode: NetworkMode =
           quality === 'poor' || quality === 'lost' ? 'LOW_BANDWIDTH' : 'OPTIMAL';
         if (nextMode !== this.lastReportedNetworkMode) {
@@ -669,11 +721,11 @@ export class LiveKitAudioEngine {
             primarySids: tracks.primarySids,
             secondarySids: tracks.secondarySids,
           };
-          this.lastNetworkModeChange.set(change);
+          this.lastNetworkModeChangeState.set(change);
           for (const h of [...this.eventHandlers]) h.onNetworkModeChange?.(change);
         }
       }),
-      onNoiseIsolationMode: guard((mode) => this.noiseIsolationMode.set(mode)),
+      onNoiseIsolationMode: guard((mode) => this.noiseIsolationModeState.set(mode)),
       onRoomEvent: guard((event) => {
         for (const h of [...this.eventHandlers]) h.onRoomEvent?.(event);
       }),
@@ -682,11 +734,11 @@ export class LiveKitAudioEngine {
       }),
       onDisconnected: guard((terminalMessage?: string) => {
         this.activeConnection.set(null);
-        this.micOn.set(false);
-        this.speakingIds.set([]);
-        this.mutedIds.set([]);
-        this.canPublish.set(false);
-        this.status.set('failed');
+        this.micOnState.set(false);
+        this.speakingIdsState.set([]);
+        this.mutedIdsState.set([]);
+        this.canPublishState.set(false);
+        this.statusState.set('failed');
         if (terminalMessage) {
           for (const h of [...this.eventHandlers]) h.onRoomEnded?.(terminalMessage);
         }
