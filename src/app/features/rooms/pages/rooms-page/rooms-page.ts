@@ -119,10 +119,12 @@ export class RoomsPage {
     this.heroOffset.update((offset): number => offset + 1);
   }
 
-  async onRefreshRooms(): Promise<void> {
-    if (await this.roomsStore.refresh()) {
-      this.toast.show('Rooms updated.');
-    }
+  onRefreshRooms(): void {
+    this.roomsStore.refresh((ok) => {
+      if (ok) {
+        this.toast.show('Rooms updated.');
+      }
+    });
   }
 
   onStartRoom(): void {

@@ -164,10 +164,13 @@ export class RoomsStore {
     }
   }
 
-  refresh(): Promise<boolean> {
-    if (!this.canFetch()) return Promise.resolve(false);
+  refresh(onDone?: (ok: boolean) => void): void {
+    if (!this.canFetch()) {
+      onDone?.(false);
+      return;
+    }
     this.hiddenIds.set(new Set());
-    return this.loadRoomsList(true);
+    this.loadRoomsList(true, onDone);
   }
 
   pinRoom(roomId: string): void {
@@ -233,7 +236,7 @@ export class RoomsStore {
 
     this.feedRequested.set(false);
     this.reconnectAttempts++;
-    void this.loadRoomsList(false);
+    this.loadRoomsList(false);
 
     const polling = this.reconnectAttempts >= ROOMS_POLL_AFTER_ATTEMPTS;
     if (polling) this.startPollingFallback();
@@ -247,32 +250,41 @@ export class RoomsStore {
     }, delayMs);
   }
 
-  private async loadRoomsList(ensureFeed: boolean): Promise<boolean> {
-    if (this.listLoading() || !this.canFetch()) return false;
+  private loadRoomsList(ensureFeed: boolean, onDone?: (ok: boolean) => void): void {
+    if (this.listLoading() || !this.canFetch()) {
+      onDone?.(false);
+      return;
+    }
     const revision = this.feedRevision;
     const targetLanguage = this.activeTargetLanguage();
     this.listLoading.set(true);
     this.errorState.set(null);
-    try {
-      const rooms = await this.roomsApi.listRooms(targetLanguage);
-      if (!this.identity.isAuthenticated() || revision !== this.feedRevision) return false;
-      this.rawRooms.set(rooms);
-      if (ensureFeed) this.ensureLoaded();
-      return true;
-    } catch (err) {
-      if (this.identity.isAuthenticated() && revision === this.feedRevision) {
-        this.errorState.set(errorMessage(err, 'Could not load live rooms right now.'));
-      }
-      return false;
-    } finally {
-      this.listLoading.set(false);
-    }
+    this.roomsApi
+      .listRooms(targetLanguage)
+      .pipe(finalize(() => this.listLoading.set(false)))
+      .subscribe({
+        next: (rooms) => {
+          if (!this.identity.isAuthenticated() || revision !== this.feedRevision) {
+            onDone?.(false);
+            return;
+          }
+          this.rawRooms.set(rooms);
+          if (ensureFeed) this.ensureLoaded();
+          onDone?.(true);
+        },
+        error: (err: unknown) => {
+          if (this.identity.isAuthenticated() && revision === this.feedRevision) {
+            this.errorState.set(errorMessage(err, 'Could not load live rooms right now.'));
+          }
+          onDone?.(false);
+        },
+      });
   }
 
   private startPollingFallback(): void {
     if (this.pollTimer !== null) return;
     this.pollTimer = setInterval(() => {
-      if (this.feedActive() && this.identity.isAuthenticated()) void this.loadRoomsList(false);
+      if (this.feedActive() && this.identity.isAuthenticated()) this.loadRoomsList(false);
     }, ROOMS_POLL_INTERVAL_MS);
   }
 

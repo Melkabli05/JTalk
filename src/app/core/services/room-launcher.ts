@@ -59,15 +59,19 @@ export class RoomLauncher {
     if (!config || destroyRef?.destroyed || this.creatingRoom) return;
 
     this.creatingRoom = true;
-    try {
-      const session = await this.roomsApi.createRoom(config);
-      if (await this.router.navigate(['/room', session.room.id])) {
-        this.toast.show('Room open.');
-      }
-    } catch (err) {
-      this.toast.show(errorMessage(err, 'Could not start the room.'));
-    } finally {
-      this.creatingRoom = false;
-    }
+    this.roomsApi.createRoom(config).subscribe({
+      next: (session) => {
+        this.creatingRoom = false;
+        void this.router.navigate(['/room', session.room.id]).then((navigated) => {
+          if (navigated) {
+            this.toast.show('Room open.');
+          }
+        });
+      },
+      error: (err: unknown) => {
+        this.creatingRoom = false;
+        this.toast.show(errorMessage(err, 'Could not start the room.'));
+      },
+    });
   }
 }

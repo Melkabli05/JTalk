@@ -91,11 +91,14 @@ describe('RoomsStore', () => {
     await flushResources();
     expect(store.rooms().map((r) => r.id)).toEqual(['ja-1']);
 
-    const refreshing = store.refresh();
+    let refreshed: boolean | undefined;
+    store.refresh((ok) => {
+      refreshed = ok;
+    });
     http
       .expectOne(`${listUrl}&targetLanguage=ja`)
       .flush({ content: [{ ...room, id: 'ja-2', targetLanguage: 'ja' }] });
-    expect(await refreshing).toBe(true);
+    expect(refreshed).toBe(true);
     expect(store.rooms().map((r) => r.id)).toEqual(['ja-2']);
 
     signedIn.set(false);
@@ -108,11 +111,14 @@ describe('RoomsStore', () => {
     const store = TestBed.inject(RoomsStore);
     const http = TestBed.inject(HttpTestingController);
     store.applyFeedEvent({ type: 'SNAPSHOT', rooms: [room] });
-    const refreshing = store.refresh();
+    let refreshed: boolean | undefined;
+    store.refresh((ok) => {
+      refreshed = ok;
+    });
     const request = http.expectOne(listUrl);
     store.applyFeedEvent({ type: 'ROOM_CLOSED', roomId: room.id });
     request.flush({ content: [room] });
-    expect(await refreshing).toBe(false);
+    expect(refreshed).toBe(false);
     expect(store.rooms()).toEqual([]);
     expect(store.loading()).toBe(false);
     http.verify();
@@ -122,10 +128,13 @@ describe('RoomsStore', () => {
     const store = TestBed.inject(RoomsStore);
     const http = TestBed.inject(HttpTestingController);
     const spanishRoom = { ...room, id: 'room-es', targetLanguage: 'es', title: 'Café Español' };
-    const refreshing = store.refresh();
+    let refreshed: boolean | undefined;
+    store.refresh((ok) => {
+      refreshed = ok;
+    });
 
     http.expectOne(listUrl).flush({ content: [room, spanishRoom] });
-    expect(await refreshing).toBe(true);
+    expect(refreshed).toBe(true);
 
     expect(store.rooms().map((item) => item.id)).toEqual(['room', 'room-es']);
     expect(store.liveCount()).toBe(2);
@@ -142,9 +151,12 @@ describe('RoomsStore', () => {
     const http = TestBed.inject(HttpTestingController);
     store.applyFeedEvent({ type: 'SNAPSHOT', rooms: [room] });
 
-    const refreshing = store.refresh();
+    let refreshed: boolean | undefined;
+    store.refresh((ok) => {
+      refreshed = ok;
+    });
     http.expectOne(listUrl).flush({ content: null });
-    expect(await refreshing).toBe(false);
+    expect(refreshed).toBe(false);
 
     expect(store.rooms().map(({ id }) => id)).toEqual([room.id]);
     expect(store.error()).toBeTruthy();

@@ -1,7 +1,7 @@
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
 import { SseClient } from 'ngx-sse-client';
-import { filter, lastValueFrom, map } from 'rxjs';
+import { filter, map, type Observable } from 'rxjs';
 import { API_BASE_URL } from '../../../core/http/api-base-url.token';
 import type {
   CreateVoiceRoomPayload,
@@ -55,21 +55,24 @@ export class RoomsApi {
   private readonly http = inject(HttpClient);
   private readonly base = `${inject(API_BASE_URL)}/v1/voice-rooms`;
 
-  async listRooms(targetLanguage?: string): Promise<readonly VoiceRoomDto[]> {
-    const page = await lastValueFrom(
-      this.http.get<RoomListPage>(this.base, {
+  listRooms(targetLanguage?: string): Observable<readonly VoiceRoomDto[]> {
+    return this.http
+      .get<RoomListPage>(this.base, {
         params: {
           size: ROOMS_LIST_PAGE_SIZE,
           expand: 'speakers',
           ...(targetLanguage ? { targetLanguage } : {}),
         },
         transferCache: false,
-      }),
-    );
-    if (!Array.isArray(page?.content)) {
-      throw new Error('Unexpected response: expected live room list.');
-    }
-    return page.content;
+      })
+      .pipe(
+        map((page) => {
+          if (!Array.isArray(page?.content)) {
+            throw new Error('Unexpected response: expected live room list.');
+          }
+          return page.content;
+        }),
+      );
   }
 
   roomFeed(hooks: RoomFeedTransportHooks, targetLanguage?: string) {
@@ -92,16 +95,16 @@ export class RoomsApi {
       );
   }
 
-  createRoom(payload: CreateVoiceRoomPayload): Promise<RoomSessionDto> {
-    return lastValueFrom(this.http.post<RoomSessionDto>(this.base, payload));
+  createRoom(payload: CreateVoiceRoomPayload): Observable<RoomSessionDto> {
+    return this.http.post<RoomSessionDto>(this.base, payload);
   }
 
-  updateRoom(roomId: string, payload: UpdateVoiceRoomPayload): Promise<VoiceRoomDto> {
-    return lastValueFrom(this.http.patch<VoiceRoomDto>(this.roomUrl(roomId), payload));
+  updateRoom(roomId: string, payload: UpdateVoiceRoomPayload): Observable<VoiceRoomDto> {
+    return this.http.patch<VoiceRoomDto>(this.roomUrl(roomId), payload);
   }
 
-  closeRoom(roomId: string): Promise<void> {
-    return lastValueFrom(this.http.delete<void>(this.roomUrl(roomId)));
+  closeRoom(roomId: string): Observable<void> {
+    return this.http.delete<void>(this.roomUrl(roomId));
   }
 
   private roomUrl(roomId: string): string {

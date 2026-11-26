@@ -8,6 +8,7 @@ import {
   Service,
   signal,
 } from '@angular/core';
+import { lastValueFrom } from 'rxjs';
 import { IdentityStore } from '../../../core/auth/identity';
 import { errorMessage } from '../../../core/http/http-error.interceptor';
 import { BrowserStorage } from '../../../core/services/browser-storage';
@@ -155,7 +156,7 @@ export class LiveRoomStore {
     if (!id) return { ok: false, message: 'No active room.' };
     const generation = this.stage.generation();
     try {
-      await this.roomsApi.closeRoom(id);
+      await lastValueFrom(this.roomsApi.closeRoom(id));
       if (generation !== this.stage.generation()) return { ok: true };
       this.teardownAudioEvents();
       const disconnected = this.audio.disconnect();
@@ -173,7 +174,7 @@ export class LiveRoomStore {
     if (!id) return { ok: false, message: 'No active room.' };
     const generation = this.stage.generation();
     try {
-      const updated = await this.roomsApi.updateRoom(id, patch);
+      const updated = await lastValueFrom(this.roomsApi.updateRoom(id, patch));
       if (generation === this.stage.generation()) this.stage.patchRoom(updated);
       return { ok: true };
     } catch (err) {
