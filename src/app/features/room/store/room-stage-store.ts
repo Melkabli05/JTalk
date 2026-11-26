@@ -1,4 +1,5 @@
 import { computed, DestroyRef, inject, Service, signal } from '@angular/core';
+import { finalize, type Observable } from 'rxjs';
 import { IdentityStore } from '../../../core/auth/identity';
 import { errorMessage } from '../../../core/http/http-error.interceptor';
 import { languageNameFor } from '../../../core/utils/language-codes';
@@ -169,20 +170,26 @@ export class RoomStageStore {
     }
   }
 
-  async runRoomCommand(
-    request: (roomId: string) => Promise<unknown>,
+  runRoomCommand<T>(
+    request: (roomId: string) => Observable<T>,
     failureMessage: string,
     onSuccess?: () => void,
-  ): Promise<ActionFeedback> {
+    onDone?: (res: ActionFeedback) => void,
+  ): void {
     const id = this.roomId();
-    if (!id) return { ok: false, message: 'No active room.' };
-    try {
-      await request(id);
-      onSuccess?.();
-      return { ok: true };
-    } catch (err) {
-      return { ok: false, message: errorMessage(err, failureMessage) };
+    if (!id) {
+      onDone?.({ ok: false, message: 'No active room.' });
+      return;
     }
+    request(id).subscribe({
+      next: () => {
+        onSuccess?.();
+        onDone?.({ ok: true });
+      },
+      error: (err: unknown) => {
+        onDone?.({ ok: false, message: errorMessage(err, failureMessage) });
+      },
+    });
   }
 
   applySessionStart(session: RoomSessionDto): void {
@@ -235,67 +242,93 @@ export class RoomStageStore {
     );
   }
 
-  async loadMoreAudience(): Promise<ActionFeedback> {
+  loadMoreAudience(onDone?: (res: ActionFeedback) => void): void {
     const roomId = this.roomId();
     const cursor = this.audienceCursor();
-    if (!roomId || !this.hasMoreAudience() || this.audienceLoading()) return { ok: true };
+    if (!roomId || !this.hasMoreAudience() || this.audienceLoading()) {
+      onDone?.({ ok: true });
+      return;
+    }
     const generation = this.sessionGeneration;
     this.audienceLoadingState.set(true);
-    try {
-      const page = await this.voiceRoomApi.getAudience(roomId, cursor);
-      if (generation !== this.sessionGeneration || this.audienceCursor() !== cursor) {
-        return { ok: true };
-      }
-      this.cachePreviews(page.audiencePreview);
-      this.audienceIdsState.update((ids): readonly string[] => {
-        const existing = new Set(ids);
-        return [
-          ...ids,
-          ...page.audiencePreview.map(({ userId }) => userId).filter((id) => !existing.has(id)),
-        ];
+    this.voiceRoomApi
+      .getAudience(roomId, cursor)
+      .pipe(
+        finalize(() => {
+          if (generation === this.sessionGeneration) this.audienceLoadingState.set(false);
+        }),
+      )
+      .subscribe({
+        next: (page) => {
+          if (generation !== this.sessionGeneration || this.audienceCursor() !== cursor) {
+            onDone?.({ ok: true });
+            return;
+          }
+          this.cachePreviews(page.audiencePreview);
+          this.audienceIdsState.update((ids): readonly string[] => {
+            const existing = new Set(ids);
+            return [
+              ...ids,
+              ...page.audiencePreview.map(({ userId }) => userId).filter((id) => !existing.has(id)),
+            ];
+          });
+          this.audienceCursor.set(page.nextCursor);
+          this.hasMoreAudienceState.set(page.hasMoreAudience);
+          this.audienceLimit.update((limit): number => Math.max(limit, this.audienceIds().length));
+          onDone?.({ ok: true });
+        },
+        error: (err: unknown) => {
+          onDone?.({ ok: false, message: errorMessage(err, 'Could not load more listeners.') });
+        },
       });
-      this.audienceCursor.set(page.nextCursor);
-      this.hasMoreAudienceState.set(page.hasMoreAudience);
-      this.audienceLimit.update((limit): number => Math.max(limit, this.audienceIds().length));
-      return { ok: true };
-    } catch (err) {
-      return { ok: false, message: errorMessage(err, 'Could not load more listeners.') };
-    } finally {
-      if (generation === this.sessionGeneration) this.audienceLoadingState.set(false);
-    }
   }
 
-  async claimStageSeat(): Promise<ActionFeedback> {
+  claimStageSeat(onDone?: (res: ActionFeedback) => void): void {
     const id = this.roomId();
-    if (!id) return { ok: false, message: 'No active room.' };
+    if (!id) {
+      onDone?.({ ok: false, message: 'No active room.' });
+      return;
+    }
     const generation = this.sessionGeneration;
     const stage = this.stage();
-    try {
-      const session = await this.voiceRoomApi.claimStageSeat(id);
-      if (generation !== this.sessionGeneration) return { ok: false };
-      if (this.stage() === stage) {
-        this.roleState.set(session.role);
-        this.stageState.set({
-          speakers: session.room.speakers,
-          handRaiseQueue: stage.handRaiseQueue.filter((userId) => userId !== this.currentUserId()),
-        });
-      }
-      if (!this.audio.canPublish()) {
-        const connected = await this.audio.connect(session);
-        if (generation !== this.sessionGeneration) return { ok: false };
-        return connected
-          ? { ok: true }
-          : { ok: false, message: 'Stage seat claimed. Tap Retry audio to reconnect.' };
-      }
-      return { ok: true };
-    } catch (err) {
-      return { ok: false, message: errorMessage(err, 'Could not join the stage.') };
-    }
+    this.voiceRoomApi.claimStageSeat(id).subscribe({
+      next: (session) => {
+        if (generation !== this.sessionGeneration) {
+          onDone?.({ ok: false });
+          return;
+        }
+        if (this.stage() === stage) {
+          this.roleState.set(session.role);
+          this.stageState.set({
+            speakers: session.room.speakers,
+            handRaiseQueue: stage.handRaiseQueue.filter((userId) => userId !== this.currentUserId()),
+          });
+        }
+        if (!this.audio.canPublish()) {
+          this.audio.connectSession(session, (connected) => {
+            if (generation !== this.sessionGeneration) {
+              onDone?.({ ok: false });
+              return;
+            }
+            onDone?.(
+              connected
+                ? { ok: true }
+                : { ok: false, message: 'Stage seat claimed. Tap Retry audio to reconnect.' },
+            );
+          });
+          return;
+        }
+        onDone?.({ ok: true });
+      },
+      error: (err: unknown) => {
+        onDone?.({ ok: false, message: errorMessage(err, 'Could not join the stage.') });
+      },
+    });
   }
 
-  leaveStage(): Promise<ActionFeedback> {
+  leaveStage(onDone?: (res: ActionFeedback) => void): void {
     const generation = this.sessionGeneration;
-    return this.runRoomCommand(
+    this.runRoomCommand(
       (id) => this.voiceRoomApi.leaveStageSeat(id),
       'Could not leave stage.',
       () => {
@@ -303,13 +336,16 @@ export class RoomStageStore {
           void this.audio.setMicrophone(false);
         }
       },
+      onDone,
     );
   }
 
-  toggleHandRaised(): Promise<ActionFeedback> {
-    return this.runRoomCommand(
+  toggleHandRaised(onDone?: (res: ActionFeedback) => void): void {
+    this.runRoomCommand(
       (id) => (this.handRaised() ? this.voiceRoomApi.lowerHand(id) : this.voiceRoomApi.raiseHand(id)),
       'Could not update hand state.',
+      undefined,
+      onDone,
     );
   }
 

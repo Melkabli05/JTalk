@@ -83,14 +83,21 @@ describe('room session', () => {
     const store = TestBed.inject(LiveRoomStore);
     const http = TestBed.inject(HttpTestingController);
 
-    const entering = store.enterRoom(room.id);
+    let entered: boolean | undefined;
+    store.enterRoom(room.id, (ok) => {
+      entered = ok;
+    });
     await vi.waitFor(() => http.expectOne(base + '/participants/join').flush(session));
-    expect(await entering).toBe(true);
+    await vi.waitFor(() => expect(entered).toBe(true));
     expect(connector.mock.calls[0]?.slice(0, 2)).toEqual(['wss://example.invalid', 'join-token']);
     expect(microphone).toHaveBeenCalledWith(true);
     expect(store.stage.audienceIds()).toEqual(['guest']);
     expect(store.stage.isHost()).toBe(true);
-    expect(await store.toggleSelfMic()).toEqual({ ok: true });
+    let micRes: { ok: boolean } | undefined;
+    store.toggleSelfMic((res) => {
+      micRes = res;
+    });
+    await vi.waitFor(() => expect(micRes).toEqual({ ok: true }));
     expect(microphone).toHaveBeenCalledWith(false);
 
     const tracks = { primarySids: ['track-1'], secondarySids: ['track-2'] };
@@ -107,12 +114,17 @@ describe('room session', () => {
     restoreBandwidth.flush(null);
 
     const api = TestBed.inject(VoiceRoomApi);
-    const promoting = store.stage.runRoomCommand(
+    let promoteRes: { ok: boolean } | undefined;
+    store.stage.runRoomCommand(
       (id) => api.promoteSpeaker(id, 'guest'),
       'Could not promote to stage.',
+      undefined,
+      (res) => {
+        promoteRes = res;
+      },
     );
     http.expectOne({ method: 'POST', url: base + '/stage/promote/guest' }).flush(null);
-    expect((await promoting).ok).toBe(true);
+    expect(promoteRes?.ok).toBe(true);
 
     listener.onLinkStatus('reconnecting');
     listener.onLinkStatus('connected');
@@ -133,7 +145,10 @@ describe('room session', () => {
     expect(store.room()?.title).toBe('Live title');
     expect(store.chat.chatError()).toBe(true);
 
-    const reloading = store.chat.reloadMessages();
+    let reloaded: boolean | undefined;
+    store.chat.reloadMessages((ok) => {
+      reloaded = ok;
+    });
     const staleChat = http.expectOne(base + '/comments');
     const incoming = {
       id: 'message',
@@ -150,7 +165,7 @@ describe('room session', () => {
       comments: [{ ...incoming, pinnedAt: incoming.createdAt }],
       reactions: [{ commentId: incoming.id, counts: { HEART: 2 }, mine: 'HEART' }],
     });
-    expect(await reloading).toBe(true);
+    expect(reloaded).toBe(true);
     expect(store.chat.messages().map((message) => message.text)).toEqual(['Welcome']);
     expect(store.chat.chatError()).toBe(false);
     expect(store.chat.pinnedCommentId()).toBe(incoming.id);
@@ -165,7 +180,10 @@ describe('room session', () => {
     expect(store.chat.commentReactions().has(incoming.id)).toBe(false);
 
     store.chat.setReplyTarget('Guest', 'parent', 'I goes');
-    const sending = store.chat.sendMessage('I go');
+    let sendRes: { ok: boolean } | undefined;
+    store.chat.sendMessage('I go', (res) => {
+      sendRes = res;
+    });
     const post = http.expectOne({ method: 'POST', url: base + '/comments' });
     expect(post.request.body).toEqual({
       type: 'CORRECTION',
@@ -180,15 +198,18 @@ describe('room session', () => {
       authorId: 'host',
       createdAt: '2026-01-01T00:00:00Z',
     });
-    expect((await sending).ok).toBe(true);
+    expect(sendRes?.ok).toBe(true);
     expect(store.chat.messages().find((message) => message.id === 'reply')?.text).toBe('I goes → I go');
     expect(store.chat.replyTarget()).toBe('New reply');
 
-    const leaving = store.leaveRoom();
+    let leaveRes: { ok: boolean } | undefined;
+    store.leaveRoom((res) => {
+      leaveRes = res;
+    });
     await vi.waitFor(() =>
       http.expectOne({ method: 'POST', url: base + '/participants/leave' }).flush(null),
     );
-    expect((await leaving).ok).toBe(true);
+    expect(leaveRes?.ok).toBe(true);
     expect(disconnect).toHaveBeenCalledOnce();
     expect(store.room()).toBeNull();
     http.verify();
@@ -218,35 +239,49 @@ describe('room session', () => {
     });
     const store = TestBed.inject(LiveRoomStore);
     const http = TestBed.inject(HttpTestingController);
-    const entering = store.enterRoom(room.id);
+    let entered: boolean | undefined;
+    store.enterRoom(room.id, (ok) => {
+      entered = ok;
+    });
     await vi.waitFor(() => http.expectOne(base + '/participants/join').flush(session));
-    expect(await entering).toBe(true);
+    await vi.waitFor(() => expect(entered).toBe(true));
 
-    const pinning = store.chat.setChatTopic('Practice\n\n\ntoday');
+    let pinRes: { ok: boolean } | undefined;
+    store.chat.setChatTopic('Practice\n\n\ntoday', (res) => {
+      pinRes = res;
+    });
     listener.onChatEvent({ type: 'TOPIC_CHANGED', topic: 'Practice\n\n\ntoday' });
     http.expectOne({ method: 'PUT', url: base + '/comments/topic' }).flush(null);
     await flushResources();
-    expect((await pinning).ok).toBe(true);
+    expect(pinRes?.ok).toBe(true);
     expect(store.chat.pinnedTopic()).toBe('Practice\n\n\ntoday');
     http.expectNone(base + '/comments');
 
-    const clearing = store.chat.setChatTopic('');
+    let clearRes: { ok: boolean } | undefined;
+    store.chat.setChatTopic('', (res) => {
+      clearRes = res;
+    });
     http.expectOne({ method: 'DELETE', url: base + '/comments/topic' }).flush(null);
-    expect((await clearing).ok).toBe(true);
+    expect(clearRes?.ok).toBe(true);
     await flushResources();
     http.expectNone(base + '/comments');
     expect(store.chat.pinnedTopic()).toBeNull();
 
     const api = TestBed.inject(VoiceRoomApi);
-    const reacting = store.stage.runRoomCommand(
+    let reactRes: { ok: boolean } | undefined;
+    store.stage.runRoomCommand(
       (id) => api.sendReaction(id, 'CLAP'),
       'Could not send reaction.',
+      undefined,
+      (res) => {
+        reactRes = res;
+      },
     );
     const request = http.expectOne({ method: 'POST', url: base + '/reactions' });
     expect(request.request.body).toEqual({ reaction: 'CLAP' });
     listener.onRoomEvent({ type: 'REACTIONS', reactions: [{ userId: 'host', reaction: 'CLAP' }] });
     request.flush(null);
-    expect((await reacting).ok).toBe(true);
+    expect(reactRes?.ok).toBe(true);
     expect(store.stage.stageReaction()).toBe('👏');
     expect(store.stage.stageReactionKey()).toBe(1);
 
@@ -290,7 +325,10 @@ describe('room session', () => {
     const join = async (id: string) => {
       const path = `/api/v1/voice-rooms/${id}`;
       const dto = { ...room, id };
-      const entering = store.enterRoom(id);
+      let entered: boolean | undefined;
+      store.enterRoom(id, (ok) => {
+        entered = ok;
+      });
       if (id !== room.id) {
         await vi.waitFor(() => http.expectOne(base + '/participants/leave').flush(null));
       }
@@ -304,18 +342,21 @@ describe('room session', () => {
           snapshot: makeSnapshot(['host'], ['guest']),
         }),
       );
-      expect(await entering).toBe(true);
+      await vi.waitFor(() => expect(entered).toBe(true));
       expect(store.stage.audienceIds()).toEqual(['guest']);
       expect(store.stage.isHost()).toBe(false);
     };
 
     await join(room.id);
-    const claiming = store.stage.claimStageSeat();
+    let claimRes: { ok: boolean } | undefined;
+    store.stage.claimStageSeat((res) => {
+      claimRes = res;
+    });
     const pendingClaim = http.expectOne(base + '/stage/join');
     await join('next');
     pendingClaim.flush(session);
 
-    expect((await claiming).ok).toBe(false);
+    expect(claimRes?.ok).toBe(false);
     expect(store.roomId()).toBe('next');
     expect(connector).toHaveBeenCalledTimes(2);
     http.verify();
@@ -344,11 +385,14 @@ describe('room session', () => {
       ],
     });
     const identity = TestBed.inject(IdentityStore);
-    const resolveUsers = vi.spyOn(identity, 'resolveUsers').mockResolvedValue();
+    const resolveUsers = vi.spyOn(identity, 'resolveUsers').mockImplementation(() => undefined);
     const store = TestBed.inject(LiveRoomStore);
     const http = TestBed.inject(HttpTestingController);
 
-    const entering = store.enterRoom(room.id);
+    let entered: boolean | undefined;
+    store.enterRoom(room.id, (ok) => {
+      entered = ok;
+    });
     await vi.waitFor(() =>
       http.expectOne(base + '/participants/join').flush({
         ...session,
@@ -364,7 +408,7 @@ describe('room session', () => {
         },
       }),
     );
-    expect(await entering).toBe(true);
+    await vi.waitFor(() => expect(entered).toBe(true));
     expect(resolveUsers).toHaveBeenCalledWith(['departed']);
     resolveUsers.mockClear();
 
@@ -405,7 +449,10 @@ describe('room session', () => {
     expect(resolveUsers).toHaveBeenCalledWith(['outsider']);
 
     resolveUsers.mockClear();
-    const reloading = store.chat.reloadMessages();
+    let reloaded: boolean | undefined;
+    store.chat.reloadMessages((ok) => {
+      reloaded = ok;
+    });
     http.expectOne(base + '/comments').flush({
       ...chat,
       comments: [
@@ -414,7 +461,7 @@ describe('room session', () => {
         { id: 'c3', type: 'TEXT', authorId: 'former-speaker', content: 'Left', createdAt: '2026-01-01T00:01:00Z' },
       ],
     });
-    await reloading;
+    expect(reloaded).toBe(true);
     expect(resolveUsers).toHaveBeenCalledWith(['former-speaker']);
     http.verify();
   });
@@ -444,28 +491,37 @@ describe('room session', () => {
     expect(store.roomLoading()).toBe(false);
     expect(store.roomError()).toBeNull();
 
-    const failedJoin = store.enterRoom(room.id);
+    let failedResult: boolean | undefined;
+    store.enterRoom(room.id, (ok) => {
+      failedResult = ok;
+    });
     await vi.waitFor(() => {
       expect(store.connectionState()).toEqual({ status: 'joining', roomId: room.id });
       expect(store.roomLoading()).toBe(true);
       http.expectOne(base + '/participants/join').flush(null, { status: 500, statusText: 'Error' });
     });
-    expect(await failedJoin).toBe(false);
+    expect(failedResult).toBe(false);
     expect(store.connectionState().status).toBe('error');
     expect(store.roomLoading()).toBe(false);
     expect(store.roomError()).toBeTruthy();
 
-    const okJoin = store.enterRoom(room.id);
+    let okResult: boolean | undefined;
+    store.enterRoom(room.id, (ok) => {
+      okResult = ok;
+    });
     await vi.waitFor(() => http.expectOne(base + '/participants/join').flush(session));
-    expect(await okJoin).toBe(true);
+    await vi.waitFor(() => expect(okResult).toBe(true));
     expect(store.connectionState()).toEqual({ status: 'connected', roomId: room.id });
     expect(store.roomError()).toBeNull();
 
-    const leaving = store.leaveRoom();
+    let left = false;
+    store.leaveRoom(() => {
+      left = true;
+    });
     await vi.waitFor(() =>
       http.expectOne({ method: 'POST', url: base + '/participants/leave' }).flush(null),
     );
-    await leaving;
+    await vi.waitFor(() => expect(left).toBe(true));
     expect(store.connectionState()).toEqual({ status: 'idle' });
     http.verify();
   });

@@ -456,6 +456,30 @@ export class LiveKitAudioEngine {
     };
   }
 
+  connectSession(session: RoomSessionDto, onDone?: (connected: boolean) => void): void {
+    void this.connect(session).then((ok) => onDone?.(ok));
+  }
+
+  disconnectSession(onDone?: () => void): void {
+    void this.disconnect().then(() => onDone?.());
+  }
+
+  toggleMic(onDone?: (ok: boolean) => void): void {
+    void this.toggleMicrophone().then((ok) => onDone?.(ok));
+  }
+
+  toggleNoise(onDone?: (mode: NoiseIsolationMode) => void): void {
+    void this.toggleNoiseIsolation().then((mode) => onDone?.(mode));
+  }
+
+  selectInputDevice(deviceId: string, onDone?: (ok: boolean) => void): void {
+    void this.selectAudioInputDevice(deviceId).then((ok) => onDone?.(ok));
+  }
+
+  enableAudioPlayback(onDone?: (ok: boolean) => void): void {
+    void this.enableAudio().then((ok) => onDone?.(ok));
+  }
+
   async connect(session: RoomSessionDto): Promise<boolean> {
     if (!isPlatformBrowser(this.platformId)) {
       return false;
@@ -634,12 +658,12 @@ export class LiveKitAudioEngine {
     }, 300);
   }
 
-  private async syncSelfMuteToBackend(roomId: string, muted: boolean): Promise<void> {
-    try {
-      await this.voiceRoomApi?.updateSelfMute(roomId, muted);
-    } catch {
-      // Non-fatal: local LiveKit track state remains authoritative for the active session
-    }
+  private syncSelfMuteToBackend(roomId: string, muted: boolean): void {
+    this.voiceRoomApi?.updateSelfMute(roomId, muted).subscribe({
+      error: () => {
+        // Non-fatal: local LiveKit track state remains authoritative for the active session
+      },
+    });
   }
 
   private clearMuteSyncTimer(): void {

@@ -143,61 +143,90 @@ export class RoomChatStore {
     this.stageStore.resolveMissingUsers(chatState.comments.map((c) => c.authorId));
   }
 
-  async reloadMessages(): Promise<boolean> {
+  reloadMessages(onDone?: (ok: boolean) => void): void {
     const id = this.stageStore.roomId();
-    if (!id) return false;
+    if (!id) {
+      onDone?.(false);
+      return;
+    }
     const generation = this.stageStore.generation();
     this.chatErrorState.set(false);
     this.loadingState.set(true);
-    try {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        const revisionBefore = this.chatRevision;
-        const chatState = await this.voiceRoomApi.getChatState(id);
-        if (generation !== this.stageStore.generation()) return false;
-        if (revisionBefore === this.chatRevision) {
-          this.applyChatState(chatState);
-          return true;
-        }
-      }
-      this.chatErrorState.set(true);
-      return false;
-    } catch {
-      if (generation === this.stageStore.generation()) this.chatErrorState.set(true);
-      return false;
-    } finally {
-      if (generation === this.stageStore.generation()) this.loadingState.set(false);
-    }
+
+    const fetchAttempt = (attempt: number): void => {
+      const revisionBefore = this.chatRevision;
+      this.voiceRoomApi.getChatState(id).subscribe({
+        next: (chatState) => {
+          if (generation !== this.stageStore.generation()) {
+            onDone?.(false);
+            return;
+          }
+          if (revisionBefore === this.chatRevision) {
+            this.loadingState.set(false);
+            this.applyChatState(chatState);
+            onDone?.(true);
+            return;
+          }
+          if (attempt + 1 < 2) {
+            fetchAttempt(attempt + 1);
+            return;
+          }
+          this.loadingState.set(false);
+          this.chatErrorState.set(true);
+          onDone?.(false);
+        },
+        error: () => {
+          if (generation === this.stageStore.generation()) {
+            this.loadingState.set(false);
+            this.chatErrorState.set(true);
+          }
+          onDone?.(false);
+        },
+      });
+    };
+
+    fetchAttempt(0);
   }
 
-  async sendMessage(content: string): Promise<ActionFeedback> {
+  sendMessage(content: string, onDone?: (res: ActionFeedback) => void): void {
     const id = this.stageStore.roomId();
-    if (!id) return { ok: false, message: 'No active room.' };
+    if (!id) {
+      onDone?.({ ok: false, message: 'No active room.' });
+      return;
+    }
     const trimmed = content.trim();
-    if (!trimmed) return { ok: false, message: 'Write something first.' };
+    if (!trimmed) {
+      onDone?.({ ok: false, message: 'Write something first.' });
+      return;
+    }
 
     const reply = this.reply();
     const generation = this.stageStore.generation();
     const original = reply?.original ?? null;
-    try {
-      const comment = await this.voiceRoomApi.postComment(id, {
+    this.voiceRoomApi
+      .postComment(id, {
         type: original === null ? 'TEXT' : 'CORRECTION',
         content: original ?? trimmed,
         ...(original !== null ? { correctedContent: trimmed } : {}),
         replyTo: reply?.commentId ?? null,
+      })
+      .subscribe({
+        next: (comment) => {
+          if (generation === this.stageStore.generation()) {
+            this.appendCommentIfNew(comment);
+            if (this.reply() === reply) this.setReplyTarget(null);
+          }
+          onDone?.({ ok: true });
+        },
+        error: (err: unknown) => {
+          onDone?.({ ok: false, message: errorMessage(err, 'Could not send message.') });
+        },
       });
-      if (generation === this.stageStore.generation()) {
-        this.appendCommentIfNew(comment);
-        if (this.reply() === reply) this.setReplyTarget(null);
-      }
-      return { ok: true };
-    } catch (err) {
-      return { ok: false, message: errorMessage(err, 'Could not send message.') };
-    }
   }
 
-  deleteMessage(commentId: string): Promise<ActionFeedback> {
+  deleteMessage(commentId: string, onDone?: (res: ActionFeedback) => void): void {
     const generation = this.stageStore.generation();
-    return this.stageStore.runRoomCommand(
+    this.stageStore.runRoomCommand(
       (id) => this.voiceRoomApi.deleteComment(id, commentId),
       'Could not delete message.',
       () => {
@@ -205,23 +234,30 @@ export class RoomChatStore {
           this.applyChatRealtimeEvent({ type: 'COMMENT_DELETED', commentId });
         }
       },
+      onDone,
     );
   }
 
-  toggleReaction(commentId: string, reaction: BackendReaction): Promise<ActionFeedback> {
-    return this.stageStore.runRoomCommand(
+  toggleReaction(
+    commentId: string,
+    reaction: BackendReaction,
+    onDone?: (res: ActionFeedback) => void,
+  ): void {
+    this.stageStore.runRoomCommand(
       (id) =>
         this.commentReactions().get(commentId)?.mine === reaction
           ? this.voiceRoomApi.removeCommentReaction(id, commentId)
           : this.voiceRoomApi.reactToComment(id, commentId, reaction),
       'Could not update reaction.',
+      undefined,
+      onDone,
     );
   }
 
-  async pinMessage(commentId: string | null): Promise<ActionFeedback> {
+  pinMessage(commentId: string | null, onDone?: (res: ActionFeedback) => void): void {
     const generation = this.stageStore.generation();
     if (commentId) {
-      return this.stageStore.runRoomCommand(
+      this.stageStore.runRoomCommand(
         (id) => this.voiceRoomApi.pinComment(id, commentId),
         'Could not update pinned comment.',
         () => {
@@ -230,11 +266,16 @@ export class RoomChatStore {
             this.updatePin(commentId, true);
           }
         },
+        onDone,
       );
+      return;
     }
     const pinned = this.pinnedCommentId();
-    if (!pinned) return { ok: true };
-    return this.stageStore.runRoomCommand(
+    if (!pinned) {
+      onDone?.({ ok: true });
+      return;
+    }
+    this.stageStore.runRoomCommand(
       (id) => this.voiceRoomApi.unpinComment(id, pinned),
       'Could not update pinned comment.',
       () => {
@@ -243,14 +284,15 @@ export class RoomChatStore {
           this.updatePin(pinned, false);
         }
       },
+      onDone,
     );
   }
 
-  setChatTopic(text: string): Promise<ActionFeedback> {
+  setChatTopic(text: string, onDone?: (res: ActionFeedback) => void): void {
     const topic = text.trim();
     const previousTopic = this.pinnedTopic();
     const generation = this.stageStore.generation();
-    return this.stageStore.runRoomCommand(
+    this.stageStore.runRoomCommand(
       (id) => (topic ? this.voiceRoomApi.pinTopic(id, topic) : this.voiceRoomApi.clearTopic(id)),
       'Could not update chat topic.',
       () => {
@@ -258,16 +300,19 @@ export class RoomChatStore {
           this.applyChatRealtimeEvent({ type: 'TOPIC_CHANGED', topic: topic || null });
         }
       },
+      onDone,
     );
   }
 
-  muteChatUser(targetUserId: string): Promise<ActionFeedback> {
-    return this.stageStore.runRoomCommand(
+  muteChatUser(targetUserId: string, onDone?: (res: ActionFeedback) => void): void {
+    this.stageStore.runRoomCommand(
       (id) =>
         this.chatMutedUsers().has(targetUserId)
           ? this.voiceRoomApi.unmuteChatUser(id, targetUserId)
           : this.voiceRoomApi.muteChatUser(id, targetUserId),
       'Could not update chat mute.',
+      undefined,
+      onDone,
     );
   }
 

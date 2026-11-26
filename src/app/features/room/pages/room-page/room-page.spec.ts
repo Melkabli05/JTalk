@@ -185,7 +185,9 @@ describe('RoomPage', () => {
   it('redirects a room shortcut and binds the ID on subsequent navigation', async () => {
     const router = TestBed.inject(Router);
     const store = TestBed.inject(LiveRoomStore);
-    const enterRoom = vi.spyOn(store, 'enterRoom').mockResolvedValue(true);
+    const enterRoom = vi.spyOn(store, 'enterRoom').mockImplementation((_id, onDone) => {
+      onDone?.(true);
+    });
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/room', HallwayRoute);
     expect(router.url).toBe('/rooms');
@@ -200,13 +202,15 @@ describe('RoomPage', () => {
     expect(enterRoom.mock.calls).toEqual([['saved'], ['second']]);
   });
 
-  it('should notify user when toggling microphone without stage publish permission', async () => {
-    vi.spyOn(TestBed.inject(LiveRoomStore), 'enterRoom').mockResolvedValue(true);
+  it('should notify user when toggling microphone without stage publish permission', () => {
+    vi.spyOn(TestBed.inject(LiveRoomStore), 'enterRoom').mockImplementation((_id, onDone) => {
+      onDone?.(true);
+    });
     const fixture = TestBed.createComponent(RoomPage);
     fixture.componentRef.setInput('id', 'current');
     fixture.detectChanges();
 
-    await fixture.componentInstance.onToggleMute();
+    fixture.componentInstance.onToggleMute();
     expect(toastSpy.show).toHaveBeenCalledWith('Join the stage to use your microphone.');
   });
 
@@ -280,12 +284,18 @@ describe('RoomPage', () => {
     http.verify();
   });
 
-  it('should report false from reloadMessages when not joined to an active room', async () => {
-    vi.spyOn(TestBed.inject(LiveRoomStore), 'enterRoom').mockResolvedValue(true);
+  it('should report false from reloadMessages when not joined to an active room', () => {
+    vi.spyOn(TestBed.inject(LiveRoomStore), 'enterRoom').mockImplementation((_id, onDone) => {
+      onDone?.(true);
+    });
     const fixture = TestBed.createComponent(RoomPage);
     fixture.componentRef.setInput('id', 'current');
     fixture.detectChanges();
 
-    expect(await fixture.componentInstance.chatStore.reloadMessages()).toBe(false);
+    let reloaded: boolean | undefined;
+    fixture.componentInstance.chatStore.reloadMessages((ok) => {
+      reloaded = ok;
+    });
+    expect(reloaded).toBe(false);
   });
 });

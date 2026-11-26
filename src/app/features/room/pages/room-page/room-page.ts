@@ -15,7 +15,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
-import { forkJoin, lastValueFrom } from 'rxjs';
+import { forkJoin } from 'rxjs';
 import { UsersApi } from '../../../../core/auth/users-api';
 import { errorMessage } from '../../../../core/http/http-error.interceptor';
 import { AppTitleStrategy } from '../../../../core/routing/app-title-strategy';
@@ -133,46 +133,55 @@ export class RoomPage {
     void this.router.navigate([path]);
   }
 
-  async onCopyRoomLink(): Promise<void> {
+  onCopyRoomLink(): void {
     if (typeof navigator === 'undefined' || !navigator.clipboard || typeof window === 'undefined') {
       this.toast.show('Copy the room URL from your address bar.');
       return;
     }
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      this.toast.show('Room link copied.');
-    } catch {
-      this.toast.show('Could not copy room link.');
-    }
+    this.writeClipboardText(
+      window.location.href,
+      () => this.toast.show('Room link copied.'),
+      () => this.toast.show('Could not copy room link.'),
+    );
   }
 
-  async onToggleNoiseIsolation(): Promise<void> {
-    const mode = await this.roomStore.audio.toggleNoiseIsolation();
-    if (mode === 'krisp-active') {
-      this.toast.show('Krisp noise isolation enabled.');
-    } else if (mode === 'krisp-bypassed') {
-      this.toast.show('Krisp noise isolation paused.');
-    } else {
-      this.toast.show('Using browser WebRTC noise suppression.');
-    }
+  onToggleNoiseIsolation(): void {
+    this.roomStore.audio.toggleNoise((mode) => {
+      if (this.destroyRef.destroyed) return;
+      if (mode === 'krisp-active') {
+        this.toast.show('Krisp noise isolation enabled.');
+      } else if (mode === 'krisp-bypassed') {
+        this.toast.show('Krisp noise isolation paused.');
+      } else {
+        this.toast.show('Using browser WebRTC noise suppression.');
+      }
+    });
   }
 
-  async onSelectAudioDevice(deviceId: string): Promise<void> {
-    const ok = await this.roomStore.audio.selectAudioInputDevice(deviceId);
-    this.toast.show(ok ? 'Microphone switched.' : 'Could not switch microphone.');
+  onSelectAudioDevice(deviceId: string): void {
+    this.roomStore.audio.selectInputDevice(deviceId, (ok) => {
+      if (!this.destroyRef.destroyed) {
+        this.toast.show(ok ? 'Microphone switched.' : 'Could not switch microphone.');
+      }
+    });
   }
 
-  async onReconnectAudio(): Promise<void> {
+  onReconnectAudio(): void {
     const roomId = this.id();
-    this.handleFeedback(roomId, await this.roomStore.reconnectAudio(), 'Audio reconnected.');
+    this.roomStore.reconnectAudio((res) =>
+      this.handleFeedback(roomId, res, 'Audio reconnected.'),
+    );
   }
 
-  async onEnableAudio(): Promise<void> {
-    const ok = await this.roomStore.audio.enableAudio();
-    this.toast.show(ok ? 'Room audio enabled.' : 'Could not start audio playback.');
+  onEnableAudio(): void {
+    this.roomStore.audio.enableAudioPlayback((ok) => {
+      if (!this.destroyRef.destroyed) {
+        this.toast.show(ok ? 'Room audio enabled.' : 'Could not start audio playback.');
+      }
+    });
   }
 
-  async openEditRoomDialog(): Promise<void> {
+  openEditRoomDialog(): void {
     const roomId = this.id();
     const ref = this.dialog.open<
       EditRoomDialog,
@@ -188,27 +197,33 @@ export class RoomPage {
       },
     });
 
-    const result = await lastValueFrom(ref.afterClosed());
-    if (!result || this.destroyRef.destroyed || this.id() !== roomId || !this.isCurrentRoom()) {
-      return;
-    }
-    this.handleFeedback(roomId, await this.roomStore.updateRoom(result), 'Room updated.');
+    ref.afterClosed().subscribe((result) => {
+      if (!result || this.destroyRef.destroyed || this.id() !== roomId || !this.isCurrentRoom()) {
+        return;
+      }
+      this.roomStore.updateRoom(result, (res) =>
+        this.handleFeedback(roomId, res, 'Room updated.'),
+      );
+    });
   }
 
-  async openEndRoomDialog(): Promise<void> {
+  openEndRoomDialog(): void {
     const roomId = this.id();
     const ref = this.dialog.open<EndRoomDialog, void, boolean>(EndRoomDialog, {
       width: '440px',
       maxWidth: 'calc(100vw - 24px)',
     });
 
-    const confirmed = await lastValueFrom(ref.afterClosed());
-    if (!confirmed || this.destroyRef.destroyed || this.id() !== roomId || !this.isCurrentRoom()) {
-      return;
-    }
-    if (this.handleFeedback(roomId, await this.roomStore.endRoom(), 'Room ended.')) {
-      void this.router.navigate(['/rooms']);
-    }
+    ref.afterClosed().subscribe((confirmed) => {
+      if (!confirmed || this.destroyRef.destroyed || this.id() !== roomId || !this.isCurrentRoom()) {
+        return;
+      }
+      this.roomStore.endRoom((res) => {
+        if (this.handleFeedback(roomId, res, 'Room ended.')) {
+          void this.router.navigate(['/rooms']);
+        }
+      });
+    });
   }
 
   openProfilePreview(target: ProfilePreviewTarget, id: string): void {
@@ -239,10 +254,10 @@ export class RoomPage {
     });
   }
 
-  async onSpeakerAction(event: { action: SpeakerMenuAction; speaker: RoomSpeaker }): Promise<void> {
+  onSpeakerAction(event: { action: SpeakerMenuAction; speaker: RoomSpeaker }): void {
     const { action, speaker } = event;
     if (action === 'profile') {
-      void this.openProfilePreview({ kind: speaker.role, muted: speaker.muted }, speaker.id);
+      this.openProfilePreview({ kind: speaker.role, muted: speaker.muted }, speaker.id);
       return;
     }
 
@@ -250,49 +265,42 @@ export class RoomPage {
     switch (action) {
       case 'mute':
         if (speaker.isYou) {
-          await this.onToggleMute();
+          this.onToggleMute();
         } else {
-          this.handleFeedback(
-            roomId,
-            await this.stageStore.runRoomCommand(
-              (id) => this.voiceRoomApi.muteSpeaker(id, speaker.id),
-              'Could not mute speaker.',
-            ),
-            `Muted ${speaker.name}.`,
+          this.stageStore.runRoomCommand(
+            (id) => this.voiceRoomApi.muteSpeaker(id, speaker.id),
+            'Could not mute speaker.',
+            undefined,
+            (res) => this.handleFeedback(roomId, res, `Muted ${speaker.name}.`),
           );
         }
         return;
       case 'leave-stage':
-        await this.onLeaveStage();
+        this.onLeaveStage();
         return;
       case 'audience':
-        this.handleFeedback(
-          roomId,
-          await this.stageStore.runRoomCommand(
-            (id) => this.voiceRoomApi.demoteSpeaker(id, speaker.id),
-            'Could not move speaker to audience.',
-          ),
-          `${speaker.name} moved to audience.`,
+        this.stageStore.runRoomCommand(
+          (id) => this.voiceRoomApi.demoteSpeaker(id, speaker.id),
+          'Could not move speaker to audience.',
+          undefined,
+          (res) => this.handleFeedback(roomId, res, `${speaker.name} moved to audience.`),
         );
         return;
       case 'remove':
-        this.handleFeedback(
-          roomId,
-          await this.stageStore.runRoomCommand(
-            (id) => this.voiceRoomApi.kickParticipant(id, speaker.id),
-            'Could not remove participant.',
-          ),
-          `${speaker.name} removed from the room.`,
+        this.stageStore.runRoomCommand(
+          (id) => this.voiceRoomApi.kickParticipant(id, speaker.id),
+          'Could not remove participant.',
+          undefined,
+          (res) => this.handleFeedback(roomId, res, `${speaker.name} removed from the room.`),
         );
         return;
       case 'transfer-host':
-        this.handleFeedback(
-          roomId,
-          await this.stageStore.runRoomCommand(
-            (id) => this.voiceRoomApi.transferHost(id, speaker.id),
-            'Could not transfer host role.',
-          ),
-          `Host role transferred to ${speaker.name}.`,
+        this.stageStore.runRoomCommand(
+          (id) => this.voiceRoomApi.transferHost(id, speaker.id),
+          'Could not transfer host role.',
+          undefined,
+          (res) =>
+            this.handleFeedback(roomId, res, `Host role transferred to ${speaker.name}.`),
         );
         return;
       default:
@@ -300,56 +308,57 @@ export class RoomPage {
     }
   }
 
-  async onToggleMute(): Promise<void> {
+  onToggleMute(): void {
     const roomId = this.id();
-    this.handleFeedback(roomId, await this.roomStore.toggleSelfMic());
+    this.roomStore.toggleSelfMic((res) => this.handleFeedback(roomId, res));
   }
 
-  async onToggleHand(): Promise<void> {
+  onToggleHand(): void {
     const roomId = this.id();
-    this.handleFeedback(roomId, await this.stageStore.toggleHandRaised());
+    this.stageStore.toggleHandRaised((res) => this.handleFeedback(roomId, res));
   }
 
-  async onClaimStageSeat(): Promise<void> {
+  onClaimStageSeat(): void {
     const roomId = this.id();
-    this.handleFeedback(roomId, await this.stageStore.claimStageSeat(), 'Joined the stage.');
-  }
-
-  async onLeaveStage(): Promise<void> {
-    const roomId = this.id();
-    this.handleFeedback(roomId, await this.stageStore.leaveStage(), 'Returned to audience.');
-  }
-
-  async onApproveRequest(targetId: string): Promise<void> {
-    const roomId = this.id();
-    this.handleFeedback(
-      roomId,
-      await this.stageStore.runRoomCommand(
-        (id) => this.voiceRoomApi.promoteSpeaker(id, targetId),
-        'Could not promote to stage.',
-      ),
-      'Promoted to stage.',
+    this.stageStore.claimStageSeat((res) =>
+      this.handleFeedback(roomId, res, 'Joined the stage.'),
     );
   }
 
-  async onStageReaction(reaction: BackendReaction): Promise<void> {
+  onLeaveStage(): void {
     const roomId = this.id();
-    this.handleFeedback(
-      roomId,
-      await this.stageStore.runRoomCommand(
-        (id) => this.voiceRoomApi.sendReaction(id, reaction),
-        'Could not send reaction.',
-      ),
+    this.stageStore.leaveStage((res) =>
+      this.handleFeedback(roomId, res, 'Returned to audience.'),
     );
   }
 
-  async onListenerAction(event: {
+  onApproveRequest(targetId: string): void {
+    const roomId = this.id();
+    this.stageStore.runRoomCommand(
+      (id) => this.voiceRoomApi.promoteSpeaker(id, targetId),
+      'Could not promote to stage.',
+      undefined,
+      (res) => this.handleFeedback(roomId, res, 'Promoted to stage.'),
+    );
+  }
+
+  onStageReaction(reaction: BackendReaction): void {
+    const roomId = this.id();
+    this.stageStore.runRoomCommand(
+      (id) => this.voiceRoomApi.sendReaction(id, reaction),
+      'Could not send reaction.',
+      undefined,
+      (res) => this.handleFeedback(roomId, res),
+    );
+  }
+
+  onListenerAction(event: {
     action: ListenerMenuAction;
     listener: RoomListener;
-  }): Promise<void> {
+  }): void {
     const { action, listener } = event;
     if (action === 'profile') {
-      void this.openProfilePreview({ kind: 'listener' }, listener.id);
+      this.openProfilePreview({ kind: 'listener' }, listener.id);
       return;
     }
 
@@ -357,23 +366,19 @@ export class RoomPage {
     switch (action) {
       case 'stage':
       case 'approve':
-        this.handleFeedback(
-          roomId,
-          await this.stageStore.runRoomCommand(
-            (id) => this.voiceRoomApi.promoteSpeaker(id, listener.id),
-            'Could not promote to stage.',
-          ),
-          `${listener.name} moved to stage.`,
+        this.stageStore.runRoomCommand(
+          (id) => this.voiceRoomApi.promoteSpeaker(id, listener.id),
+          'Could not promote to stage.',
+          undefined,
+          (res) => this.handleFeedback(roomId, res, `${listener.name} moved to stage.`),
         );
         return;
       case 'remove':
-        this.handleFeedback(
-          roomId,
-          await this.stageStore.runRoomCommand(
-            (id) => this.voiceRoomApi.kickParticipant(id, listener.id),
-            'Could not remove participant.',
-          ),
-          `${listener.name} removed from room.`,
+        this.stageStore.runRoomCommand(
+          (id) => this.voiceRoomApi.kickParticipant(id, listener.id),
+          'Could not remove participant.',
+          undefined,
+          (res) => this.handleFeedback(roomId, res, `${listener.name} removed from room.`),
         );
         return;
       default:
@@ -381,57 +386,61 @@ export class RoomPage {
     }
   }
 
-  async onLoadMoreAudience(): Promise<void> {
+  onLoadMoreAudience(): void {
     const roomId = this.id();
-    this.handleFeedback(roomId, await this.stageStore.loadMoreAudience());
+    this.stageStore.loadMoreAudience((res) => this.handleFeedback(roomId, res));
   }
 
-  async onChatTopic(text: string): Promise<void> {
+  onChatTopic(text: string): void {
     const roomId = this.id();
-    this.handleFeedback(roomId, await this.chatStore.setChatTopic(text), 'Chat topic updated.');
+    this.chatStore.setChatTopic(text, (res) =>
+      this.handleFeedback(roomId, res, 'Chat topic updated.'),
+    );
   }
 
-  async onRetryChat(): Promise<void> {
-    if ((await this.chatStore.reloadMessages()) && !this.destroyRef.destroyed) {
-      this.toast.show('Chat loaded.');
-    }
+  onRetryChat(): void {
+    this.chatStore.reloadMessages((ok) => {
+      if (ok && !this.destroyRef.destroyed) {
+        this.toast.show('Chat loaded.');
+      }
+    });
   }
 
-  async onRefreshChat(): Promise<void> {
-    if ((await this.chatStore.reloadMessages()) && !this.destroyRef.destroyed) {
-      this.toast.show('Chat updated.');
-    }
+  onRefreshChat(): void {
+    this.chatStore.reloadMessages((ok) => {
+      if (ok && !this.destroyRef.destroyed) {
+        this.toast.show('Chat updated.');
+      }
+    });
   }
 
-  async onSendMessage(text: string): Promise<void> {
+  onSendMessage(text: string): void {
     if (this.sendingComment()) return;
     const roomId = this.id();
     const discussion = this.discussion();
     this.sendingComment.set(true);
-    try {
-      if (this.handleFeedback(roomId, await this.chatStore.sendMessage(text))) {
+    this.chatStore.sendMessage(text, (res) => {
+      this.sendingComment.set(false);
+      if (this.handleFeedback(roomId, res)) {
         discussion?.clearSentDraft(text);
       }
-    } finally {
-      this.sendingComment.set(false);
-    }
+    });
   }
 
-  async onToggleMessageReaction(event: {
+  onToggleMessageReaction(event: {
     messageId: string;
     reaction: BackendReaction;
-  }): Promise<void> {
+  }): void {
     const roomId = this.id();
-    this.handleFeedback(
-      roomId,
-      await this.chatStore.toggleReaction(event.messageId, event.reaction),
+    this.chatStore.toggleReaction(event.messageId, event.reaction, (res) =>
+      this.handleFeedback(roomId, res),
     );
   }
 
-  async onCommentAction(event: {
+  onCommentAction(event: {
     action: 'reply' | 'pin' | 'copy' | 'correct' | 'mute' | 'delete';
     message: DiscussionMessage;
-  }): Promise<void> {
+  }): void {
     const { action, message } = event;
     const roomId = this.id();
     switch (action) {
@@ -444,44 +453,62 @@ export class RoomPage {
         this.chatStore.setReplyTarget(message.author, message.id);
         return;
       case 'pin':
-        this.handleFeedback(roomId, await this.chatStore.pinMessage(message.id), 'Pinned comment.');
+        this.chatStore.pinMessage(message.id, (res) =>
+          this.handleFeedback(roomId, res, 'Pinned comment.'),
+        );
         return;
       case 'copy':
-        try {
-          await navigator.clipboard.writeText(message.text);
-          this.toast.show('Copied.');
-        } catch {
+        if (typeof navigator === 'undefined' || !navigator.clipboard) {
           this.toast.show('Could not copy this comment.');
+          return;
         }
+        this.writeClipboardText(
+          message.text,
+          () => this.toast.show('Copied.'),
+          () => this.toast.show('Could not copy this comment.'),
+        );
         return;
       case 'mute':
         if (message.authorId) {
-          this.handleFeedback(
-            roomId,
-            await this.chatStore.muteChatUser(message.authorId),
-            `Updated chat mute for ${message.author}.`,
+          this.chatStore.muteChatUser(message.authorId, (res) =>
+            this.handleFeedback(roomId, res, `Updated chat mute for ${message.author}.`),
           );
         }
         return;
       case 'delete':
-        this.handleFeedback(roomId, await this.chatStore.deleteMessage(message.id), 'Deleted.');
+        this.chatStore.deleteMessage(message.id, (res) =>
+          this.handleFeedback(roomId, res, 'Deleted.'),
+        );
         return;
       default:
         return;
     }
   }
 
-  async onUnpinMessage(): Promise<void> {
+  onUnpinMessage(): void {
     const roomId = this.id();
-    this.handleFeedback(roomId, await this.chatStore.pinMessage(null), 'Unpinned.');
+    this.chatStore.pinMessage(null, (res) => this.handleFeedback(roomId, res, 'Unpinned.'));
   }
 
-  async onLeaveQuietly(): Promise<void> {
+  onLeaveQuietly(): void {
     const roomId = this.id();
-    this.handleFeedback(roomId, await this.roomStore.leaveRoom(), 'Left the room.');
-    if (!this.destroyRef.destroyed && this.id() === roomId) {
-      void this.router.navigate(['/rooms']);
-    }
+    this.roomStore.leaveRoom((res) => {
+      this.handleFeedback(roomId, res, 'Left the room.');
+      if (!this.destroyRef.destroyed && this.id() === roomId) {
+        void this.router.navigate(['/rooms']);
+      }
+    });
+  }
+
+  private writeClipboardText(text: string, onSuccess: () => void, onError: () => void): void {
+    void navigator.clipboard.writeText(text).then(
+      () => {
+        if (!this.destroyRef.destroyed) onSuccess();
+      },
+      () => {
+        if (!this.destroyRef.destroyed) onError();
+      },
+    );
   }
 
   private handleFeedback(roomId: string, res: ActionFeedback, successMessage?: string): boolean {

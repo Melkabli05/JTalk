@@ -1,5 +1,6 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { RoomSessionDto } from '../../../shared/models/voice-room.model';
 import { VoiceRoomApi } from './voice-room-api';
@@ -51,7 +52,7 @@ describe('LiveKitAudioEngine', () => {
       return handle;
     });
 
-    const updateSelfMute = vi.fn().mockResolvedValue(undefined);
+    const updateSelfMute = vi.fn().mockReturnValue(of(undefined));
 
     TestBed.configureTestingModule({
       providers: [
