@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,6 +21,7 @@ export class RoomAudience {
   readonly hasMore = input(false);
   readonly loading = input(false);
   readonly isHost = input(false);
+  readonly hasAudience = computed(() => this.listeners().length > 0 || this.hasMore());
 
   readonly loadMore = output<void>();
   readonly listenerAction = output<{

@@ -28,6 +28,15 @@ describe('RoomAudience', () => {
     }).compileComponents();
   });
 
+  it('hides the entire audience section when there are no listeners', () => {
+    const fixture = TestBed.createComponent(RoomAudience);
+    fixture.componentRef.setInput('listeners', []);
+    fixture.componentRef.setInput('listenerLabel', '0 listening');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.audience-section')).toBeNull();
+  });
+
   it('can hide the listener rail without reporting an empty audience', () => {
     const fixture = TestBed.createComponent(RoomAudience);
     fixture.componentRef.setInput('listeners', listeners);
@@ -36,13 +45,12 @@ describe('RoomAudience', () => {
 
     const tiles = fixture.nativeElement.querySelectorAll('.listener-tile');
     expect(tiles.length).toBe(2);
-    expect(fixture.nativeElement.querySelector('#audienceEmpty')?.hidden).toBe(true);
+    expect(fixture.nativeElement.querySelector('#audienceEmpty')).toBeNull();
 
     const toggleBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector('#audienceToggle');
     toggleBtn?.click();
     fixture.detectChanges();
     expect(toggleBtn?.getAttribute('aria-expanded')).toBe('false');
-    expect(fixture.nativeElement.querySelector('#audienceList')?.hidden).toBe(true);
-    expect(fixture.nativeElement.querySelector('#audienceEmpty')?.hidden).toBe(true);
+    expect(fixture.nativeElement.querySelector('#audienceList')).toBeNull();
   });
 });
