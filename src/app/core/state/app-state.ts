@@ -64,7 +64,6 @@ export class AppState {
 
   readonly profile = computed<UserProfile>(() => {
     const me = this.identity.me();
-    const authUser = this.identity.authUser();
     const stats = this.identity.socialStats();
 
     if (me) {
@@ -84,22 +83,11 @@ export class AppState {
       };
     }
 
-    const fallbackName =
-      (typeof authUser?.name === 'string' && authUser.name.trim()) ||
-      (typeof authUser?.nickname === 'string' && authUser.nickname.trim()) ||
-      'Speaker';
-    const fallbackUsername =
-      (typeof authUser?.nickname === 'string' &&
-        authUser.nickname.toLowerCase().replace(/[^a-z0-9_.]/g, '')) ||
-      '';
-
     return {
       id: this.identity.userId() ?? undefined,
-      name: fallbackName,
-      username: fallbackUsername,
-      avatar: resolveAvatarSelection(
-        typeof authUser?.picture === 'string' ? authUser.picture : null,
-      ),
+      name: 'Speaker',
+      username: '',
+      avatar: resolveAvatarSelection(null),
       speak: 'English',
       learn: 'Spanish',
       location: 'Not set',
