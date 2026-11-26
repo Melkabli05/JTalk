@@ -226,7 +226,7 @@ describe('RoomPage', () => {
     store.roomError.set('This room has ended.');
     fixture.detectChanges();
 
-    expect(toastSpy.show).toHaveBeenCalledWith('This room has ended.');
+    expect(toastSpy.show).toHaveBeenCalledWith('Room closed.');
     expect(navigate).toHaveBeenCalledWith(['/rooms']);
   });
 

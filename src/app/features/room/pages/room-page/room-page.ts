@@ -163,7 +163,7 @@ export class RoomPage {
       const err = this.roomStore.roomError();
       if (err === 'This room has ended.' || err === 'You were removed from this room.') {
         untracked(() => {
-          this.toast.show(err);
+          this.toast.show(err === 'This room has ended.' ? 'Room closed.' : err);
           void this.router.navigate(['/rooms']);
         });
       }
@@ -320,11 +320,9 @@ export class RoomPage {
 
   async onToggleHand(): Promise<void> {
     const roomId = this.id();
-    const wasRaised = this.stageStore.handRaised();
     this.handleFeedback(
       roomId,
       await this.stageStore.toggleHandRaised(),
-      wasRaised ? 'Hand lowered.' : 'Hand raised.',
     );
   }
 
