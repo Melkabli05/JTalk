@@ -15,7 +15,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
-import { lastValueFrom } from 'rxjs';
+import { forkJoin, lastValueFrom } from 'rxjs';
 import { UsersApi } from '../../../../core/auth/users-api';
 import { errorMessage } from '../../../../core/http/http-error.interceptor';
 import { AppTitleStrategy } from '../../../../core/routing/app-title-strategy';
@@ -211,32 +211,32 @@ export class RoomPage {
     }
   }
 
-  async openProfilePreview(target: ProfilePreviewTarget, id: string): Promise<void> {
+  openProfilePreview(target: ProfilePreviewTarget, id: string): void {
     const seq = ++this.profilePreviewSeq;
-    try {
-      const [profile, stats] = await Promise.all([
-        this.usersApi.getUser(id),
-        this.usersApi.getSocialStats(id),
-      ]);
-      if (this.destroyRef.destroyed || seq !== this.profilePreviewSeq) return;
-      const isYou = id === this.stageStore.currentUserId();
-      const ref = this.dialog.open<HostProfileDialog, HostProfileDialogData, string>(
-        HostProfileDialog,
-        {
-          width: '560px',
-          maxWidth: 'calc(100vw - 24px)',
-          data: { profile, stats, target, isYou },
-        },
-      );
-      const action = await lastValueFrom(ref.afterClosed());
-      if (!this.destroyRef.destroyed && isYou && action === 'view-profile') {
-        void this.router.navigate(['/profile']);
-      }
-    } catch (err) {
-      if (!this.destroyRef.destroyed && seq === this.profilePreviewSeq) {
-        this.toast.show(errorMessage(err, 'Could not load this profile.'));
-      }
-    }
+    forkJoin([this.usersApi.getUser(id), this.usersApi.getSocialStats(id)]).subscribe({
+      next: ([profile, stats]) => {
+        if (this.destroyRef.destroyed || seq !== this.profilePreviewSeq) return;
+        const isYou = id === this.stageStore.currentUserId();
+        const ref = this.dialog.open<HostProfileDialog, HostProfileDialogData, string>(
+          HostProfileDialog,
+          {
+            width: '560px',
+            maxWidth: 'calc(100vw - 24px)',
+            data: { profile, stats, target, isYou },
+          },
+        );
+        ref.afterClosed().subscribe((action) => {
+          if (!this.destroyRef.destroyed && isYou && action === 'view-profile') {
+            void this.router.navigate(['/profile']);
+          }
+        });
+      },
+      error: (err: unknown) => {
+        if (!this.destroyRef.destroyed && seq === this.profilePreviewSeq) {
+          this.toast.show(errorMessage(err, 'Could not load this profile.'));
+        }
+      },
+    });
   }
 
   async onSpeakerAction(event: { action: SpeakerMenuAction; speaker: RoomSpeaker }): Promise<void> {

@@ -39,7 +39,9 @@ describe('ProfilePage', () => {
     const harness = await RouterTestingHarness.create();
     const router = TestBed.inject(Router);
     const identity = TestBed.inject(IdentityStore);
-    const deleteSpy = vi.spyOn(identity, 'deleteAccount').mockResolvedValue({ ok: true });
+    const deleteSpy = vi.spyOn(identity, 'deleteAccount').mockImplementation((onDone) => {
+      onDone?.({ ok: true });
+    });
 
     const page = await harness.navigateByUrl('/profile?tab=account', ProfilePage);
     expect(page.activeTab()).toBe('account');
@@ -53,7 +55,7 @@ describe('ProfilePage', () => {
     await vi.waitFor(() => expect(router.url).toBe('/profile'));
     expect(page.selectedTabIndex()).toBe(0);
 
-    await page.openDeleteDialog();
+    page.openDeleteDialog();
     expect(dialogSpy.open).toHaveBeenCalled();
     expect(deleteSpy).toHaveBeenCalledTimes(1);
   });

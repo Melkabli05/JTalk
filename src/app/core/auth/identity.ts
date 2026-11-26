@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '@auth0/auth0-angular';
-import { lastValueFrom } from 'rxjs';
+import { catchError, finalize, map, type Observable, of, switchMap, throwError } from 'rxjs';
 import { ApiError, errorMessage } from '../http/http-error.interceptor';
 import type {
   CreateProfileRequest,
@@ -219,56 +219,63 @@ export class IdentityStore {
     this.loadMe();
   }
 
-  async saveProfile(
+  saveProfile(
     input: ProfileSaveInput,
     avatarBlob?: Blob | null,
-  ): Promise<ProfileSaveResult> {
+    onDone?: (result: ProfileSaveResult) => void,
+  ): void {
     if (this.savingProfileState()) {
-      return { ok: false, error: 'A profile save is already in progress.' };
+      onDone?.({ ok: false, error: 'A profile save is already in progress.' });
+      return;
     }
     if (!this.hasProfile() && !this.needsOnboarding()) {
-      return { ok: false, error: 'Load your profile before making changes.' };
+      onDone?.({ ok: false, error: 'Load your profile before making changes.' });
+      return;
     }
 
     this.savingProfileState.set(true);
-    try {
-      const current = this.me();
-      const preserveSocialStats = (profile: UserProfileResponse): UserProfileResponse =>
-        profile.socialStats !== undefined
-          ? profile
-          : current?.socialStats
-            ? { ...profile, socialStats: current.socialStats }
-            : profile;
+    const current = this.me();
+    const preserveSocialStats = (profile: UserProfileResponse): UserProfileResponse =>
+      profile.socialStats !== undefined
+        ? profile
+        : current?.socialStats
+          ? { ...profile, socialStats: current.socialStats }
+          : profile;
 
-      let saved = preserveSocialStats(
-        current
-          ? await this.updateExistingProfile(current, input)
-          : await this.createInitialProfile(input),
-      );
-
-      if (avatarBlob) {
+    const save$ = (
+      current ? this.updateExistingProfile(current, input) : this.createInitialProfile(input)
+    ).pipe(
+      map(preserveSocialStats),
+      switchMap((saved) => {
+        if (!avatarBlob) return of(saved);
         this.meState.set(saved);
-        saved = preserveSocialStats(await this.usersApi.uploadAvatar(avatarBlob));
-      }
+        return this.usersApi.uploadAvatar(avatarBlob).pipe(map(preserveSocialStats));
+      }),
+      finalize(() => this.savingProfileState.set(false)),
+    );
 
-      this.meState.set(saved);
-      return { ok: true, profile: saved };
-    } catch (err) {
-      return { ok: false, error: errorMessage(err, 'Could not save profile.') };
-    } finally {
-      this.savingProfileState.set(false);
-    }
+    save$.subscribe({
+      next: (saved) => {
+        this.meState.set(saved);
+        onDone?.({ ok: true, profile: saved });
+      },
+      error: (err: unknown) => {
+        onDone?.({ ok: false, error: errorMessage(err, 'Could not save profile.') });
+      },
+    });
   }
 
-  async deleteAccount(): Promise<AccountActionResult> {
-    try {
-      await this.usersApi.deleteMe();
-      this.meState.set(null);
-      await this.signOut();
-      return { ok: true };
-    } catch (err) {
-      return { ok: false, error: errorMessage(err, 'Could not delete account.') };
-    }
+  deleteAccount(onDone?: (result: AccountActionResult) => void): void {
+    this.usersApi.deleteMe().subscribe({
+      next: () => {
+        this.meState.set(null);
+        this.signOut();
+        onDone?.({ ok: true });
+      },
+      error: (err: unknown) => {
+        onDone?.({ ok: false, error: errorMessage(err, 'Could not delete account.') });
+      },
+    });
   }
 
   signIn(mode: 'login' | 'signup' = 'login', targetPath = '/rooms'): void {
@@ -279,16 +286,14 @@ export class IdentityStore {
     });
   }
 
-  async signOut(): Promise<void> {
+  signOut(): void {
     if (!this.auth || !isPlatformBrowser(this.platformId)) return;
-    try {
-      await lastValueFrom(this.auth.logout({ logoutParams: { returnTo: window.location.origin } }));
-    } catch {
-      window.location.assign('/');
-    }
+    this.auth.logout({ logoutParams: { returnTo: window.location.origin } }).subscribe({
+      error: () => window.location.assign('/'),
+    });
   }
 
-  async resolveUsers(ids: readonly string[]): Promise<void> {
+  resolveUsers(ids: readonly string[]): void {
     if (!this.isAuthenticated() || ids.length === 0) return;
 
     const currentMap = this.userDirectory();
@@ -303,13 +308,19 @@ export class IdentityStore {
 
     for (let i = 0; i < missing.length; i += 500) {
       const chunk = missing.slice(i, i + 500);
-      try {
-        this.mergeUserSummaries(await this.usersApi.getBatch(chunk));
-      } catch {
-        // Non-fatal: fallback display names remain until the next lookup.
-      } finally {
-        for (const id of chunk) this.inFlightBatchIds.delete(id);
-      }
+      this.usersApi
+        .getBatch(chunk)
+        .pipe(
+          finalize(() => {
+            for (const id of chunk) this.inFlightBatchIds.delete(id);
+          }),
+        )
+        .subscribe({
+          next: (summaries) => this.mergeUserSummaries(summaries),
+          error: () => {
+            // Non-fatal: fallback display names remain until the next lookup.
+          },
+        });
     }
   }
 
@@ -335,7 +346,7 @@ export class IdentityStore {
     });
   }
 
-  private async createInitialProfile(input: ProfileSaveInput): Promise<UserProfileResponse> {
+  private createInitialProfile(input: ProfileSaveInput): Observable<UserProfileResponse> {
     const trimmedUsername = input.username.trim();
     const createReq: CreateProfileRequest = {
       ...(trimmedUsername ? { username: trimmedUsername } : {}),
@@ -348,21 +359,21 @@ export class IdentityStore {
       ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
       ...(input.countryCode ? { countryCode: input.countryCode } : {}),
     };
-    try {
-      return await this.usersApi.createMe(createReq);
-    } catch (err) {
-      if (err instanceof ApiError && err.type === 'urn:jtalk:user:problem:profile-already-exists') {
-        this.loadMe();
-      }
-      throw err;
-    }
+    return this.usersApi.createMe(createReq).pipe(
+      catchError((err: unknown) => {
+        if (err instanceof ApiError && err.type === 'urn:jtalk:user:problem:profile-already-exists') {
+          this.loadMe();
+        }
+        return throwError(() => err);
+      }),
+    );
   }
 
   private updateExistingProfile(
     current: UserProfileResponse,
     input: ProfileSaveInput,
-  ): Promise<UserProfileResponse> {
+  ): Observable<UserProfileResponse> {
     const patch = buildProfilePatch(current, input);
-    return Object.keys(patch).length > 0 ? this.usersApi.updateMe(patch) : Promise.resolve(current);
+    return Object.keys(patch).length > 0 ? this.usersApi.updateMe(patch) : of(current);
   }
 }

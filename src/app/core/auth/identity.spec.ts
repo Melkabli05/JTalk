@@ -45,20 +45,27 @@ describe('IdentityStore profile edits', () => {
     };
     identity.setProfile({ ...profile, bio: null, avatarUrl: null, countryCode: null });
 
-    const saving = identity.saveProfile({
-      displayName: 'Person',
-      username: 'person',
-      nativeLanguage: 'pt',
-      learningLanguage: null,
-      countryCode: null,
-      bio: 'Updated bio',
-    });
+    let saveResult: { ok: boolean } | undefined;
+    identity.saveProfile(
+      {
+        displayName: 'Person',
+        username: 'person',
+        nativeLanguage: 'pt',
+        learningLanguage: null,
+        countryCode: null,
+        bio: 'Updated bio',
+      },
+      null,
+      (res) => {
+        saveResult = res;
+      },
+    );
     const request = http.expectOne({ method: 'PATCH', url: '/api/v1/users/me' });
     expect(request.request.body).toEqual({
       bio: 'Updated bio',
     });
     request.flush({ ...profile, bio: 'Updated bio' });
-    expect((await saving).ok).toBe(true);
+    expect(saveResult?.ok).toBe(true);
     expect(identity.userDirectory().get('person')?.displayName).toBe('Person');
 
     identity.updateCachedAvatar('person', '/api/v1/users/person/avatar/42');
@@ -103,14 +110,21 @@ describe('IdentityStore profile edits', () => {
     await flushResources();
     expect(identity.needsOnboarding()).toBe(true);
 
-    const saving = identity.saveProfile({
-      displayName: 'Person',
-      username: '',
-      nativeLanguage: 'en',
-      learningLanguage: 'fr',
-      countryCode: null,
-      bio: '',
-    });
+    let saveResult: { ok: boolean } | undefined;
+    identity.saveProfile(
+      {
+        displayName: 'Person',
+        username: '',
+        nativeLanguage: 'en',
+        learningLanguage: 'fr',
+        countryCode: null,
+        bio: '',
+      },
+      null,
+      (res) => {
+        saveResult = res;
+      },
+    );
     http
       .expectOne({ method: 'POST', url })
       .flush(
@@ -120,7 +134,7 @@ describe('IdentityStore profile edits', () => {
         },
         { status: 409, statusText: 'Conflict' },
       );
-    expect((await saving).ok).toBe(false);
+    expect(saveResult?.ok).toBe(false);
     await flushResources();
     http.expectOne({ method: 'GET', url }).flush({
       id: 'person',
@@ -168,14 +182,21 @@ describe('IdentityStore profile edits', () => {
     await flushResources();
     expect(identity.socialStats()?.followerCount).toBe(7);
 
-    const saving = identity.saveProfile({
-      displayName: 'First Updated',
-      username: 'first',
-      nativeLanguage: 'en',
-      learningLanguage: null,
-      countryCode: null,
-      bio: '',
-    });
+    let saveResult: { ok: boolean } | undefined;
+    identity.saveProfile(
+      {
+        displayName: 'First Updated',
+        username: 'first',
+        nativeLanguage: 'en',
+        learningLanguage: null,
+        countryCode: null,
+        bio: '',
+      },
+      null,
+      (res) => {
+        saveResult = res;
+      },
+    );
     http.expectOne({ method: 'PATCH', url: '/api/v1/users/me' }).flush({
       id: 'first',
       username: 'first',
@@ -185,7 +206,7 @@ describe('IdentityStore profile edits', () => {
       learningLanguages: [],
       createdAt: '2026-01-01T00:00:00Z',
     });
-    expect((await saving).ok).toBe(true);
+    expect(saveResult?.ok).toBe(true);
     expect(identity.socialStats()?.followerCount).toBe(7);
 
     identity.refreshSocialStats();

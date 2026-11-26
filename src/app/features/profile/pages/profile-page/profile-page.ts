@@ -19,7 +19,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { lastValueFrom } from 'rxjs';
 import type {
   FollowListResponse,
   LanguageType,
@@ -183,15 +182,17 @@ export class ProfilePage {
     }
   }
 
-  async unblock(id: string): Promise<void> {
-    try {
-      await this.usersApi.unblock(id);
-      if (this.connectionList() === 'blocks') this.loadConnections('blocks');
-    } catch (err) {
-      if (!this.destroyRef.destroyed) {
-        this.toast.show(errorMessage(err, 'Could not unblock account.'));
-      }
-    }
+  unblock(id: string): void {
+    this.usersApi.unblock(id).subscribe({
+      next: () => {
+        if (this.connectionList() === 'blocks') this.loadConnections('blocks');
+      },
+      error: (err: unknown) => {
+        if (!this.destroyRef.destroyed) {
+          this.toast.show(errorMessage(err, 'Could not unblock account.'));
+        }
+      },
+    });
   }
 
   formatLevel(value: ProficiencyLevel | null | undefined): string {
@@ -205,29 +206,32 @@ export class ProfilePage {
     }
   }
 
-  async changeLanguage(
+  changeLanguage(
     code: string,
     type?: LanguageType,
     proficiencyLevel?: ProficiencyLevel,
-  ): Promise<void> {
+  ): void {
     if (this.languageBusy()) return;
     this.languageBusy.set(true);
-    try {
-      const matrix = type
-        ? await this.usersApi.addMyLanguage({
-            languageCode: code,
-            languageType: type,
-            ...(type === 'LEARNING' && proficiencyLevel ? { proficiencyLevel } : {}),
-          })
-        : await this.usersApi.removeMyLanguage(code);
-      this.identity.applyLanguageMatrix(matrix);
-    } catch (err) {
-      if (!this.destroyRef.destroyed) {
-        this.toast.show(errorMessage(err, 'Could not update languages.'));
-      }
-    } finally {
-      this.languageBusy.set(false);
-    }
+    const req$ = type
+      ? this.usersApi.addMyLanguage({
+          languageCode: code,
+          languageType: type,
+          ...(type === 'LEARNING' && proficiencyLevel ? { proficiencyLevel } : {}),
+        })
+      : this.usersApi.removeMyLanguage(code);
+    req$.subscribe({
+      next: (matrix) => {
+        this.languageBusy.set(false);
+        this.identity.applyLanguageMatrix(matrix);
+      },
+      error: (err: unknown) => {
+        this.languageBusy.set(false);
+        if (!this.destroyRef.destroyed) {
+          this.toast.show(errorMessage(err, 'Could not update languages.'));
+        }
+      },
+    });
   }
 
   selectTab(tab: ProfileTab): void {
@@ -250,38 +254,41 @@ export class ProfilePage {
     }
   }
 
-  async onProfileSaved(event: ProfileEditSaveEvent): Promise<void> {
+  onProfileSaved(event: ProfileEditSaveEvent): void {
     const wasOnboarding = this.identity.needsOnboarding();
-    const res = await this.identity.saveProfile(event.input, event.avatarBlob);
-    if (this.destroyRef.destroyed) return;
-    if (res.ok) {
-      this.editForm()?.clearPendingAvatar();
-      this.toast.show(wasOnboarding ? 'Profile created.' : 'Profile saved.');
-      if (wasOnboarding) {
-        void this.router.navigate(['/rooms']);
+    this.identity.saveProfile(event.input, event.avatarBlob, (res) => {
+      if (this.destroyRef.destroyed) return;
+      if (res.ok) {
+        this.editForm()?.clearPendingAvatar();
+        this.toast.show(wasOnboarding ? 'Profile created.' : 'Profile saved.');
+        if (wasOnboarding) {
+          void this.router.navigate(['/rooms']);
+        }
+      } else {
+        this.toast.show(res.error ?? 'Could not save profile.');
       }
-    } else {
-      this.toast.show(res.error ?? 'Could not save profile.');
-    }
+    });
   }
 
   onProfileDiscarded(): void {
     this.toast.show('Changes discarded.');
   }
 
-  async openDeleteDialog(): Promise<void> {
+  openDeleteDialog(): void {
     const ref = this.dialog.open<DeleteAccountDialog, void, boolean>(DeleteAccountDialog, {
       width: '440px',
       maxWidth: 'calc(100vw - 24px)',
     });
 
-    const confirmed = await lastValueFrom(ref.afterClosed());
-    if (!confirmed || this.destroyRef.destroyed) return;
-    const res = await this.identity.deleteAccount();
-    if (res.ok) {
-      this.roomStore.rememberRoom(null);
-    } else if (res.error && !this.destroyRef.destroyed) {
-      this.toast.show(res.error);
-    }
+    ref.afterClosed().subscribe((confirmed) => {
+      if (!confirmed || this.destroyRef.destroyed) return;
+      this.identity.deleteAccount((res) => {
+        if (res.ok) {
+          this.roomStore.rememberRoom(null);
+        } else if (res.error && !this.destroyRef.destroyed) {
+          this.toast.show(res.error);
+        }
+      });
+    });
   }
 }

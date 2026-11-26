@@ -107,7 +107,7 @@ export class LiveRoomStore {
     this.signingOut = true;
     try {
       await this.leaveRoom();
-      await this.identity.signOut();
+      this.identity.signOut();
     } finally {
       this.signingOut = false;
     }

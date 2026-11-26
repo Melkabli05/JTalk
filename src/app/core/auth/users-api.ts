@@ -1,8 +1,8 @@
 import { HttpClient, httpResource } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
-import { lastValueFrom } from 'rxjs';
+import type { Observable } from 'rxjs';
 import { API_BASE_URL } from '../http/api-base-url.token';
-import {
+import type {
   AddLanguageRequest,
   CreateProfileRequest,
   DiscoveredUserResponse,
@@ -26,40 +26,34 @@ export class UsersApi {
     );
   }
 
-  getUser(userId: string): Promise<UserProfileResponse> {
-    return lastValueFrom(
-      this.http.get<UserProfileResponse>(`${this.base}/${encodeURIComponent(userId)}`),
-    );
+  getUser(userId: string): Observable<UserProfileResponse> {
+    return this.http.get<UserProfileResponse>(`${this.base}/${encodeURIComponent(userId)}`);
   }
 
-  getSocialStats(userId: string): Promise<SocialStatsResponse> {
-    return lastValueFrom(
-      this.http.get<SocialStatsResponse>(`${this.base}/${encodeURIComponent(userId)}/social`),
-    );
+  getSocialStats(userId: string): Observable<SocialStatsResponse> {
+    return this.http.get<SocialStatsResponse>(`${this.base}/${encodeURIComponent(userId)}/social`);
   }
 
-  createMe(payload: CreateProfileRequest): Promise<UserProfileResponse> {
-    return lastValueFrom(this.http.post<UserProfileResponse>(`${this.base}/me`, payload));
+  createMe(payload: CreateProfileRequest): Observable<UserProfileResponse> {
+    return this.http.post<UserProfileResponse>(`${this.base}/me`, payload);
   }
 
-  updateMe(payload: UpdateProfileRequest): Promise<UserProfileResponse> {
-    return lastValueFrom(this.http.patch<UserProfileResponse>(`${this.base}/me`, payload));
+  updateMe(payload: UpdateProfileRequest): Observable<UserProfileResponse> {
+    return this.http.patch<UserProfileResponse>(`${this.base}/me`, payload);
   }
 
-  deleteMe(): Promise<void> {
-    return lastValueFrom(this.http.delete<void>(`${this.base}/me`));
+  deleteMe(): Observable<void> {
+    return this.http.delete<void>(`${this.base}/me`);
   }
 
-  uploadAvatar(imageBlob: Blob): Promise<UserProfileResponse> {
-    return lastValueFrom(
-      this.http.put<UserProfileResponse>(`${this.base}/me/avatar`, imageBlob, {
-        headers: { 'Content-Type': imageBlob.type || 'image/jpeg' },
-      }),
-    );
+  uploadAvatar(imageBlob: Blob): Observable<UserProfileResponse> {
+    return this.http.put<UserProfileResponse>(`${this.base}/me/avatar`, imageBlob, {
+      headers: { 'Content-Type': imageBlob.type || 'image/jpeg' },
+    });
   }
 
-  getBatch(ids: readonly string[]): Promise<UserSummaryResponse[]> {
-    return lastValueFrom(this.http.post<UserSummaryResponse[]>(`${this.base}/batch`, { ids }));
+  getBatch(ids: readonly string[]): Observable<UserSummaryResponse[]> {
+    return this.http.post<UserSummaryResponse[]>(`${this.base}/batch`, { ids });
   }
 
   searchResource(query: () => string | undefined) {
@@ -82,24 +76,22 @@ export class UsersApi {
     });
   }
 
-  addMyLanguage(req: AddLanguageRequest): Promise<LanguageMatrixResponse> {
-    return lastValueFrom(this.http.post<LanguageMatrixResponse>(`${this.base}/me/languages`, req));
+  addMyLanguage(req: AddLanguageRequest): Observable<LanguageMatrixResponse> {
+    return this.http.post<LanguageMatrixResponse>(`${this.base}/me/languages`, req);
   }
 
-  removeMyLanguage(languageCode: string): Promise<LanguageMatrixResponse> {
-    return lastValueFrom(
-      this.http.delete<LanguageMatrixResponse>(
-        `${this.base}/me/languages/${encodeURIComponent(languageCode)}`,
-      ),
+  removeMyLanguage(languageCode: string): Observable<LanguageMatrixResponse> {
+    return this.http.delete<LanguageMatrixResponse>(
+      `${this.base}/me/languages/${encodeURIComponent(languageCode)}`,
     );
   }
 
-  follow(userId: string): Promise<void> {
-    return lastValueFrom(this.http.post<void>(`${this.base}/${encodeURIComponent(userId)}/follow`, null));
+  follow(userId: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/${encodeURIComponent(userId)}/follow`, null);
   }
 
-  unfollow(userId: string): Promise<void> {
-    return lastValueFrom(this.http.delete<void>(`${this.base}/${encodeURIComponent(userId)}/follow`));
+  unfollow(userId: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${encodeURIComponent(userId)}/follow`);
   }
 
   connectionsResource(
@@ -129,11 +121,11 @@ export class UsersApi {
     });
   }
 
-  block(userId: string): Promise<void> {
-    return lastValueFrom(this.http.post<void>(`${this.base}/${encodeURIComponent(userId)}/block`, null));
+  block(userId: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/${encodeURIComponent(userId)}/block`, null);
   }
 
-  unblock(userId: string): Promise<void> {
-    return lastValueFrom(this.http.delete<void>(`${this.base}/${encodeURIComponent(userId)}/block`));
+  unblock(userId: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${encodeURIComponent(userId)}/block`);
   }
 }

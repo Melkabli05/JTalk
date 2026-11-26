@@ -171,50 +171,62 @@ export class PeopleStore {
     }
   }
 
-  async toggleFollow(
+  toggleFollow(
     person: DiscoveredUserResponse,
-  ): Promise<{ ok: boolean; followed: boolean; error?: string }> {
+    onDone?: (res: { ok: boolean; followed: boolean; error?: string }) => void,
+  ): void {
     if (this.pendingIds().has(person.id)) {
-      return { ok: false, followed: person.followedByMe };
+      onDone?.({ ok: false, followed: person.followedByMe });
+      return;
     }
     this.togglePending(person.id, true);
     const followed = !person.followedByMe;
-    try {
-      await (followed ? this.usersApi.follow(person.id) : this.usersApi.unfollow(person.id));
-      this.followOverrides.update(
-        (prev): ReadonlyMap<string, boolean> => new Map(prev).set(person.id, followed),
-      );
-      this.identity.refreshSocialStats();
-      return { ok: true, followed };
-    } catch (err) {
-      return {
-        ok: false,
-        followed: person.followedByMe,
-        error: errorMessage(err, 'Could not update follow status.'),
-      };
-    } finally {
-      this.togglePending(person.id, false);
-    }
+    (followed ? this.usersApi.follow(person.id) : this.usersApi.unfollow(person.id)).subscribe({
+      next: () => {
+        this.togglePending(person.id, false);
+        this.followOverrides.update(
+          (prev): ReadonlyMap<string, boolean> => new Map(prev).set(person.id, followed),
+        );
+        this.identity.refreshSocialStats();
+        onDone?.({ ok: true, followed });
+      },
+      error: (err: unknown) => {
+        this.togglePending(person.id, false);
+        onDone?.({
+          ok: false,
+          followed: person.followedByMe,
+          error: errorMessage(err, 'Could not update follow status.'),
+        });
+      },
+    });
   }
 
-  async blockUser(person: DiscoveredUserResponse): Promise<{ ok: boolean; error?: string }> {
-    if (this.pendingIds().has(person.id)) return { ok: false };
-    this.togglePending(person.id, true);
-    try {
-      await this.usersApi.block(person.id);
-      this.blockedIds.update((prev): ReadonlySet<string> => new Set(prev).add(person.id));
-      this.followOverrides.update((prev): ReadonlyMap<string, boolean> => {
-        const next = new Map(prev);
-        next.delete(person.id);
-        return next;
-      });
-      this.identity.refreshSocialStats();
-      return { ok: true };
-    } catch (err) {
-      return { ok: false, error: errorMessage(err, 'Could not block user.') };
-    } finally {
-      this.togglePending(person.id, false);
+  blockUser(
+    person: DiscoveredUserResponse,
+    onDone?: (res: { ok: boolean; error?: string }) => void,
+  ): void {
+    if (this.pendingIds().has(person.id)) {
+      onDone?.({ ok: false });
+      return;
     }
+    this.togglePending(person.id, true);
+    this.usersApi.block(person.id).subscribe({
+      next: () => {
+        this.togglePending(person.id, false);
+        this.blockedIds.update((prev): ReadonlySet<string> => new Set(prev).add(person.id));
+        this.followOverrides.update((prev): ReadonlyMap<string, boolean> => {
+          const next = new Map(prev);
+          next.delete(person.id);
+          return next;
+        });
+        this.identity.refreshSocialStats();
+        onDone?.({ ok: true });
+      },
+      error: (err: unknown) => {
+        this.togglePending(person.id, false);
+        onDone?.({ ok: false, error: errorMessage(err, 'Could not block user.') });
+      },
+    });
   }
 
   private togglePending(id: string, busy: boolean): void {

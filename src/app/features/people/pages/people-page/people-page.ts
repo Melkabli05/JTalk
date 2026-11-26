@@ -49,25 +49,27 @@ export class PeoplePage {
     });
   }
 
-  async onFollowToggle(person: DiscoveredUserResponse): Promise<void> {
-    const res = await this.peopleStore.toggleFollow(person);
-    if (this.destroyRef.destroyed) return;
-    if (res.ok) {
-      this.toast.show(
-        res.followed ? `Following ${person.displayName}.` : `Unfollowed ${person.displayName}.`,
-      );
-    } else if (res.error) {
-      this.toast.show(res.error);
-    }
+  onFollowToggle(person: DiscoveredUserResponse): void {
+    this.peopleStore.toggleFollow(person, (res) => {
+      if (this.destroyRef.destroyed) return;
+      if (res.ok) {
+        this.toast.show(
+          res.followed ? `Following ${person.displayName}.` : `Unfollowed ${person.displayName}.`,
+        );
+      } else if (res.error) {
+        this.toast.show(res.error);
+      }
+    });
   }
 
-  async onBlockUser(person: DiscoveredUserResponse): Promise<void> {
-    const res = await this.peopleStore.blockUser(person);
-    if (this.destroyRef.destroyed) return;
-    if (res.ok) {
-      this.toast.show(`Blocked ${person.displayName}.`);
-    } else if (res.error) {
-      this.toast.show(res.error);
-    }
+  onBlockUser(person: DiscoveredUserResponse): void {
+    this.peopleStore.blockUser(person, (res) => {
+      if (this.destroyRef.destroyed) return;
+      if (res.ok) {
+        this.toast.show(`Blocked ${person.displayName}.`);
+      } else if (res.error) {
+        this.toast.show(res.error);
+      }
+    });
   }
 }

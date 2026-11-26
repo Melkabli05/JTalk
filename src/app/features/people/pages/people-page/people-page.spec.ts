@@ -40,12 +40,14 @@ describe('PeoplePage', () => {
       followedByMe: false,
     };
 
-    vi.spyOn(page.peopleStore, 'toggleFollow').mockResolvedValue({ ok: true, followed: true });
+    vi.spyOn(page.peopleStore, 'toggleFollow').mockImplementation((_person, onDone) => {
+      onDone?.({ ok: true, followed: true });
+    });
     harness.detectChanges();
 
     expect(harness.routeNativeElement?.querySelector('input[type="search"]')).toBeTruthy();
 
-    await page.onFollowToggle(person);
+    page.onFollowToggle(person);
     expect(toastSpy.show).toHaveBeenCalledWith('Following Amira.');
   });
 
