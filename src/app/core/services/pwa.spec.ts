@@ -37,9 +37,12 @@ describe('PwaService', () => {
     expect(installEvent.defaultPrevented).toBe(true);
     expect(pwa.canInstall()).toBe(true);
 
-    const outcome = await pwa.promptInstall();
+    let outcome: string | undefined;
+    pwa.promptInstall((res) => {
+      outcome = res;
+    });
     expect(prompt).toHaveBeenCalledTimes(1);
-    expect(outcome).toBe('accepted');
+    await vi.waitFor(() => expect(outcome).toBe('accepted'));
     expect(pwa.canInstall()).toBe(false);
   });
 });

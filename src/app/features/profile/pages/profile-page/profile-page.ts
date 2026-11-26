@@ -199,11 +199,12 @@ export class ProfilePage {
     return value ? value.charAt(0) + value.slice(1).toLowerCase() : '';
   }
 
-  async onInstallApp(): Promise<void> {
-    const outcome = await this.pwa.promptInstall();
-    if (outcome === 'accepted' && !this.destroyRef.destroyed) {
-      this.toast.show('Jtalk installed.');
-    }
+  onInstallApp(): void {
+    this.pwa.promptInstall((outcome) => {
+      if (outcome === 'accepted' && !this.destroyRef.destroyed) {
+        this.toast.show('Jtalk installed.');
+      }
+    });
   }
 
   changeLanguage(

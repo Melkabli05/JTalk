@@ -59,9 +59,9 @@ describe('RoomLauncher', () => {
     const router = TestBed.inject(Router);
     const navSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-    await launcher.openStartRoom();
+    launcher.openStartRoom();
 
-    expect(dialogSpy.open).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(dialogSpy.open).toHaveBeenCalledTimes(1));
     expect(roomStore.resumeRoomId()).toBeNull();
     expect(navSpy).not.toHaveBeenCalled();
     expect(toastSpy.show).not.toHaveBeenCalled();
@@ -83,10 +83,10 @@ describe('RoomLauncher', () => {
     const connect = vi.spyOn(roomStore.audio, 'connect').mockResolvedValue(true);
     const harness = await RouterTestingHarness.create();
 
-    const opening = launcher.openStartRoom();
+    launcher.openStartRoom();
 
     const req = await vi.waitFor(() => httpMock.expectOne('/api/v1/voice-rooms'));
-    await launcher.openStartRoom();
+    launcher.openStartRoom();
     expect(dialogSpy.open).toHaveBeenCalledOnce();
     httpMock.expectNone('/api/v1/voice-rooms');
     expect(req.request.method).toBe('POST');
@@ -117,7 +117,6 @@ describe('RoomLauncher', () => {
       canPublishAudio: true,
     };
     req.flush(created);
-    await opening;
 
     const base = '/api/v1/voice-rooms/room-abc-123';
     const join = await vi.waitFor(

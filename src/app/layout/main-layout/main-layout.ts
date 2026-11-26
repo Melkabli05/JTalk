@@ -74,12 +74,13 @@ export class MainLayout {
     this.roomLauncher.openStartRoom(this.destroyRef);
   }
 
-  async onBackToRoom(): Promise<void> {
+  onBackToRoom(): void {
     const roomId = this.roomStore.roomId();
-    await this.router.navigate(roomId ? ['/room', roomId] : ['/rooms']);
-    if (roomId && !this.destroyRef.destroyed) {
-      this.roomStore.triggerStageFocus();
-      this.toast.show('Back in the room.');
-    }
+    void this.router.navigate(roomId ? ['/room', roomId] : ['/rooms']).then(() => {
+      if (roomId && !this.destroyRef.destroyed) {
+        this.roomStore.triggerStageFocus();
+        this.toast.show('Back in the room.');
+      }
+    });
   }
 }

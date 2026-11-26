@@ -1,7 +1,6 @@
 import { DestroyRef, inject, Service } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
-import { lastValueFrom } from 'rxjs';
 import { IdentityStore } from '../auth/identity';
 import { errorMessage } from '../http/http-error.interceptor';
 import { CreateVoiceRoomPayload } from '../../shared/models/voice-room.model';
@@ -17,7 +16,7 @@ export class RoomLauncher {
   private readonly toast = inject(ToastNotifier);
   private creatingRoom = false;
 
-  async openStartRoom(destroyRef?: DestroyRef): Promise<void> {
+  openStartRoom(destroyRef?: DestroyRef): void {
     if (this.creatingRoom) return;
 
     if (!this.identity.isAuthenticated()) {
@@ -32,46 +31,46 @@ export class RoomLauncher {
     }
 
     const dialogId = 'start-room';
-    let dialogModule: typeof import('../../layout/ui/start-room-dialog/start-room-dialog');
-    try {
-      dialogModule = await import('../../layout/ui/start-room-dialog/start-room-dialog');
-    } catch {
-      if (!destroyRef?.destroyed) {
-        this.toast.show('Could not load the room form. Please try again.');
-      }
-      return;
-    }
+    void import('../../layout/ui/start-room-dialog/start-room-dialog').then(
+      (dialogModule) => {
+        if (destroyRef?.destroyed || this.creatingRoom || this.dialog.getDialogById(dialogId)) {
+          return;
+        }
+        const ref = this.dialog.open<
+          InstanceType<typeof dialogModule.StartRoomDialog>,
+          void,
+          CreateVoiceRoomPayload
+        >(dialogModule.StartRoomDialog, {
+          id: dialogId,
+          width: '560px',
+          maxWidth: 'calc(100vw - 24px)',
+          autoFocus: 'first-tabbable',
+        });
 
-    if (destroyRef?.destroyed || this.creatingRoom || this.dialog.getDialogById(dialogId)) return;
-
-    const ref = this.dialog.open<
-      InstanceType<typeof dialogModule.StartRoomDialog>,
-      void,
-      CreateVoiceRoomPayload
-    >(dialogModule.StartRoomDialog, {
-      id: dialogId,
-      width: '560px',
-      maxWidth: 'calc(100vw - 24px)',
-      autoFocus: 'first-tabbable',
-    });
-
-    const config = await lastValueFrom(ref.afterClosed());
-    if (!config || destroyRef?.destroyed || this.creatingRoom) return;
-
-    this.creatingRoom = true;
-    this.roomsApi.createRoom(config).subscribe({
-      next: (session) => {
-        this.creatingRoom = false;
-        void this.router.navigate(['/room', session.room.id]).then((navigated) => {
-          if (navigated) {
-            this.toast.show('Room open.');
-          }
+        ref.afterClosed().subscribe((config) => {
+          if (!config || destroyRef?.destroyed || this.creatingRoom) return;
+          this.creatingRoom = true;
+          this.roomsApi.createRoom(config).subscribe({
+            next: (session) => {
+              this.creatingRoom = false;
+              void this.router.navigate(['/room', session.room.id]).then((navigated) => {
+                if (navigated) {
+                  this.toast.show('Room open.');
+                }
+              });
+            },
+            error: (err: unknown) => {
+              this.creatingRoom = false;
+              this.toast.show(errorMessage(err, 'Could not start the room.'));
+            },
+          });
         });
       },
-      error: (err: unknown) => {
-        this.creatingRoom = false;
-        this.toast.show(errorMessage(err, 'Could not start the room.'));
+      () => {
+        if (!destroyRef?.destroyed) {
+          this.toast.show('Could not load the room form. Please try again.');
+        }
       },
-    });
+    );
   }
 }

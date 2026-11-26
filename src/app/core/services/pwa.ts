@@ -98,17 +98,20 @@ export class PwaService {
     }
   }
 
-  async promptInstall(): Promise<'accepted' | 'dismissed' | 'unavailable'> {
+  promptInstall(onDone?: (outcome: 'accepted' | 'dismissed' | 'unavailable') => void): void {
     const promptEvent = this.deferredPrompt();
-    if (!promptEvent) return 'unavailable';
-    this.deferredPrompt.set(null);
-    try {
-      await promptEvent.prompt();
-      const { outcome } = await promptEvent.userChoice;
-      return outcome;
-    } catch {
-      return 'dismissed';
+    if (!promptEvent) {
+      onDone?.('unavailable');
+      return;
     }
+    this.deferredPrompt.set(null);
+    void promptEvent
+      .prompt()
+      .then(() => promptEvent.userChoice)
+      .then(
+        ({ outcome }) => onDone?.(outcome),
+        () => onDone?.('dismissed'),
+      );
   }
 
   applyUpdate(): void {
