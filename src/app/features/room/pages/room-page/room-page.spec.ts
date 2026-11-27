@@ -80,8 +80,8 @@ describe('RoomPage', () => {
       role: 'LISTENER',
       canPublishAudio: false,
       isChatMuted: true,
-      liveKitUrl: 'wss://example.invalid',
-      liveKitToken: 'token',
+      mediaUrl: 'wss://example.invalid',
+      mediaToken: 'token',
       snapshot: {
         speakers: [{ userId: 'host', displayName: 'Cached speaker', nativeLanguage: 'en' }],
         audienceCount: 301,
@@ -169,8 +169,8 @@ describe('RoomPage', () => {
       },
       role,
       canPublishAudio: role === 'HOST',
-      liveKitUrl: 'wss://example.invalid',
-      liveKitToken: 'local',
+      mediaUrl: 'wss://example.invalid',
+      mediaToken: 'local',
       snapshot: {
         speakers: [{ userId: 'host', displayName: 'Host' }],
         audienceCount: 1,
@@ -329,8 +329,8 @@ describe('RoomPage', () => {
       },
       role: 'LISTENER',
       canPublishAudio: false,
-      liveKitUrl: 'wss://example.invalid',
-      liveKitToken: 'token',
+      mediaUrl: 'wss://example.invalid',
+      mediaToken: 'token',
       snapshot: {
         speakers: [{ userId: 'host', displayName: 'Host', isReconnecting: false }],
         audienceCount: 0,

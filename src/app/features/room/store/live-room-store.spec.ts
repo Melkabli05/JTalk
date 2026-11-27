@@ -38,8 +38,8 @@ describe('room session', () => {
   });
   const session = {
     room,
-    liveKitUrl: 'wss://example.invalid',
-    liveKitToken: 'join-token',
+    mediaUrl: 'wss://example.invalid',
+    mediaToken: 'join-token',
     canPublishAudio: true,
     role: 'HOST',
     isChatMuted: false,
@@ -346,7 +346,7 @@ describe('room session', () => {
           room: dto,
           role: 'LISTENER',
           canPublishAudio: false,
-          liveKitToken: id,
+          mediaToken: id,
           snapshot: makeSnapshot(['host'], ['guest']),
         }),
       );

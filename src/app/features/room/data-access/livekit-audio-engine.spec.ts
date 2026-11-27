@@ -26,8 +26,8 @@ describe('LiveKitAudioEngine', () => {
       participantCount: 1,
       handRaiseCount: 0,
     },
-    liveKitUrl: 'wss://jtalk-eimd2bul.livekit.cloud',
-    liveKitToken: 'tok-123',
+    mediaUrl: 'wss://jtalk-eimd2bul.livekit.cloud',
+    mediaToken: 'tok-123',
     role: 'HOST',
     canPublishAudio: true,
   };

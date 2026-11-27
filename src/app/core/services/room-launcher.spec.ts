@@ -120,8 +120,8 @@ describe('RoomLauncher', () => {
         participantCount: 0,
         handRaiseCount: 0,
       },
-      liveKitUrl: 'wss://example.invalid',
-      liveKitToken: 'create-token',
+      mediaUrl: 'wss://example.invalid',
+      mediaToken: 'create-token',
       role: 'HOST',
       canPublishAudio: true,
     };
@@ -138,7 +138,7 @@ describe('RoomLauncher', () => {
     httpMock.expectNone(`${base}/participants/snapshot`);
     expect(connect).not.toHaveBeenCalled();
     const joinedRoom = { ...created.room, participantCount: 1 };
-    join.flush({ ...created, room: joinedRoom, liveKitToken: 'join-token' });
+    join.flush({ ...created, room: joinedRoom, mediaToken: 'join-token' });
 
     const snap = await vi.waitFor(() => {
       harness.detectChanges();
@@ -155,7 +155,7 @@ describe('RoomLauncher', () => {
         chat: { comments: [], topic: null, muted: false, mutedUsers: [], reactions: [] },
       },
     });
-    expect(connect).toHaveBeenCalledWith(expect.objectContaining({ liveKitToken: 'join-token' }));
+    expect(connect).toHaveBeenCalledWith(expect.objectContaining({ mediaToken: 'join-token' }));
     expect(roomStore.resumeRoomId()).toBe(joinedRoom.id);
     expect(router.url).toBe('/room/room-abc-123');
     expect(toastSpy.show).toHaveBeenCalledWith('Room open.');
@@ -211,8 +211,8 @@ describe('RoomLauncher', () => {
         participantCount: 1,
         handRaiseCount: 0,
       },
-      liveKitUrl: 'wss://example.invalid',
-      liveKitToken: 'tok',
+      mediaUrl: 'wss://example.invalid',
+      mediaToken: 'tok',
       role: 'HOST',
       canPublishAudio: true,
     });

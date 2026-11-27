@@ -82,8 +82,8 @@ export interface VoiceRoomDto {
 
 export interface RoomSessionDto {
   readonly room: VoiceRoomDto;
-  readonly liveKitUrl: string;
-  readonly liveKitToken: string;
+  readonly mediaUrl: string;
+  readonly mediaToken: string;
   readonly role: BackendRoomRole;
   readonly canPublishAudio: boolean;
   readonly isChatMuted?: boolean;

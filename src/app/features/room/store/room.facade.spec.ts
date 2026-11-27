@@ -25,8 +25,8 @@ describe('RoomFacade', () => {
   };
   const session = {
     room,
-    liveKitUrl: 'wss://example.invalid',
-    liveKitToken: 'tok',
+    mediaUrl: 'wss://example.invalid',
+    mediaToken: 'tok',
     role: 'HOST' as const,
     canPublishAudio: true,
     snapshot: {

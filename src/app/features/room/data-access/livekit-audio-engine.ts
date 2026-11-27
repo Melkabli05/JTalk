@@ -154,8 +154,8 @@ export class LiveKitAudioEngine {
 
     try {
       const handle = await this.connector(
-        session.liveKitUrl,
-        session.liveKitToken,
+        session.mediaUrl,
+        session.mediaToken,
         {
           initialNoiseIsolation: this.noiseIsolationEnabled(),
           preferredInputDeviceId: this.selectedAudioInputId(),
