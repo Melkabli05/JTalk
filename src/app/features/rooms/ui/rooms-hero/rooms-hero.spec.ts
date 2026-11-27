@@ -45,15 +45,12 @@ describe('RoomsHero', () => {
     expect(fixture.nativeElement.textContent).toContain('5 rooms live now');
     expect(fixture.nativeElement.querySelector('#heroStartRoomBtn')).toBeNull();
 
-    const allImages = fixture.nativeElement.querySelectorAll('img.hero-bg');
-    expect(allImages.length).toBe(1);
-    const activeImages = fixture.nativeElement.querySelectorAll('img.hero-bg.is-active');
-    expect(activeImages.length).toBe(1);
+    const canvas = fixture.nativeElement.querySelector('canvas.hero-canvas');
+    expect(canvas).toBeTruthy();
 
     fixture.componentRef.setInput('activeScene', scenes[1]);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('img.hero-bg').length).toBe(2);
-    expect(fixture.nativeElement.querySelectorAll('img.hero-bg.is-active').length).toBe(1);
+    expect(fixture.nativeElement.querySelectorAll('canvas.hero-canvas').length).toBe(1);
 
     const btn: HTMLButtonElement | null = fixture.nativeElement.querySelector('.hero-scene-btn');
     btn?.click();

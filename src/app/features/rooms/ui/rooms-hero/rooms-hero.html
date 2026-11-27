@@ -1,18 +1,5 @@
 @let current = activeScene();
-@for (item of renderedScenes(); track item.id) {
-  @let isActive = item.id === current.id;
-  <img
-    class="hero-bg"
-    [class.is-active]="isActive"
-    [src]="item.src"
-    [alt]="isActive ? item.alt : ''"
-    [attr.aria-hidden]="isActive ? null : 'true'"
-    [attr.loading]="isActive ? 'eager' : 'lazy'"
-    decoding="async"
-    [attr.fetchpriority]="isActive ? 'high' : 'low'"
-    referrerpolicy="no-referrer"
-  />
-}
+<canvas #heroCanvas class="hero-canvas" aria-hidden="true"></canvas>
 <div class="hero-inner">
   <span class="live-pill" [class.is-empty]="isEmpty()">
     <span class="live-dot" aria-hidden="true"></span>{{ statusPillText() }}
@@ -36,9 +23,9 @@
   matIconButton
   class="hero-scene-btn"
   type="button"
-  aria-label="Next hero background"
+  aria-label="Next hero scene"
   matTooltip="Next scene"
   (click)="nextScene.emit()"
 >
-  <mat-icon>wallpaper</mat-icon>
+  <mat-icon>auto_awesome</mat-icon>
 </button>
