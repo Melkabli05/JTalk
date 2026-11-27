@@ -49,6 +49,10 @@ export class VoiceRoomApi {
     return this.mutate('POST', roomId, 'participants/join');
   }
 
+  keepalive(roomId: string): Observable<void> {
+    return this.mutate('POST', roomId, 'keepalive');
+  }
+
   leave(roomId: string): Observable<void> {
     return this.mutate('POST', roomId, 'participants/leave');
   }

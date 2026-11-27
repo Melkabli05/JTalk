@@ -69,7 +69,33 @@ export class RoomPage {
   private lastFocusTick = this.facade.focusStageTick();
   readonly isCurrentRoom = computed(() => this.facade.roomId() === this.id());
 
+  private idleDialogOpen = false;
+
   constructor() {
+    effect(() => {
+      if (!this.facade.idleWarning() || this.idleDialogOpen) return;
+      const roomId = this.id();
+      this.idleDialogOpen = true;
+      const ref = this.dialog.open<ConfirmActionDialog, ConfirmActionDialogData, boolean>(
+        ConfirmActionDialog,
+        {
+          width: '400px',
+          maxWidth: 'calc(100vw - 24px)',
+          data: {
+            title: 'Still there?',
+            message: 'You have been alone in this room. Tap Stay Live within 60 seconds to keep it open.',
+            confirmLabel: 'Stay Live',
+          },
+        },
+      );
+      ref.afterClosed().subscribe((confirmed) => {
+        this.idleDialogOpen = false;
+        if (confirmed && !this.destroyRef.destroyed && this.id() === roomId) {
+          this.facade.stayLive(roomId);
+        }
+      });
+    });
+
     effect(() => {
       const roomId = this.id();
       untracked(() => this.facade.enterRoom(roomId));

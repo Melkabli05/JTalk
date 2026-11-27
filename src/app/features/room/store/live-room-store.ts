@@ -45,6 +45,7 @@ export class LiveRoomStore {
   private readonly pendingTransitions: (() => void)[] = [];
   private readonly snapshotLoading = signal(false);
   private checkedPresenceForUserId: string | null = null;
+  private afkTimer: ReturnType<typeof setTimeout> | null = null;
 
   private readonly rememberedRoom = linkedSignal<boolean, string | null>({
     source: () => this.identity.isAuthenticated(),
@@ -75,7 +76,26 @@ export class LiveRoomStore {
   readonly messagesLoading = computed(() => this.snapshotLoading() || this.chat.loading());
 
   constructor() {
-    this.destroyRef.onDestroy(() => this.teardownAudioEvents());
+    this.destroyRef.onDestroy(() => {
+      this.teardownAudioEvents();
+      this.clearAfkTimer();
+    });
+
+    if (isPlatformBrowser(this.platformId) && typeof document !== 'undefined') {
+      const onVisibilityChange = (): void => this.evaluateBackgroundAfkGuard();
+      document.addEventListener('visibilitychange', onVisibilityChange);
+      this.destroyRef.onDestroy(() =>
+        document.removeEventListener('visibilitychange', onVisibilityChange),
+      );
+
+      effect(() => {
+        // Re-evaluate AFK timer whenever mic state or stage membership changes while hidden.
+        this.audio.micOn();
+        this.stage.isCurrentUserOnStage();
+        this.stage.roomId();
+        this.evaluateBackgroundAfkGuard();
+      });
+    }
 
     effect((onCleanup) => {
       const signedIn = this.identity.isAuthenticated();
@@ -471,7 +491,51 @@ export class LiveRoomStore {
     this.networkModeQueue = [];
   }
 
+  stayLive(roomId: string): void {
+    this.stage.dismissIdleWarning();
+    this.voiceRoomApi.keepalive(roomId).subscribe({
+      error: () => {
+        // Best-effort keepalive; room closure or network errors are handled by normal room events.
+      },
+    });
+  }
+
+  private evaluateBackgroundAfkGuard(): void {
+    const roomId = this.stage.roomId();
+    const shouldWatch =
+      typeof document !== 'undefined' &&
+      document.hidden &&
+      roomId !== null &&
+      this.stage.isCurrentUserOnStage() &&
+      !this.audio.micOn();
+
+    if (!shouldWatch) {
+      this.clearAfkTimer();
+      return;
+    }
+    if (this.afkTimer !== null) return;
+
+    this.afkTimer = setTimeout(() => {
+      this.afkTimer = null;
+      const activeRoomId = this.stage.roomId();
+      if (!activeRoomId || !this.stage.isCurrentUserOnStage() || this.audio.micOn()) return;
+      if (this.stage.isHost()) {
+        this.stage.applyRoomRealtimeEvent({ type: 'ROOM_IDLE_WARNING', roomId: activeRoomId });
+      } else {
+        this.leaveStage(activeRoomId);
+      }
+    }, 300_000);
+  }
+
+  private clearAfkTimer(): void {
+    if (this.afkTimer !== null) {
+      clearTimeout(this.afkTimer);
+      this.afkTimer = null;
+    }
+  }
+
   private resetAll(): void {
+    this.clearAfkTimer();
     this.endingRoom = false;
     this.snapshotLoading.set(false);
     this.connectionStateSignal.set({ status: 'idle' });

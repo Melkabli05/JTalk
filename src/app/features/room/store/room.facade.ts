@@ -117,6 +117,8 @@ export class RoomFacade {
   readonly stageReaction: Signal<StageReaction | null> = this.stageStore.stageReaction;
   readonly stageReactionKey: Signal<number> = this.stageStore.stageReactionKey;
   readonly speakerReactions: Signal<ReadonlyMap<string, string>> = this.stageStore.speakerReactions;
+  readonly idleWarning: Signal<boolean> = this.stageStore.idleWarning;
+  readonly hostReconnecting: Signal<boolean> = this.stageStore.hostReconnecting;
   readonly canClaimStageSeat: Signal<boolean> = this.stageStore.canClaimStageSeat;
   readonly claimingSeat: Signal<boolean> = this.stageStore.claimingSeat;
   readonly togglingHand: Signal<boolean> = this.stageStore.togglingHand;
@@ -242,6 +244,10 @@ export class RoomFacade {
         this.toast.show(ok ? 'Room audio enabled.' : 'Could not start audio playback.');
       }
     });
+  }
+
+  stayLive(roomId: string): void {
+    this.roomStore.stayLive(roomId);
   }
 
   updateRoom(roomId: string, payload: UpdateVoiceRoomPayload): void {

@@ -51,6 +51,8 @@ export class RoomStageStore {
   private readonly hasMoreAudienceState = signal(false);
   private readonly audienceLoadingState = signal(false);
   private readonly stageReactionsState = signal<readonly StageReaction[]>([]);
+  private readonly hostReconnectingState = signal(false);
+  private readonly idleWarningState = signal(false);
   private readonly reactionTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private nextReactionId = 0;
   private nextReactionLane = 0;
@@ -70,6 +72,8 @@ export class RoomStageStore {
   readonly hasMoreAudience = this.hasMoreAudienceState.asReadonly();
   readonly audienceLoading = this.audienceLoadingState.asReadonly();
   readonly stageReactions = this.stageReactionsState.asReadonly();
+  readonly hostReconnecting = this.hostReconnectingState.asReadonly();
+  readonly idleWarning = this.idleWarningState.asReadonly();
   readonly stageReaction = computed(() => this.stageReactionsState().at(-1) ?? null);
   readonly stageReactionKey = computed(() => this.stageReactionsState().at(-1)?.id ?? 0);
   readonly speakerReactions = computed<ReadonlyMap<string, string>>(() => {
@@ -530,6 +534,30 @@ export class RoomStageStore {
       case 'COMMENT_PINNED':
       case 'COMMENT_UNPINNED':
         return;
+      case 'HOST_RECONNECTING':
+        this.hostReconnectingState.set(true);
+        return;
+      case 'HOST_RECONNECTED':
+        this.hostReconnectingState.set(false);
+        return;
+      case 'HOST_TRANSFERRED': {
+        this.hostReconnectingState.set(false);
+        const newHostId = event.targetUserId;
+        if (newHostId) {
+          this.roomState.update((curr) => (curr ? { ...curr, hostId: newHostId } : curr));
+          if (newHostId === this.currentUserId()) {
+            this.roleState.set('HOST');
+          } else if (this.roleState() === 'HOST') {
+            this.roleState.set('SPEAKER');
+          }
+        }
+        return;
+      }
+      case 'ROOM_IDLE_WARNING':
+        if (this.isHost()) {
+          this.idleWarningState.set(true);
+        }
+        return;
     }
   }
 
@@ -542,6 +570,8 @@ export class RoomStageStore {
     this.reconnectingSpeakerIdsState.set(new Set());
     this.clearReactionTimers();
     this.stageReactionsState.set([]);
+    this.hostReconnectingState.set(false);
+    this.idleWarningState.set(false);
     this.roleState.set('LISTENER');
     this.roomState.set(null);
     this.audienceIdsState.set([]);
@@ -590,6 +620,10 @@ export class RoomStageStore {
       initial: (name.trim()[0] ?? fallback.charAt(0)).toUpperCase(),
       chipClass: avatarChipClassFor(userId),
     };
+  }
+
+  dismissIdleWarning(): void {
+    this.idleWarningState.set(false);
   }
 
   private flashStageReaction(userId: string, emoji: string, reactorName: string): void {

@@ -191,7 +191,11 @@ export interface RoomRealtimeEvent {
     | 'REACTIONS'
     | 'PARTICIPANT_PROFILE_UPDATED'
     | 'COMMENT_PINNED'
-    | 'COMMENT_UNPINNED';
+    | 'COMMENT_UNPINNED'
+    | 'HOST_RECONNECTING'
+    | 'HOST_RECONNECTED'
+    | 'HOST_TRANSFERRED'
+    | 'ROOM_IDLE_WARNING';
   readonly roomId?: string;
   readonly targetUserId?: string | null;
   readonly timestamp?: string;
