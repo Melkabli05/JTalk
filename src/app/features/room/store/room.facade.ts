@@ -9,7 +9,7 @@ import {
   untracked,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { firstValueFrom, forkJoin } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import type { UserProfileResponse } from '../../../core/auth/auth.models';
 import { IdentityStore } from '../../../core/auth/identity';
 import { UsersApi } from '../../../core/auth/users-api';
@@ -83,7 +83,10 @@ export class RoomFacade {
     );
   });
   readonly handCount: Signal<number> = computed(
-    (): number => this.stageStore.room()?.handRaiseCount ?? 0,
+    (): number =>
+      this.stageStore.stage().speakers.length > 0
+        ? this.stageStore.stage().handRaiseQueue.length
+        : (this.stageStore.room()?.handRaiseCount ?? 0),
   );
   readonly isHost: Signal<boolean> = this.stageStore.isHost;
   readonly pendingRequests = this.stageStore.pendingRequests;
@@ -272,10 +275,16 @@ export class RoomFacade {
     onReady: (data: HostProfileDialogData) => void,
   ): void {
     const seq = ++this.profilePreviewSeq;
-    forkJoin([this.usersApi.getUser(id), this.usersApi.getSocialStats(id)]).subscribe({
-      next: ([profile, stats]) => {
+    this.usersApi.getUser(id, 'socialStats').subscribe({
+      next: (profile) => {
         if (this.destroyRef.destroyed || seq !== this.profilePreviewSeq) return;
         const isYou = id === this.stageStore.currentUserId();
+        const stats = profile.socialStats ?? {
+          followerCount: 0,
+          followingCount: 0,
+          followedByMe: false,
+          followsMe: false,
+        };
         onReady({
           profile,
           stats,

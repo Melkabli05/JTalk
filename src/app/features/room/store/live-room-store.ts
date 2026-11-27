@@ -2,6 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   computed,
   DestroyRef,
+  effect,
   inject,
   linkedSignal,
   PLATFORM_ID,
@@ -11,8 +12,6 @@ import {
 import { finalize } from 'rxjs';
 import { IdentityStore } from '../../../core/auth/identity';
 import { ApiError, errorMessage } from '../../../core/http/http-error.interceptor';
-import { BrowserStorage } from '../../../core/services/browser-storage';
-import { ACTIVE_ROOM_STORAGE_KEY } from '../../../shared/constants/storage-keys.constants';
 import type {
   RoomJoinSnapshot,
   UpdateVoiceRoomPayload,
@@ -29,7 +28,6 @@ import { RoomStageStore } from './room-stage-store';
 export class LiveRoomStore {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly storage = inject(BrowserStorage);
   private readonly roomsApi = inject(RoomsApi);
   private readonly voiceRoomApi = inject(VoiceRoomApi);
   private readonly identity = inject(IdentityStore);
@@ -46,11 +44,11 @@ export class LiveRoomStore {
   private transitioning = false;
   private readonly pendingTransitions: (() => void)[] = [];
   private readonly snapshotLoading = signal(false);
+  private checkedPresenceForUserId: string | null = null;
 
   private readonly rememberedRoom = linkedSignal<boolean, string | null>({
     source: () => this.identity.isAuthenticated(),
-    computation: (signedIn, previous) =>
-      signedIn ? (previous?.value ?? this.readStoredActiveRoomId()) : null,
+    computation: (signedIn, previous) => (signedIn ? (previous?.value ?? null) : null),
   });
   readonly resumeRoomId = this.rememberedRoom.asReadonly();
 
@@ -78,15 +76,35 @@ export class LiveRoomStore {
 
   constructor() {
     this.destroyRef.onDestroy(() => this.teardownAudioEvents());
+
+    effect((onCleanup) => {
+      const signedIn = this.identity.isAuthenticated();
+      const userId = this.identity.me()?.id ?? null;
+      if (!signedIn || !userId) {
+        this.checkedPresenceForUserId = null;
+        return;
+      }
+      if (!isPlatformBrowser(this.platformId) || this.checkedPresenceForUserId === userId) {
+        return;
+      }
+      this.checkedPresenceForUserId = userId;
+      if (this.stage.roomId()) return;
+      const sub = this.roomsApi.getUserPresence(userId).subscribe({
+        next: (presence) => {
+          if (!this.stage.roomId()) {
+            this.rememberRoom(presence.live ? presence.roomId : null);
+          }
+        },
+        error: () => {
+          // Best-effort startup recovery; ignore transient network errors.
+        },
+      });
+      onCleanup(() => sub.unsubscribe());
+    });
   }
 
   rememberRoom(roomId: string | null): void {
     this.rememberedRoom.set(roomId);
-    if (roomId) {
-      this.storage.setString('session', ACTIVE_ROOM_STORAGE_KEY, roomId);
-    } else {
-      this.storage.remove('session', ACTIVE_ROOM_STORAGE_KEY);
-    }
   }
 
   triggerStageFocus(): void {
@@ -459,9 +477,5 @@ export class LiveRoomStore {
     this.connectionStateSignal.set({ status: 'idle' });
     this.stage.reset();
     this.chat.reset();
-  }
-
-  private readStoredActiveRoomId(): string | null {
-    return this.storage.getString('session', ACTIVE_ROOM_STORAGE_KEY);
   }
 }

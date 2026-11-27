@@ -25,6 +25,7 @@ import type {
   SocialStatsResponse,
   UserProfileResponse,
 } from '../../../../core/auth/auth.models';
+import { UsersApi } from '../../../../core/auth/users-api';
 import { COUNTRY_CATALOG, LANGUAGE_CATALOG } from '../../../../core/utils/language-codes';
 import { trimmedRequired } from '../../../../shared/utils/form-validators';
 import {
@@ -125,6 +126,7 @@ function modelsEqual(a: ProfileFormModel, b: ProfileFormModel): boolean {
   styleUrl: './profile-edit-form.scss',
 })
 export class ProfileEditForm {
+  private readonly usersApi = inject(UsersApi);
   private readonly aboutTextareaRef = viewChild<ElementRef<HTMLTextAreaElement>>('aboutTextarea');
   private readonly fileInputRef = viewChild<ElementRef<HTMLInputElement>>('avatarFileInput');
 
@@ -158,6 +160,8 @@ export class ProfileEditForm {
   readonly pendingAvatarBlob = this.selectedBlob.asReadonly();
   readonly pendingPreviewUrl = signal<string | null>(null);
   private readonly avatarFailedUrl = signal<string | null>(null);
+  readonly usernameChecking = signal(false);
+  readonly usernameAvailability = signal<'available' | 'taken' | null>(null);
 
   // Onboarding-only local learning languages submitted in POST /api/v1/users/me.
   readonly onboardingLearning = signal<readonly LearningLanguageEntry[]>([]);
@@ -198,12 +202,15 @@ export class ProfileEditForm {
       if (!normalized) {
         return this.onboarding() ? undefined : { kind: 'required', message: 'Enter a username.' };
       }
-      return PROFILE_USERNAME_PATTERN.test(normalized)
-        ? undefined
-        : {
-            kind: 'pattern',
-            message: 'Use 3–30 lowercase letters, numbers, dots, or underscores.',
-          };
+      if (!PROFILE_USERNAME_PATTERN.test(normalized)) {
+        return {
+          kind: 'pattern',
+          message: 'Use 3–30 lowercase letters, numbers, dots, or underscores.',
+        };
+      }
+      return this.usernameAvailability() === 'taken'
+        ? { kind: 'taken', message: 'This username is already taken.' }
+        : undefined;
     });
     maxLength(schemaPath.bio, PROFILE_BIO_MAX, {
       message: `Use ${PROFILE_BIO_MAX} characters or fewer.`,
@@ -212,7 +219,7 @@ export class ProfileEditForm {
 
   readonly usernameErrorMatcher: ErrorStateMatcher = {
     isErrorState: (control) => {
-      if (this.serverErrors().username) return true;
+      if (this.serverErrors().username || this.usernameAvailability() === 'taken') return true;
       return Boolean(control?.invalid && (control.touched || control.dirty));
     },
   };
@@ -277,6 +284,42 @@ export class ProfileEditForm {
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.revokePreviewUrl());
+
+    effect((onCleanup) => {
+      const normalized = normalizeUsername(this.model().username);
+      const current = normalizeUsername(this.profile()?.username ?? '');
+      if (
+        !normalized ||
+        !PROFILE_USERNAME_PATTERN.test(normalized) ||
+        normalized === current ||
+        this.serverErrors().username
+      ) {
+        this.usernameChecking.set(false);
+        this.usernameAvailability.set(null);
+        return;
+      }
+
+      this.usernameChecking.set(true);
+      this.usernameAvailability.set(null);
+      let sub: { unsubscribe(): void } | null = null;
+      const timer = setTimeout(() => {
+        sub = this.usersApi.isUsernameAvailable(normalized).subscribe({
+          next: (res) => {
+            this.usernameChecking.set(false);
+            this.usernameAvailability.set(res.available ? 'available' : 'taken');
+          },
+          error: () => {
+            this.usernameChecking.set(false);
+            this.usernameAvailability.set(null);
+          },
+        });
+      }, 350);
+
+      onCleanup(() => {
+        clearTimeout(timer);
+        sub?.unsubscribe();
+      });
+    });
 
     effect(() => {
       if (this.focusSection() === 'bio') {
@@ -412,6 +455,8 @@ export class ProfileEditForm {
 
   onDiscard(): void {
     this.clearPendingAvatar();
+    this.usernameChecking.set(false);
+    this.usernameAvailability.set(null);
     this.model.set({ ...this.savedModel() });
     this.countryQuery.set(
       this.savedModel().countryCode ? displayCountryName(this.savedModel().countryCode) : '',

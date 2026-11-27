@@ -292,6 +292,22 @@ export class IdentityStore {
     this.loadMe();
   }
 
+  patchMe(patch: UpdateProfileRequest): Observable<UserProfileResponse> {
+    const current = this.me();
+    return this.usersApi.updateMe(patch).pipe(
+      map((updated) => {
+        const merged: UserProfileResponse =
+          updated.socialStats !== undefined
+            ? updated
+            : current?.socialStats
+              ? { ...updated, socialStats: current.socialStats }
+              : updated;
+        this.meState.set(merged);
+        return merged;
+      }),
+    );
+  }
+
   saveProfile(
     input: ProfileSaveInput,
     avatarBlob?: Blob | null,

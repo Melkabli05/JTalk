@@ -20,6 +20,12 @@ interface RoomListPage {
   readonly content: readonly VoiceRoomDto[];
 }
 
+export interface UserLivePresenceDto {
+  readonly userId: string;
+  readonly live: boolean;
+  readonly roomId: string | null;
+}
+
 function isObjectRecord(value: unknown): value is object {
   return typeof value === 'object' && value !== null;
 }
@@ -111,6 +117,12 @@ export class RoomsApi {
 
   closeRoom(roomId: string): Observable<void> {
     return this.http.delete<void>(this.roomUrl(roomId));
+  }
+
+  getUserPresence(userId: string): Observable<UserLivePresenceDto> {
+    return this.http.get<UserLivePresenceDto>(
+      `${this.base}/presence/${encodeURIComponent(userId)}`,
+    );
   }
 
   private roomUrl(roomId: string): string {

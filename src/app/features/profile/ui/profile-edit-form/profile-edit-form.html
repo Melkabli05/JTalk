@@ -108,11 +108,17 @@
               <mat-error>{{ error.message }}</mat-error>
             }
             <mat-hint>
-              {{
-                isOnboarding
-                  ? 'Optional. Leave blank to generate one, or pick 3–30 letters, numbers, dots, or underscores.'
-                  : 'Lowercase letters, numbers, dots, or underscores. Can be changed once every 30 days.'
-              }}
+              @if (usernameChecking()) {
+                Checking availability…
+              } @else if (usernameAvailability() === 'available') {
+                Username is available.
+              } @else {
+                {{
+                  isOnboarding
+                    ? 'Optional. Leave blank to generate one, or pick 3–30 letters, numbers, dots, or underscores.'
+                    : 'Lowercase letters, numbers, dots, or underscores. Can be changed once every 30 days.'
+                }}
+              }
             </mat-hint>
           </mat-form-field>
         </div>

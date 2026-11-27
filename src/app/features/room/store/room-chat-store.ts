@@ -33,6 +33,10 @@ export class RoomChatStore {
   private readonly pendingReactionCommentIds = new Set<string>();
   private readonly pendingDeleteCommentIds = new Set<string>();
   private readonly pendingMuteUserIds = new Set<string>();
+  private readonly reactionListCache = new Map<
+    string,
+    { readonly tally: CommentReactionTallyDto; readonly list: readonly MessageReaction[] }
+  >();
 
   private readonly loadingState = signal(false);
   private readonly rawCommentsState = signal<readonly RoomCommentDto[]>([]);
@@ -70,22 +74,7 @@ export class RoomChatStore {
     return this.rawComments().map((comment) => {
       const name = this.stageStore.resolveDisplayName(comment.authorId, 'Speaker');
       const tally = reactionsMap.get(comment.id);
-      let reactions: readonly MessageReaction[] = EMPTY_REACTIONS;
-      if (tally) {
-        const list: MessageReaction[] = [];
-        for (const [code, count] of Object.entries(tally.counts)) {
-          if (isBackendReaction(code) && typeof count === 'number' && count > 0) {
-            list.push({
-              code,
-              emoji: emojiForReaction(code),
-              count,
-              active: tally.mine === code,
-              label: labelForReaction(code),
-            });
-          }
-        }
-        if (list.length > 0) reactions = list;
-      }
+      const reactions = this.resolveReactions(comment.id, tally);
 
       return {
         id: comment.id,
@@ -458,5 +447,29 @@ export class RoomChatStore {
     if (comments.some((existing) => existing.id === comment.id)) return;
     this.chatRevision++;
     this.rawCommentsState.set([...comments, comment]);
+  }
+
+  private resolveReactions(
+    commentId: string,
+    tally: CommentReactionTallyDto | undefined,
+  ): readonly MessageReaction[] {
+    if (!tally || tally.total === 0) {
+      this.reactionListCache.delete(commentId);
+      return EMPTY_REACTIONS;
+    }
+    const cached = this.reactionListCache.get(commentId);
+    if (cached && cached.tally === tally) {
+      return cached.list;
+    }
+    const list: MessageReaction[] = Object.entries(tally.counts)
+      .filter(([, count]) => count > 0)
+      .map(([emoji, count]) => ({
+        emoji,
+        count,
+        reactedByMe: tally.viewerReactions.includes(emoji),
+      }));
+    const result = list.length > 0 ? list : EMPTY_REACTIONS;
+    this.reactionListCache.set(commentId, { tally, list: result });
+    return result;
   }
 }

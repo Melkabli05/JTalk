@@ -424,13 +424,7 @@ export class RoomStageStore {
           );
         }
         this.roomState.update((room): VoiceRoomDto | null =>
-          room
-            ? {
-                ...room,
-                speakers: nextStage.speakers,
-                handRaiseCount: nextStage.handRaiseQueue.length,
-              }
-            : null,
+          room ? { ...room, speakers: nextStage.speakers } : null,
         );
         this.resolveMissingUsers([...nextStage.speakers, ...nextStage.handRaiseQueue, ...demoted]);
         return;

@@ -1,6 +1,6 @@
 import { DestroyRef, inject, type ResourceStatus, Service, type Signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { firstValueFrom, forkJoin } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import type {
   DiscoveredUserResponse,
   UserProfileResponse,
@@ -106,10 +106,16 @@ export class PeopleFacade {
 
   loadProfilePreview(id: string, onReady: (data: HostProfileDialogData) => void): void {
     const seq = ++this.profilePreviewSeq;
-    forkJoin([this.usersApi.getUser(id), this.usersApi.getSocialStats(id)]).subscribe({
-      next: ([profile, stats]) => {
+    this.usersApi.getUser(id, 'socialStats').subscribe({
+      next: (profile) => {
         if (this.destroyRef.destroyed || seq !== this.profilePreviewSeq) return;
         const isYou = id === this.identity.userId();
+        const stats = profile.socialStats ?? {
+          followerCount: 0,
+          followingCount: 0,
+          followedByMe: false,
+          followsMe: false,
+        };
         onReady({
           profile,
           stats,

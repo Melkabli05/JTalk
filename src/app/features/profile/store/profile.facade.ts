@@ -6,7 +6,6 @@ import {
   type Signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { switchMap } from 'rxjs';
 import type {
   LanguageType,
   ProficiencyLevel,
@@ -118,25 +117,13 @@ export class ProfileFacade {
     if (this.store.languageBusy()) return;
     this.store.setLanguageBusy(true);
 
-    const me = this.me();
-    const isCurrentlyNative = me?.nativeLanguages.includes(code) ?? false;
-    const isCurrentlyLearning =
-      me?.learningLanguages.some((entry) => entry.languageCode === code) ?? false;
-    const switchingRole =
-      (type === 'NATIVE' && isCurrentlyLearning) || (type === 'LEARNING' && isCurrentlyNative);
-
-    const addRequest = () =>
-      this.usersApi.addMyLanguage({
-        languageCode: code,
-        languageType: type ?? 'LEARNING',
-        ...(type === 'LEARNING' && proficiencyLevel ? { proficiencyLevel } : {}),
-      });
-
     const req$ = !type
       ? this.usersApi.removeMyLanguage(code)
-      : switchingRole
-        ? this.usersApi.removeMyLanguage(code).pipe(switchMap(() => addRequest()))
-        : addRequest();
+      : this.usersApi.addMyLanguage({
+          languageCode: code,
+          languageType: type,
+          ...(type === 'LEARNING' && proficiencyLevel ? { proficiencyLevel } : {}),
+        });
 
     req$.subscribe({
       next: (matrix) => {
@@ -159,16 +146,9 @@ export class ProfileFacade {
     const current = this.me();
     if (!current || this.store.languageBusy() || current.nativeLanguage === code) return;
     this.store.setLanguageBusy(true);
-    this.usersApi.updateMe({ nativeLanguage: code }).subscribe({
-      next: (updated) => {
+    this.identity.patchMe({ nativeLanguage: code }).subscribe({
+      next: () => {
         this.store.setLanguageBusy(false);
-        const merged: UserProfileResponse =
-          updated.socialStats !== undefined
-            ? updated
-            : current.socialStats
-              ? { ...updated, socialStats: current.socialStats }
-              : updated;
-        this.identity.setProfile(merged);
         if (!this.destroyRef.destroyed) {
           this.toast?.show('Primary language updated.');
         }

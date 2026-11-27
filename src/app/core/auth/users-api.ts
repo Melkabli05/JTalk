@@ -26,8 +26,18 @@ export class UsersApi {
     );
   }
 
-  getUser(userId: string): Observable<UserProfileResponse> {
-    return this.http.get<UserProfileResponse>(`${this.base}/${encodeURIComponent(userId)}`);
+  getUser(userId: string, expand?: 'socialStats'): Observable<UserProfileResponse> {
+    return this.http.get<UserProfileResponse>(
+      `${this.base}/${encodeURIComponent(userId)}`,
+      expand ? { params: { expand } } : undefined,
+    );
+  }
+
+  isUsernameAvailable(username: string): Observable<{ username: string; available: boolean }> {
+    return this.http.get<{ username: string; available: boolean }>(
+      `${this.base}/username-available`,
+      { params: { username } },
+    );
   }
 
   getSocialStats(userId: string): Observable<SocialStatsResponse> {
