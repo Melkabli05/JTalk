@@ -397,16 +397,42 @@ export class RoomStageStore {
         const at = event.timestamp ? Date.parse(event.timestamp) : NaN;
         if (Number.isFinite(at) && at < this.lastStageEventAt) return;
         if (Number.isFinite(at)) this.lastStageEventAt = at;
+
+        const prevSpeakers = this.stage().speakers;
+        const prevSpeakerSet = new Set(prevSpeakers);
+        const nextSpeakerSet = new Set(nextStage.speakers);
+        const demoted = prevSpeakers.filter((id) => !nextSpeakerSet.has(id));
+        const promotedCount = nextStage.speakers.filter((id) => !prevSpeakerSet.has(id)).length;
+
         this.stageState.set(nextStage);
         if (!this.isHost()) {
-          this.roleState.set(
-            nextStage.speakers.includes(this.currentUserId()) ? 'SPEAKER' : 'LISTENER',
+          const onStage = nextSpeakerSet.has(this.currentUserId());
+          this.roleState.set(onStage ? 'SPEAKER' : 'LISTENER');
+          if (!onStage) {
+            void this.audio.setMicrophone(false);
+          }
+        }
+        if (demoted.length > 0 || promotedCount > 0) {
+          this.audienceIdsState.update((ids) => {
+            const kept = ids.filter((id) => !nextSpeakerSet.has(id));
+            const seen = new Set(kept);
+            const added = demoted.filter((id) => !seen.has(id));
+            return [...kept, ...added].slice(0, this.audienceLimit());
+          });
+          this.audienceCountState.update((count) =>
+            Math.max(0, count - promotedCount + demoted.length),
           );
         }
         this.roomState.update((room): VoiceRoomDto | null =>
-          room ? { ...room, handRaiseCount: nextStage.handRaiseQueue.length } : null,
+          room
+            ? {
+                ...room,
+                speakers: nextStage.speakers,
+                handRaiseCount: nextStage.handRaiseQueue.length,
+              }
+            : null,
         );
-        this.resolveMissingUsers([...nextStage.speakers, ...nextStage.handRaiseQueue]);
+        this.resolveMissingUsers([...nextStage.speakers, ...nextStage.handRaiseQueue, ...demoted]);
         return;
       }
       case 'PRESENCE_CHANGED': {
