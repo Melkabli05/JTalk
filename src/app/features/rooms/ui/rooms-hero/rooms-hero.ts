@@ -30,7 +30,6 @@ import { type HeroThreeStage, mountHeroThreeStage } from '../../utils/hero-three
     '[attr.data-season]': "activeScene().season ?? 'default'",
     '[class.is-empty]': 'isEmpty()',
     '(pointermove)': 'onPointerMove($event)',
-    '(pointerdown)': 'onPointerDown()',
     '(pointerleave)': 'onPointerLeave()',
   },
   templateUrl: './rooms-hero.html',
@@ -76,10 +75,6 @@ export class RoomsHero {
         this.scenes().findIndex((scene) => scene.id === current.id),
       );
       this.stage?.setScene(current.period, index);
-    });
-
-    effect(() => {
-      this.stage?.setLiveEnergy(this.liveCount());
     });
 
     afterNextRender(() => {
@@ -129,7 +124,6 @@ export class RoomsHero {
           return;
         }
         this.stage = mounted;
-        mounted.setLiveEnergy(this.liveCount());
         mounted.resize(host.clientWidth, host.clientHeight);
         syncVisibility();
       });
@@ -146,16 +140,12 @@ export class RoomsHero {
   }
 
   onPointerMove(event: PointerEvent): void {
-    if (!this.stage) return;
+    if (!this.stage || event.pointerType === 'touch') return;
     const rect = this.hostRef.nativeElement.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) return;
     const nx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     const ny = -(((event.clientY - rect.top) / rect.height) * 2 - 1);
     this.stage.setPointer(nx, ny);
-  }
-
-  onPointerDown(): void {
-    this.stage?.triggerPulse(0.95);
   }
 
   onPointerLeave(): void {
