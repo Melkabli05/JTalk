@@ -73,6 +73,7 @@ export interface DiscussionMessage {
   id: string;
   authorId?: string;
   author: string;
+  avatarUrl?: string | null;
   avatarText: string;
   avatarClass: string;
   isHost?: boolean;

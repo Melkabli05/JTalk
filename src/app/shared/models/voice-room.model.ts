@@ -77,6 +77,7 @@ export interface VoiceRoomDto {
   readonly createdAt?: string;
   readonly host?: RoomSpeakerSummary | null;
   readonly speakerProfiles?: readonly RoomSpeakerSummary[] | null;
+  readonly participantProfiles?: readonly RoomSpeakerSummary[] | null;
 }
 
 export interface RoomSessionDto {

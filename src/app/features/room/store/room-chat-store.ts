@@ -87,6 +87,7 @@ export class RoomChatStore {
         id: comment.id,
         authorId: comment.authorId,
         author: name,
+        avatarUrl: this.stageStore.resolveAvatarUrl(comment.authorId),
         avatarText: (name.trim()[0] ?? 'S').toUpperCase(),
         avatarClass: avatarChipClassFor(comment.authorId),
         isHost: comment.authorId === hostId,

@@ -8,6 +8,7 @@
     [activeFilterLabel]="activeFilterLabel()"
     [scenes]="currentHero.scenes"
     [activeScene]="currentHero.active"
+    [inRoom]="isInRoom()"
     (nextScene)="cycleHeroScene()"
     (startRoom)="onStartRoom()"
   />

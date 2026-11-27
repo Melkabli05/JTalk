@@ -31,6 +31,12 @@
           ? 'speaker'
           : 'listener'
     "
+    [activeRoomHostName]="activeRoomHost()?.name ?? room?.host?.displayName ?? profileName"
+    [activeRoomHostAvatarUrl]="
+      activeRoomHost()?.avatarUrl ??
+      room?.host?.avatarUrl ??
+      (roomStore.stage.isHost() ? profileAvatarUrl : null)
+    "
     [colorScheme]="theme.colorScheme()"
     (toggleCollapse)="toggleSidebar()"
     (startRoom)="onOpenStartRoom()"
@@ -58,6 +64,7 @@
   <app-mobile-tabbar
     [profileName]="profileName"
     [avatarUrl]="profileAvatarUrl"
+    [inRoom]="inRoom"
     (startRoom)="onOpenStartRoom()"
   />
 }

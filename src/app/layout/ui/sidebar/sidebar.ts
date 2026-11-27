@@ -39,6 +39,8 @@ export class Sidebar {
   readonly activeRoomLang = input('English');
   readonly activeRoomSeats = input(8);
   readonly activeRoomRole = input<'host' | 'speaker' | 'listener'>('listener');
+  readonly activeRoomHostName = input<string | null>(null);
+  readonly activeRoomHostAvatarUrl = input<string | null>(null);
   readonly colorScheme = input<ColorScheme>('light');
 
   readonly toggleCollapse = output<void>();
@@ -70,5 +72,20 @@ export class Sidebar {
   readonly avatarInitial = computed(() => {
     const trimmed = this.profileName().trim();
     return trimmed ? trimmed.charAt(0).toUpperCase() : 'J';
+  });
+
+  readonly resolvedHostName = computed(
+    () => this.activeRoomHostName()?.trim() || this.profileName(),
+  );
+
+  readonly resolvedHostAvatarUrl = computed(
+    () =>
+      this.activeRoomHostAvatarUrl() ??
+      (this.activeRoomRole() === 'host' ? this.avatarUrl() : null),
+  );
+
+  readonly resolvedHostInitial = computed(() => {
+    const trimmed = this.resolvedHostName().trim();
+    return trimmed ? trimmed.charAt(0).toUpperCase() : 'H';
   });
 }

@@ -23,6 +23,7 @@ import {
   type RoomLangFilter,
 } from '../../constants/rooms.constants';
 import { RoomsFacade } from '../../store/rooms.facade';
+import { LiveRoomStore } from '../../../room/store/live-room-store';
 import { LanguageChips } from '../../ui/language-chips/language-chips';
 import { RoomCard } from '../../ui/room-card/room-card';
 import { RoomsHero } from '../../ui/rooms-hero/rooms-hero';
@@ -49,6 +50,8 @@ import {
 })
 export class RoomsPage {
   readonly facade = inject(RoomsFacade);
+  private readonly roomStore = inject(LiveRoomStore);
+  readonly isInRoom = computed(() => this.roomStore.roomId() !== null);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);

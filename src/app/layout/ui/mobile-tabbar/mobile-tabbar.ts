@@ -26,6 +26,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 export class MobileTabbar {
   readonly profileName = input('Jilali');
   readonly avatarUrl = input<string | null>(null);
+  readonly inRoom = input(false);
 
   readonly startRoom = output<void>();
 

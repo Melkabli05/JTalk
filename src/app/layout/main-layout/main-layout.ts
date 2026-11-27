@@ -56,6 +56,10 @@ export class MainLayout {
     return seg === 'room' || seg === 'people' || seg === 'profile' ? seg : 'rooms';
   });
 
+  readonly activeRoomHost = computed(
+    () => this.roomStore.stage.speakers().find((s) => s.role === 'host') ?? null,
+  );
+
   constructor() {
     afterNextRender(() => this.roomsStore.ensureLoaded());
     effect(() => {

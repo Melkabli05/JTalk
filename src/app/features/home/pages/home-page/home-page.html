@@ -107,16 +107,23 @@
           >
         </button>
 
-        <button
-          matButton="text"
-          type="button"
-          class="home-secondary-btn"
-          [disabled]="authBusy()"
-          (click)="openStartRoom()"
-        >
-          <mat-icon aria-hidden="true">add</mat-icon>
-          <span>Start a room</span>
-        </button>
+        @if (activeRoomId(); as roomId) {
+          <a matButton="text" class="home-secondary-btn" [routerLink]="['/room', roomId]">
+            <mat-icon aria-hidden="true">graphic_eq</mat-icon>
+            <span>Back to the room</span>
+          </a>
+        } @else {
+          <button
+            matButton="text"
+            type="button"
+            class="home-secondary-btn"
+            [disabled]="authBusy()"
+            (click)="openStartRoom()"
+          >
+            <mat-icon aria-hidden="true">add</mat-icon>
+            <span>Start a room</span>
+          </button>
+        }
       </div>
 
       @if (currentRoom) {

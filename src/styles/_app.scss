@@ -511,18 +511,26 @@ a[matIconButton] mat-icon {
   flex: 0 0 48px;
   border-radius: var(--r-full);
   overflow: hidden;
-  background: var(--photo-bg);
-  color: var(--nb-white);
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: var(--sp-xs);
 }
 
-.inroom-host-avatar span {
-  font-size: 0.4375rem;
-  line-height: 1.25;
+.inroom-host-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.inroom-host-avatar .inroom-host-initial {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1;
+}
   font-weight: 540;
 }
 
@@ -1342,6 +1350,8 @@ app-room-card {
 }
 
 .room-host-avatar {
+  margin-inline-start: auto;
+  flex-shrink: 0;
   width: 36px;
   height: 36px;
   font-size: 0.8125rem;
@@ -1433,13 +1443,18 @@ app-room-card {
 .directory-list-meta {
   display: inline-flex;
   align-items: center;
+  align-self: center;
   gap: var(--sp-xs);
   margin-left: var(--sp-s);
 }
 
-.directory-list-meta button {
-  padding-inline: 10px !important;
-  min-width: 56px;
+.directory-list-meta button:not([matIconButton]) {
+  padding-inline: 16px;
+  min-height: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 // ============================================================================

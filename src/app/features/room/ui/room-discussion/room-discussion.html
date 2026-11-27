@@ -121,12 +121,20 @@
                 (click)="openProfile.emit(msg)"
               >
                 <span class="avatar msg-avatar" [class]="msg.avatarClass" aria-hidden="true">
-                  {{ msg.avatarText }}
+                  @if (msg.avatarUrl; as url) {
+                    <img [src]="url" [alt]="msg.author" referrerpolicy="no-referrer" />
+                  } @else {
+                    {{ msg.avatarText }}
+                  }
                 </span>
               </button>
             } @else {
               <span class="avatar msg-avatar" [class]="msg.avatarClass" aria-hidden="true">
-                {{ msg.avatarText }}
+                @if (msg.avatarUrl; as url) {
+                  <img [src]="url" [alt]="msg.author" referrerpolicy="no-referrer" />
+                } @else {
+                  {{ msg.avatarText }}
+                }
               </span>
             }
 

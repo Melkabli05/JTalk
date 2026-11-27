@@ -95,10 +95,14 @@
     <p class="inroom-meta">{{ activeRoomLang() }} · {{ activeRoomSeats() }} seats</p>
     <div class="inroom-host">
       <span class="inroom-host-avatar" aria-hidden="true">
-        <span>Learn by <em>talking.</em></span>
+        @if (resolvedHostAvatarUrl(); as hostUrl) {
+          <img [src]="hostUrl" [alt]="resolvedHostName()" referrerpolicy="no-referrer" />
+        } @else {
+          <span class="inroom-host-initial">{{ resolvedHostInitial() }}</span>
+        }
       </span>
       <div>
-        <p class="inroom-host-name">{{ name }}</p>
+        <p class="inroom-host-name">{{ resolvedHostName() }}</p>
         <p class="inroom-host-role">{{ activeRoomRoleLabel() }}</p>
       </div>
       @if (activeRoomRole() === 'host') {
@@ -121,7 +125,7 @@
       <span class="inroom-back-label">Back to the room</span>
     </button>
   </mat-card>
-} @else {
+} @else if (!inRoom()) {
   <mat-card class="golive-card" appearance="filled" aria-labelledby="golive-h">
     <h2 id="golive-h">Go live</h2>
     <p>Start a room. People join to practise.</p>

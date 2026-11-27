@@ -19,7 +19,7 @@
   </span>
   <h1>{{ current.greeting }}</h1>
   <p>{{ heroSubtitle() }}</p>
-  @if (isEmpty()) {
+  @if (isEmpty() && !inRoom()) {
     <button
       matButton="filled"
       type="button"

@@ -25,6 +25,7 @@ import { IdentityStore } from '../../../core/auth/identity';
 import { UsersApi } from '../../../core/auth/users-api';
 import { ApiError, errorMessage } from '../../../core/http/http-error.interceptor';
 import { ToastNotifier } from '../../../core/services/toast-notifier';
+import { overlayUserSummary } from '../../../shared/utils/user-summary.utils';
 import type { HostProfileDialogData } from '../../room/models/live-room.model';
 import {
   PEOPLE_MATCHMAKING_PAGE_SIZE,
@@ -144,6 +145,7 @@ export class PeopleFacade {
     (): readonly DiscoveredUserResponse[] => {
       const overrides = this.followOverrides();
       const blocked = this.blockedIds();
+      const directory = this.identity.userDirectory();
       const users = this.searching()
         ? this.normalizedQuery() === this.settledQuery() && this.search.hasValue()
           ? this.search.value()
@@ -153,10 +155,11 @@ export class PeopleFacade {
       return users
         .filter((u) => !blocked.has(u.id))
         .map((u) => {
+          const synced = overlayUserSummary(u, directory);
           const override = overrides.get(u.id);
-          return override === undefined || override === u.followedByMe
-            ? u
-            : { ...u, followedByMe: override };
+          return override === undefined || override === synced.followedByMe
+            ? synced
+            : { ...synced, followedByMe: override };
         });
     },
   );

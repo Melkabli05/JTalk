@@ -21,6 +21,10 @@ import { RoomLauncher } from '../../../core/services/room-launcher';
 import { ToastNotifier } from '../../../core/services/toast-notifier';
 import type { VoiceRoomDto } from '../../../shared/models/voice-room.model';
 import {
+  overlayUserSummary,
+  overlayUserSummaryList,
+} from '../../../shared/utils/user-summary.utils';
+import {
   type RoomLangFilter,
   ROOMS_POLL_AFTER_ATTEMPTS,
   ROOMS_POLL_INTERVAL_MS,
@@ -129,7 +133,22 @@ export class RoomsFacade {
 
   readonly rooms: Signal<readonly VoiceRoomDto[]> = computed((): readonly VoiceRoomDto[] => {
     const hidden = this.hiddenIds();
-    const visible = (this.rawRooms() ?? []).filter((room) => !hidden.has(room.id));
+    const directory = this.identity.userDirectory();
+    const visible = (this.rawRooms() ?? [])
+      .filter((room) => !hidden.has(room.id))
+      .map((room) => {
+        const host = room.host ? overlayUserSummary(room.host, directory) : room.host;
+        const speakerProfiles = overlayUserSummaryList(room.speakerProfiles, directory);
+        const participantProfiles = overlayUserSummaryList(room.participantProfiles, directory);
+        if (
+          host === room.host &&
+          speakerProfiles === room.speakerProfiles &&
+          participantProfiles === room.participantProfiles
+        ) {
+          return room;
+        }
+        return { ...room, host, speakerProfiles, participantProfiles };
+      });
     const pinned = this.pinnedIds();
     if (pinned.length === 0 || visible.length <= 1) return visible;
     const byId = new Map(visible.map((room) => [room.id, room]));

@@ -26,6 +26,7 @@ export class RoomsHero {
   readonly activeFilterLabel = input('All languages');
   readonly scenes = input.required<readonly HeroScene[]>();
   readonly activeScene = input.required<HeroScene>();
+  readonly inRoom = input(false);
 
   readonly nextScene = output<void>();
   readonly startRoom = output<void>();

@@ -143,6 +143,13 @@ export class RoomStageStore {
     );
   }
 
+  resolveAvatarUrl(userId: string): string | null {
+    return (
+      this.identity.userDirectory().get(userId)?.avatarUrl ??
+      (userId === this.currentUserId() ? (this.identity.me()?.avatarUrl ?? null) : null)
+    );
+  }
+
   resolveMissingUsers(ids: readonly string[]): void {
     const directory = this.identity.userDirectory();
     const missing = ids.filter((id) => !directory.get(id)?.displayName);
@@ -518,7 +525,7 @@ export class RoomStageStore {
     const name = this.resolveDisplayName(userId, fallback);
     return {
       id: userId,
-      avatarUrl: this.identity.userDirectory().get(userId)?.avatarUrl ?? null,
+      avatarUrl: this.resolveAvatarUrl(userId),
       name,
       initial: (name.trim()[0] ?? fallback.charAt(0)).toUpperCase(),
       chipClass: avatarChipClassFor(userId),

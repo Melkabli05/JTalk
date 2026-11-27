@@ -66,10 +66,21 @@ export class RoomCard {
   readonly avatars = computed(() => {
     const r = this.room();
     const profiles = this.speakerProfileById();
-    return r.speakers
-      .filter((id) => id !== r.hostId)
-      .slice(0, ROOM_CARD_AVATAR_LIMIT)
-      .map((id) => toAvatarBadge(id, profiles.get(id), 'Speaker'));
+    const seen = new Set<string>(r.hostId ? [r.hostId] : []);
+    const badges: AvatarBadge[] = [];
+    for (const id of r.speakers) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      badges.push(toAvatarBadge(id, profiles.get(id), 'Speaker'));
+      if (badges.length >= ROOM_CARD_AVATAR_LIMIT) return badges;
+    }
+    for (const participant of r.participantProfiles ?? []) {
+      if (seen.has(participant.id)) continue;
+      seen.add(participant.id);
+      badges.push(toAvatarBadge(participant.id, participant, 'Participant'));
+      if (badges.length >= ROOM_CARD_AVATAR_LIMIT) return badges;
+    }
+    return badges;
   });
 
   readonly hostAvatar = computed(() => {
