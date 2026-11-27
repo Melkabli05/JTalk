@@ -192,8 +192,8 @@
                 </div>
                 @if (corr.tip) {
                   <p class="msg-correction-tip">
-                    <span aria-hidden="true">💡</span>
-                    <strong>Tip:</strong> {{ corr.tip }}
+                    <mat-icon class="msg-correction-tip-icon" aria-hidden="true">lightbulb</mat-icon>
+                    <span><strong>Tip:</strong> {{ corr.tip }}</span>
                   </p>
                 }
               } @else {
@@ -318,7 +318,7 @@
     </form>
     @if (correcting()) {
       <div class="composer-tip-row">
-        <span aria-hidden="true">💡</span>
+        <mat-icon class="composer-tip-icon" aria-hidden="true">lightbulb</mat-icon>
         <input
           type="text"
           class="composer-tip-input"

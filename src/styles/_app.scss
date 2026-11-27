@@ -3177,6 +3177,9 @@ app-room-card {
 }
 
 .msg-correction-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   margin: 8px 0 2px;
   padding-top: 8px;
   border-top: 1px solid var(--mat-sys-outline-variant);
@@ -3184,6 +3187,16 @@ app-room-card {
   line-height: 1.4;
   color: var(--mat-sys-on-surface-variant);
   word-break: break-word;
+}
+
+.msg-correction-tip-icon {
+  flex: 0 0 auto;
+  width: 15px !important;
+  height: 15px !important;
+  font-size: 15px !important;
+  line-height: 15px !important;
+  margin-top: 1px;
+  color: var(--positive-ink);
 }
 
 .msg-correcting-pill {
@@ -3214,6 +3227,15 @@ app-room-card {
   border-radius: var(--r-m);
   background: var(--mat-sys-surface-container-low);
   border: 1px solid var(--mat-sys-outline-variant);
+}
+
+.composer-tip-icon {
+  flex: 0 0 auto;
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 16px !important;
+  line-height: 16px !important;
+  color: var(--positive-ink);
 }
 
 .composer-tip-input {
