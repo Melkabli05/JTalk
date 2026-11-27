@@ -97,7 +97,7 @@ export class IdentityStore {
 
   readonly authError = computed<string | null>(() => {
     const err = this.authErrorSignal();
-    return err instanceof Error ? err.message : null;
+    return err ? errorMessage(err, 'Sign-in could not be completed. Please try again.') : null;
   });
 
   private readonly meEnabled = computed(

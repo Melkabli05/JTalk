@@ -9,7 +9,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { lastValueFrom } from 'rxjs';
 import { vi } from 'vitest';
-import { httpErrorInterceptor } from './http-error.interceptor';
+import { errorMessage, httpErrorInterceptor } from './http-error.interceptor';
 import { countryNameFor, languageNameFor } from '../utils/language-codes';
 
 describe('httpErrorInterceptor', () => {
@@ -116,6 +116,21 @@ describe('httpErrorInterceptor', () => {
       message: expect.stringContaining(message),
       cause: expect.any(HttpErrorResponse),
     });
+  });
+
+  it('hides technical SDK and runtime error messages behind friendly fallbacks', () => {
+    expect(
+      errorMessage(
+        new Error(
+          "Missing Refresh Token (audience: 'https://api.jtalk.app', scope: 'openid profile email offline_access')",
+        ),
+        'Could not load your profile.',
+      ),
+    ).toBe('Your session expired. Please sign in again.');
+
+    expect(
+      errorMessage(new Error('TypeError: Cannot read properties of undefined'), 'Could not save.'),
+    ).toBe('Could not save.');
   });
 });
 

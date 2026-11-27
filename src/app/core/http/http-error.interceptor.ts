@@ -97,6 +97,30 @@ export const httpErrorInterceptor: HttpInterceptorFn = (request, next) =>
     }),
   );
 
+const AUTH_SESSION_ERROR_RE =
+  /missing refresh token|login_required|consent_required|interaction_required|invalid_grant/i;
+
+function isAuthSessionError(error: unknown): boolean {
+  if (error instanceof Error) {
+    return AUTH_SESSION_ERROR_RE.test(error.message);
+  }
+  if (isPlainObject(error)) {
+    const code = readProp(error, 'error');
+    const description = readProp(error, 'error_description');
+    return (
+      (typeof code === 'string' && AUTH_SESSION_ERROR_RE.test(code)) ||
+      (typeof description === 'string' && AUTH_SESSION_ERROR_RE.test(description))
+    );
+  }
+  return false;
+}
+
 export function errorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error && error.message ? error.message : fallback;
+  if (error instanceof ApiError && error.message) {
+    return error.message;
+  }
+  if (isAuthSessionError(error)) {
+    return 'Your session expired. Please sign in again.';
+  }
+  return fallback;
 }
