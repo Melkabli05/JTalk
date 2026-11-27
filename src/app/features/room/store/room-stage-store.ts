@@ -86,16 +86,10 @@ export class RoomStageStore {
     const activeIds = new Set(this.audio.speakingIds());
     const mutedIds = new Set(this.audio.mutedIds());
     return this.stage().speakers.map((userId) => {
-      const summary = this.identity.userDirectory().get(userId);
       const isYou = userId === myId;
-      const name = this.resolveDisplayName(userId, 'Speaker');
       const muted = isYou ? !this.audio.micOn() : mutedIds.has(userId);
       return {
-        id: userId,
-        avatarUrl: summary?.avatarUrl ?? null,
-        name,
-        initial: (name.trim()[0] ?? 'S').toUpperCase(),
-        chipClass: avatarChipClassFor(userId),
+        ...this.resolveParticipantCard(userId, 'Speaker'),
         role: hostId === userId ? 'host' : 'speaker',
         isYou,
         muted,
@@ -109,29 +103,14 @@ export class RoomStageStore {
     const handQueue = new Set(this.stage().handRaiseQueue);
     return this.audienceIds()
       .filter((userId) => !speakerSet.has(userId))
-      .map((userId) => {
-        const name = this.resolveDisplayName(userId, 'Listener');
-        return {
-          id: userId,
-          avatarUrl: this.identity.userDirectory().get(userId)?.avatarUrl ?? null,
-          name,
-          initial: (name.trim()[0] ?? 'L').toUpperCase(),
-          chipClass: avatarChipClassFor(userId),
-          handRaised: handQueue.has(userId),
-        };
-      });
+      .map((userId) => ({
+        ...this.resolveParticipantCard(userId, 'Listener'),
+        handRaised: handQueue.has(userId),
+      }));
   });
 
   readonly pendingRequests = computed(() =>
-    this.stage().handRaiseQueue.map((userId) => {
-      const name = this.resolveDisplayName(userId, 'Listener');
-      return {
-        id: userId,
-        avatarUrl: this.identity.userDirectory().get(userId)?.avatarUrl ?? null,
-        name,
-        initial: (name.trim()[0] ?? 'L').toUpperCase(),
-      };
-    }),
+    this.stage().handRaiseQueue.map((userId) => this.resolveParticipantCard(userId, 'Listener')),
   );
 
   readonly handRaised = computed(() => {
@@ -478,6 +457,17 @@ export class RoomStageStore {
         };
       });
     this.identity.mergeUserSummaries(summaries);
+  }
+
+  private resolveParticipantCard(userId: string, fallback: 'Speaker' | 'Listener') {
+    const name = this.resolveDisplayName(userId, fallback);
+    return {
+      id: userId,
+      avatarUrl: this.identity.userDirectory().get(userId)?.avatarUrl ?? null,
+      name,
+      initial: (name.trim()[0] ?? fallback.charAt(0)).toUpperCase(),
+      chipClass: avatarChipClassFor(userId),
+    };
   }
 
   private flashStageReaction(emoji: string): void {
