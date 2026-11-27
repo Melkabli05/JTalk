@@ -21,6 +21,9 @@ import { SkeletonLoader } from '../../../../shared/ui/skeleton-loader/skeleton-l
 import { sanitizeUserText } from '../../../../shared/utils/form-validators';
 import { DiscussionMessage } from '../../models/live-room.model';
 
+const BLOCKED_IMAGE_PATTERN =
+  /(?:data:image\/|<img\b|!\[[^\]]*\]\([^)]+\)|https?:\/\/\S+\.(?:png|jpe?g|webp|gif|svg|bmp|avif)(?:[?#]\S*)?)/i;
+
 @Component({
   selector: 'app-room-discussion',
   imports: [
@@ -190,14 +193,37 @@ export class RoomDiscussion {
 
   onTipInput(event: Event): void {
     const value = event.target instanceof HTMLInputElement ? event.target.value : '';
-    this.draftTip.set(value);
+    this.draftTip.set(BLOCKED_IMAGE_PATTERN.test(value) ? '' : value);
+  }
+
+  onComposerPaste(event: ClipboardEvent): void {
+    const clipboard = event.clipboardData;
+    if (!clipboard) return;
+    const hasImageFile =
+      clipboard.files.length > 0 ||
+      Array.from(clipboard.items).some((item) => item.kind === 'file' || item.type.startsWith('image/'));
+    const pastedText = clipboard.getData('text/plain');
+    if (hasImageFile || BLOCKED_IMAGE_PATTERN.test(pastedText)) {
+      event.preventDefault();
+    }
+  }
+
+  onComposerDrop(event: DragEvent): void {
+    if (event.dataTransfer?.files?.length) {
+      event.preventDefault();
+      return;
+    }
+    const droppedText = event.dataTransfer?.getData('text/plain') ?? '';
+    if (BLOCKED_IMAGE_PATTERN.test(droppedText)) {
+      event.preventDefault();
+    }
   }
 
   onSendMessage(event: Event): void {
     event.preventDefault();
     if (!this.canSend() || this.sending() || this.messageField().invalid()) return;
     const text = sanitizeUserText(this.draftMessage(), { allowNewlines: true });
-    if (!text) {
+    if (!text || BLOCKED_IMAGE_PATTERN.test(text)) {
       this.emptySendAttempt.emit();
       this.composerInputRef()?.nativeElement.focus();
       return;
