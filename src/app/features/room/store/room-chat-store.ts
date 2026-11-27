@@ -15,6 +15,8 @@ import { VoiceRoomApi } from '../data-access/voice-room-api';
 import type { ActionFeedback, DiscussionMessage, MessageReaction } from '../models/live-room.model';
 import { RoomStageStore } from './room-stage-store';
 
+const EMPTY_REACTIONS: readonly MessageReaction[] = [];
+
 function formatTimeLabel(isoDate: string): string {
   const date = new Date(isoDate);
   return Number.isNaN(date.getTime())
@@ -68,11 +70,12 @@ export class RoomChatStore {
     return this.rawComments().map((comment) => {
       const name = this.stageStore.resolveDisplayName(comment.authorId, 'Speaker');
       const tally = reactionsMap.get(comment.id);
-      const reactions: MessageReaction[] = [];
+      let reactions: readonly MessageReaction[] = EMPTY_REACTIONS;
       if (tally) {
+        const list: MessageReaction[] = [];
         for (const [code, count] of Object.entries(tally.counts)) {
           if (isBackendReaction(code) && typeof count === 'number' && count > 0) {
-            reactions.push({
+            list.push({
               code,
               emoji: emojiForReaction(code),
               count,
@@ -81,6 +84,7 @@ export class RoomChatStore {
             });
           }
         }
+        if (list.length > 0) reactions = list;
       }
 
       return {

@@ -87,8 +87,8 @@ function buildProfilePatch(
           ],
         }
       : {}),
-    ...(input.countryCode && input.countryCode !== current.countryCode
-      ? { countryCode: input.countryCode }
+    ...(input.countryCode !== undefined && (input.countryCode ?? '') !== (current.countryCode ?? '')
+      ? { countryCode: input.countryCode ?? '' }
       : {}),
     ...(input.avatarUrl !== undefined && input.avatarUrl !== current.avatarUrl
       ? { avatarUrl: input.avatarUrl ?? '' }
@@ -192,7 +192,7 @@ export class IdentityStore {
   readonly userDirectory = computed<ReadonlyMap<string, UserSummaryResponse>>(() => {
     const cache = this.directoryCache();
     const profile = this.me();
-    if (!profile) return cache;
+    if (!profile || cache.get(profile.id) === profile) return cache;
     const next = new Map(cache);
     next.set(profile.id, profile);
     return next;

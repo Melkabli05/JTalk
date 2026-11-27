@@ -82,6 +82,8 @@ export class LiveKitAudioEngine {
   readonly soundBlocked = this.soundBlockedState.asReadonly();
   readonly speakingIds = this.speakingIdsState.asReadonly();
   readonly mutedIds = this.mutedIdsState.asReadonly();
+  readonly speakingIdSet = computed<ReadonlySet<string>>(() => new Set(this.speakingIds()));
+  readonly mutedIdSet = computed<ReadonlySet<string>>(() => new Set(this.mutedIds()));
   readonly connectionQuality = this.connectionQualityState.asReadonly();
   readonly lastNetworkModeChange = this.lastNetworkModeChangeState.asReadonly();
   readonly noiseIsolationEnabled = this.noiseIsolationEnabledState.asReadonly();

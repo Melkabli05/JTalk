@@ -82,8 +82,8 @@ export class RoomStageStore {
   readonly speakers = computed<readonly RoomSpeaker[]>(() => {
     const hostId = this.room()?.hostId;
     const myId = this.currentUserId();
-    const activeIds = new Set(this.audio.speakingIds());
-    const mutedIds = new Set(this.audio.mutedIds());
+    const activeIds = this.audio.speakingIdSet();
+    const mutedIds = this.audio.mutedIdSet();
     const reconnectingIds = this.reconnectingSpeakerIdsState();
     return this.stage().speakers.map((userId) => {
       const isYou = userId === myId;
@@ -184,6 +184,14 @@ export class RoomStageStore {
     this.roleState.set(session.role);
     this.roomState.set(session.room);
     this.stageState.set({ speakers: session.room.speakers, handRaiseQueue: [] });
+    const summaries = [
+      ...(session.room.host ? [session.room.host] : []),
+      ...(session.room.speakerProfiles ?? []),
+      ...(session.room.participantProfiles ?? []),
+    ];
+    if (summaries.length > 0) {
+      this.cachePreviews(summaries);
+    }
   }
 
   applyJoinSnapshot(snapshot: RoomJoinSnapshot): void {
