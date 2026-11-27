@@ -1,0 +1,44 @@
+@if (assets(); as noto) {
+  @if (showStaticSvg()) {
+    <img
+      class="noto-layer noto-static"
+      [class.is-hidden]="shouldAnimate() && animatedLoaded()"
+      [src]="noto.staticSvgUrl"
+      [alt]="imgAlt()"
+      [attr.aria-hidden]="decorative() ? 'true' : null"
+      [attr.width]="size()"
+      [attr.height]="size()"
+      referrerpolicy="no-referrer"
+      decoding="async"
+      draggable="false"
+      (error)="staticFailed.set(true)"
+    />
+  } @else if (!shouldAnimate()) {
+    <span class="noto-fallback" [attr.aria-hidden]="decorative() ? 'true' : null">
+      {{ emoji() }}
+    </span>
+  }
+
+  @if (shouldAnimate()) {
+    <picture class="noto-layer noto-motion" [class.is-ready]="animatedLoaded()">
+      <source [attr.srcset]="noto.animatedWebpUrl" type="image/webp" />
+      <img
+        class="noto-motion-img"
+        [src]="noto.animatedGifUrl"
+        [alt]="imgAlt()"
+        [attr.aria-hidden]="decorative() ? 'true' : null"
+        [attr.width]="size()"
+        [attr.height]="size()"
+        referrerpolicy="no-referrer"
+        decoding="async"
+        draggable="false"
+        (load)="animatedLoaded.set(true)"
+        (error)="animatedFailed.set(true)"
+      />
+    </picture>
+  }
+} @else {
+  <span class="noto-fallback" [attr.aria-hidden]="decorative() ? 'true' : null">
+    {{ emoji() }}
+  </span>
+}

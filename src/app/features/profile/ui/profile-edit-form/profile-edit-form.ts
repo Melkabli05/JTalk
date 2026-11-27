@@ -358,8 +358,103 @@ export class ProfileEditForm {
       return;
     }
 
-    this.serverErrorCleared.emit('avatar');
-    this.cropFileRequested.emit(file);
+    this.validateFileSignature(file);
+  }
+
+  private validateFileSignature(file: File): void {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const buffer = event.target?.result;
+      if (!buffer || !(buffer instanceof ArrayBuffer)) {
+        this.uploadError.emit('Could not read the file.');
+        return;
+      }
+
+      if (!this.isValidImageSignature(new Uint8Array(buffer), file.type)) {
+        this.uploadError.emit('File validation failed. Please select a JPEG or PNG image.');
+        return;
+      }
+
+      this.serverErrorCleared.emit('avatar');
+      this.cropFileRequested.emit(file);
+    };
+    reader.onerror = () => {
+      this.uploadError.emit('Could not read the file.');
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  private isValidImageSignature(bytes: Uint8Array, contentType: string): boolean {
+    if (bytes.length < 4) return false;
+
+    if (contentType === 'image/jpeg') {
+      return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    }
+
+    if (contentType === 'image/png') {
+      return (
+        bytes[0] === 0x89 &&
+        bytes[1] === 0x50 &&
+        bytes[2] === 0x4e &&
+        bytes[3] === 0x47 &&
+        bytes.length > 7 &&
+        bytes[4] === 0x0d &&
+        bytes[5] === 0x0a &&
+        bytes[6] === 0x1a &&
+        bytes[7] === 0x0a
+      );
+    }
+
+    if (this.isGifSignature(bytes)) {
+      return false;
+    }
+    if (this.isWebPSignature(bytes)) {
+      return false;
+    }
+    if (this.isSvgSignature(bytes)) {
+      return false;
+    }
+    if (this.isIcoSignature(bytes)) {
+      return false;
+    }
+
+    return false;
+  }
+
+  private isGifSignature(bytes: Uint8Array): boolean {
+    if (bytes.length < 6) return false;
+    return (
+      bytes[0] === 0x47 &&
+      bytes[1] === 0x49 &&
+      bytes[2] === 0x46 &&
+      bytes[3] === 0x38 &&
+      (bytes[4] === 0x37 || bytes[4] === 0x39) &&
+      bytes[5] === 0x61
+    );
+  }
+
+  private isWebPSignature(bytes: Uint8Array): boolean {
+    if (bytes.length < 12) return false;
+    return (
+      bytes[0] === 0x52 &&
+      bytes[1] === 0x49 &&
+      bytes[2] === 0x46 &&
+      bytes[3] === 0x46 &&
+      bytes[8] === 0x57 &&
+      bytes[9] === 0x45 &&
+      bytes[10] === 0x42 &&
+      bytes[11] === 0x50
+    );
+  }
+
+  private isSvgSignature(bytes: Uint8Array): boolean {
+    const text = new TextDecoder().decode(bytes.slice(0, Math.min(200, bytes.length)));
+    return /^\s*<svg|^\s*<\?xml.*svg/i.test(text);
+  }
+
+  private isIcoSignature(bytes: Uint8Array): boolean {
+    if (bytes.length < 4) return false;
+    return bytes[0] === 0x00 && bytes[1] === 0x00 && bytes[2] === 0x01 && bytes[3] === 0x00;
   }
 
   applyCroppedAvatar(blob: Blob, previewUrl?: string): void {

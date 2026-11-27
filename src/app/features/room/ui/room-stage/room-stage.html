@@ -37,7 +37,9 @@
           [style.--reaction-lane]="reaction.lane"
         >
           <span class="stage-reaction-emoji-row">
-            <span class="stage-reaction-emoji">{{ reaction.emoji }}</span>
+            <span class="stage-reaction-emoji">
+              <app-animated-emoji [emoji]="reaction.emoji" [active]="true" [size]="34" />
+            </span>
             @if (reaction.count > 1) {
               <span class="stage-reaction-count">×{{ reaction.count }}</span>
             }
@@ -90,7 +92,7 @@
 
           @if (speakerReactions().get(speaker.id); as speakerEmoji) {
             <span class="speaker-badge speaker-badge-reaction" aria-hidden="true">
-              {{ speakerEmoji }}
+              <app-animated-emoji [emoji]="speakerEmoji" [active]="true" [size]="18" />
             </span>
           }
 

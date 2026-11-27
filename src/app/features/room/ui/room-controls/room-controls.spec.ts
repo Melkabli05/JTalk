@@ -84,4 +84,26 @@ describe('RoomControls', () => {
     retryBtn?.click();
     expect(retrySpy).toHaveBeenCalledOnce();
   });
+
+  it('activates animated Noto emoji on picker hover and shows a launch burst on pick', () => {
+    const fixture = TestBed.createComponent(RoomControls);
+    fixture.componentRef.setInput('muted', false);
+    fixture.componentRef.setInput('handRaised', false);
+    const pickedSpy = vi.fn();
+    fixture.componentInstance.reactionPicked.subscribe(pickedSpy);
+    fixture.detectChanges();
+
+    fixture.componentInstance.setActivePickerReaction('FIRE');
+    expect(fixture.componentInstance.activePickerReaction()).toBe('FIRE');
+
+    const fireItem = fixture.componentInstance.reactionEmojis.find((item) => item.code === 'FIRE')!;
+    fixture.componentInstance.onPickReaction(fireItem);
+    fixture.detectChanges();
+
+    expect(pickedSpy).toHaveBeenCalledWith('FIRE');
+    expect(fixture.componentInstance.activePickerReaction()).toBeNull();
+    const burst = fixture.nativeElement.querySelector('.ctrl-react-burst app-animated-emoji');
+    expect(burst?.getAttribute('data-animated')).toBe('true');
+    expect(burst?.querySelector('source')?.getAttribute('srcset')).toContain('/1f525/512.webp');
+  });
 });

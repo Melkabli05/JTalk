@@ -52,6 +52,8 @@ export interface HostProfileDialogData {
 
 export type RoomSpeakerRole = 'host' | 'speaker';
 
+export type MuteReason = 'host' | 'self';
+
 export interface RoomSpeaker {
   avatarUrl?: string | null;
   id: string;
@@ -61,6 +63,7 @@ export interface RoomSpeaker {
   role: RoomSpeakerRole;
   isYou?: boolean;
   muted: boolean;
+  muteReason?: MuteReason;
   speaking: boolean;
   reconnecting?: boolean;
 }
@@ -102,6 +105,7 @@ export interface DiscussionMessage {
   isThreadReply?: boolean;
   timeLabel: string;
   text: string;
+  gifUrl?: string;
   correction?: MessageCorrection;
   reactions: readonly MessageReaction[];
 }
@@ -109,4 +113,11 @@ export interface DiscussionMessage {
 export interface ProfilePreviewTarget {
   kind: 'host' | 'speaker' | 'listener' | 'member';
   muted?: boolean;
+}
+
+export interface OpenMicInvitation {
+  readonly fromUserId: string;
+  readonly fromUserName: string;
+  readonly roomId: string;
+  readonly invitationId: string;
 }

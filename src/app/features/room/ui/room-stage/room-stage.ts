@@ -3,6 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { AnimatedEmoji } from '../../../../shared/ui/animated-emoji/animated-emoji';
 import type {
   DiscussionMessage,
   RoomSpeaker,
@@ -12,7 +13,7 @@ import type {
 
 @Component({
   selector: 'app-room-stage',
-  imports: [MatButtonModule, MatIconModule, MatMenuModule, MatRippleModule],
+  imports: [AnimatedEmoji, MatButtonModule, MatIconModule, MatMenuModule, MatRippleModule],
   templateUrl: './room-stage.html',
   styleUrl: './room-stage.scss',
 })

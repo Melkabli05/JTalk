@@ -17,6 +17,7 @@
           matIconButton
           type="button"
           aria-label="Edit pinned topic"
+          [matTooltip]="pinnedTopic() ? 'Edit pinned topic' : 'Pin chat topic'"
           (click)="editingTopic.set(!editingTopic())"
         >
           <mat-icon>edit_note</mat-icon>
@@ -63,6 +64,36 @@
         <button matButton="text" type="button" (click)="editingTopic.set(false)">Cancel</button>
       </div>
     </form>
+  } @else if (pinnedTopic(); as topic) {
+    <div class="disc-pinned-topic" id="pinnedChatTopic" role="note" aria-label="Pinned chat topic">
+      <mat-icon class="disc-pinned-topic-icon" aria-hidden="true">push_pin</mat-icon>
+      <div class="disc-pinned-topic-body">
+        <span class="disc-pinned-topic-label">Topic</span>
+        <p class="disc-pinned-topic-text">{{ topic }}</p>
+      </div>
+      @if (isHost()) {
+        <div class="disc-pinned-topic-actions">
+          <button
+            type="button"
+            class="disc-pinned-topic-btn"
+            aria-label="Edit pinned topic"
+            matTooltip="Edit topic"
+            (click)="editingTopic.set(true)"
+          >
+            <mat-icon aria-hidden="true">edit</mat-icon>
+          </button>
+          <button
+            type="button"
+            class="disc-pinned-topic-btn"
+            aria-label="Unpin chat topic"
+            matTooltip="Unpin topic"
+            (click)="topicChange.emit('')"
+          >
+            <mat-icon aria-hidden="true">close</mat-icon>
+          </button>
+        </div>
+      }
+    </div>
   }
   <div class="chat-error" id="chatError" role="alert" [hidden]="!hasError || isLoading">
     <mat-icon aria-hidden="true">cloud_off</mat-icon>
@@ -160,19 +191,23 @@
                   <span class="msg-role-label">You</span>
                 }
                 <time class="msg-time">{{ msg.timeLabel }}</time>
-                <button
-                  matIconButton
-                  class="msg-more-btn"
-                  type="button"
-                  [attr.aria-label]="commentActionsAriaLabel(msg.author)"
-                  [matMenuTriggerFor]="commentActionsMenu"
-                  [matMenuTriggerData]="{ msg }"
-                >
-                  <mat-icon>more_horiz</mat-icon>
-                </button>
+                @if (hasCommentActions(msg)) {
+                  <button
+                    matIconButton
+                    class="msg-more-btn"
+                    type="button"
+                    [attr.aria-label]="commentActionsAriaLabel(msg.author)"
+                    [matMenuTriggerFor]="commentActionsMenu"
+                    [matMenuTriggerData]="{ msg }"
+                  >
+                    <mat-icon>more_horiz</mat-icon>
+                  </button>
+                }
               </div>
 
-              @if (msg.correction; as corr) {
+              @if (msg.gifUrl; as gif) {
+                <img class="msg-gif" [src]="gif" alt="GIF" loading="lazy" (load)="onMediaLoad()" />
+              } @else if (msg.correction; as corr) {
                 <div class="msg-correction-label">
                   <mat-icon aria-hidden="true">edit</mat-icon>
                   <span>Language suggestion</span>
@@ -202,32 +237,75 @@
 
               <div class="msg-actions">
                 <div class="msg-reactions" aria-label="Message reactions">
-                  @for (rx of msg.reactions; track rx.emoji) {
-                    <button
-                      type="button"
-                      matRipple
-                      class="reaction-chip"
-                      [class.is-active]="rx.active"
-                      [disabled]="!canSend()"
-                      [attr.aria-label]="rx.label + ', ' + rx.count + ' reactions'"
-                      (click)="toggleReaction.emit({ messageId: msg.id, reaction: rx.code })"
-                    >
-                      <span>{{ rx.emoji }}</span>
-                      <span>{{ rx.count }}</span>
-                    </button>
+                  @for (rx of msg.reactions; track rx.code) {
+                    @let chipBursting = isChipBursting(msg.id, rx.code);
+                    <span class="reaction-chip-wrap">
+                      <button
+                        type="button"
+                        matRipple
+                        class="reaction-chip"
+                        [class.is-active]="rx.active"
+                        [class.is-hovered]="hoveredChipKey() === reactionKey(msg.id, rx.code)"
+                        [class.is-bursting]="chipBursting"
+                        [disabled]="!canSend()"
+                        [attr.aria-label]="rx.label + ', ' + rx.count + ' reactions'"
+                        (pointerenter)="setHoveredChip(msg.id, rx.code)"
+                        (pointerleave)="clearHoveredChip(msg.id, rx.code)"
+                        (focus)="setHoveredChip(msg.id, rx.code)"
+                        (blur)="clearHoveredChip(msg.id, rx.code)"
+                        (click)="onToggleReactionChip(msg.id, rx.code)"
+                      >
+                        <app-animated-emoji
+                          class="reaction-chip-emoji"
+                          [code]="rx.code"
+                          [emoji]="rx.emoji"
+                          [active]="isChipAnimated(msg.id, rx.code)"
+                          [size]="18"
+                        />
+                        <span class="reaction-chip-count">{{ rx.count }}</span>
+                      </button>
+                      @if (chipBursting) {
+                        <span class="reaction-chip-floater" aria-hidden="true">
+                          <app-animated-emoji
+                            [code]="rx.code"
+                            [emoji]="rx.emoji"
+                            [active]="true"
+                            [size]="24"
+                          />
+                        </span>
+                      }
+                    </span>
                   }
                 </div>
 
                 @if (canSend()) {
-                  <button
-                    type="button"
-                    class="msg-inline-action"
-                    aria-label="Add a reaction"
-                    [matMenuTriggerFor]="msgReactionMenu"
-                    [matMenuTriggerData]="{ msg }"
-                  >
-                    <mat-icon aria-hidden="true">add_reaction</mat-icon>
-                  </button>
+                  <span class="msg-react-trigger-shell">
+                    <button
+                      type="button"
+                      class="msg-inline-action"
+                      aria-label="Add a reaction"
+                      [matMenuTriggerFor]="msgReactionMenu"
+                      [matMenuTriggerData]="{ msg }"
+                      (menuOpened)="onReactionMenuOpened()"
+                    >
+                      <mat-icon aria-hidden="true">add_reaction</mat-icon>
+                    </button>
+
+                    @if (messageReactionBurst(); as burst) {
+                      @if (burst.messageId === msg.id) {
+                        @for (item of [burst]; track item.id) {
+                          <span class="msg-react-floater" aria-hidden="true">
+                            <app-animated-emoji
+                              [code]="item.code"
+                              [emoji]="item.emoji"
+                              [active]="true"
+                              [size]="26"
+                            />
+                          </span>
+                        }
+                      }
+                    }
+                  </span>
 
                   <button
                     type="button"
@@ -259,14 +337,15 @@
   <div class="disc-footer">
     <div class="new-msgs-wrap" [hidden]="!hasMessages || !showNewMessagesPill()">
       <button
-        matButton="tonal"
         type="button"
+        matRipple
         class="new-msgs-pill"
+        [class.has-unread]="unreadCount() > 0"
         id="newMsgsPill"
         (click)="onJumpToNewest()"
       >
         <mat-icon aria-hidden="true">arrow_downward</mat-icon>
-        <span>Latest messages</span>
+        <span>{{ latestMessagesLabel() }}</span>
       </button>
     </div>
 
@@ -308,6 +387,21 @@
         autocomplete="off"
         enterkeyhint="send"
       ></textarea>
+
+      @if (canSend() && !correcting()) {
+        <button
+          #gifMenuTrigger="matMenuTrigger"
+          matIconButton
+          type="button"
+          class="gif-trigger-btn"
+          aria-label="Send a GIF"
+          matTooltip="Send GIF"
+          [matMenuTriggerFor]="gifPickerMenu"
+          (menuOpened)="onOpenGifPicker()"
+        >
+          <mat-icon>gif_box</mat-icon>
+        </button>
+      }
 
       <button
         matIconButton
@@ -351,22 +445,18 @@
 
   <mat-menu #commentActionsMenu="matMenu" class="jtalk-menu" xPosition="before">
     <ng-template matMenuContent let-msg="msg">
-      @if (msg.authorId) {
-        <button mat-menu-item type="button" (click)="openProfile.emit(msg)">
-          <mat-icon>person</mat-icon>
-          <span>View profile</span>
-        </button>
-      }
       @if (canSend()) {
-        <button mat-menu-item type="button" (click)="onCorrectMessage(msg)">
-          <mat-icon>edit</mat-icon><span>Correct this message</span>
-        </button>
+        @if (canCorrectMessage(msg)) {
+          <button mat-menu-item type="button" (click)="onCorrectMessage(msg)">
+            <mat-icon>edit</mat-icon><span>Correct this message</span>
+          </button>
+        }
         <button mat-menu-item type="button" (click)="onReplyTo(msg)">
           <mat-icon>reply</mat-icon>
           <span>Reply in thread</span>
         </button>
       }
-      @if (isHost()) {
+      @if (isHost() && canPinMessage(msg)) {
         <button
           mat-menu-item
           type="button"
@@ -377,14 +467,16 @@
           <span class="ca-chip-inline">Host</span>
         </button>
       }
-      <button
-        mat-menu-item
-        type="button"
-        (click)="commentAction.emit({ action: 'copy', message: msg })"
-      >
-        <mat-icon>content_copy</mat-icon>
-        <span>Copy text</span>
-      </button>
+      @if (canCopyMessage(msg)) {
+        <button
+          mat-menu-item
+          type="button"
+          (click)="commentAction.emit({ action: 'copy', message: msg })"
+        >
+          <mat-icon>content_copy</mat-icon>
+          <span>Copy</span>
+        </button>
+      }
       @if (isHost() && !msg.isYou && msg.authorId) {
         <button
           mat-menu-item
@@ -409,22 +501,77 @@
     </ng-template>
   </mat-menu>
 
-  <mat-menu #msgReactionMenu="matMenu" class="jtalk-emoji-menu" yPosition="above">
+  <mat-menu
+    #msgReactionMenu="matMenu"
+    class="jtalk-emoji-menu"
+    yPosition="above"
+    (closed)="clearActivePickerReaction()"
+  >
     <ng-template matMenuContent let-msg="msg">
-      <div class="emoji-menu-row" role="group" aria-label="React to this message">
-        @for (opt of reactionEmojis; track opt.emoji) {
+      <div class="emoji-menu-row" (keydown)="onEmojiRowKeydown($event)">
+        @for (opt of reactionEmojis; track opt.code) {
           <button
+            mat-menu-item
+            disableRipple
             class="emoji-menu-btn"
             type="button"
             [class.is-active]="isEmojiActive(msg, opt.emoji)"
+            [class.is-hovered]="activePickerReaction() === opt.code"
             [attr.aria-pressed]="isEmojiActive(msg, opt.emoji)"
             [attr.aria-label]="'React with ' + opt.label.toLowerCase()"
-            (click)="toggleReaction.emit({ messageId: msg.id, reaction: opt.code })"
+            (pointerenter)="setActivePickerReaction(opt.code)"
+            (pointerleave)="clearActivePickerReaction(opt.code)"
+            (pointerdown)="setActivePickerReaction(opt.code)"
+            (focus)="setActivePickerReaction(opt.code)"
+            (blur)="clearActivePickerReaction(opt.code)"
+            (click)="onPickCommentReaction(msg.id, opt)"
           >
-            {{ opt.emoji }}
+            <span class="emoji-menu-label" aria-hidden="true">{{ opt.label }}</span>
+            <app-animated-emoji
+              class="emoji-menu-glyph"
+              [code]="opt.code"
+              [emoji]="opt.emoji"
+              [active]="activePickerReaction() === opt.code"
+              [size]="24"
+            />
           </button>
         }
       </div>
     </ng-template>
+  </mat-menu>
+
+  <mat-menu #gifPickerMenu="matMenu" class="jtalk-gif-menu" yPosition="above">
+    <div
+      class="gif-picker"
+      (click)="$event.stopPropagation()"
+      (keydown)="onGifPickerKeydown($event)"
+    >
+      <input
+        #gifSearchInput
+        type="search"
+        class="gif-search-input"
+        [value]="gifQuery()"
+        (input)="onGifQueryInput($event)"
+        placeholder="Search GIFs…"
+        aria-label="Search GIFs"
+        autocomplete="off"
+      />
+      @if (gifLoading()) {
+        <p class="gif-status">Loading GIFs…</p>
+      } @else {
+        <div class="gif-grid">
+          @for (item of gifResults(); track item.id) {
+            <button
+              type="button"
+              class="gif-tile"
+              [attr.aria-label]="item.title || 'GIF'"
+              (click)="onSelectGif(item)"
+            >
+              <img [src]="item.previewUrl" [alt]="item.title || 'GIF'" loading="lazy" />
+            </button>
+          }
+        </div>
+      }
+    </div>
   </mat-menu>
 </section>

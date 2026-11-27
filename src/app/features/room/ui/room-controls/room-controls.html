@@ -65,29 +65,64 @@
       </button>
     }
 
-    <button
-      matIconButton
-      class="ctrl-action-btn"
-      type="button"
-      id="reactBtn"
-      aria-label="Open reaction picker"
-      matTooltip="React"
-      [matMenuTriggerFor]="reactionMenu"
-    >
-      <mat-icon>mood</mat-icon>
-    </button>
+    <span class="ctrl-react-shell">
+      <button
+        matIconButton
+        class="ctrl-action-btn"
+        type="button"
+        id="reactBtn"
+        aria-label="Open reaction picker"
+        matTooltip="React"
+        [matMenuTriggerFor]="reactionMenu"
+        (menuOpened)="onReactionMenuOpened()"
+      >
+        <mat-icon>mood</mat-icon>
+      </button>
 
-    <mat-menu #reactionMenu="matMenu" class="jtalk-emoji-menu" yPosition="above">
-      <div class="emoji-menu-row" role="group" aria-label="Choose a reaction">
-        @for (item of reactionEmojis; track item.emoji) {
+      @if (launchBurst(); as burst) {
+        @for (item of [burst]; track item.id) {
+          <span class="ctrl-react-burst" aria-hidden="true">
+            <app-animated-emoji
+              [code]="item.code"
+              [emoji]="item.emoji"
+              [active]="true"
+              [size]="30"
+            />
+          </span>
+        }
+      }
+    </span>
+
+    <mat-menu
+      #reactionMenu="matMenu"
+      class="jtalk-emoji-menu"
+      yPosition="above"
+      (closed)="clearActivePickerReaction()"
+    >
+      <div class="emoji-menu-row" (keydown)="onEmojiRowKeydown($event)">
+        @for (item of reactionEmojis; track item.code) {
           <button
+            mat-menu-item
+            disableRipple
             class="emoji-menu-btn"
-            matRipple
             type="button"
+            [class.is-hovered]="activePickerReaction() === item.code"
             [attr.aria-label]="'React with ' + item.label.toLowerCase()"
-            (click)="$event.stopPropagation(); reactionPicked.emit(item.code)"
+            (pointerenter)="setActivePickerReaction(item.code)"
+            (pointerleave)="clearActivePickerReaction(item.code)"
+            (pointerdown)="setActivePickerReaction(item.code)"
+            (focus)="setActivePickerReaction(item.code)"
+            (blur)="clearActivePickerReaction(item.code)"
+            (click)="onPickReaction(item)"
           >
-            {{ item.emoji }}
+            <span class="emoji-menu-label" aria-hidden="true">{{ item.label }}</span>
+            <app-animated-emoji
+              class="emoji-menu-glyph"
+              [code]="item.code"
+              [emoji]="item.emoji"
+              [active]="activePickerReaction() === item.code"
+              [size]="24"
+            />
           </button>
         }
       </div>

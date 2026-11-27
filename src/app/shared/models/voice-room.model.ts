@@ -2,7 +2,14 @@ export type BackendRoomRole = 'HOST' | 'SPEAKER' | 'LISTENER';
 
 export type NetworkMode = 'OPTIMAL' | 'LOW_BANDWIDTH';
 
-export type CommentType = 'TEXT' | 'CORRECTION';
+export type CommentType = 'TEXT' | 'CORRECTION' | 'GIF';
+
+export interface GifItem {
+  readonly id: string;
+  readonly previewUrl: string;
+  readonly url: string;
+  readonly title: string;
+}
 
 export const BACKEND_REACTIONS = [
   'HEART',

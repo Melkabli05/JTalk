@@ -96,9 +96,13 @@ export class RoomChatStore {
         isYou: comment.authorId === myId,
         isThreadReply: Boolean(comment.replyTo),
         timeLabel: formatTimeLabel(comment.createdAt),
-        text: isCorrection
-          ? `${comment.content} → ${comment.correctedContent}`
-          : comment.content,
+        text:
+          comment.type === 'GIF'
+            ? ''
+            : isCorrection
+              ? `${comment.content} → ${comment.correctedContent}`
+              : comment.content,
+        ...(comment.type === 'GIF' ? { gifUrl: comment.content } : {}),
         ...(diff
           ? {
               correction: {
@@ -114,7 +118,8 @@ export class RoomChatStore {
 
   readonly pinnedMessage = computed<DiscussionMessage | null>(() => {
     const id = this.pinnedCommentId();
-    return id ? (this.messages().find((m) => m.id === id) ?? null) : null;
+    const message = id ? (this.messages().find((m) => m.id === id) ?? null) : null;
+    return message && !message.gifUrl ? message : null;
   });
 
   readonly commentCountLabel = computed(() => {
@@ -239,6 +244,34 @@ export class RoomChatStore {
       });
   }
 
+  sendGif(gifUrl: string, onDone?: (res: ActionFeedback) => void): void {
+    const id = this.stageStore.roomId();
+    if (!id) {
+      onDone?.({ ok: false, message: 'No active room.' });
+      return;
+    }
+    const reply = this.reply();
+    const generation = this.stageStore.generation();
+    this.voiceRoomApi
+      .postComment(id, {
+        type: 'GIF',
+        content: gifUrl,
+        replyTo: reply?.commentId ?? null,
+      })
+      .subscribe({
+        next: (comment) => {
+          if (generation === this.stageStore.generation()) {
+            this.appendCommentIfNew(comment);
+            if (this.reply() === reply) this.setReplyTarget(null);
+          }
+          onDone?.({ ok: true });
+        },
+        error: (err: unknown) => {
+          onDone?.({ ok: false, message: errorMessage(err, 'Could not send GIF.') });
+        },
+      });
+  }
+
   deleteMessage(commentId: string, onDone?: (res: ActionFeedback) => void): void {
     if (this.pendingDeleteCommentIds.has(commentId)) return;
     this.pendingDeleteCommentIds.add(commentId);
@@ -282,6 +315,11 @@ export class RoomChatStore {
   pinMessage(commentId: string | null, onDone?: (res: ActionFeedback) => void): void {
     const generation = this.stageStore.generation();
     if (commentId) {
+      const target = this.rawComments().find((c) => c.id === commentId);
+      if (target?.type === 'GIF') {
+        onDone?.({ ok: false, message: 'GIFs cannot be pinned to the stage.' });
+        return;
+      }
       this.stageStore.runRoomCommand(
         (id) => this.voiceRoomApi.pinComment(id, commentId),
         'Could not update pinned comment.',

@@ -9,7 +9,7 @@ import {
   untracked,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import type { UserProfileResponse } from '../../../core/auth/auth.models';
 import { IdentityStore } from '../../../core/auth/identity';
 import { UsersApi } from '../../../core/auth/users-api';
@@ -18,6 +18,7 @@ import { AppTitleStrategy } from '../../../core/routing/app-title-strategy';
 import { ToastNotifier } from '../../../core/services/toast-notifier';
 import type {
   BackendReaction,
+  GifItem,
   UpdateVoiceRoomPayload,
 } from '../../../shared/models/voice-room.model';
 import { VoiceRoomApi } from '../data-access/voice-room-api';
@@ -136,6 +137,12 @@ export class RoomFacade {
   );
 
   readonly listeners: Signal<readonly RoomListener[]> = this.stageStore.listeners;
+  private readonly gifResultsState = signal<readonly GifItem[]>([]);
+  private readonly gifLoadingState = signal(false);
+  readonly gifResults = this.gifResultsState.asReadonly();
+  readonly gifLoading = this.gifLoadingState.asReadonly();
+  
+  private readonly gifSearchSubject = new Subject<string>();
   private readonly chooseSuccessorOpenState = signal(false);
   readonly chooseSuccessorOpen: Signal<boolean> = this.chooseSuccessorOpenState.asReadonly();
   readonly eligibleSuccessors = computed(() => {
@@ -147,7 +154,7 @@ export class RoomFacade {
         id: s.id,
         name: s.name,
         initial: s.initial,
-        avatarUrl: s.avatarUrl,
+        avatarUrl: s.avatarUrl ?? null,
         chipClass: s.chipClass,
         roleLabel: mods.has(s.id) ? 'Moderator · Speaker' : 'Speaker',
       }));
@@ -155,7 +162,7 @@ export class RoomFacade {
       id: l.id,
       name: l.name,
       initial: l.initial,
-      avatarUrl: l.avatarUrl,
+      avatarUrl: l.avatarUrl ?? null,
       chipClass: l.chipClass,
       roleLabel: mods.has(l.id) ? 'Moderator · Listener' : 'Listener',
     }));
@@ -189,6 +196,16 @@ export class RoomFacade {
         });
       }
     });
+
+    effect(() => {
+      if (this.audioStatus() === 'connected' && this.soundBlocked()) {
+        untracked(() => this.enableAudio());
+      }
+    });
+
+    this.gifSearchSubject
+      .pipe(debounceTime(300))
+      .subscribe((query) => this.performGifSearch(query));
   }
 
   enterRoom(roomId: string): void {
@@ -379,12 +396,21 @@ export class RoomFacade {
         if (speaker.isYou) {
           this.toggleMute(roomId);
         } else {
-          this.stageStore.runRoomCommand(
-            (id) => this.voiceRoomApi.muteSpeaker(id, speaker.id),
-            'Could not mute speaker.',
-            undefined,
-            (res) => this.handleFeedback(roomId, res, `Muted ${speaker.name}.`),
-          );
+          if (speaker.muteReason === 'self') {
+            this.stageStore.runRoomCommand(
+              (id) => this.voiceRoomApi.sendOpenMicInvitation(id, speaker.id),
+              'Could not send open mic invitation.',
+              undefined,
+              (res) => this.handleFeedback(roomId, res, `Sent open mic invitation to ${speaker.name}.`),
+            );
+          } else {
+            this.stageStore.runRoomCommand(
+              (id) => this.voiceRoomApi.muteSpeaker(id, speaker.id),
+              'Could not mute speaker.',
+              undefined,
+              (res) => this.handleFeedback(roomId, res, `Muted ${speaker.name}.`),
+            );
+          }
         }
         return;
       case 'leave-stage':
@@ -462,7 +488,13 @@ export class RoomFacade {
   }
 
   toggleMute(roomId: string): void {
-    this.roomStore.toggleSelfMic((res) => this.handleFeedback(roomId, res));
+    this.roomStore.toggleSelfMic((res) => {
+      if (res.ok && !this.muted()) {
+        this.handleFeedback(roomId, res, 'Microphone enabled.');
+      } else {
+        this.handleFeedback(roomId, res);
+      }
+    });
   }
 
   toggleHand(roomId: string): void {
@@ -555,8 +587,11 @@ export class RoomFacade {
     const { action, message } = event;
     switch (action) {
       case 'correct': {
+        if (message.gifUrl) return;
         const original = this.chatStore.rawComments().find((c) => c.id === message.id);
-        if (original) this.chatStore.setReplyTarget(message.author, original.id, original.content);
+        if (original && original.type !== 'GIF') {
+          this.chatStore.setReplyTarget(message.author, original.id, original.content);
+        }
         return;
       }
       case 'reply':
@@ -565,13 +600,14 @@ export class RoomFacade {
       case 'pin':
         if (this.chatStore.pinnedCommentId() === message.id) {
           this.unpinMessage(roomId);
-        } else {
+        } else if (!message.gifUrl) {
           this.chatStore.pinMessage(message.id, (res) =>
             this.handleFeedback(roomId, res, 'Pinned comment.'),
           );
         }
         return;
-      case 'copy':
+      case 'copy': {
+        if (message.gifUrl || !message.text) return;
         if (typeof navigator === 'undefined' || !navigator.clipboard) {
           this.toast.show('Could not copy this comment.');
           return;
@@ -582,6 +618,7 @@ export class RoomFacade {
           () => this.toast.show('Could not copy this comment.'),
         );
         return;
+      }
       case 'mute':
         if (message.authorId) {
           this.chatStore.muteChatUser(message.authorId, (res) =>
@@ -601,6 +638,34 @@ export class RoomFacade {
 
   unpinMessage(roomId: string): void {
     this.chatStore.pinMessage(null, (res) => this.handleFeedback(roomId, res, 'Unpinned.'));
+  }
+
+  searchGifs(query: string): void {
+    this.gifLoadingState.set(true);
+    this.gifSearchSubject.next(query);
+  }
+
+  private performGifSearch(query: string): void {
+    this.voiceRoomApi.searchGifs(query).subscribe({
+      next: (items: readonly GifItem[]) => {
+        this.gifResultsState.set(items);
+        this.gifLoadingState.set(false);
+      },
+      error: () => {
+        this.gifLoadingState.set(false);
+      },
+    });
+  }
+
+  sendGif(roomId: string, gifUrl: string): void {
+    if (!this.canSendMessage() || this.sendingCommentState()) return;
+    this.sendingCommentState.set(true);
+    this.chatStore.sendGif(gifUrl, (res) => {
+      if (!this.destroyRef.destroyed && this.roomStore.roomId() === roomId) {
+        this.sendingCommentState.set(false);
+      }
+      this.handleFeedback(roomId, res);
+    });
   }
 
   dismissSuccessorPrompt(): void {
@@ -643,6 +708,28 @@ export class RoomFacade {
     }
     this.toast.show(res.message ?? 'Action could not be completed.');
     return false;
+  }
+
+  acceptOpenMicInvitation(roomId: string): void {
+    this.voiceRoomApi.acceptOpenMicInvitation(roomId).subscribe({
+      next: () => {
+        this.handleFeedback(roomId, { ok: true }, 'Microphone invitation accepted.');
+      },
+      error: () => {
+        this.handleFeedback(roomId, { ok: false, message: 'Could not accept microphone invitation.' });
+      },
+    });
+  }
+
+  rejectOpenMicInvitation(roomId: string): void {
+    this.voiceRoomApi.rejectOpenMicInvitation(roomId).subscribe({
+      next: () => {
+        this.handleFeedback(roomId, { ok: true });
+      },
+      error: () => {
+        this.handleFeedback(roomId, { ok: false, message: 'Could not reject microphone invitation.' });
+      },
+    });
   }
 
   private writeClipboardText(text: string, onSuccess: () => void, onError: () => void): void {

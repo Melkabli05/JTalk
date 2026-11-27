@@ -264,6 +264,10 @@ export class LiveRoomStore {
       onDone?.({ ok: false, message: 'Join the stage to use your microphone.' });
       return;
     }
+    if (this.audio.status() !== 'connected') {
+      onDone?.({ ok: false, message: 'Audio not ready. Please wait.' });
+      return;
+    }
     this.audio.toggleMic((ok) => {
       onDone?.(
         ok ? { ok: true } : { ok: false, message: this.audio.micError() ?? 'Microphone error.' },

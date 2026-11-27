@@ -6,6 +6,7 @@ import type {
   AudiencePage,
   BackendReaction,
   ChatStateDto,
+  GifItem,
   NetworkMode,
   PostCommentPayload,
   RoomCommentDto,
@@ -123,6 +124,13 @@ export class VoiceRoomApi {
     return this.mutate('POST', roomId, 'comments', payload);
   }
 
+  searchGifs(query: string): Observable<readonly GifItem[]> {
+    const trimmed = query.trim();
+    return this.http.get<readonly GifItem[]>(`${this.base}/gifs`, {
+      ...(trimmed ? { params: { q: trimmed } } : {}),
+    });
+  }
+
   deleteComment(roomId: string, commentId: string): Observable<void> {
     return this.mutate('DELETE', roomId, `comments/${encodeURIComponent(commentId)}`);
   }
@@ -167,5 +175,17 @@ export class VoiceRoomApi {
 
   sendReaction(roomId: string, reaction: BackendReaction): Observable<void> {
     return this.mutate('POST', roomId, 'reactions', { reaction });
+  }
+
+  sendOpenMicInvitation(roomId: string, targetUserId: string): Observable<void> {
+    return this.mutate('POST', roomId, `stage/open-mic/${encodeURIComponent(targetUserId)}`);
+  }
+
+  acceptOpenMicInvitation(roomId: string): Observable<void> {
+    return this.mutate('POST', roomId, 'stage/open-mic/accept');
+  }
+
+  rejectOpenMicInvitation(roomId: string): Observable<void> {
+    return this.mutate('POST', roomId, 'stage/open-mic/reject');
   }
 }

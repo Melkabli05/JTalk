@@ -91,4 +91,22 @@ describe('RoomStage', () => {
     expect(reconnectingTile?.textContent).toContain('Reconnecting');
     expect(fixture.componentInstance.canMuteSpeaker(sampleSpeakers[0]!)).toBe(false);
   });
+
+  it('renders animated Noto Emoji for live stage reactions and speaker reaction badges', () => {
+    const fixture = TestBed.createComponent(RoomStage);
+    fixture.componentRef.setInput('speakers', sampleSpeakers);
+    fixture.componentRef.setInput('maxSeats', 8);
+    fixture.componentRef.setInput('stageReactions', [
+      { id: 1, userId: 'elena', emoji: '❤️', reactorName: 'Elena', count: 2, lane: 0 },
+    ]);
+    fixture.componentRef.setInput('speakerReactions', new Map([['elena', '❤️']]));
+    fixture.detectChanges();
+
+    const stageEmoji = fixture.nativeElement.querySelector('.stage-reaction-emoji app-animated-emoji');
+    const badgeEmoji = fixture.nativeElement.querySelector('.speaker-badge-reaction app-animated-emoji');
+    expect(stageEmoji?.getAttribute('data-animated')).toBe('true');
+    expect(stageEmoji?.querySelector('source')?.getAttribute('srcset')).toContain('/2764_fe0f/512.webp');
+    expect(badgeEmoji?.getAttribute('data-animated')).toBe('true');
+    expect(badgeEmoji?.querySelector('source')?.getAttribute('srcset')).toContain('/2764_fe0f/512.webp');
+  });
 });

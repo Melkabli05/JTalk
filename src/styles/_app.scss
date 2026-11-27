@@ -957,17 +957,49 @@ a[matIconButton] mat-icon {
 
 .jtalk-emoji-menu {
   border: 1px solid var(--outline-variant);
-  border-radius: 9999px !important;
+  border-radius: var(--r-full) !important;
   min-width: 0 !important;
-  max-width: calc(100vw - 24px) !important;
+  max-width: calc(100vw - var(--sp-xxl)) !important;
+  overflow: visible !important;
+}
+
+.jtalk-emoji-menu .mat-mdc-menu-content {
+  padding: 0 !important;
+  overflow: visible;
+}
+
+.jtalk-emoji-menu .emoji-menu-btn.mat-mdc-menu-item {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  justify-content: center;
+  overflow: visible;
+  background: transparent !important;
+}
+
+.jtalk-emoji-menu .emoji-menu-btn.mat-mdc-menu-item::before,
+.jtalk-emoji-menu .emoji-menu-btn.mat-mdc-menu-item .mat-mdc-menu-ripple {
+  display: none !important;
+}
+
+.jtalk-emoji-menu .emoji-menu-btn .mat-mdc-menu-item-text {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  width: 100%;
+  height: 100%;
 }
 
 .emoji-menu-row {
   display: flex;
   align-items: center;
-  gap: var(--sp-xs);
+  gap: var(--sp-xxs);
   padding: var(--sp-xs) var(--sp-s);
-  overflow-x: auto;
+  overflow: visible;
   scrollbar-width: none;
 }
 
@@ -975,27 +1007,168 @@ a[matIconButton] mat-icon {
   display: none;
 }
 
+@media (max-width: 560px) {
+  .emoji-menu-row {
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: var(--r-full);
+    padding: var(--sp-xs) var(--sp-m);
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 14px,
+      #000 calc(100% - 14px),
+      transparent 100%
+    );
+  }
+}
+
 .emoji-menu-btn {
-  width: var(--touch-min);
-  height: var(--touch-min);
-  min-width: var(--touch-min);
-  min-height: var(--touch-min);
+  position: relative;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border: 0;
   border-radius: var(--r-full);
   background: transparent;
-  font-size: var(--icon-l);
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
 
-.emoji-menu-btn:hover {
-  background: var(--menu-hover);
+.emoji-menu-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.emoji-menu-btn .emoji-menu-glyph {
+  transform: translate3d(0, 0, 0) scale(1);
+  transform-origin: center center;
+  transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.emoji-menu-btn:hover,
+.emoji-menu-btn.is-hovered {
+  z-index: 3;
+}
+
+// Contained spring scale: 24px * 1.25 = 30px inside 44px slot / 52px menu pill (never clips or exits)
+.emoji-menu-btn:hover .emoji-menu-glyph,
+.emoji-menu-btn.is-hovered .emoji-menu-glyph,
+.emoji-menu-btn:focus-visible .emoji-menu-glyph {
+  transition: transform 0.24s cubic-bezier(0.34, 1.16, 0.64, 1);
+  transform: translate3d(0, 0, 0) scale(1.25);
+}
+
+.emoji-menu-btn:active .emoji-menu-glyph {
+  transition: transform 0.1s cubic-bezier(0.2, 0, 0, 1);
+  transform: translate3d(0, 0, 0) scale(1.12);
+}
+
+.emoji-menu-btn:has(+ .emoji-menu-btn.is-hovered) .emoji-menu-glyph,
+.emoji-menu-btn.is-hovered + .emoji-menu-btn .emoji-menu-glyph {
+  transform: translate3d(0, 0, 0) scale(1.06);
+}
+
+// Matches Jtalk Material 3 tooltip tokens (mat.tooltip-overrides: 8px radius, inverse-surface, Google Sans Flex)
+.emoji-menu-label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + var(--sp-s));
+  padding: var(--sp-xs) var(--sp-s);
+  border-radius: var(--r-s);
+  background: var(--mat-sys-inverse-surface);
+  color: var(--mat-sys-inverse-on-surface);
+  font-family: var(--font);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(-50%, 4px, 0) scale(0.96);
+  transition:
+    opacity 0.15s cubic-bezier(0.2, 0, 0, 1),
+    transform 0.18s cubic-bezier(0.2, 0, 0, 1);
+  z-index: 5;
+}
+
+.emoji-menu-btn:hover .emoji-menu-label,
+.emoji-menu-btn.is-hovered .emoji-menu-label,
+.emoji-menu-btn:focus-visible .emoji-menu-label {
+  opacity: 1;
+  transform: translate3d(-50%, 0, 0) scale(1);
+}
+
+// Keep first and last tooltips aligned cleanly within the menu pill edges
+.emoji-menu-btn:first-child .emoji-menu-label {
+  left: 0;
+  transform: translate3d(0, 4px, 0) scale(0.96);
+}
+
+.emoji-menu-btn:first-child:hover .emoji-menu-label,
+.emoji-menu-btn:first-child.is-hovered .emoji-menu-label,
+.emoji-menu-btn:first-child:focus-visible .emoji-menu-label {
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.emoji-menu-btn:last-child .emoji-menu-label {
+  left: auto;
+  right: 0;
+  transform: translate3d(0, 4px, 0) scale(0.96);
+}
+
+.emoji-menu-btn:last-child:hover .emoji-menu-label,
+.emoji-menu-btn:last-child.is-hovered .emoji-menu-label,
+.emoji-menu-btn:last-child:focus-visible .emoji-menu-label {
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+@media (max-width: 560px) {
+  .emoji-menu-label {
+    display: none;
+  }
+
+  .emoji-menu-btn:hover .emoji-menu-glyph,
+  .emoji-menu-btn.is-hovered .emoji-menu-glyph,
+  .emoji-menu-btn:focus-visible .emoji-menu-glyph {
+    transform: translate3d(0, 0, 0) scale(1.18);
+  }
 }
 
 .emoji-menu-btn.is-active {
-  background: var(--mat-sys-primary-container);
+  background: transparent !important;
+}
+
+.emoji-menu-btn.is-active .mat-mdc-menu-item-text::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: var(--r-full);
+  background: var(--mat-sys-primary);
+  transform: translateX(-50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emoji-menu-btn .emoji-menu-glyph,
+  .emoji-menu-btn:hover .emoji-menu-glyph,
+  .emoji-menu-btn.is-hovered .emoji-menu-glyph,
+  .emoji-menu-btn:has(+ .emoji-menu-btn.is-hovered) .emoji-menu-glyph,
+  .emoji-menu-btn.is-hovered + .emoji-menu-btn .emoji-menu-glyph,
+  .emoji-menu-label {
+    transition: none;
+    transform: none;
+  }
 }
 
 // ============================================================================
@@ -2068,11 +2241,29 @@ app-room-card {
 }
 
 .speaker-badge-reaction {
-  top: -2px;
-  right: -2px;
+  top: -4px;
+  right: -4px;
+  width: 24px;
+  height: 24px;
   background: var(--mat-sys-surface-container-high);
   font-size: 0.75rem;
   line-height: 1;
+  animation: speaker-reaction-pop 0.36s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes speaker-reaction-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.45) rotate(-10deg);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.16) rotate(4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 .speaker-badge-mod {
@@ -2211,8 +2402,12 @@ app-room-card {
 }
 
 .stage-reaction-emoji {
-  font-size: 1.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
   line-height: 1;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.18));
 }
 
 .stage-reaction-count {
@@ -2236,18 +2431,30 @@ app-room-card {
 @keyframes reaction-rise {
   0% {
     opacity: 0;
-    transform: translateY(10px) scale(0.92);
+    transform: translate3d(0, 14px, 0) scale(0.6);
   }
-  15% {
+  16% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, -2px, 0) scale(1.12) rotate(3deg);
   }
-  78% {
+  42% {
     opacity: 1;
+    transform: translate3d(-4px, -10px, 0) scale(1.02) rotate(-2deg);
+  }
+  74% {
+    opacity: 0.94;
+    transform: translate3d(3px, -20px, 0) scale(1.03) rotate(2deg);
   }
   100% {
     opacity: 0;
-    transform: translateY(-18px) scale(1.04);
+    transform: translate3d(0, -32px, 0) scale(0.92) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .speaker-badge-reaction,
+  .stage-reaction {
+    animation: none;
   }
 }
 
@@ -2789,6 +2996,101 @@ app-room-card {
   color: var(--mat-sys-on-error-container) !important;
 }
 
+.disc-pinned-topic {
+  flex: 0 0 auto;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-s);
+  padding: var(--sp-s) var(--sp-m);
+  background: var(--mat-sys-surface-container-low);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.disc-pinned-topic-icon {
+  width: 15px !important;
+  height: 15px !important;
+  font-size: 15px !important;
+  line-height: 15px !important;
+  color: var(--mat-sys-primary);
+  margin-top: 2px;
+  flex: 0 0 auto;
+}
+
+.disc-pinned-topic-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.disc-pinned-topic-label {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 540;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--mat-sys-primary);
+}
+
+.disc-pinned-topic-text {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--mat-sys-on-surface);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+.disc-pinned-topic-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-xxs);
+  flex: 0 0 auto;
+  margin: -3px -4px -3px 0;
+}
+
+.disc-pinned-topic-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease;
+}
+
+.disc-pinned-topic-btn:hover {
+  background: var(--state-hover);
+  color: var(--mat-sys-on-surface);
+}
+
+.disc-pinned-topic-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.disc-pinned-topic-btn mat-icon {
+  width: 15px !important;
+  height: 15px !important;
+  font-size: 15px !important;
+  line-height: 15px !important;
+}
+
 .chat-error {
   margin: 10px 12px;
   background: var(--mat-sys-error-container);
@@ -2977,14 +3279,20 @@ app-room-card {
   display: none;
 }
 
+.reaction-chip-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .reaction-chip {
   cursor: pointer;
   color: var(--mat-sys-on-surface-variant);
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  min-height: 28px;
-  padding: 0 9px;
+  gap: 5px;
+  min-height: 30px;
+  padding: 0 10px;
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: var(--r-full);
   background: var(--mat-sys-surface);
@@ -2994,12 +3302,42 @@ app-room-card {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   transition:
-    background-color 0.14s ease,
-    border-color 0.14s ease;
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.2s ease,
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.reaction-chip:hover {
-  background: var(--mat-sys-surface-container);
+.reaction-chip .reaction-chip-emoji {
+  transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1);
+  transform: translate3d(0, 0, 0) scale(1);
+  transform-origin: center center;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.reaction-chip:hover:not(:disabled),
+.reaction-chip.is-hovered:not(:disabled) {
+  border-color: var(--mat-sys-outline);
+}
+
+.reaction-chip:hover:not(:disabled) .reaction-chip-emoji,
+.reaction-chip.is-hovered:not(:disabled) .reaction-chip-emoji,
+.reaction-chip:focus-visible:not(:disabled) .reaction-chip-emoji {
+  transition: transform 0.24s cubic-bezier(0.34, 1.16, 0.64, 1);
+  transform: translate3d(0, 0, 0) scale(1.18);
+}
+
+.reaction-chip:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.reaction-chip.is-bursting {
+  animation: reaction-chip-pop 0.34s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.reaction-chip.is-bursting .reaction-chip-emoji {
+  transform: translate3d(0, 0, 0) scale(1.16);
 }
 
 .reaction-chip.is-active {
@@ -3007,6 +3345,58 @@ app-room-card {
   color: var(--mat-sys-on-primary-container);
   border-color: transparent;
   font-weight: 540;
+}
+
+.reaction-chip-floater {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  z-index: 6;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: reaction-chip-float 1.15s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+@keyframes reaction-chip-pop {
+  0% {
+    transform: scale(0.95);
+  }
+  45% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes reaction-chip-float {
+  0% {
+    opacity: 0;
+    transform: translate3d(-50%, 4px, 0) scale(0.65);
+  }
+  20% {
+    opacity: 1;
+    transform: translate3d(-50%, -6px, 0) scale(1.08);
+  }
+  55% {
+    opacity: 1;
+    transform: translate3d(-50%, -22px, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-50%, -38px, 0) scale(0.88);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reaction-chip,
+  .reaction-chip .reaction-chip-emoji,
+  .reaction-chip.is-bursting,
+  .reaction-chip-floater {
+    animation: none;
+    transition: none;
+    transform: none;
+  }
 }
 
 .msg-inline-action {
@@ -3055,7 +3445,7 @@ app-room-card {
   position: absolute;
   left: 0;
   right: 0;
-  top: -42px;
+  bottom: calc(100% + var(--sp-s));
   display: flex;
   justify-content: center;
   pointer-events: none;
@@ -3066,18 +3456,42 @@ app-room-card {
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  min-height: 32px;
-  padding: 0 12px;
+  justify-content: center;
+  gap: var(--sp-xs);
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px 0 8px;
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: var(--r-full);
-  background: var(--mat-sys-surface);
-  color: var(--mat-sys-primary);
-  font: inherit;
+  background: var(--menu-bg);
+  color: var(--mat-sys-on-surface);
+  font-family: var(--font);
   font-size: 0.75rem;
-  font-weight: 540;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
   box-shadow: var(--elevation-1);
   cursor: pointer;
+  animation: new-msgs-pill-in 0.18s cubic-bezier(0.2, 0, 0, 1);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.14s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.new-msgs-pill:hover {
+  background: var(--mat-sys-surface-container-low);
+  border-color: var(--mat-sys-outline);
+}
+
+.new-msgs-pill:active {
+  transform: scale(0.96);
+}
+
+.new-msgs-pill:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .new-msgs-pill mat-icon {
@@ -3085,6 +3499,39 @@ app-room-card {
   height: 14px !important;
   font-size: 14px !important;
   line-height: 14px !important;
+  color: var(--mat-sys-primary);
+}
+
+.new-msgs-pill.has-unread {
+  background: var(--primary-btn);
+  color: var(--on-primary-btn);
+  border-color: transparent;
+}
+
+.new-msgs-pill.has-unread:hover {
+  filter: brightness(0.96);
+}
+
+.new-msgs-pill.has-unread mat-icon {
+  color: currentColor;
+}
+
+@keyframes new-msgs-pill-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .new-msgs-pill {
+    animation: none;
+    transition: none;
+  }
 }
 
 .reply-banner {
