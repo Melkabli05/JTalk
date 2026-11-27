@@ -78,6 +78,17 @@ export interface MessageReaction extends ReactionPresentation {
   active: boolean;
 }
 
+export interface CorrectionDiffPart {
+  readonly text: string;
+  readonly changed: boolean;
+}
+
+export interface MessageCorrection {
+  readonly originalParts: readonly CorrectionDiffPart[];
+  readonly correctedParts: readonly CorrectionDiffPart[];
+  readonly tip?: string;
+}
+
 export interface DiscussionMessage {
   id: string;
   authorId?: string;
@@ -90,6 +101,7 @@ export interface DiscussionMessage {
   isThreadReply?: boolean;
   timeLabel: string;
   text: string;
+  correction?: MessageCorrection;
   reactions: readonly MessageReaction[];
 }
 

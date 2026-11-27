@@ -48,6 +48,8 @@ export class RoomDiscussion {
   readonly replyTarget = input<string | null>(null);
   readonly showNewMessagesPill = signal(false);
   readonly correcting = input(false);
+  readonly correctingCommentId = input<string | null>(null);
+  readonly draftTip = signal('');
   readonly pinnedTopic = input<string | null>(null);
   readonly pinnedMessageId = input<string | null>(null);
   readonly topicChange = output<string>();
@@ -176,7 +178,19 @@ export class RoomDiscussion {
   }
 
   clearReplyTarget(): void {
+    this.draftTip.set('');
     this.replyCleared.emit();
+  }
+
+  consumeTip(): string | undefined {
+    if (!this.correcting()) return undefined;
+    const cleaned = sanitizeUserText(this.draftTip());
+    return cleaned || undefined;
+  }
+
+  onTipInput(event: Event): void {
+    const value = event.target instanceof HTMLInputElement ? event.target.value : '';
+    this.draftTip.set(value);
   }
 
   onSendMessage(event: Event): void {
@@ -200,6 +214,7 @@ export class RoomDiscussion {
   clearSentDraft(sent: string): void {
     if (sanitizeUserText(this.draftMessage(), { allowNewlines: true }) === sent) {
       this.draftMessage.set('');
+      this.draftTip.set('');
     }
   }
 

@@ -141,6 +141,7 @@ export class RoomFacade {
   readonly chatError: Signal<boolean> = this.chatStore.chatError;
   readonly replyTarget: Signal<string | null> = this.chatStore.replyTarget;
   readonly correcting: Signal<boolean> = this.chatStore.correcting;
+  readonly correctingCommentId: Signal<string | null> = this.chatStore.correctingCommentId;
   readonly pinnedTopic: Signal<string | null> = this.chatStore.pinnedTopic;
   readonly pinnedMessage: Signal<DiscussionMessage | null> = this.chatStore.pinnedMessage;
   readonly pinnedMessageId: Signal<string | null> = this.chatStore.pinnedCommentId;
@@ -495,15 +496,19 @@ export class RoomFacade {
     this.chatStore.setReplyTarget(null);
   }
 
-  sendMessage(roomId: string, text: string, onSent?: () => void): void {
+  sendMessage(roomId: string, text: string, onSent?: () => void, tip?: string): void {
     if (this.sendingCommentState()) return;
     this.sendingCommentState.set(true);
-    this.chatStore.sendMessage(text, (res) => {
-      this.sendingCommentState.set(false);
-      if (this.handleFeedback(roomId, res)) {
-        onSent?.();
-      }
-    });
+    this.chatStore.sendMessage(
+      text,
+      (res) => {
+        this.sendingCommentState.set(false);
+        if (this.handleFeedback(roomId, res)) {
+          onSent?.();
+        }
+      },
+      tip,
+    );
   }
 
   toggleMessageReaction(roomId: string, messageId: string, reaction: BackendReaction): void {

@@ -111,6 +111,7 @@
             class="msg"
             [class.msg-thread-reply]="msg.isThreadReply"
             [class.msg-is-you]="msg.isYou"
+            [class.msg-correction]="Boolean(msg.correction)"
             [attr.data-author]="msg.author"
           >
             @if (msg.authorId) {
@@ -171,7 +172,33 @@
                 </button>
               </div>
 
-              <p class="msg-text">{{ msg.text }}</p>
+              @if (msg.correction; as corr) {
+                <div class="msg-correction-label">
+                  <mat-icon aria-hidden="true">edit</mat-icon>
+                  <span>Language suggestion</span>
+                </div>
+                <p class="msg-correction-original">
+                  @for (part of corr.originalParts; track $index) {
+                    <span [class.msg-diff-removed]="part.changed">{{ part.text }}</span>{{ $last ? '' : ' ' }}
+                  }
+                </p>
+                <div class="msg-correction-revised-row">
+                  <mat-icon class="msg-correction-arrow" aria-hidden="true">subdirectory_arrow_right</mat-icon>
+                  <p class="msg-correction-revised">
+                    @for (part of corr.correctedParts; track $index) {
+                      <span [class.msg-diff-added]="part.changed">{{ part.text }}</span>{{ $last ? '' : ' ' }}
+                    }
+                  </p>
+                </div>
+                @if (corr.tip) {
+                  <p class="msg-correction-tip">
+                    <span aria-hidden="true">💡</span>
+                    <strong>Tip:</strong> {{ corr.tip }}
+                  </p>
+                }
+              } @else {
+                <p class="msg-text">{{ msg.text }}</p>
+              }
 
               <div class="msg-actions">
                 <div class="msg-reactions" aria-label="Message reactions">
@@ -209,6 +236,13 @@
                   >
                     Reply
                   </button>
+
+                  @if (msg.id === correctingCommentId()) {
+                    <span class="msg-correcting-pill">
+                      <mat-icon aria-hidden="true">edit</mat-icon>
+                      <span>Correcting…</span>
+                    </span>
+                  }
                 }
               </div>
             </div>
@@ -282,6 +316,21 @@
         <mat-icon>arrow_upward</mat-icon>
       </button>
     </form>
+    @if (correcting()) {
+      <div class="composer-tip-row">
+        <span aria-hidden="true">💡</span>
+        <input
+          type="text"
+          class="composer-tip-input"
+          maxlength="200"
+          [value]="draftTip()"
+          (input)="onTipInput($event)"
+          placeholder="Optional tip (e.g. grammar or phrasing note)"
+          aria-label="Optional correction tip"
+          autocomplete="off"
+        />
+      </div>
+    }
     @if (showCharCount()) {
       <p
         class="composer-char-count"

@@ -203,7 +203,8 @@ export class RoomPage {
 
   onSendMessage(text: string): void {
     const discussion = this.discussion();
-    this.facade.sendMessage(this.id(), text, () => discussion?.clearSentDraft(text));
+    const tip = discussion?.consumeTip();
+    this.facade.sendMessage(this.id(), text, () => discussion?.clearSentDraft(text), tip);
   }
 
   onStageReaction(reaction: BackendReaction): void {

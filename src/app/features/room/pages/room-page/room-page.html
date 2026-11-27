@@ -93,6 +93,7 @@
           [chatError]="facade.chatError()"
           [replyTarget]="facade.replyTarget()"
           [correcting]="facade.correcting()"
+          [correctingCommentId]="facade.correctingCommentId()"
           [pinnedTopic]="facade.pinnedTopic()"
           [pinnedMessageId]="facade.pinnedMessageId()"
           (topicChange)="facade.updateChatTopic(id(), $event)"

@@ -14,6 +14,7 @@ import { avatarChipClassFor } from '../../../shared/utils/avatar-chip.utils';
 import { sanitizeUserText } from '../../../shared/utils/form-validators';
 import { VoiceRoomApi } from '../data-access/voice-room-api';
 import type { ActionFeedback, DiscussionMessage, MessageReaction } from '../models/live-room.model';
+import { computeCorrectionDiff } from '../utils/correction-diff.utils';
 import { RoomStageStore } from './room-stage-store';
 
 const EMPTY_REACTIONS: readonly MessageReaction[] = [];
@@ -66,6 +67,9 @@ export class RoomChatStore {
   } | null>(null);
   readonly replyTarget = computed(() => this.reply()?.author ?? null);
   readonly correcting = computed(() => this.reply()?.original != null);
+  readonly correctingCommentId = computed(() =>
+    this.reply()?.original != null ? (this.reply()?.commentId ?? null) : null,
+  );
 
   readonly messages = computed<readonly DiscussionMessage[]>(() => {
     const myId = this.stageStore.currentUserId();
@@ -76,6 +80,10 @@ export class RoomChatStore {
       const name = this.stageStore.resolveDisplayName(comment.authorId, 'Speaker');
       const tally = reactionsMap.get(comment.id);
       const reactions = this.resolveReactions(comment.id, tally);
+      const isCorrection = comment.type === 'CORRECTION' && Boolean(comment.correctedContent);
+      const diff = isCorrection
+        ? computeCorrectionDiff(comment.content, comment.correctedContent!)
+        : null;
 
       return {
         id: comment.id,
@@ -88,10 +96,17 @@ export class RoomChatStore {
         isYou: comment.authorId === myId,
         isThreadReply: Boolean(comment.replyTo),
         timeLabel: formatTimeLabel(comment.createdAt),
-        text:
-          comment.type === 'CORRECTION' && comment.correctedContent
-            ? `${comment.content} → ${comment.correctedContent}`
-            : comment.content,
+        text: isCorrection
+          ? `${comment.content} → ${comment.correctedContent}`
+          : comment.content,
+        ...(diff
+          ? {
+              correction: {
+                ...diff,
+                ...(comment.tip ? { tip: comment.tip } : {}),
+              },
+            }
+          : {}),
         reactions,
       };
     });
@@ -186,7 +201,7 @@ export class RoomChatStore {
     fetchAttempt(0);
   }
 
-  sendMessage(content: string, onDone?: (res: ActionFeedback) => void): void {
+  sendMessage(content: string, onDone?: (res: ActionFeedback) => void, tip?: string): void {
     const id = this.stageStore.roomId();
     if (!id) {
       onDone?.({ ok: false, message: 'No active room.' });
@@ -201,11 +216,13 @@ export class RoomChatStore {
     const reply = this.reply();
     const generation = this.stageStore.generation();
     const original = reply?.original ?? null;
+    const cleanedTip = tip ? sanitizeUserText(tip) : '';
     this.voiceRoomApi
       .postComment(id, {
         type: original === null ? 'TEXT' : 'CORRECTION',
         content: original ?? trimmed,
         ...(original !== null ? { correctedContent: trimmed } : {}),
+        ...(original !== null && cleanedTip ? { tip: cleanedTip } : {}),
         replyTo: reply?.commentId ?? null,
       })
       .subscribe({

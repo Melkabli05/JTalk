@@ -131,6 +131,7 @@ export interface RoomCommentDto {
   readonly type: CommentType;
   readonly content: string;
   readonly correctedContent?: string;
+  readonly tip?: string;
   readonly pinnedAt?: string;
   readonly replyTo?: string;
   readonly createdAt: string;
@@ -172,6 +173,7 @@ export interface PostCommentPayload {
   readonly content: string;
   readonly correctedContent?: string | null;
   readonly replyTo?: string | null;
+  readonly tip?: string | null;
 }
 
 export interface ReactionBurstDto {
