@@ -28,13 +28,24 @@
     </div>
   }
 
-  @if (stageReaction(); as reaction) {
-    @for (key of [stageReactionKey()]; track key) {
-      <div class="stage-reaction" id="stageReaction" aria-hidden="true">
-        <span class="stage-reaction-emoji">{{ reaction.emoji }}</span>
-        <span class="stage-reaction-name">{{ reaction.reactorName }}</span>
-      </div>
-    }
+  @if (stageReactions().length > 0) {
+    <div class="stage-reactions-layer" aria-hidden="true">
+      @for (reaction of stageReactions(); track reaction.id) {
+        <div
+          class="stage-reaction"
+          id="stageReaction"
+          [style.--reaction-lane]="reaction.lane"
+        >
+          <span class="stage-reaction-emoji-row">
+            <span class="stage-reaction-emoji">{{ reaction.emoji }}</span>
+            @if (reaction.count > 1) {
+              <span class="stage-reaction-count">×{{ reaction.count }}</span>
+            }
+          </span>
+          <span class="stage-reaction-name">{{ reaction.reactorName }}</span>
+        </div>
+      }
+    </div>
   }
 
   <div
@@ -74,6 +85,12 @@
           @if (speaker.role === 'host') {
             <span class="speaker-badge speaker-badge-host" aria-hidden="true" title="Host">
               <mat-icon>star</mat-icon>
+            </span>
+          }
+
+          @if (speakerReactions().get(speaker.id); as speakerEmoji) {
+            <span class="speaker-badge speaker-badge-reaction" aria-hidden="true">
+              {{ speakerEmoji }}
             </span>
           }
 

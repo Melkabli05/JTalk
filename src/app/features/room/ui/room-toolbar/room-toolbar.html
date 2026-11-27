@@ -131,17 +131,67 @@
         </mat-menu>
       }
 
+      <div class="room-header-desktop-actions">
+        <button
+          matIconButton
+          class="room-header-icon-btn"
+          type="button"
+          aria-label="Share room menu"
+          matTooltip="Share"
+          [matMenuTriggerFor]="shareMenu"
+        >
+          <mat-icon>ios_share</mat-icon>
+        </button>
+        <mat-menu #shareMenu="matMenu" class="jtalk-menu" xPosition="before">
+          <button mat-menu-item type="button" (click)="copyRoomLink.emit()">
+            <mat-icon>link</mat-icon>
+            <span>Copy room link</span>
+          </button>
+          <button mat-menu-item type="button" (click)="findPeople.emit()">
+            <mat-icon>group</mat-icon>
+            <span>Browse language partners</span>
+          </button>
+        </mat-menu>
+
+        @if (isHost()) {
+          <button
+            matIconButton
+            class="room-header-icon-btn"
+            id="editRoomBtn"
+            type="button"
+            aria-label="Edit room"
+            matTooltip="Edit room"
+            (click)="openEditRoom.emit()"
+          >
+            <mat-icon>tune</mat-icon>
+          </button>
+
+          <button
+            matIconButton
+            class="room-header-icon-btn room-header-end-btn"
+            id="endRoomBtn"
+            type="button"
+            aria-label="End room for everyone"
+            matTooltip="End room for everyone"
+            (click)="openEndRoom.emit()"
+          >
+            <mat-icon>power_settings_new</mat-icon>
+          </button>
+        }
+      </div>
+
       <button
         matIconButton
-        class="room-header-icon-btn"
+        class="room-header-icon-btn room-header-mobile-more"
+        id="roomMoreBtn"
         type="button"
-        aria-label="Share room menu"
-        matTooltip="Share"
-        [matMenuTriggerFor]="shareMenu"
+        aria-label="Room options"
+        matTooltip="Room options"
+        [matMenuTriggerFor]="mobileMoreMenu"
       >
-        <mat-icon>ios_share</mat-icon>
+        <mat-icon>more_vert</mat-icon>
       </button>
-      <mat-menu #shareMenu="matMenu" class="jtalk-menu" xPosition="before">
+      <mat-menu #mobileMoreMenu="matMenu" class="jtalk-menu" xPosition="before">
         <button mat-menu-item type="button" (click)="copyRoomLink.emit()">
           <mat-icon>link</mat-icon>
           <span>Copy room link</span>
@@ -150,33 +200,22 @@
           <mat-icon>group</mat-icon>
           <span>Browse language partners</span>
         </button>
+        @if (isHost()) {
+          <button mat-menu-item type="button" (click)="openEditRoom.emit()">
+            <mat-icon>tune</mat-icon>
+            <span>Edit room</span>
+          </button>
+          <button
+            mat-menu-item
+            class="menu-item-danger"
+            type="button"
+            (click)="openEndRoom.emit()"
+          >
+            <mat-icon>power_settings_new</mat-icon>
+            <span>End room for everyone</span>
+          </button>
+        }
       </mat-menu>
-
-      @if (isHost()) {
-        <button
-          matIconButton
-          class="room-header-icon-btn"
-          id="editRoomBtn"
-          type="button"
-          aria-label="Edit room"
-          matTooltip="Edit room"
-          (click)="openEditRoom.emit()"
-        >
-          <mat-icon>tune</mat-icon>
-        </button>
-
-        <button
-          matIconButton
-          class="room-header-icon-btn room-header-end-btn"
-          id="endRoomBtn"
-          type="button"
-          aria-label="End room for everyone"
-          matTooltip="End room for everyone"
-          (click)="openEndRoom.emit()"
-        >
-          <mat-icon>power_settings_new</mat-icon>
-        </button>
-      }
     </div>
   </div>
 

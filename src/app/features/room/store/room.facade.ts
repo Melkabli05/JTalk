@@ -113,8 +113,10 @@ export class RoomFacade {
 
   readonly speakers: Signal<readonly RoomSpeaker[]> = this.stageStore.speakers;
   readonly effectiveMaxSeats: Signal<number> = this.stageStore.effectiveMaxSeats;
+  readonly stageReactions: Signal<readonly StageReaction[]> = this.stageStore.stageReactions;
   readonly stageReaction: Signal<StageReaction | null> = this.stageStore.stageReaction;
   readonly stageReactionKey: Signal<number> = this.stageStore.stageReactionKey;
+  readonly speakerReactions: Signal<ReadonlyMap<string, string>> = this.stageStore.speakerReactions;
   readonly canClaimStageSeat: Signal<boolean> = this.stageStore.canClaimStageSeat;
   readonly claimingSeat: Signal<boolean> = this.stageStore.claimingSeat;
   readonly togglingHand: Signal<boolean> = this.stageStore.togglingHand;

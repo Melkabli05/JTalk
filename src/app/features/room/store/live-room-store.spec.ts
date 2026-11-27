@@ -285,7 +285,12 @@ describe('room session', () => {
     listener.onRoomEvent({ type: 'REACTIONS', reactions: [{ userId: 'host', reaction: 'CLAP' }] });
     request.flush(null);
     expect(reactRes?.ok).toBe(true);
-    expect(store.stage.stageReaction()).toEqual({ emoji: '👏', reactorName: 'Host' });
+    expect(store.stage.stageReaction()).toMatchObject({
+      emoji: '👏',
+      reactorName: 'Host',
+      count: 1,
+    });
+    expect(store.stage.stageReactions()).toHaveLength(1);
     expect(store.stage.stageReactionKey()).toBe(1);
 
     listener.onLinkStatus('reconnecting');

@@ -35,7 +35,6 @@ export class RoomStageStore {
 
   private sessionGeneration = 0;
   private lastStageEventAt = 0;
-  private reactionTimeout: ReturnType<typeof setTimeout> | null = null;
 
   private readonly roomState = signal<VoiceRoomDto | null>(null);
   private readonly roleState = signal<BackendRoomRole>('LISTENER');
@@ -51,8 +50,10 @@ export class RoomStageStore {
   private readonly audienceCountState = signal(0);
   private readonly hasMoreAudienceState = signal(false);
   private readonly audienceLoadingState = signal(false);
-  private readonly stageReactionState = signal<StageReaction | null>(null);
-  private readonly stageReactionKeyState = signal(0);
+  private readonly stageReactionsState = signal<readonly StageReaction[]>([]);
+  private readonly reactionTimers = new Map<number, ReturnType<typeof setTimeout>>();
+  private nextReactionId = 0;
+  private nextReactionLane = 0;
 
   readonly room = this.roomState.asReadonly();
   readonly roomId = computed(() => this.room()?.id ?? null);
@@ -68,8 +69,16 @@ export class RoomStageStore {
   readonly audienceCount = this.audienceCountState.asReadonly();
   readonly hasMoreAudience = this.hasMoreAudienceState.asReadonly();
   readonly audienceLoading = this.audienceLoadingState.asReadonly();
-  readonly stageReaction = this.stageReactionState.asReadonly();
-  readonly stageReactionKey = this.stageReactionKeyState.asReadonly();
+  readonly stageReactions = this.stageReactionsState.asReadonly();
+  readonly stageReaction = computed(() => this.stageReactionsState().at(-1) ?? null);
+  readonly stageReactionKey = computed(() => this.stageReactionsState().at(-1)?.id ?? 0);
+  readonly speakerReactions = computed<ReadonlyMap<string, string>>(() => {
+    const map = new Map<string, string>();
+    for (const reaction of this.stageReactionsState()) {
+      map.set(reaction.userId, reaction.emoji);
+    }
+    return map;
+  });
 
   readonly effectiveRoomTitle = computed(() => this.room()?.title || 'Live room');
   readonly effectiveMaxSeats = computed(
@@ -478,13 +487,14 @@ export class RoomStageStore {
         return;
       }
       case 'REACTIONS': {
-        const latest = event.reactions?.at(-1);
-        if (latest && isBackendReaction(latest.reaction)) {
-          const reactorName =
-            latest.userId === this.currentUserId()
-              ? 'You'
-              : this.resolveDisplayName(latest.userId, 'Listener');
-          this.flashStageReaction({ emoji: emojiForReaction(latest.reaction), reactorName });
+        for (const item of event.reactions ?? []) {
+          if (isBackendReaction(item.reaction)) {
+            const reactorName =
+              item.userId === this.currentUserId()
+                ? 'You'
+                : this.resolveDisplayName(item.userId, 'Listener');
+            this.flashStageReaction(item.userId, emojiForReaction(item.reaction), reactorName);
+          }
         }
         return;
       }
@@ -530,8 +540,8 @@ export class RoomStageStore {
     this.leavingStageState.set(false);
     this.togglingHandState.set(false);
     this.reconnectingSpeakerIdsState.set(new Set());
-    this.clearReactionTimer();
-    this.stageReactionState.set(null);
+    this.clearReactionTimers();
+    this.stageReactionsState.set([]);
     this.roleState.set('LISTENER');
     this.roomState.set(null);
     this.audienceIdsState.set([]);
@@ -582,17 +592,60 @@ export class RoomStageStore {
     };
   }
 
-  private flashStageReaction(reaction: StageReaction): void {
-    this.stageReactionState.set(reaction);
-    this.stageReactionKeyState.update((k): number => k + 1);
-    this.clearReactionTimer();
-    this.reactionTimeout = setTimeout(() => this.stageReactionState.set(null), 2400);
+  private flashStageReaction(userId: string, emoji: string, reactorName: string): void {
+    const id = ++this.nextReactionId;
+    const current = this.stageReactionsState();
+    const existing = current.find((item) => item.userId === userId && item.emoji === emoji);
+
+    let next: readonly StageReaction[];
+    if (existing) {
+      this.clearReactionTimer(existing.id);
+      const updated: StageReaction = {
+        ...existing,
+        id,
+        reactorName,
+        count: existing.count + 1,
+      };
+      next = [...current.filter((item) => item.id !== existing.id), updated];
+    } else {
+      const created: StageReaction = {
+        id,
+        userId,
+        emoji,
+        reactorName,
+        count: 1,
+        lane: this.nextReactionLane++ % 4,
+      };
+      const combined = [...current, created];
+      if (combined.length > 4) {
+        const evicted = combined[0];
+        if (evicted) this.clearReactionTimer(evicted.id);
+        next = combined.slice(combined.length - 4);
+      } else {
+        next = combined;
+      }
+    }
+
+    this.stageReactionsState.set(next);
+    const timer = setTimeout(() => {
+      this.reactionTimers.delete(id);
+      this.stageReactionsState.update((list) => list.filter((item) => item.id !== id));
+    }, 2400);
+    this.reactionTimers.set(id, timer);
   }
 
-  private clearReactionTimer(): void {
-    if (this.reactionTimeout !== null) {
-      clearTimeout(this.reactionTimeout);
-      this.reactionTimeout = null;
+  private clearReactionTimer(id: number): void {
+    const timer = this.reactionTimers.get(id);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      this.reactionTimers.delete(id);
     }
+  }
+
+  private clearReactionTimers(): void {
+    for (const timer of this.reactionTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.reactionTimers.clear();
   }
 }

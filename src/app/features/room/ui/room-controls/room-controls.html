@@ -85,7 +85,7 @@
             matRipple
             type="button"
             [attr.aria-label]="'React with ' + item.label.toLowerCase()"
-            (click)="reactionPicked.emit(item.code)"
+            (click)="$event.stopPropagation(); reactionPicked.emit(item.code)"
           >
             {{ item.emoji }}
           </button>

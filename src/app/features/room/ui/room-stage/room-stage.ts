@@ -21,8 +21,8 @@ export class RoomStage {
 
   readonly speakers = input.required<readonly RoomSpeaker[]>();
   readonly maxSeats = input.required<number>();
-  readonly stageReaction = input<StageReaction | null>(null);
-  readonly stageReactionKey = input(0);
+  readonly stageReactions = input<readonly StageReaction[]>([]);
+  readonly speakerReactions = input<ReadonlyMap<string, string>>(new Map());
 
   readonly isHost = input(false);
   readonly hasOpenSeat = input(false);

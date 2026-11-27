@@ -7,8 +7,12 @@ export interface ActionFeedback {
 }
 
 export interface StageReaction {
+  readonly id: number;
+  readonly userId: string;
   readonly emoji: string;
   readonly reactorName: string;
+  readonly count: number;
+  readonly lane: number;
 }
 
 export type RoomConnectionState =
