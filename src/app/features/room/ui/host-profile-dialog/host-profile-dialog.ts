@@ -32,11 +32,26 @@ export class HostProfileDialog {
         level: entry.proficiencyLevel?.toLowerCase() ?? '',
       });
     }
-    const role =
-      target.kind === 'host' ? 'Host' : target.kind === 'speaker' ? 'Speaker' : 'Listener';
-    const audio = target.kind === 'listener' ? 'In audience' : target.muted ? 'Muted' : 'On mic';
+    const status =
+      target.kind === 'member'
+        ? isYou
+          ? 'Profile · You'
+          : 'Community member'
+        : [
+            target.kind === 'host'
+              ? 'Host'
+              : target.kind === 'speaker'
+                ? 'Speaker'
+                : 'Listener',
+            target.kind === 'listener'
+              ? 'In audience'
+              : target.muted
+                ? 'Muted'
+                : 'On mic',
+            ...(isYou ? ['You'] : []),
+          ].join(' · ');
     return {
-      status: [role, audio, ...(isYou ? ['You'] : [])].join(' · '),
+      status,
       name: profile.displayName,
       meta: '@' + profile.username,
       avatarUrl: profile.avatarUrl ?? null,

@@ -19,3 +19,27 @@ img.avatar {
   align-items: center;
   gap: 4px;
 }
+
+.person-clickable {
+  cursor: pointer;
+}
+
+.person-profile-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.person-profile-btn:hover {
+  text-decoration: underline;
+}
+
+.person-profile-btn:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

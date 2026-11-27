@@ -22,6 +22,7 @@ import { SkeletonLoader } from '../../../../shared/ui/skeleton-loader/skeleton-l
 import { KEYBOARD_OFFSET_THRESHOLD_PX } from '../../constants/room.constants';
 import {
   ConfirmActionDialogData,
+  DiscussionMessage,
   HostProfileDialogData,
   ListenerMenuAction,
   ProfilePreviewTarget,
@@ -160,6 +161,15 @@ export class RoomPage {
         }
       });
     });
+  }
+
+  onOpenCommentProfile(msg: DiscussionMessage): void {
+    if (!msg.authorId) return;
+    const speaker = this.facade.speakers().find((s) => s.id === msg.authorId);
+    const target: ProfilePreviewTarget = speaker
+      ? { kind: speaker.role, muted: speaker.muted }
+      : { kind: 'listener' };
+    this.openProfilePreview(msg.authorId, target);
   }
 
   onSendMessage(text: string): void {

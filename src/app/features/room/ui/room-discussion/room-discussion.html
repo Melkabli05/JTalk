@@ -113,13 +113,37 @@
             [class.msg-is-you]="msg.isYou"
             [attr.data-author]="msg.author"
           >
-            <span class="avatar msg-avatar" [class]="msg.avatarClass" aria-hidden="true">
-              {{ msg.avatarText }}
-            </span>
+            @if (msg.authorId) {
+              <button
+                type="button"
+                class="msg-avatar-btn"
+                [attr.aria-label]="'View ' + msg.author + '\'s profile'"
+                (click)="openProfile.emit(msg)"
+              >
+                <span class="avatar msg-avatar" [class]="msg.avatarClass" aria-hidden="true">
+                  {{ msg.avatarText }}
+                </span>
+              </button>
+            } @else {
+              <span class="avatar msg-avatar" [class]="msg.avatarClass" aria-hidden="true">
+                {{ msg.avatarText }}
+              </span>
+            }
 
             <div class="msg-body">
               <div class="msg-head">
-                <b class="msg-author">{{ msg.author }}</b>
+                @if (msg.authorId) {
+                  <button
+                    type="button"
+                    class="msg-author-btn"
+                    [attr.aria-label]="'View ' + msg.author + '\'s profile'"
+                    (click)="openProfile.emit(msg)"
+                  >
+                    <b class="msg-author">{{ msg.author }}</b>
+                  </button>
+                } @else {
+                  <b class="msg-author">{{ msg.author }}</b>
+                }
                 @if (msg.isHost) {
                   <span class="msg-role-label is-host">Host</span>
                 }
@@ -264,6 +288,12 @@
 
   <mat-menu #commentActionsMenu="matMenu" class="jtalk-menu" xPosition="before">
     <ng-template matMenuContent let-msg="msg">
+      @if (msg.authorId) {
+        <button mat-menu-item type="button" (click)="openProfile.emit(msg)">
+          <mat-icon>person</mat-icon>
+          <span>View profile</span>
+        </button>
+      }
       @if (canSend()) {
         <button mat-menu-item type="button" (click)="onCorrectMessage(msg)">
           <mat-icon>edit</mat-icon><span>Correct this message</span>

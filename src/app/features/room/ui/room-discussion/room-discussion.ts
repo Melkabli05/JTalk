@@ -68,6 +68,7 @@ export class RoomDiscussion {
     action: 'reply' | 'pin' | 'copy' | 'correct' | 'mute' | 'delete';
     message: DiscussionMessage;
   }>();
+  readonly openProfile = output<DiscussionMessage>();
 
   readonly skeletonMessages = [
     { id: 1, authorWidth: '68px', lines: 2, hasReaction: false, isReply: false },

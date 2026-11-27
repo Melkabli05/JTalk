@@ -84,6 +84,6 @@ export interface DiscussionMessage {
 }
 
 export interface ProfilePreviewTarget {
-  kind: 'host' | 'speaker' | 'listener';
+  kind: 'host' | 'speaker' | 'listener' | 'member';
   muted?: boolean;
 }

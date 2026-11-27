@@ -3,18 +3,30 @@
   @if (p.avatarUrl) {
     <img
       matListItemAvatar
-      class="avatar"
+      class="avatar person-clickable"
       [src]="p.avatarUrl"
       [alt]="p.displayName"
       referrerpolicy="no-referrer"
+      (click)="openProfile.emit(p)"
     />
   } @else {
-    <span matListItemAvatar class="avatar" [class]="chipClass()" aria-hidden="true">
+    <span
+      matListItemAvatar
+      class="avatar person-clickable"
+      [class]="chipClass()"
+      aria-hidden="true"
+      (click)="openProfile.emit(p)"
+    >
       {{ initial() }}
     </span>
   }
   <span matListItemTitle
-    >{{ p.displayName }} <span class="person-handle">&#64;{{ p.username }}</span></span
+    ><button
+      type="button"
+      class="person-profile-btn"
+      [attr.aria-label]="'View ' + p.displayName + '\'s profile'"
+      (click)="openProfile.emit(p)"
+    >{{ p.displayName }} <span class="person-handle">&#64;{{ p.username }}</span></button></span
   >
   <span matListItemLine>{{ languages() }}</span>
   <span matListItemMeta class="directory-list-meta">
@@ -36,6 +48,10 @@
       <mat-icon>more_vert</mat-icon>
     </button>
     <mat-menu #personMenu="matMenu" class="jtalk-menu" xPosition="before">
+      <button mat-menu-item type="button" (click)="openProfile.emit(p)">
+        <mat-icon>person</mat-icon>
+        <span>View profile</span>
+      </button>
       <button mat-menu-item class="menu-item-danger" type="button" (click)="blockUser.emit(p)">
         <mat-icon>block</mat-icon>
         <span>Block &#64;{{ p.username }}</span>

@@ -101,6 +101,7 @@
           <app-person-row
             [person]="person"
             [busy]="facade.busyIds().has(person.id)"
+            (openProfile)="openPersonProfile($event)"
             (followToggle)="facade.toggleFollow($event)"
             (blockUser)="facade.blockUser($event)"
           />

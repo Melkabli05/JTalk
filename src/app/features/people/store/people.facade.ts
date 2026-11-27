@@ -15,11 +15,17 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import type { DiscoveredUserResponse, UserPageResponse } from '../../../core/auth/auth.models';
+import { firstValueFrom, forkJoin } from 'rxjs';
+import type {
+  DiscoveredUserResponse,
+  UserPageResponse,
+  UserProfileResponse,
+} from '../../../core/auth/auth.models';
 import { IdentityStore } from '../../../core/auth/identity';
 import { UsersApi } from '../../../core/auth/users-api';
 import { ApiError, errorMessage } from '../../../core/http/http-error.interceptor';
 import { ToastNotifier } from '../../../core/services/toast-notifier';
+import type { HostProfileDialogData } from '../../room/models/live-room.model';
 import {
   PEOPLE_MATCHMAKING_PAGE_SIZE,
   PEOPLE_MIN_SEARCH_LENGTH,
@@ -81,6 +87,7 @@ export class PeopleFacade {
     computation: () => new Set(),
   });
   private readonly pendingIds = signal<ReadonlySet<string>>(new Set());
+  private profilePreviewSeq = 0;
 
   private readonly queryState = linkedSignal<string>(() => this.queryParamMap?.().get('q') ?? '');
   readonly query: Signal<string> = this.queryState.asReadonly();
@@ -247,6 +254,56 @@ export class PeopleFacade {
         }
       },
     });
+  }
+
+  loadProfilePreview(id: string, onReady: (data: HostProfileDialogData) => void): void {
+    const seq = ++this.profilePreviewSeq;
+    forkJoin([this.usersApi.getUser(id), this.usersApi.getSocialStats(id)]).subscribe({
+      next: ([profile, stats]) => {
+        if (this.destroyRef.destroyed || seq !== this.profilePreviewSeq) return;
+        const isYou = id === this.identity.userId();
+        onReady({
+          profile,
+          stats,
+          target: { kind: 'member' },
+          isYou,
+          onToggleFollow: isYou
+            ? undefined
+            : (follow) => this.toggleFollowFromPreview(profile, follow),
+        });
+      },
+      error: (err: unknown) => {
+        if (!this.destroyRef.destroyed && seq === this.profilePreviewSeq) {
+          this.toast?.show(errorMessage(err, 'Could not load this profile.'));
+        }
+      },
+    });
+  }
+
+  private async toggleFollowFromPreview(
+    profile: UserProfileResponse,
+    follow: boolean,
+  ): Promise<boolean> {
+    try {
+      await firstValueFrom(
+        follow ? this.usersApi.follow(profile.id) : this.usersApi.unfollow(profile.id),
+      );
+      this.followOverrides.update((prev): ReadonlyMap<string, boolean> =>
+        new Map(prev).set(profile.id, follow),
+      );
+      this.identity.refreshSocialStats();
+      if (!this.destroyRef.destroyed) {
+        this.toast?.show(
+          follow ? `Following ${profile.displayName}.` : `Unfollowed ${profile.displayName}.`,
+        );
+      }
+      return true;
+    } catch (err: unknown) {
+      if (!this.destroyRef.destroyed) {
+        this.toast?.show(errorMessage(err, 'Could not update follow status.'));
+      }
+      return false;
+    }
   }
 
   private togglePending(id: string, busy: boolean): void {

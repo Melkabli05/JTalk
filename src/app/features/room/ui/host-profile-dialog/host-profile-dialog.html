@@ -54,7 +54,7 @@
       <span
         class="hp-mic"
         id="hostProfileMic"
-        [hidden]="data.target.kind === 'listener'"
+        [hidden]="data.target.kind === 'listener' || data.target.kind === 'member'"
         [class.is-muted]="data.target.muted"
         aria-hidden="true"
       >

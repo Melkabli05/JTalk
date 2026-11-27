@@ -21,6 +21,7 @@ export class PersonRow {
   readonly busy = input(false);
   readonly followToggle = output<DiscoveredUserResponse>();
   readonly blockUser = output<DiscoveredUserResponse>();
+  readonly openProfile = output<DiscoveredUserResponse>();
 
   readonly initial = computed(() => {
     const p = this.person();

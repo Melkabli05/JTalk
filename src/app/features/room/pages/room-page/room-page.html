@@ -106,6 +106,7 @@
           (emptySendAttempt)="facade.notify('Write something first.')"
           (toggleReaction)="facade.toggleMessageReaction(id(), $event.messageId, $event.reaction)"
           (commentAction)="facade.commentAction(id(), $event)"
+          (openProfile)="onOpenCommentProfile($event)"
         />
       </div>
 
