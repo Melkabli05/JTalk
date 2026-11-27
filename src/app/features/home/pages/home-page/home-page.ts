@@ -173,20 +173,14 @@ export class HomePage {
     void this.router.navigate(['/room', room.id]);
   }
 
-  readonly showInstallCta = computed(() => this.pwa.canInstall() || this.pwa.isIosInstallable());
+  readonly showInstallCta = this.pwa.canInstall;
 
   onInstallApp(): void {
-    if (this.pwa.canInstall()) {
-      this.pwa.promptInstall((outcome) => {
-        if (outcome === 'accepted' && !this.destroyRef.destroyed) {
-          this.toast?.show('Jtalk installed.');
-        }
-      });
-      return;
-    }
-    if (this.pwa.isIosInstallable()) {
-      this.toast?.show('To install Jtalk, tap Share and then Add to Home Screen.');
-    }
+    this.pwa.promptInstall((outcome) => {
+      if (outcome === 'accepted' && !this.destroyRef.destroyed) {
+        this.toast?.show('Jtalk installed.');
+      }
+    });
   }
 
   private prefersReducedMotion(): boolean {
