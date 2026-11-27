@@ -9,6 +9,7 @@ import { IdentityStore } from '../../../core/auth/identity';
 import { UsersApi } from '../../../core/auth/users-api';
 import { errorMessage } from '../../../core/http/http-error.interceptor';
 import { ToastNotifier } from '../../../core/services/toast-notifier';
+import { sanitizeUserText } from '../../../shared/utils/form-validators';
 import type { HostProfileDialogData } from '../../room/models/live-room.model';
 import { PeopleStore } from './people.store';
 
@@ -39,12 +40,12 @@ export class PeopleFacade {
   readonly people: Signal<readonly DiscoveredUserResponse[]> = this.store.people;
 
   setQuery(raw: string): void {
-    this.store.setQuery(raw);
-    const trimmed = raw.trim();
+    const cleaned = sanitizeUserText(raw);
+    this.store.setQuery(cleaned);
     if (this.route && this.router) {
       void this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: { q: trimmed.length > 0 ? trimmed : null },
+        queryParams: { q: cleaned.length > 0 ? cleaned : null },
         queryParamsHandling: 'merge',
         replaceUrl: true,
       });

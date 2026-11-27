@@ -14,7 +14,11 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import type { UpdateVoiceRoomPayload } from '../../../../shared/models/voice-room.model';
-import { trimmedRequired } from '../../../../shared/utils/form-validators';
+import {
+  noBlankOnlyText,
+  sanitizeUserText,
+  trimmedRequired,
+} from '../../../../shared/utils/form-validators';
 
 export interface EditRoomDialogData extends Required<UpdateVoiceRoomPayload> {
   readonly submit?: (patch: UpdateVoiceRoomPayload) => Promise<string | null>;
@@ -56,6 +60,7 @@ export class EditRoomDialog {
     (path) => {
       trimmedRequired(path.title, 'Room title is required.');
       maxLength(path.title, 80, { message: 'Use 80 characters or fewer.' });
+      noBlankOnlyText(path.topic, 'Enter valid text or leave the topic blank.');
       maxLength(path.topic, 255, { message: 'Use 255 characters or fewer.' });
       required(path.maxStageSeats, { message: 'Enter the number of stage seats.' });
       min(path.maxStageSeats, 2, { message: 'Use at least 2 seats.' });
@@ -73,8 +78,8 @@ export class EditRoomDialog {
         action: async (field) => {
           this.submitError.set(null);
           const values = field().value();
-          const title = values.title.trim();
-          const topic = values.topic.trim();
+          const title = sanitizeUserText(values.title);
+          const topic = sanitizeUserText(values.topic);
           const seats = values.maxStageSeats;
           const patch: UpdateVoiceRoomPayload = {
             ...(title !== this.data.title && { title }),

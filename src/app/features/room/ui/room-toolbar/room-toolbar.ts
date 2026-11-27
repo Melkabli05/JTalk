@@ -62,9 +62,9 @@ export class RoomToolbar {
   readonly noiseIsolationLabel = computed(() => {
     switch (this.noiseIsolationMode()) {
       case 'krisp-active':
-        return 'Krisp noise isolation: On';
+        return 'Noise isolation: On';
       case 'krisp-bypassed':
-        return 'Krisp noise isolation: Off';
+        return 'Noise isolation: Off';
       case 'webrtc-fallback':
         return 'Noise suppression: Browser APM';
       default:

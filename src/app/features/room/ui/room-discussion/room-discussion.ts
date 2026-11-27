@@ -18,6 +18,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SkeletonLoader } from '../../../../shared/ui/skeleton-loader/skeleton-loader';
+import { sanitizeUserText } from '../../../../shared/utils/form-validators';
 import { DiscussionMessage } from '../../models/live-room.model';
 
 @Component({
@@ -165,7 +166,7 @@ export class RoomDiscussion {
 
   onSaveTopic(event: Event, rawValue: string): void {
     event.preventDefault();
-    const trimmed = rawValue.trim();
+    const trimmed = sanitizeUserText(rawValue);
     if (!trimmed && !this.pinnedTopic()) {
       this.editingTopic.set(false);
       return;
@@ -181,7 +182,7 @@ export class RoomDiscussion {
   onSendMessage(event: Event): void {
     event.preventDefault();
     if (!this.canSend() || this.sending() || this.messageField().invalid()) return;
-    const text = this.draftMessage().trim();
+    const text = sanitizeUserText(this.draftMessage(), { allowNewlines: true });
     if (!text) {
       this.emptySendAttempt.emit();
       this.composerInputRef()?.nativeElement.focus();
@@ -197,7 +198,9 @@ export class RoomDiscussion {
   }
 
   clearSentDraft(sent: string): void {
-    if (this.draftMessage().trim() === sent) this.draftMessage.set('');
+    if (sanitizeUserText(this.draftMessage(), { allowNewlines: true }) === sent) {
+      this.draftMessage.set('');
+    }
   }
 
   onComposerKey(event: KeyboardEvent): void {

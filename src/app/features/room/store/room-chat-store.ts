@@ -11,6 +11,7 @@ import {
   type RoomCommentDto,
 } from '../../../shared/models/voice-room.model';
 import { avatarChipClassFor } from '../../../shared/utils/avatar-chip.utils';
+import { sanitizeUserText } from '../../../shared/utils/form-validators';
 import { VoiceRoomApi } from '../data-access/voice-room-api';
 import type { ActionFeedback, DiscussionMessage, MessageReaction } from '../models/live-room.model';
 import { RoomStageStore } from './room-stage-store';
@@ -296,7 +297,7 @@ export class RoomChatStore {
   }
 
   setChatTopic(text: string, onDone?: (res: ActionFeedback) => void): void {
-    const topic = text.trim();
+    const topic = sanitizeUserText(text);
     const previousTopic = this.pinnedTopic();
     const generation = this.stageStore.generation();
     this.stageStore.runRoomCommand(

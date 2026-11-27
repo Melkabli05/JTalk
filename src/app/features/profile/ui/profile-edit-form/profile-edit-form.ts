@@ -27,7 +27,11 @@ import type {
 } from '../../../../core/auth/auth.models';
 import { UsersApi } from '../../../../core/auth/users-api';
 import { COUNTRY_CATALOG, LANGUAGE_CATALOG } from '../../../../core/utils/language-codes';
-import { trimmedRequired } from '../../../../shared/utils/form-validators';
+import {
+  noBlankOnlyText,
+  sanitizeUserText,
+  trimmedRequired,
+} from '../../../../shared/utils/form-validators';
 import {
   PROFILE_AVATAR_ACCEPTED_TYPES,
   PROFILE_AVATAR_MAX_BYTES,
@@ -212,6 +216,7 @@ export class ProfileEditForm {
         ? { kind: 'taken', message: 'This username is already taken.' }
         : undefined;
     });
+    noBlankOnlyText(schemaPath.bio, 'Enter valid text or leave your bio blank.', true);
     maxLength(schemaPath.bio, PROFILE_BIO_MAX, {
       message: `Use ${PROFILE_BIO_MAX} characters or fewer.`,
     });
@@ -479,7 +484,7 @@ export class ProfileEditForm {
 
     this.saved.emit({
       input: {
-        displayName: val.displayName.trim(),
+        displayName: sanitizeUserText(val.displayName),
         username: normalizeUsername(val.username),
         nativeLanguage: isOnboarding ? val.nativeLanguage : (current?.nativeLanguage ?? val.nativeLanguage),
         learningLanguage: primaryLearning,
@@ -487,7 +492,7 @@ export class ProfileEditForm {
           ? { learningLanguages: learningEntries }
           : {}),
         countryCode: val.countryCode || null,
-        bio: val.bio,
+        bio: sanitizeUserText(val.bio, { allowNewlines: true }),
       },
       avatarBlob: this.pendingAvatarBlob(),
     });

@@ -8,7 +8,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { CreateVoiceRoomPayload } from '../../../shared/models/voice-room.model';
 import { LANGUAGE_CATALOG } from '../../../core/utils/language-codes';
-import { trimmedRequired } from '../../../shared/utils/form-validators';
+import {
+  noBlankOnlyText,
+  sanitizeUserText,
+  trimmedRequired,
+} from '../../../shared/utils/form-validators';
 
 export interface StartRoomDialogData {
   readonly defaults?: Partial<
@@ -55,6 +59,7 @@ export class StartRoomDialog {
     (schemaPath) => {
       trimmedRequired(schemaPath.title, 'Room title is required.');
       maxLength(schemaPath.title, 80, { message: 'Use 80 characters or fewer.' });
+      noBlankOnlyText(schemaPath.topic, 'Enter valid text or leave the topic blank.');
       maxLength(schemaPath.topic, 255, { message: 'Use 255 characters or fewer.' });
     },
     {
@@ -64,8 +69,8 @@ export class StartRoomDialog {
           const config = field().value();
           const payload: CreateVoiceRoomPayload = {
             ...config,
-            title: config.title.trim(),
-            topic: config.topic.trim() || 'Just chatting',
+            title: sanitizeUserText(config.title),
+            topic: sanitizeUserText(config.topic) || 'Just chatting',
           };
           if (this.data?.submit) {
             const err = await this.data.submit(payload);
