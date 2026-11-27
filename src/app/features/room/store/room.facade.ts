@@ -208,11 +208,11 @@ export class RoomFacade {
     this.roomStore.audio.toggleNoise((mode) => {
       if (this.destroyRef.destroyed) return;
       if (mode === 'krisp-active') {
-        this.toast.show('Krisp noise isolation enabled.');
+        this.toast.show('Noise isolation enabled.');
       } else if (mode === 'krisp-bypassed') {
-        this.toast.show('Krisp noise isolation paused.');
+        this.toast.show('Noise isolation paused.');
       } else {
-        this.toast.show('Using browser WebRTC noise suppression.');
+        this.toast.show('Using standard noise reduction.');
       }
     });
   }

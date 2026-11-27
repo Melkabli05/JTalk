@@ -327,7 +327,7 @@ export class LiveRoomStore {
             } else {
               this.connectionStateSignal.set({
                 status: 'error',
-                message: 'Connected to room, but LiveKit audio could not start. Tap Retry audio.',
+                message: 'Connected to room, but voice audio could not start. Tap Retry audio.',
               });
             }
             onDone(true);

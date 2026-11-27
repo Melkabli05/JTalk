@@ -36,7 +36,7 @@ const problemMessages = new Map<string, string>([
   ],
   [
     'urn:jtalk:proxy:problem:upstream-unavailable',
-    'The JTalk backend service is waking up or temporarily unavailable. Please retry.',
+    'Jtalk is temporarily unavailable. Please try again in a moment.',
   ],
 ]);
 

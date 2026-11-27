@@ -66,7 +66,7 @@ export class RoomToolbar {
       case 'krisp-bypassed':
         return 'Noise isolation: Off';
       case 'webrtc-fallback':
-        return 'Noise suppression: Browser APM';
+        return 'Noise reduction: Standard';
       default:
         return 'Noise isolation unavailable';
     }
