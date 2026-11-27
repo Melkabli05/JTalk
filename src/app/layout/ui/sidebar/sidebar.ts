@@ -6,9 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { ColorScheme } from '../../../core/services/theme';
-
-export type AppView = 'rooms' | 'room' | 'people' | 'profile';
+import type { ColorScheme } from '../../../core/models/theme.model';
+import type { AppView } from '../../models/layout.model';
 
 @Component({
   selector: 'app-sidebar',

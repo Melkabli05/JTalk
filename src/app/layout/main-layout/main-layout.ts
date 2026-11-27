@@ -19,9 +19,10 @@ import { ThemeService } from '../../core/services/theme';
 import { ToastNotifier } from '../../core/services/toast-notifier';
 import { LiveRoomStore } from '../../features/room/store/live-room-store';
 import { RoomsFacade } from '../../features/rooms/store/rooms.facade';
+import type { AppView } from '../models/layout.model';
 import { InRoomBanner } from '../ui/inroom-banner/inroom-banner';
 import { MobileTabbar } from '../ui/mobile-tabbar/mobile-tabbar';
-import { Sidebar, type AppView } from '../ui/sidebar/sidebar';
+import { Sidebar } from '../ui/sidebar/sidebar';
 
 @Component({
   selector: 'app-main-layout',

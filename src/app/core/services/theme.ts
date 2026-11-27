@@ -1,13 +1,8 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { computed, DestroyRef, inject, PLATFORM_ID, Service, signal } from '@angular/core';
 import { COLOR_SCHEME_STORAGE_KEY } from '../../shared/constants/storage-keys.constants';
+import { type ColorScheme, isColorScheme } from '../models/theme.model';
 import { BrowserStorage } from './browser-storage';
-
-export type ColorScheme = 'light' | 'dark';
-
-export function isColorScheme(value: unknown): value is ColorScheme {
-  return value === 'light' || value === 'dark';
-}
 
 // Matches --mat-sys-background: light-dark(#F8F7F4, #131314) in src/styles/_theme.scss
 const THEME_COLOR_BY_SCHEME = {

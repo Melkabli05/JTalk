@@ -92,3 +92,24 @@ export type ProfileLoadStatus =
   | 'ready'
   | 'missing'
   | 'error';
+
+export interface ProfileSaveInput {
+  readonly displayName: string;
+  readonly username: string;
+  readonly nativeLanguage: string;
+  readonly learningLanguage: string | null;
+  readonly countryCode: string | null;
+  readonly bio: string;
+  readonly avatarUrl?: string | null;
+}
+
+export interface ProfileSaveResult {
+  readonly ok: boolean;
+  readonly profile?: UserProfileResponse;
+  readonly error?: string;
+}
+
+export interface AccountActionResult {
+  readonly ok: boolean;
+  readonly error?: string;
+}

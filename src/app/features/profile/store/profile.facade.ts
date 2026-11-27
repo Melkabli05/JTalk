@@ -22,8 +22,9 @@ import type {
 import { IdentityStore } from '../../../core/auth/identity';
 import { UsersApi } from '../../../core/auth/users-api';
 import { errorMessage } from '../../../core/http/http-error.interceptor';
+import { type ColorScheme, isColorScheme } from '../../../core/models/theme.model';
 import { PwaService } from '../../../core/services/pwa';
-import { type ColorScheme, isColorScheme, ThemeService } from '../../../core/services/theme';
+import { ThemeService } from '../../../core/services/theme';
 import { ToastNotifier } from '../../../core/services/toast-notifier';
 import { LiveRoomStore } from '../../room/store/live-room-store';
 import {
@@ -32,9 +33,7 @@ import {
   PROFILE_TAB_ORDER,
   type ProfileTab,
 } from '../constants/profile.constants';
-import type { ProfileEditSaveEvent } from '../ui/profile-edit-form/profile-edit-form';
-
-export type ProfileConnectionList = 'followers' | 'following' | 'blocks';
+import type { ProfileConnectionList, ProfileEditSaveEvent } from '../models/profile.model';
 
 interface ConnectionsRequest {
   readonly userId: string;

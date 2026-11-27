@@ -18,8 +18,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import type { SocialStatsResponse, UserProfileResponse } from '../../../../core/auth/auth.models';
-import type { ProfileSaveInput } from '../../../../core/auth/identity';
+import type {
+  SocialStatsResponse,
+  UserProfileResponse,
+} from '../../../../core/auth/auth.models';
 import {
   COUNTRY_CATALOG,
   LANGUAGE_CATALOG,
@@ -27,11 +29,7 @@ import {
 } from '../../../../core/utils/language-codes';
 import { AvatarArt } from '../../../../shared/ui/avatar-art/avatar-art';
 import { trimmedRequired } from '../../../../shared/utils/form-validators';
-
-export interface ProfileEditSaveEvent {
-  readonly input: ProfileSaveInput;
-  readonly avatarBlob: Blob | null;
-}
+import type { ProfileEditSaveEvent } from '../../models/profile.model';
 
 interface ProfileFormModel {
   displayName: string;

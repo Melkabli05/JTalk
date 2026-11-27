@@ -11,39 +11,20 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '@auth0/auth0-angular';
 import { catchError, finalize, map, type Observable, of, switchMap, throwError } from 'rxjs';
 import { ApiError, errorMessage } from '../http/http-error.interceptor';
+import { JTALK_USER_ID_CLAIM } from './auth.constants';
 import type {
+  AccountActionResult,
   CreateProfileRequest,
   LanguageMatrixResponse,
   ProfileLoadStatus,
+  ProfileSaveInput,
+  ProfileSaveResult,
   SocialStatsResponse,
   UpdateProfileRequest,
   UserProfileResponse,
   UserSummaryResponse,
 } from './auth.models';
 import { UsersApi } from './users-api';
-
-export const JTALK_USER_ID_CLAIM = 'https://jtalk.app/user_id';
-
-export interface ProfileSaveInput {
-  readonly displayName: string;
-  readonly username: string;
-  readonly nativeLanguage: string;
-  readonly learningLanguage: string | null;
-  readonly countryCode: string | null;
-  readonly bio: string;
-  readonly avatarUrl?: string | null;
-}
-
-export interface ProfileSaveResult {
-  readonly ok: boolean;
-  readonly profile?: UserProfileResponse;
-  readonly error?: string;
-}
-
-export interface AccountActionResult {
-  readonly ok: boolean;
-  readonly error?: string;
-}
 
 function buildProfilePatch(
   current: UserProfileResponse,

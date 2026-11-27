@@ -11,13 +11,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import type { ProficiencyLevel } from '../../../../core/auth/auth.models';
 import { LANGUAGE_CATALOG, languageNameFor } from '../../../../core/utils/language-codes';
+import type { ProfileEditSaveEvent } from '../../models/profile.model';
 import { ProfileFacade } from '../../store/profile.facade';
 import { DeleteAccountDialog } from '../../ui/delete-account-dialog/delete-account-dialog';
 import { ProfileAccount } from '../../ui/profile-account/profile-account';
-import {
-  ProfileEditForm,
-  type ProfileEditSaveEvent,
-} from '../../ui/profile-edit-form/profile-edit-form';
+import { ProfileEditForm } from '../../ui/profile-edit-form/profile-edit-form';
 import { ProfileHeader } from '../../ui/profile-header/profile-header';
 import { ProfileOverview } from '../../ui/profile-overview/profile-overview';
 
