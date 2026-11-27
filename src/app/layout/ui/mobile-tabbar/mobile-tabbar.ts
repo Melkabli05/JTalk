@@ -29,6 +29,7 @@ export class MobileTabbar {
   readonly inRoom = input(false);
 
   readonly startRoom = output<void>();
+  readonly backToRoom = output<void>();
 
   readonly avatarInitial = computed(() => {
     const trimmed = this.profileName().trim();

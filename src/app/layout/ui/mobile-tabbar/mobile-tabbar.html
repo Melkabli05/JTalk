@@ -45,15 +45,13 @@
     </a>
   </mat-toolbar>
 </nav>
-@if (!inRoom()) {
-  <button
-    matFab
-    class="mobile-golive-fab"
-    type="button"
-    aria-label="Go live: start a room"
-    matTooltip="Go live"
-    (click)="startRoom.emit()"
-  >
-    <mat-icon aria-hidden="true">add</mat-icon>
-  </button>
-}
+<button
+  matFab
+  class="mobile-golive-fab"
+  type="button"
+  [attr.aria-label]="inRoom() ? 'Back to the room' : 'Go live: start a room'"
+  [matTooltip]="inRoom() ? 'Back to the room' : 'Go live'"
+  (click)="inRoom() ? backToRoom.emit() : startRoom.emit()"
+>
+  <mat-icon aria-hidden="true">{{ inRoom() ? 'graphic_eq' : 'add' }}</mat-icon>
+</button>
