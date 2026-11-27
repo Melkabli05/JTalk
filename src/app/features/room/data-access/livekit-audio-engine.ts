@@ -20,11 +20,11 @@ import type {
 import {
   type AudioDeviceOption,
   type AudioQualityLevel,
-  LIVEKIT_CONNECTOR,
   type LiveKitConnectionHandle,
   type LiveKitConnectionStatus,
   type LiveKitListener,
 } from './livekit-connector';
+import { LIVEKIT_CONNECTOR } from '../tokens/livekit-connector.token';
 import type { NoiseIsolationMode } from './livekit-noise-filter';
 import { VoiceRoomApi } from './voice-room-api';
 

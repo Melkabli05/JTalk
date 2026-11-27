@@ -11,7 +11,10 @@ import type {
 } from '../../../shared/models/voice-room.model';
 import { ROOMS_LIST_PAGE_SIZE } from '../constants/rooms.constants';
 import type { RoomFeedEvent } from '../models/room-feed.model';
-import { ROOM_FEED_TRANSPORT, type RoomFeedTransportHooks } from '../../../core/http/room-feed-transport';
+import {
+  ROOM_FEED_TRANSPORT,
+  type RoomFeedTransportHooks,
+} from '../../../core/http/room-feed-transport.token';
 
 interface RoomListPage {
   readonly content: readonly VoiceRoomDto[];

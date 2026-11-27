@@ -1,4 +1,3 @@
-import { InjectionToken } from '@angular/core';
 import type { Participant, TrackPublication } from 'livekit-client';
 import type { ChatRealtimeEvent, RoomRealtimeEvent } from '../../../shared/models/voice-room.model';
 import { CHAT_EVENTS_TOPIC, ROOM_EVENTS_TOPIC } from '../constants/room.constants';
@@ -329,8 +328,3 @@ export async function defaultLiveKitConnector(
     },
   };
 }
-
-export const LIVEKIT_CONNECTOR = new InjectionToken<LiveKitConnectorFn>('LIVEKIT_CONNECTOR', {
-  providedIn: 'root',
-  factory: () => defaultLiveKitConnector,
-});

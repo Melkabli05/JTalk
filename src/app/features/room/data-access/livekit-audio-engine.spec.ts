@@ -6,11 +6,11 @@ import { RoomSessionDto } from '../../../shared/models/voice-room.model';
 import { VoiceRoomApi } from './voice-room-api';
 import { LiveKitAudioEngine } from './livekit-audio-engine';
 import {
-  LIVEKIT_CONNECTOR,
   type LiveKitConnectionHandle,
   type LiveKitConnectorFn,
   type LiveKitListener,
 } from './livekit-connector';
+import { LIVEKIT_CONNECTOR } from '../tokens/livekit-connector.token';
 
 describe('LiveKitAudioEngine', () => {
   const session: RoomSessionDto = {

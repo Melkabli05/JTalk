@@ -5,7 +5,7 @@ import { provideRouter, Router } from '@angular/router';
 import { vi } from 'vitest';
 import { provideNoopAuthForTests } from '../../../core/auth/auth.providers';
 import { ToastNotifier } from '../../../core/services/toast-notifier';
-import { LIVEKIT_CONNECTOR } from '../data-access/livekit-connector';
+import { LIVEKIT_CONNECTOR } from '../tokens/livekit-connector.token';
 import { LiveRoomStore } from './live-room-store';
 import { RoomFacade } from './room.facade';
 

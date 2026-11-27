@@ -1,12 +1,6 @@
-import { HttpContextToken, HttpEventType, HttpInterceptorFn } from '@angular/common/http';
+import { HttpEventType, HttpInterceptorFn } from '@angular/common/http';
 import { map, tap } from 'rxjs';
-
-export interface RoomFeedTransportHooks {
-  activity(): void;
-  disconnected(): void;
-}
-
-export const ROOM_FEED_TRANSPORT = new HttpContextToken<RoomFeedTransportHooks | null>(() => null);
+import { ROOM_FEED_TRANSPORT } from './room-feed-transport.token';
 
 export const roomFeedTransport: HttpInterceptorFn = (request, next) => {
   const hooks = request.context.get(ROOM_FEED_TRANSPORT);
