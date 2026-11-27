@@ -303,8 +303,7 @@ export class LiveRoomStore {
             const missing =
               err instanceof ApiError &&
               (err.status === 404 ||
-                err.problem?.type ===
-                  'urn:jtalk:live-communication:problem:voice-room-not-found');
+                err.type === 'urn:jtalk:live-communication:problem:voice-room-not-found');
             this.connectionStateSignal.set({
               status: missing ? 'ended' : 'error',
               message: errorMessage(

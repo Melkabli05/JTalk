@@ -19,6 +19,7 @@ import { IdentityStore } from '../../../../core/auth/identity';
 import { SessionExpiryHandler } from '../../../../core/http/session-expiry';
 import { PwaService } from '../../../../core/services/pwa';
 import { ThemeService } from '../../../../core/services/theme';
+import { ToastNotifier } from '../../../../core/services/toast-notifier';
 import { VoiceRoomDto } from '../../../../shared/models/voice-room.model';
 import {
   EASE_EDITORIAL,
@@ -42,6 +43,7 @@ export class HomePage {
   readonly identity = inject(IdentityStore);
   readonly theme = inject(ThemeService);
   readonly pwa = inject(PwaService);
+  private readonly toast = inject(ToastNotifier, { optional: true });
   readonly sessionExpiry = inject(SessionExpiryHandler);
   readonly activeRoomId = this.store.activeRoomId;
 
@@ -171,8 +173,20 @@ export class HomePage {
     void this.router.navigate(['/room', room.id]);
   }
 
+  readonly showInstallCta = computed(() => this.pwa.canInstall() || this.pwa.isIosInstallable());
+
   onInstallApp(): void {
-    void this.pwa.promptInstall();
+    if (this.pwa.canInstall()) {
+      this.pwa.promptInstall((outcome) => {
+        if (outcome === 'accepted' && !this.destroyRef.destroyed) {
+          this.toast?.show('Jtalk installed.');
+        }
+      });
+      return;
+    }
+    if (this.pwa.isIosInstallable()) {
+      this.toast?.show('To install Jtalk, tap Share and then Add to Home Screen.');
+    }
   }
 
   private prefersReducedMotion(): boolean {

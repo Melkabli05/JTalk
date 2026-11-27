@@ -184,13 +184,26 @@ export class RoomStageStore {
     this.roleState.set(session.role);
     this.roomState.set(session.room);
     this.stageState.set({ speakers: session.room.speakers, handRaiseQueue: [] });
+    const existing = this.identity.userDirectory();
     const summaries = [
       ...(session.room.host ? [session.room.host] : []),
       ...(session.room.speakerProfiles ?? []),
       ...(session.room.participantProfiles ?? []),
-    ];
+    ]
+      .filter((s) => Boolean(s.displayName || s.username))
+      .map((s) => {
+        const prev = existing.get(s.id);
+        return {
+          id: s.id,
+          username: s.username ?? prev?.username ?? '',
+          displayName: s.displayName ?? prev?.displayName ?? s.username ?? 'Speaker',
+          avatarUrl: s.avatarUrl ?? prev?.avatarUrl ?? null,
+          countryCode: s.countryCode ?? prev?.countryCode ?? null,
+          nativeLanguage: s.nativeLanguage ?? prev?.nativeLanguage ?? 'en',
+        };
+      });
     if (summaries.length > 0) {
-      this.cachePreviews(summaries);
+      this.identity.mergeUserSummaries(summaries);
     }
   }
 

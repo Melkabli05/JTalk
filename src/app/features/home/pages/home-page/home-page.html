@@ -18,6 +18,18 @@
     </a>
 
     <div class="home-header-actions">
+      @if (showInstallCta()) {
+        <button
+          matButton="tonal"
+          type="button"
+          class="home-install-btn"
+          (click)="onInstallApp()"
+        >
+          <mat-icon aria-hidden="true">download</mat-icon>
+          <span>Install app</span>
+        </button>
+      }
+
       <button
         matIconButton
         type="button"
@@ -168,7 +180,7 @@
     <div class="home-footer-inner">
       <div class="home-footer-left">
         <span class="home-footer-note">Audio only · No camera</span>
-        @if (pwa.canInstall()) {
+        @if (showInstallCta()) {
           <button matButton="text" type="button" class="home-install-btn" (click)="onInstallApp()">
             <mat-icon aria-hidden="true">download</mat-icon>
             <span>Install app</span>
