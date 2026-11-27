@@ -19,7 +19,7 @@ import {
   withComponentInputBinding,
   withInMemoryScrolling,
 } from '@angular/router';
-import { roomFeedTransport } from '../features/rooms/data-access/room-feed-transport';
+import { roomFeedTransport } from './http/room-feed-transport';
 import { authBearerInterceptor } from './auth/auth-bearer.interceptor';
 import { AppTitleStrategy } from './routing/app-title-strategy';
 

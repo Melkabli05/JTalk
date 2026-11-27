@@ -5,7 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { IdentityStore } from '../../../core/auth/identity';
 import { httpErrorInterceptor } from '../../../core/http/http-error.interceptor';
-import { roomFeedTransport } from '../data-access/room-feed-transport';
+import { roomFeedTransport } from '../../../core/http/room-feed-transport';
 import { RoomsFacade } from './rooms.facade';
 
 describe('RoomsFacade', () => {

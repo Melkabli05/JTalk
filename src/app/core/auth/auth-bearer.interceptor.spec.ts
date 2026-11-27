@@ -6,7 +6,7 @@ import { AuthService } from '@auth0/auth0-angular';
 import { lastValueFrom, from, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { RoomsApi } from '../../features/rooms/data-access/rooms-api';
-import { roomFeedTransport } from '../../features/rooms/data-access/room-feed-transport';
+import { roomFeedTransport } from '../http/room-feed-transport';
 import { authBearerInterceptor } from './auth-bearer.interceptor';
 
 describe('authenticated HTTP requests', () => {
