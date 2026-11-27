@@ -424,6 +424,7 @@ export class RoomChatStore {
     this.pendingReactionCommentIds.clear();
     this.pendingDeleteCommentIds.clear();
     this.pendingMuteUserIds.clear();
+    this.reactionListCache.clear();
     this.loadingState.set(false);
     this.chatErrorState.set(false);
     this.setReplyTarget(null);
@@ -453,7 +454,7 @@ export class RoomChatStore {
     commentId: string,
     tally: CommentReactionTallyDto | undefined,
   ): readonly MessageReaction[] {
-    if (!tally || tally.total === 0) {
+    if (!tally) {
       this.reactionListCache.delete(commentId);
       return EMPTY_REACTIONS;
     }
@@ -461,13 +462,18 @@ export class RoomChatStore {
     if (cached && cached.tally === tally) {
       return cached.list;
     }
-    const list: MessageReaction[] = Object.entries(tally.counts)
-      .filter(([, count]) => count > 0)
-      .map(([emoji, count]) => ({
-        emoji,
-        count,
-        reactedByMe: tally.viewerReactions.includes(emoji),
-      }));
+    const list: MessageReaction[] = [];
+    for (const [code, count] of Object.entries(tally.counts)) {
+      if (isBackendReaction(code) && typeof count === 'number' && count > 0) {
+        list.push({
+          code,
+          emoji: emojiForReaction(code),
+          count,
+          active: tally.mine === code,
+          label: labelForReaction(code),
+        });
+      }
+    }
     const result = list.length > 0 ? list : EMPTY_REACTIONS;
     this.reactionListCache.set(commentId, { tally, list: result });
     return result;
