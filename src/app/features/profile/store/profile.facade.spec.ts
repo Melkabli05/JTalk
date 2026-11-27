@@ -8,6 +8,7 @@ import { IdentityStore } from '../../../core/auth/identity';
 import { ToastNotifier } from '../../../core/services/toast-notifier';
 import { LiveRoomStore } from '../../room/store/live-room-store';
 import { ProfileFacade } from './profile.facade';
+import { ProfileStore } from './profile.store';
 
 function makeProfile(overrides: Partial<UserProfileResponse> = {}): UserProfileResponse {
   return {
@@ -29,6 +30,11 @@ describe('ProfileFacade', () => {
   const meSignal = signal<UserProfileResponse | null>(makeProfile());
   const toastSpy = { show: vi.fn() };
   const identityMock = {
+    isAuthenticated: signal(true),
+    isLoading: signal(false),
+    userId: signal('me-1'),
+    displayNameFallback: signal('Yuki'),
+    userDirectory: signal(new Map()),
     me: meSignal,
     socialStats: signal(undefined),
     authUser: signal({ email: 'yuki@example.com' }),
@@ -46,7 +52,14 @@ describe('ProfileFacade', () => {
     deleteAccount: vi.fn(),
   };
   const roomStoreMock = {
+    roomId: signal(null),
     room: signal(null),
+    practiseLangLabel: signal('English'),
+    stage: {
+      isHost: signal(false),
+      isCurrentUserOnStage: signal(false),
+      speakers: signal([]),
+    },
     signOut: vi.fn(),
     rememberRoom: vi.fn(),
   };
@@ -64,6 +77,7 @@ describe('ProfileFacade', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        ProfileStore,
         ProfileFacade,
         provideHttpClient(),
         provideHttpClientTesting(),

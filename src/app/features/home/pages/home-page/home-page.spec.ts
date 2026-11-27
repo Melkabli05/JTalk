@@ -7,6 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { AuthService } from '@auth0/auth0-angular';
 import { from } from 'rxjs';
 import { vi } from 'vitest';
+import { HomeStore } from '../../store/home.store';
 import { HomePage } from './home-page';
 
 @Component({ selector: 'app-dummy-target', template: '' })
@@ -21,6 +22,7 @@ describe('HomePage', () => {
     return TestBed.configureTestingModule({
       imports: [HomePage],
       providers: [
+        HomeStore,
         provideZonelessChangeDetection(),
         provideHttpClient(),
         provideHttpClientTesting(),

@@ -6,19 +6,13 @@ import {
   DestroyRef,
   effect,
   inject,
-  signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { Router, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
-import { IdentityStore } from '../../core/auth/identity';
-import { PwaService } from '../../core/services/pwa';
-import { RoomLauncher } from '../../core/services/room-launcher';
-import { ThemeService } from '../../core/services/theme';
-import { ToastNotifier } from '../../core/services/toast-notifier';
-import { LiveRoomStore } from '../../features/room/store/live-room-store';
-import { RoomsFacade } from '../../features/rooms/store/rooms.facade';
+import { AppStore } from '../../core/store/app.store';
+import { RoomsStore } from '../../features/rooms/store/rooms.store';
 import type { AppView } from '../models/layout.model';
 import { InRoomBanner } from '../ui/inroom-banner/inroom-banner';
 import { MobileTabbar } from '../ui/mobile-tabbar/mobile-tabbar';
@@ -31,18 +25,12 @@ import { Sidebar } from '../ui/sidebar/sidebar';
   styleUrl: './main-layout.scss',
 })
 export class MainLayout {
-  readonly theme = inject(ThemeService);
-  readonly pwa = inject(PwaService);
-  readonly identity = inject(IdentityStore);
-  readonly roomsStore = inject(RoomsFacade);
-  readonly roomStore = inject(LiveRoomStore);
+  readonly app = inject(AppStore);
+  readonly roomsStore = inject(RoomsStore);
   private readonly breakpointObserver = inject(BreakpointObserver);
-  private readonly toast = inject(ToastNotifier);
   private readonly router = inject(Router);
-  private readonly roomLauncher = inject(RoomLauncher);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly sidebarCollapsed = signal(false);
   readonly isPhoneViewport = toSignal(
     this.breakpointObserver.observe('(max-width: 767px)').pipe(map((state) => state.matches)),
     { initialValue: false },
@@ -56,34 +44,24 @@ export class MainLayout {
     return seg === 'room' || seg === 'people' || seg === 'profile' ? seg : 'rooms';
   });
 
-  readonly activeRoomHost = computed(
-    () => this.roomStore.stage.speakers().find((s) => s.role === 'host') ?? null,
-  );
-
   constructor() {
     afterNextRender(() => this.roomsStore.ensureLoaded());
     effect(() => {
-      if (this.identity.needsOnboarding() && this.activeView() !== 'profile') {
+      if (this.app.needsOnboarding() && this.activeView() !== 'profile') {
         void this.router.navigate(['/profile']);
       }
     });
   }
 
   toggleSidebar(): void {
-    this.sidebarCollapsed.update((collapsed) => !collapsed);
+    this.app.toggleSidebar();
   }
 
   onOpenStartRoom(): void {
-    this.roomLauncher.openStartRoom(this.destroyRef);
+    this.app.openStartRoom(this.destroyRef);
   }
 
   onBackToRoom(): void {
-    const roomId = this.roomStore.roomId();
-    void this.router.navigate(roomId ? ['/room', roomId] : ['/rooms']).then(() => {
-      if (roomId && !this.destroyRef.destroyed) {
-        this.roomStore.triggerStageFocus();
-        this.toast.show('Back in the room.');
-      }
-    });
+    this.app.backToRoom(this.destroyRef);
   }
 }

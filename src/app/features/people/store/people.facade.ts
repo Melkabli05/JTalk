@@ -1,41 +1,24 @@
-import { isPlatformBrowser } from '@angular/common';
-import {
-  computed,
-  debounced,
-  DestroyRef,
-  effect,
-  inject,
-  linkedSignal,
-  PLATFORM_ID,
-  type ResourceStatus,
-  Service,
-  type Signal,
-  signal,
-  untracked,
-} from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { DestroyRef, inject, type ResourceStatus, Service, type Signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom, forkJoin } from 'rxjs';
 import type {
   DiscoveredUserResponse,
-  UserPageResponse,
   UserProfileResponse,
 } from '../../../core/auth/auth.models';
 import { IdentityStore } from '../../../core/auth/identity';
 import { UsersApi } from '../../../core/auth/users-api';
-import { ApiError, errorMessage } from '../../../core/http/http-error.interceptor';
+import { errorMessage } from '../../../core/http/http-error.interceptor';
 import { ToastNotifier } from '../../../core/services/toast-notifier';
-import { overlayUserSummary } from '../../../shared/utils/user-summary.utils';
 import type { HostProfileDialogData } from '../../room/models/live-room.model';
-import {
-  PEOPLE_MATCHMAKING_PAGE_SIZE,
-  PEOPLE_MIN_SEARCH_LENGTH,
-  PEOPLE_SEARCH_DEBOUNCE_MS,
-} from '../constants/people.constants';
+import { PeopleStore } from './people.store';
 
+/**
+ * People feature facade: coordinates follow/block actions, profile preview loading,
+ * query-param sync, and toast feedback on top of {@link PeopleStore}.
+ */
 @Service({ autoProvided: false })
 export class PeopleFacade {
-  private readonly platformId = inject(PLATFORM_ID);
+  private readonly store = inject(PeopleStore);
   private readonly destroyRef = inject(DestroyRef);
   private readonly usersApi = inject(UsersApi);
   private readonly identity = inject(IdentityStore);
@@ -43,149 +26,25 @@ export class PeopleFacade {
   private readonly route = inject(ActivatedRoute, { optional: true });
   private readonly router = inject(Router, { optional: true });
 
-  private readonly queryParamMap = this.route
-    ? toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap })
-    : null;
-
-  private readonly cursor = linkedSignal<
-    boolean,
-    { afterCreatedAt: string; afterId: string } | null
-  >({
-    source: () => this.identity.isAuthenticated(),
-    computation: () => null,
-  });
-  private readonly matches = this.usersApi.matchmakingResource(() =>
-    isPlatformBrowser(this.platformId) && this.identity.isAuthenticated()
-      ? { size: String(PEOPLE_MATCHMAKING_PAGE_SIZE), ...this.cursor() }
-      : undefined,
-  );
-  private readonly matchUsers = linkedSignal<
-    {
-      signedIn: boolean;
-      cursor: { afterCreatedAt: string; afterId: string } | null;
-      page: UserPageResponse | undefined;
-    },
-    readonly DiscoveredUserResponse[]
-  >({
-    source: () => ({
-      signedIn: this.identity.isAuthenticated(),
-      cursor: this.cursor(),
-      page: this.matches.hasValue() ? this.matches.value() : undefined,
-    }),
-    computation: ({ signedIn, cursor, page }, previous) => {
-      if (!signedIn) return [];
-      if (!page) return cursor ? (previous?.value ?? []) : [];
-      if (previous && page === previous.source.page) return previous.value;
-      return cursor ? [...(previous?.value ?? []), ...page.content] : page.content;
-    },
-  });
-  private readonly followOverrides = linkedSignal<boolean, ReadonlyMap<string, boolean>>({
-    source: () => this.identity.isAuthenticated(),
-    computation: () => new Map(),
-  });
-  private readonly blockedIds = linkedSignal<boolean, ReadonlySet<string>>({
-    source: () => this.identity.isAuthenticated(),
-    computation: () => new Set(),
-  });
-  private readonly pendingIds = signal<ReadonlySet<string>>(new Set());
   private profilePreviewSeq = 0;
 
-  private readonly queryState = linkedSignal<string>(() => this.queryParamMap?.().get('q') ?? '');
-  readonly query: Signal<string> = this.queryState.asReadonly();
-  private readonly normalizedQuery = computed(() => this.query().trim());
-  readonly searching: Signal<boolean> = computed(
-    () => this.normalizedQuery().length >= PEOPLE_MIN_SEARCH_LENGTH,
-  );
-
-  private readonly debouncedQuery = debounced(
-    () => (this.searching() ? this.normalizedQuery() : ''),
-    PEOPLE_SEARCH_DEBOUNCE_MS,
-  );
-  private readonly settledQuery = computed(() =>
-    this.debouncedQuery.hasValue() ? this.debouncedQuery.value() : '',
-  );
-
-  private readonly search = this.usersApi.searchResource(() => {
-    const query = this.normalizedQuery();
-    const settled = this.settledQuery();
-    return isPlatformBrowser(this.platformId) &&
-      this.identity.isAuthenticated() &&
-      this.searching() &&
-      query === settled
-      ? settled
-      : undefined;
-  });
-
-  readonly status: Signal<ResourceStatus> = computed((): ResourceStatus => {
-    if (this.searching()) {
-      return this.normalizedQuery() !== this.settledQuery() ? 'loading' : this.search.status();
-    }
-    return this.matches.status();
-  });
-  readonly loading: Signal<boolean> = computed(
-    (): boolean => this.status() === 'loading' || this.status() === 'reloading',
-  );
-  readonly error: Signal<string | null> = computed((): string | null => {
-    const err = this.searching() ? this.search.error() : this.matches.error();
-    return err
-      ? errorMessage(err, this.searching() ? 'Could not search users.' : 'Could not load people.')
-      : null;
-  });
-  readonly needsLearningLanguage: Signal<boolean> = computed((): boolean => {
-    if (this.searching()) return false;
-    const err = this.matches.error();
-    return err instanceof ApiError && err.type === 'urn:jtalk:user:problem:no-learning-language';
-  });
-  readonly hasMore: Signal<boolean> = computed(
-    (): boolean => !this.searching() && this.matches.hasValue() && this.matches.value().hasNext,
-  );
-  readonly busyIds: Signal<ReadonlySet<string>> = this.pendingIds.asReadonly();
-
-  readonly people: Signal<readonly DiscoveredUserResponse[]> = computed(
-    (): readonly DiscoveredUserResponse[] => {
-      const overrides = this.followOverrides();
-      const blocked = this.blockedIds();
-      const directory = this.identity.userDirectory();
-      const users = this.searching()
-        ? this.normalizedQuery() === this.settledQuery() && this.search.hasValue()
-          ? this.search.value()
-          : []
-        : this.matchUsers();
-
-      return users
-        .filter((u) => !blocked.has(u.id))
-        .map((u) => {
-          const synced = overlayUserSummary(u, directory);
-          const override = overrides.get(u.id);
-          return override === undefined || override === synced.followedByMe
-            ? synced
-            : { ...synced, followedByMe: override };
-        });
-    },
-  );
-
-  constructor() {
-    effect(() => {
-      if (this.matches.hasValue()) {
-        const content = this.matches.value().content;
-        untracked(() => this.identity.mergeUserSummaries(content));
-      }
-    });
-
-    effect(() => {
-      if (this.search.hasValue()) {
-        const results = this.search.value();
-        untracked(() => this.identity.mergeUserSummaries(results));
-      }
-    });
-  }
+  readonly query: Signal<string> = this.store.query;
+  readonly searching: Signal<boolean> = this.store.searching;
+  readonly status: Signal<ResourceStatus> = this.store.status;
+  readonly loading: Signal<boolean> = this.store.loading;
+  readonly error: Signal<string | null> = this.store.error;
+  readonly needsLearningLanguage: Signal<boolean> = this.store.needsLearningLanguage;
+  readonly hasMore: Signal<boolean> = this.store.hasMore;
+  readonly busyIds: Signal<ReadonlySet<string>> = this.store.busyIds;
+  readonly people: Signal<readonly DiscoveredUserResponse[]> = this.store.people;
 
   setQuery(raw: string): void {
-    this.queryState.set(raw);
-    if (this.router && this.route) {
+    this.store.setQuery(raw);
+    const trimmed = raw.trim();
+    if (this.route && this.router) {
       void this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: { q: raw.trim() ? raw : null },
+        queryParams: { q: trimmed.length > 0 ? trimmed : null },
         queryParamsHandling: 'merge',
         replaceUrl: true,
       });
@@ -193,30 +52,21 @@ export class PeopleFacade {
   }
 
   refresh(): void {
-    this.followOverrides.set(new Map());
-    if (this.searching()) this.search.reload();
-    else if (this.cursor()) this.cursor.set(null);
-    else this.matches.reload();
+    this.store.refresh();
   }
 
   loadMore(): void {
-    if (!this.hasMore() || this.matches.isLoading() || !this.matches.hasValue()) return;
-    const { nextAfterCreatedAt, nextAfterId } = this.matches.value();
-    if (nextAfterCreatedAt && nextAfterId) {
-      this.cursor.set({ afterCreatedAt: nextAfterCreatedAt, afterId: nextAfterId });
-    }
+    this.store.loadMore();
   }
 
   toggleFollow(person: DiscoveredUserResponse): void {
-    if (this.pendingIds().has(person.id)) return;
-    this.togglePending(person.id, true);
+    if (this.store.busyIds().has(person.id)) return;
+    this.store.setPending(person.id, true);
     const followed = !person.followedByMe;
     (followed ? this.usersApi.follow(person.id) : this.usersApi.unfollow(person.id)).subscribe({
       next: () => {
-        this.togglePending(person.id, false);
-        this.followOverrides.update((prev): ReadonlyMap<string, boolean> =>
-          new Map(prev).set(person.id, followed),
-        );
+        this.store.setPending(person.id, false);
+        this.store.setFollowOverride(person.id, followed);
         this.identity.refreshSocialStats();
         if (!this.destroyRef.destroyed) {
           this.toast?.show(
@@ -225,7 +75,7 @@ export class PeopleFacade {
         }
       },
       error: (err: unknown) => {
-        this.togglePending(person.id, false);
+        this.store.setPending(person.id, false);
         if (!this.destroyRef.destroyed) {
           this.toast?.show(errorMessage(err, 'Could not update follow status.'));
         }
@@ -234,24 +84,19 @@ export class PeopleFacade {
   }
 
   blockUser(person: DiscoveredUserResponse): void {
-    if (this.pendingIds().has(person.id)) return;
-    this.togglePending(person.id, true);
+    if (this.store.busyIds().has(person.id)) return;
+    this.store.setPending(person.id, true);
     this.usersApi.block(person.id).subscribe({
       next: () => {
-        this.togglePending(person.id, false);
-        this.blockedIds.update((prev): ReadonlySet<string> => new Set(prev).add(person.id));
-        this.followOverrides.update((prev): ReadonlyMap<string, boolean> => {
-          const next = new Map(prev);
-          next.delete(person.id);
-          return next;
-        });
+        this.store.setPending(person.id, false);
+        this.store.markBlocked(person.id);
         this.identity.refreshSocialStats();
         if (!this.destroyRef.destroyed) {
           this.toast?.show(`Blocked ${person.displayName}.`);
         }
       },
       error: (err: unknown) => {
-        this.togglePending(person.id, false);
+        this.store.setPending(person.id, false);
         if (!this.destroyRef.destroyed) {
           this.toast?.show(errorMessage(err, 'Could not block user.'));
         }
@@ -291,9 +136,7 @@ export class PeopleFacade {
       await firstValueFrom(
         follow ? this.usersApi.follow(profile.id) : this.usersApi.unfollow(profile.id),
       );
-      this.followOverrides.update((prev): ReadonlyMap<string, boolean> =>
-        new Map(prev).set(profile.id, follow),
-      );
+      this.store.setFollowOverride(profile.id, follow);
       this.identity.refreshSocialStats();
       if (!this.destroyRef.destroyed) {
         this.toast?.show(
@@ -307,14 +150,5 @@ export class PeopleFacade {
       }
       return false;
     }
-  }
-
-  private togglePending(id: string, busy: boolean): void {
-    this.pendingIds.update((prev): ReadonlySet<string> => {
-      const next = new Set(prev);
-      if (busy) next.add(id);
-      else next.delete(id);
-      return next;
-    });
   }
 }

@@ -1,11 +1,12 @@
 import type { Routes } from '@angular/router';
 import { unsavedProfileGuard } from './guards/unsaved-profile.guard';
 import { ProfileFacade } from './store/profile.facade';
+import { ProfileStore } from './store/profile.store';
 
 export const PROFILE_ROUTES: Routes = [
   {
     path: '',
-    providers: [ProfileFacade],
+    providers: [ProfileStore, ProfileFacade],
     loadComponent: () => import('./pages/profile-page/profile-page').then((m) => m.ProfilePage),
     children: [
       {

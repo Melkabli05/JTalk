@@ -7,6 +7,7 @@ import type { DiscoveredUserResponse } from '../../../core/auth/auth.models';
 import { IdentityStore } from '../../../core/auth/identity';
 import { ToastNotifier } from '../../../core/services/toast-notifier';
 import { PeopleFacade } from './people.facade';
+import { PeopleStore } from './people.store';
 
 function makeUser(overrides: Partial<DiscoveredUserResponse> = {}): DiscoveredUserResponse {
   return {
@@ -26,6 +27,7 @@ describe('PeopleFacade', () => {
   const identityMock = {
     isAuthenticated: signedIn,
     userId: signal(null),
+    userDirectory: signal(new Map()),
     mergeUserSummaries: vi.fn(),
     refreshSocialStats: vi.fn(),
   };
@@ -37,6 +39,7 @@ describe('PeopleFacade', () => {
     identityMock.refreshSocialStats.mockReset();
     TestBed.configureTestingModule({
       providers: [
+        PeopleStore,
         PeopleFacade,
         provideHttpClient(),
         provideHttpClientTesting(),

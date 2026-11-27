@@ -1,17 +1,13 @@
 import {
-  computed,
   DestroyRef,
   inject,
-  linkedSignal,
   type ResourceStatus,
   Service,
   type Signal,
-  signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { switchMap } from 'rxjs';
 import type {
-  FollowListResponse,
   LanguageType,
   ProficiencyLevel,
   ProfileLoadStatus,
@@ -33,30 +29,17 @@ import { PwaService } from '../../../core/services/pwa';
 import { ThemeService } from '../../../core/services/theme';
 import { ToastNotifier } from '../../../core/services/toast-notifier';
 import { LiveRoomStore } from '../../room/store/live-room-store';
-import {
-  PROFILE_CONNECTIONS_PAGE_SIZE,
-  PROFILE_MAX_LANGUAGES,
-} from '../constants/profile.constants';
 import type { ProfileConnectionList, ProfileEditSaveEvent } from '../models/profile.model';
-import {
-  buildOrderedLanguageRows,
-  type ProfileLanguageRow,
-} from '../utils/profile-format.utils';
+import type { ProfileLanguageRow } from '../utils/profile-format.utils';
+import { ProfileStore } from './profile.store';
 
-interface ConnectionsRequest {
-  readonly userId: string;
-  readonly list: ProfileConnectionList;
-  readonly page: number;
-}
-
-function readAuthString(user: unknown, key: string): string | null {
-  if (!user || typeof user !== 'object') return null;
-  const value: unknown = Reflect.get(user, key);
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
-}
-
+/**
+ * Profile feature facade: coordinates profile mutations, language matrix updates,
+ * theme/PWA preferences, toasts, and navigation on top of {@link ProfileStore}.
+ */
 @Service({ autoProvided: false })
 export class ProfileFacade {
+  private readonly store = inject(ProfileStore);
   private readonly theme = inject(ThemeService);
   private readonly pwa = inject(PwaService);
   private readonly identity = inject(IdentityStore);
@@ -66,129 +49,59 @@ export class ProfileFacade {
   private readonly router = inject(Router, { optional: true });
   private readonly destroyRef = inject(DestroyRef);
 
-  private readonly languageBusyState = signal(false);
-  readonly languageBusy: Signal<boolean> = this.languageBusyState.asReadonly();
-
-  private readonly unblockingIdsState = signal<ReadonlySet<string>>(new Set());
-  readonly unblockingIds: Signal<ReadonlySet<string>> = this.unblockingIdsState.asReadonly();
-
-  private readonly connectionsRequest = signal<ConnectionsRequest | null>(null);
-  private readonly connectionsRes = this.usersApi.connectionsResource(() => {
-    const req = this.connectionsRequest();
-    return req
-      ? { userId: req.userId, list: req.list, page: req.page, size: PROFILE_CONNECTIONS_PAGE_SIZE }
-      : undefined;
-  });
-
-  readonly me: Signal<UserProfileResponse | null> = this.identity.me;
-  readonly socialStats: Signal<SocialStatsResponse | undefined> = this.identity.socialStats;
-  readonly profileStatus: Signal<ProfileLoadStatus> = this.identity.profileStatus;
-  readonly meRetrying: Signal<boolean> = this.identity.meRetrying;
-  readonly profileError: Signal<string | null> = this.identity.profileError;
-  readonly hasProfile: Signal<boolean> = this.identity.hasProfile;
-  readonly needsOnboarding: Signal<boolean> = this.identity.needsOnboarding;
-  readonly savingProfile: Signal<boolean> = this.identity.savingProfile;
-  readonly deletingAccount: Signal<boolean> = this.identity.deletingAccount;
-
-  readonly authEmail: Signal<string | null> = computed(() =>
-    readAuthString(this.identity.authUser(), 'email'),
-  );
-  readonly isInLiveRoom: Signal<boolean> = computed(() => this.roomStore.room() !== null);
-
-  readonly maxLanguages = PROFILE_MAX_LANGUAGES;
-  readonly languageRows: Signal<readonly ProfileLanguageRow[]> = computed(() => {
-    const me = this.me();
-    return me ? buildOrderedLanguageRows(me) : [];
-  });
-  readonly totalLanguages: Signal<number> = computed(() => this.languageRows().length);
-
-  readonly colorScheme: Signal<ColorScheme> = this.theme.colorScheme;
-  readonly themePreference: Signal<ThemePreference> = this.theme.preference;
-  readonly canInstall: Signal<boolean> = this.pwa.canInstall;
-  readonly isIosInstallable: Signal<boolean> = this.pwa.isIosInstallable;
-
-  readonly connectionList: Signal<ProfileConnectionList | null> = computed(
-    (): ProfileConnectionList | null => this.connectionsRequest()?.list ?? null,
-  );
-  readonly connectionsStatus: Signal<ResourceStatus> = this.connectionsRes.status;
-  readonly connectionsBusy: Signal<boolean> = this.connectionsRes.isLoading;
-  readonly connectionsError: Signal<string | null> = computed((): string | null => {
-    const err = this.connectionsRes.error();
-    return err ? errorMessage(err, 'Could not load accounts.') : null;
-  });
-
-  readonly connections: Signal<readonly UserSummaryResponse[]> = linkedSignal<
-    {
-      request: ConnectionsRequest | null;
-      page: FollowListResponse | UserSummaryResponse[] | undefined;
-    },
-    readonly UserSummaryResponse[]
-  >({
-    source: () => ({
-      request: this.connectionsRequest(),
-      page: this.connectionsRes.hasValue() ? this.connectionsRes.value() : undefined,
-    }),
-    computation: ({ request, page }, previous) => {
-      if (!request) return [];
-      if (!page) return request.page > 0 ? (previous?.value ?? []) : [];
-      if (previous && page === previous.source.page) return previous.value;
-      if (Array.isArray(page)) return page;
-      return request.page > 0 ? [...(previous?.value ?? []), ...page.content] : page.content;
-    },
-  });
-
-  readonly moreConnections: Signal<boolean> = computed((): boolean => {
-    if (!this.connectionsRes.hasValue()) return false;
-    const page = this.connectionsRes.value();
-    return !Array.isArray(page) && (page.page + 1) * page.size < page.total;
-  });
+  readonly languageBusy: Signal<boolean> = this.store.languageBusy;
+  readonly unblockingIds: Signal<ReadonlySet<string>> = this.store.unblockingIds;
+  readonly me: Signal<UserProfileResponse | null> = this.store.me;
+  readonly socialStats: Signal<SocialStatsResponse | undefined> = this.store.socialStats;
+  readonly profileStatus: Signal<ProfileLoadStatus> = this.store.profileStatus;
+  readonly meRetrying: Signal<boolean> = this.store.meRetrying;
+  readonly profileError: Signal<string | null> = this.store.profileError;
+  readonly hasProfile: Signal<boolean> = this.store.hasProfile;
+  readonly needsOnboarding: Signal<boolean> = this.store.needsOnboarding;
+  readonly savingProfile: Signal<boolean> = this.store.savingProfile;
+  readonly deletingAccount: Signal<boolean> = this.store.deletingAccount;
+  readonly authEmail: Signal<string | null> = this.store.authEmail;
+  readonly isInLiveRoom: Signal<boolean> = this.store.isInLiveRoom;
+  readonly maxLanguages = this.store.maxLanguages;
+  readonly languageRows: Signal<readonly ProfileLanguageRow[]> = this.store.languageRows;
+  readonly totalLanguages: Signal<number> = this.store.totalLanguages;
+  readonly colorScheme: Signal<ColorScheme> = this.store.colorScheme;
+  readonly themePreference: Signal<ThemePreference> = this.store.themePreference;
+  readonly canInstall: Signal<boolean> = this.store.canInstall;
+  readonly isIosInstallable: Signal<boolean> = this.store.isIosInstallable;
+  readonly connectionList: Signal<ProfileConnectionList | null> = this.store.connectionList;
+  readonly connectionsStatus: Signal<ResourceStatus> = this.store.connectionsStatus;
+  readonly connectionsBusy: Signal<boolean> = this.store.connectionsBusy;
+  readonly connectionsError: Signal<string | null> = this.store.connectionsError;
+  readonly connections: Signal<readonly UserSummaryResponse[]> = this.store.connections;
+  readonly moreConnections: Signal<boolean> = this.store.moreConnections;
 
   loadMe(): void {
     this.identity.loadMe();
   }
 
   retryConnections(): void {
-    this.connectionsRes.reload();
+    this.store.retryConnections();
   }
 
   closeConnections(): void {
-    this.connectionsRequest.set(null);
+    this.store.closeConnections();
   }
 
   loadConnections(list: ProfileConnectionList, append = false): void {
-    const userId = this.identity.me()?.id;
-    if (!userId) return;
-
-    const current = this.connectionsRequest();
-    if (append && (!this.moreConnections() || this.connectionsBusy() || current?.list !== list)) {
-      return;
-    }
-    const previousPage = this.connectionsRes.hasValue() ? this.connectionsRes.value() : undefined;
-    const page = append && previousPage && !Array.isArray(previousPage) ? previousPage.page + 1 : 0;
-    if (current?.userId === userId && current.list === list && current.page === page) {
-      this.connectionsRes.reload();
-    } else {
-      this.connectionsRequest.set({ userId, list, page });
-    }
+    this.store.loadConnections(list, append);
   }
 
   unblock(id: string): void {
-    if (this.unblockingIdsState().has(id)) return;
-    this.unblockingIdsState.update((prev): ReadonlySet<string> => new Set(prev).add(id));
-    const clearPending = (): void => {
-      this.unblockingIdsState.update((prev): ReadonlySet<string> => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-    };
+    if (this.store.unblockingIds().has(id)) return;
+    this.store.setUnblocking(id, true);
     this.usersApi.unblock(id).subscribe({
       next: () => {
-        clearPending();
+        this.store.setUnblocking(id, false);
         if (this.connectionList() === 'blocks') this.loadConnections('blocks');
       },
       error: (err: unknown) => {
-        clearPending();
+        this.store.setUnblocking(id, false);
         if (!this.destroyRef.destroyed) {
           this.toast?.show(errorMessage(err, 'Could not unblock account.'));
         }
@@ -202,8 +115,8 @@ export class ProfileFacade {
     proficiencyLevel?: ProficiencyLevel,
     onDone?: (ok: boolean, error?: string) => void,
   ): void {
-    if (this.languageBusyState()) return;
-    this.languageBusyState.set(true);
+    if (this.store.languageBusy()) return;
+    this.store.setLanguageBusy(true);
 
     const me = this.me();
     const isCurrentlyNative = me?.nativeLanguages.includes(code) ?? false;
@@ -227,12 +140,12 @@ export class ProfileFacade {
 
     req$.subscribe({
       next: (matrix) => {
-        this.languageBusyState.set(false);
+        this.store.setLanguageBusy(false);
         this.identity.applyLanguageMatrix(matrix);
         onDone?.(true);
       },
       error: (err: unknown) => {
-        this.languageBusyState.set(false);
+        this.store.setLanguageBusy(false);
         const msg = errorMessage(err, 'Could not update languages.');
         if (!this.destroyRef.destroyed) {
           this.toast?.show(msg);
@@ -244,11 +157,11 @@ export class ProfileFacade {
 
   setPrimaryNativeLanguage(code: string): void {
     const current = this.me();
-    if (!current || this.languageBusyState() || current.nativeLanguage === code) return;
-    this.languageBusyState.set(true);
+    if (!current || this.store.languageBusy() || current.nativeLanguage === code) return;
+    this.store.setLanguageBusy(true);
     this.usersApi.updateMe({ nativeLanguage: code }).subscribe({
       next: (updated) => {
-        this.languageBusyState.set(false);
+        this.store.setLanguageBusy(false);
         const merged: UserProfileResponse =
           updated.socialStats !== undefined
             ? updated
@@ -261,7 +174,7 @@ export class ProfileFacade {
         }
       },
       error: (err: unknown) => {
-        this.languageBusyState.set(false);
+        this.store.setLanguageBusy(false);
         if (!this.destroyRef.destroyed) {
           this.toast?.show(errorMessage(err, 'Could not update primary language.'));
         }

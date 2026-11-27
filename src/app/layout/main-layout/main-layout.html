@@ -1,13 +1,12 @@
-@let profileName = identity.displayNameFallback();
-@let profileAvatarUrl = identity.me()?.avatarUrl ?? null;
-@let room = roomStore.room();
-@let inRoom = room !== null;
+@let profileName = app.displayNameFallback();
+@let profileAvatarUrl = app.me()?.avatarUrl ?? null;
+@let inRoom = app.inRoom();
 @let isRoomView = activeView() === 'room';
 @let bannerVisible = inRoom && !isRoomView && isPhoneViewport();
 <div
   class="app"
   id="app"
-  [class.sidebar-collapsed]="sidebarCollapsed()"
+  [class.sidebar-collapsed]="app.sidebarCollapsed()"
   [class.in-room]="inRoom"
   [class.banner-visible]="bannerVisible"
   [class.room-active]="isRoomView"
@@ -15,37 +14,27 @@
   <a class="skip-link" href="#main-content">Skip to main content</a>
 
   <app-sidebar
-    [collapsed]="sidebarCollapsed()"
+    [collapsed]="app.sidebarCollapsed()"
     [liveRoomsCount]="roomsStore.liveCount()"
     [profileName]="profileName"
     [avatarUrl]="profileAvatarUrl"
     [inRoom]="inRoom"
     [activeView]="activeView()"
-    [activeRoomTitle]="room?.title ?? 'Live room'"
-    [activeRoomLang]="roomStore.practiseLangLabel()"
-    [activeRoomSeats]="room?.maxStageSeats ?? 8"
-    [activeRoomRole]="
-      roomStore.stage.isHost()
-        ? 'host'
-        : roomStore.stage.isCurrentUserOnStage()
-          ? 'speaker'
-          : 'listener'
-    "
-    [activeRoomHostName]="activeRoomHost()?.name ?? room?.host?.displayName ?? profileName"
-    [activeRoomHostAvatarUrl]="
-      activeRoomHost()?.avatarUrl ??
-      room?.host?.avatarUrl ??
-      (roomStore.stage.isHost() ? profileAvatarUrl : null)
-    "
-    [colorScheme]="theme.colorScheme()"
+    [activeRoomTitle]="app.activeRoomTitle()"
+    [activeRoomLang]="app.activeRoomLang()"
+    [activeRoomSeats]="app.activeRoomSeats()"
+    [activeRoomRole]="app.activeRoomRole()"
+    [activeRoomHostName]="app.activeRoomHostName()"
+    [activeRoomHostAvatarUrl]="app.activeRoomHostAvatarUrl()"
+    [colorScheme]="app.colorScheme()"
     (toggleCollapse)="toggleSidebar()"
     (startRoom)="onOpenStartRoom()"
     (backToRoom)="onBackToRoom()"
-    (toggleTheme)="theme.toggle()"
+    (toggleTheme)="app.toggleTheme()"
   />
 
   <main id="main-content" class="main">
-    @if (!pwa.isOnline()) {
+    @if (!app.isOnline()) {
       <div class="offline-banner" role="status" aria-live="polite">
         <mat-icon class="icon-18" aria-hidden="true">cloud_off</mat-icon>
         <span>You're offline. Live rooms and updates will resume when you reconnect.</span>
@@ -53,7 +42,7 @@
     }
     <app-inroom-banner
       [visible]="bannerVisible"
-      [roomTitle]="room?.title ?? 'Live room'"
+      [roomTitle]="app.activeRoomTitle()"
       (backToRoom)="onBackToRoom()"
     />
     <router-outlet />

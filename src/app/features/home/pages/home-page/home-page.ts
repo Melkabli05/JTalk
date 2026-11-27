@@ -6,7 +6,6 @@ import {
   effect,
   ElementRef,
   inject,
-  signal,
   untracked,
   viewChild,
 } from '@angular/core';
@@ -19,33 +18,15 @@ import { sanitizeReturnUrl } from '../../../../core/auth/auth.utils';
 import { IdentityStore } from '../../../../core/auth/identity';
 import { SessionExpiryHandler } from '../../../../core/http/session-expiry';
 import { PwaService } from '../../../../core/services/pwa';
-import { RoomLauncher } from '../../../../core/services/room-launcher';
 import { ThemeService } from '../../../../core/services/theme';
-import { languageLabelFor } from '../../../../core/utils/language-codes';
 import { VoiceRoomDto } from '../../../../shared/models/voice-room.model';
-import { LiveRoomStore } from '../../../room/store/live-room-store';
-import { RoomsFacade } from '../../../rooms/store/rooms.facade';
 import {
   EASE_EDITORIAL,
   EASE_SNAPPY,
   GREETING_INTERVAL_MS,
   ROOM_CYCLE_INTERVAL_MS,
 } from '../../constants/home.constants';
-
-interface HomeGreeting {
-  readonly text: string;
-  readonly lang: string;
-  readonly dir?: 'ltr' | 'rtl';
-}
-
-const HOME_GREETINGS: readonly [HomeGreeting, ...HomeGreeting[]] = [
-  { text: 'Hola', lang: 'es', dir: 'ltr' },
-  { text: 'Hello', lang: 'en', dir: 'ltr' },
-  { text: 'مرحبا', lang: 'ar', dir: 'rtl' },
-  { text: 'こんにちは', lang: 'ja', dir: 'ltr' },
-  { text: 'Bonjour', lang: 'fr', dir: 'ltr' },
-  { text: 'Ciao', lang: 'it', dir: 'ltr' },
-];
+import { HomeStore } from '../../store/home.store';
 
 @Component({
   selector: 'app-home-page',
@@ -57,14 +38,12 @@ export class HomePage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly roomLauncher = inject(RoomLauncher);
+  readonly store = inject(HomeStore);
   readonly identity = inject(IdentityStore);
-  readonly roomsStore = inject(RoomsFacade);
-  private readonly roomStore = inject(LiveRoomStore);
-  readonly activeRoomId = this.roomStore.roomId;
   readonly theme = inject(ThemeService);
   readonly pwa = inject(PwaService);
   readonly sessionExpiry = inject(SessionExpiryHandler);
+  readonly activeRoomId = this.store.activeRoomId;
 
   private readonly queryParams = toSignal(this.route.queryParamMap, {
     initialValue: this.route.snapshot.queryParamMap,
@@ -84,43 +63,17 @@ export class HomePage {
   private readonly liveStripRef = viewChild<ElementRef<HTMLElement>>('liveStrip');
   private redirected = false;
 
-  readonly greetings = HOME_GREETINGS;
-  readonly greetingIndex = signal(1);
-  readonly selectedRoomIndex = signal(0);
-  readonly autoCyclePaused = signal(false);
+  readonly greetings = this.store.greetings;
+  readonly greetingIndex = this.store.greetingIndex;
+  readonly selectedRoomIndex = this.store.selectedRoomIndex;
+  readonly autoCyclePaused = this.store.autoCyclePaused;
 
-  readonly rooms = this.roomsStore.rooms;
-
-  readonly activeGreeting = computed(
-    () => this.greetings[this.greetingIndex()] ?? this.greetings[0],
-  );
-
-  readonly liveSummary = computed(() => {
-    if (!this.identity.isAuthenticated()) return 'Drop-in voice rooms';
-    const count = this.roomsStore.liveCount();
-    if (count <= 0) return 'Start the first room';
-    return count === 1 ? '1 open now' : `${count} open now`;
-  });
-
-  readonly selectedRoom = computed<VoiceRoomDto | null>(() => {
-    const list = this.rooms();
-    if (list.length === 0) return null;
-    const idx = this.selectedRoomIndex() % list.length;
-    return list[idx] ?? list[0] ?? null;
-  });
-
-  readonly selectedRoomMeta = computed(() => {
-    const room = this.selectedRoom();
-    if (!room) return '';
-    return `${languageLabelFor(room.targetLanguage)} · ${room.speakers.length} speaking · ${room.participantCount} participant${room.participantCount === 1 ? '' : 's'} · ${room.maxStageSeats} seats`;
-  });
-
-  readonly activeCounterLabel = computed(() => {
-    const total = this.rooms().length;
-    if (total === 0) return '00 / 00';
-    const current = (this.selectedRoomIndex() % total) + 1;
-    return `${String(current).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
-  });
+  readonly rooms = this.store.rooms;
+  readonly activeGreeting = this.store.activeGreeting;
+  readonly liveSummary = this.store.liveSummary;
+  readonly selectedRoom = this.store.selectedRoom;
+  readonly selectedRoomMeta = this.store.selectedRoomMeta;
+  readonly activeCounterLabel = this.store.activeCounterLabel;
 
   constructor() {
     effect(() => {
@@ -152,10 +105,9 @@ export class HomePage {
 
       const roomTimer = window.setInterval(() => {
         if (this.autoCyclePaused()) return;
-        const total = this.rooms().length;
-        if (total < 2) return;
-        this.selectedRoomIndex.update((i) => (i + 1) % total);
-        this.animateLiveStrip();
+        if (this.store.cycleRoom(false)) {
+          this.animateLiveStrip();
+        }
       }, ROOM_CYCLE_INTERVAL_MS);
 
       this.destroyRef.onDestroy(() => {
@@ -166,15 +118,13 @@ export class HomePage {
   }
 
   cycleRoom(): void {
-    const total = this.rooms().length;
-    if (total < 2) return;
-    this.autoCyclePaused.set(true);
-    this.selectedRoomIndex.update((i) => (i + 1) % total);
-    this.animateLiveStrip();
+    if (this.store.cycleRoom(true)) {
+      this.animateLiveStrip();
+    }
   }
 
   cycleGreeting(): void {
-    this.greetingIndex.update((i) => (i + 1) % this.greetings.length);
+    this.store.cycleGreeting();
   }
 
   onPrimaryMagnetMove(event: PointerEvent): void {
@@ -209,7 +159,7 @@ export class HomePage {
       this.identity.signIn('login', '/rooms?action=start');
       return;
     }
-    this.roomLauncher.openStartRoom(this.destroyRef);
+    this.store.openStartRoom(this.destroyRef);
   }
 
   joinRoom(room: VoiceRoomDto): void {
