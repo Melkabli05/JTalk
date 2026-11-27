@@ -43,6 +43,21 @@
     </div>
   }
 
+  @if (sessionExpiry.sessionExpired()) {
+    <div class="offline-banner home-offline-banner" role="alert">
+      <mat-icon class="icon-18" aria-hidden="true">lock_clock</mat-icon>
+      <span>Your session expired. Please sign in again.</span>
+      <button
+        matIconButton
+        type="button"
+        aria-label="Dismiss session expired notice"
+        (click)="sessionExpiry.clear()"
+      >
+        <mat-icon class="icon-18" aria-hidden="true">close</mat-icon>
+      </button>
+    </div>
+  }
+
   <main id="main-content" class="home-main">
     <section class="home-hero" aria-labelledby="homeHeroHeading">
       <p class="home-status home-anim-fade">

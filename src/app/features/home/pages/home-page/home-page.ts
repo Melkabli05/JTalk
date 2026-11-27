@@ -26,6 +26,7 @@ import {
   GREETING_INTERVAL_MS,
   ROOM_CYCLE_INTERVAL_MS,
 } from '../../constants/home.constants';
+import { SessionExpiryHandler } from '../../../../core/http/session-expiry';
 
 interface HomeGreeting {
   readonly text: string;
@@ -57,6 +58,7 @@ export class HomePage {
   readonly roomsStore = inject(RoomsFacade);
   readonly theme = inject(ThemeService);
   readonly pwa = inject(PwaService);
+  readonly sessionExpiry = inject(SessionExpiryHandler);
 
   readonly themeToggleLabel = computed(() =>
     this.theme.isDark() ? 'Switch to light mode' : 'Switch to dark mode',
@@ -134,6 +136,7 @@ export class HomePage {
       this.destroyRef.onDestroy(() => {
         window.clearInterval(greetingTimer);
         window.clearInterval(roomTimer);
+        this.sessionExpiry.clear();
       });
     });
   }

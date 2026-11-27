@@ -1,9 +1,9 @@
 import { isPlatformBrowser } from '@angular/common';
-import { computed, inject, linkedSignal, PLATFORM_ID, Service, signal } from '@angular/core';
+import { computed, effect, inject, linkedSignal, PLATFORM_ID, Service, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '@auth0/auth0-angular';
 import { catchError, finalize, map, type Observable, of, switchMap, throwError } from 'rxjs';
-import { ApiError, errorMessage } from '../http/http-error.interceptor';
+import { ApiError, errorMessage, isAuthSessionError } from '../http/http-error.interceptor';
 import { JTALK_USER_ID_CLAIM } from './auth.constants';
 import type {
   AccountActionResult,
@@ -18,6 +18,7 @@ import type {
   UserSummaryResponse,
 } from './auth.models';
 import { UsersApi } from './users-api';
+import { SessionExpiryHandler } from '../http/session-expiry';
 
 function buildProfilePatch(
   current: UserProfileResponse,
@@ -81,6 +82,7 @@ export class IdentityStore {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly auth = inject(AuthService, { optional: true });
   private readonly usersApi = inject(UsersApi);
+  private readonly sessionExpiry = inject(SessionExpiryHandler);
 
   readonly isLoading = this.auth
     ? toSignal(this.auth.isLoading$, { initialValue: isPlatformBrowser(this.platformId) })
@@ -170,6 +172,16 @@ export class IdentityStore {
     () => this.isAuthenticated() && this.profileStatus() === 'missing',
   );
 
+  constructor() {
+    effect(() => {
+      const err = this.authErrorSignal();
+      if (err && isAuthSessionError(err)) {
+        this.meState.set(null);
+        this.sessionExpiry.handle();
+      }
+    });
+  }
+
   loadMe(): void {
     if (this.meEnabled()) {
       this.meResource.reload();
@@ -257,6 +269,7 @@ export class IdentityStore {
 
   signIn(mode: 'login' | 'signup' = 'login', targetPath = '/rooms'): void {
     if (!this.auth || !isPlatformBrowser(this.platformId)) return;
+    this.sessionExpiry.clear();
     this.auth.loginWithRedirect({
       appState: { target: targetPath },
       ...(mode === 'signup' ? { authorizationParams: { screen_hint: 'signup' } } : {}),

@@ -1,5 +1,7 @@
 import { HttpErrorResponse, type HttpInterceptorFn } from '@angular/common/http';
 import { catchError } from 'rxjs';
+import { SessionExpiryHandler } from './session-expiry';
+import { inject } from '@angular/core/primitives/di';
 
 const problemMessages = new Map<string, string>([
   ['urn:jtalk:user:problem:user-not-found', 'Profile not found.'],
@@ -90,17 +92,23 @@ export class ApiError extends Error {
   }
 }
 
-export const httpErrorInterceptor: HttpInterceptorFn = (request, next) =>
-  next(request).pipe(
+export const httpErrorInterceptor: HttpInterceptorFn = (request, next) => {
+  const sessionExpiry = inject(SessionExpiryHandler);
+
+  return next(request).pipe(
     catchError((error: unknown) => {
+      if (isAuthSessionError(error)) {
+        sessionExpiry.handle();
+      }
       throw error instanceof HttpErrorResponse ? new ApiError(error) : error;
     }),
   );
+};
 
 const AUTH_SESSION_ERROR_RE =
   /missing refresh token|login_required|consent_required|interaction_required|invalid_grant/i;
 
-function isAuthSessionError(error: unknown): boolean {
+export function isAuthSessionError(error: unknown): boolean {
   if (error instanceof Error) {
     return AUTH_SESSION_ERROR_RE.test(error.message);
   }
