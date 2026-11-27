@@ -1,13 +1,13 @@
 import {
   Component,
   computed,
-  effect,
+  DestroyRef,
   type ElementRef,
+  inject,
   input,
   linkedSignal,
   output,
   signal,
-  untracked,
   viewChild,
 } from '@angular/core';
 import { form, FormField, maxLength, validate } from '@angular/forms/signals';
@@ -182,19 +182,7 @@ export class ProfileEditForm {
   );
 
   constructor() {
-    effect((onCleanup) => {
-      const file = this.selectedFile();
-      if (!file) {
-        this.pendingPreviewUrl.set(null);
-        return;
-      }
-      const objectUrl = URL.createObjectURL(file);
-      untracked(() => {
-        this.pendingPreviewUrl.set(objectUrl);
-        this.avatarPicked.emit();
-      });
-      onCleanup(() => URL.revokeObjectURL(objectUrl));
-    });
+    inject(DestroyRef).onDestroy(() => this.revokePreviewUrl());
   }
 
   triggerAvatarUpload(): void {
@@ -217,7 +205,7 @@ export class ProfileEditForm {
       return;
     }
 
-    this.selectedFile.set(file);
+    this.setAvatarFile(file);
   }
 
   clearAbout(): void {
@@ -249,6 +237,24 @@ export class ProfileEditForm {
   }
 
   clearPendingAvatar(): void {
-    this.selectedFile.set(null);
+    this.setAvatarFile(null);
+  }
+
+  private setAvatarFile(file: File | null): void {
+    this.revokePreviewUrl();
+    this.selectedFile.set(file);
+    if (!file) {
+      this.pendingPreviewUrl.set(null);
+      return;
+    }
+    this.pendingPreviewUrl.set(URL.createObjectURL(file));
+    this.avatarPicked.emit();
+  }
+
+  private revokePreviewUrl(): void {
+    const existing = this.pendingPreviewUrl();
+    if (existing) {
+      URL.revokeObjectURL(existing);
+    }
   }
 }
