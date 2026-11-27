@@ -223,16 +223,30 @@
             </mat-card>
           }
           @if (facade.hasProfile() || facade.needsOnboarding()) {
-            <app-profile-edit-form
-              [profile]="me"
-              [stats]="stats"
-              [onboarding]="facade.needsOnboarding()"
-              [saving]="facade.savingProfile()"
-              (saved)="onProfileSaved($event)"
-              (discarded)="facade.discardProfile()"
-              (avatarPicked)="facade.notify('Picture ready to save.')"
-              (uploadError)="facade.notify($event)"
-            />
+            @defer (when facade.selectedTabIndex() === 1; prefetch on idle) {
+              <app-profile-edit-form
+                [profile]="me"
+                [stats]="stats"
+                [onboarding]="facade.needsOnboarding()"
+                [saving]="facade.savingProfile()"
+                (saved)="onProfileSaved($event)"
+                (discarded)="facade.discardProfile()"
+                (avatarPicked)="facade.notify('Picture ready to save.')"
+                (uploadError)="facade.notify($event)"
+              />
+            } @placeholder {
+              <mat-card class="profile-card" appearance="outlined">
+                <p class="profile-empty">Open Edit profile to update your details.</p>
+              </mat-card>
+            } @loading (minimum 150ms) {
+              <mat-card class="profile-card" appearance="outlined" role="status">
+                <p class="profile-empty">Loading profile editor…</p>
+              </mat-card>
+            } @error {
+              <mat-card class="profile-card" appearance="outlined" role="alert">
+                <p class="profile-empty">Could not load the profile editor.</p>
+              </mat-card>
+            }
           }
         </div>
       </mat-tab>
