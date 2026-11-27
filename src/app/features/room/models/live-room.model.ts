@@ -6,6 +6,11 @@ export interface ActionFeedback {
   readonly message?: string;
 }
 
+export interface StageReaction {
+  readonly emoji: string;
+  readonly reactorName: string;
+}
+
 export type RoomConnectionState =
   | { readonly status: 'idle' }
   | { readonly status: 'joining'; readonly roomId: string }

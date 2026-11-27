@@ -19,7 +19,12 @@ import { avatarChipClassFor } from '../../../shared/utils/avatar-chip.utils';
 import { AUDIENCE_INITIAL_LIMIT, DEFAULT_MAX_STAGE_SEATS } from '../constants/room.constants';
 import { LiveKitAudioEngine } from '../data-access/livekit-audio-engine';
 import { VoiceRoomApi } from '../data-access/voice-room-api';
-import type { ActionFeedback, RoomListener, RoomSpeaker } from '../models/live-room.model';
+import type {
+  ActionFeedback,
+  RoomListener,
+  RoomSpeaker,
+  StageReaction,
+} from '../models/live-room.model';
 
 @Service()
 export class RoomStageStore {
@@ -46,7 +51,7 @@ export class RoomStageStore {
   private readonly audienceCountState = signal(0);
   private readonly hasMoreAudienceState = signal(false);
   private readonly audienceLoadingState = signal(false);
-  private readonly stageReactionState = signal<string | null>(null);
+  private readonly stageReactionState = signal<StageReaction | null>(null);
   private readonly stageReactionKeyState = signal(0);
 
   readonly room = this.roomState.asReadonly();
@@ -475,7 +480,11 @@ export class RoomStageStore {
       case 'REACTIONS': {
         const latest = event.reactions?.at(-1);
         if (latest && isBackendReaction(latest.reaction)) {
-          this.flashStageReaction(emojiForReaction(latest.reaction));
+          const reactorName =
+            latest.userId === this.currentUserId()
+              ? 'You'
+              : this.resolveDisplayName(latest.userId, 'Listener');
+          this.flashStageReaction({ emoji: emojiForReaction(latest.reaction), reactorName });
         }
         return;
       }
@@ -573,11 +582,11 @@ export class RoomStageStore {
     };
   }
 
-  private flashStageReaction(emoji: string): void {
-    this.stageReactionState.set(emoji);
+  private flashStageReaction(reaction: StageReaction): void {
+    this.stageReactionState.set(reaction);
     this.stageReactionKeyState.update((k): number => k + 1);
     this.clearReactionTimer();
-    this.reactionTimeout = setTimeout(() => this.stageReactionState.set(null), 1800);
+    this.reactionTimeout = setTimeout(() => this.stageReactionState.set(null), 2400);
   }
 
   private clearReactionTimer(): void {

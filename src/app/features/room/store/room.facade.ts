@@ -28,6 +28,7 @@ import type {
   ListenerMenuAction,
   ProfilePreviewTarget,
   RoomListener,
+  StageReaction,
   RoomSpeaker,
   SpeakerMenuAction,
 } from '../models/live-room.model';
@@ -112,7 +113,7 @@ export class RoomFacade {
 
   readonly speakers: Signal<readonly RoomSpeaker[]> = this.stageStore.speakers;
   readonly effectiveMaxSeats: Signal<number> = this.stageStore.effectiveMaxSeats;
-  readonly stageReaction: Signal<string | null> = this.stageStore.stageReaction;
+  readonly stageReaction: Signal<StageReaction | null> = this.stageStore.stageReaction;
   readonly stageReactionKey: Signal<number> = this.stageStore.stageReactionKey;
   readonly canClaimStageSeat: Signal<boolean> = this.stageStore.canClaimStageSeat;
   readonly claimingSeat: Signal<boolean> = this.stageStore.claimingSeat;

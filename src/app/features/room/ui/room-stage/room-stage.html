@@ -30,7 +30,10 @@
 
   @if (stageReaction(); as reaction) {
     @for (key of [stageReactionKey()]; track key) {
-      <span class="stage-reaction" id="stageReaction" aria-hidden="true">{{ reaction }}</span>
+      <div class="stage-reaction" id="stageReaction" aria-hidden="true">
+        <span class="stage-reaction-emoji">{{ reaction.emoji }}</span>
+        <span class="stage-reaction-name">{{ reaction.reactorName }}</span>
+      </div>
     }
   }
 

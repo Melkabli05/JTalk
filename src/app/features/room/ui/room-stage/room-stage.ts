@@ -7,6 +7,7 @@ import type {
   DiscussionMessage,
   RoomSpeaker,
   SpeakerMenuAction,
+  StageReaction,
 } from '../../models/live-room.model';
 
 @Component({
@@ -20,7 +21,7 @@ export class RoomStage {
 
   readonly speakers = input.required<readonly RoomSpeaker[]>();
   readonly maxSeats = input.required<number>();
-  readonly stageReaction = input<string | null>(null);
+  readonly stageReaction = input<StageReaction | null>(null);
   readonly stageReactionKey = input(0);
 
   readonly isHost = input(false);

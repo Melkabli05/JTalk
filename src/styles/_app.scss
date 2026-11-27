@@ -2170,15 +2170,32 @@ app-room-card {
   z-index: 8;
   top: 6px;
   right: 10px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
   background: var(--primary-btn);
   color: var(--on-primary-btn);
-  border-radius: var(--r-full);
-  padding: 4px 10px;
-  font-size: 1.125rem;
-  line-height: 1;
+  border-radius: var(--r-md);
+  padding: 6px 10px;
   box-shadow: var(--elevation-1);
   animation: reaction-rise 2.4s ease forwards;
   pointer-events: none;
+}
+
+.stage-reaction-emoji {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.stage-reaction-name {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.1;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @keyframes reaction-rise {
@@ -3903,8 +3920,11 @@ body:has(.app.room-active) .jtalk-snackbar {
   .stage-reaction {
     top: 12px;
     right: 16px;
-    padding: 6px 12px;
-    font-size: 1.25rem;
+    padding: 8px 12px;
+  }
+
+  .stage-reaction-emoji {
+    font-size: 1.375rem;
   }
 
   .audience-section {
