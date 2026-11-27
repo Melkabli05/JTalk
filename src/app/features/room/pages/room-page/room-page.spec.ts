@@ -210,7 +210,7 @@ describe('RoomPage', () => {
     fixture.componentRef.setInput('id', 'current');
     fixture.detectChanges();
 
-    fixture.componentInstance.onToggleMute();
+    fixture.componentInstance.facade.toggleMute('current');
     expect(toastSpy.show).toHaveBeenCalledWith('Join the stage to use your microphone.');
   });
 
@@ -293,7 +293,7 @@ describe('RoomPage', () => {
     fixture.detectChanges();
 
     let reloaded: boolean | undefined;
-    fixture.componentInstance.chatStore.reloadMessages((ok) => {
+    fixture.componentInstance.facade.retryChat((ok) => {
       reloaded = ok;
     });
     expect(reloaded).toBe(false);

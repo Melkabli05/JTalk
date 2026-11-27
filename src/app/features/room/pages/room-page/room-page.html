@@ -2,7 +2,7 @@
   class="view view-room"
   [style.--room-kb-offset.px]="keyboardOffset()"
 >
-  @if (!isCurrentRoom() && (!roomStore.roomError() || roomStore.roomLoading())) {
+  @if (!isCurrentRoom() && (!facade.roomError() || facade.roomLoading())) {
     <div class="room-joining-state" role="status" aria-busy="true">
       <div class="room-joining-card">
         <p class="room-joining-label">Joining room…</p>
@@ -17,8 +17,8 @@
     </div>
   } @else if (!isCurrentRoom()) {
     <div class="rooms-empty-hint" role="alert">
-      <p>{{ roomStore.roomError() }}</p>
-      <button matButton="outlined" type="button" (click)="navigateTo('/rooms')">
+      <p>{{ facade.roomError() }}</p>
+      <button matButton="outlined" type="button" (click)="facade.navigateTo('/rooms')">
         <mat-icon aria-hidden="true">arrow_back</mat-icon>
         Back to live rooms
       </button>
@@ -27,101 +27,101 @@
     <div class="room-layout">
       <div class="room-head-col">
         <app-room-toolbar
-          [roomTitle]="stageStore.effectiveRoomTitle()"
-          [roomTopic]="roomStore.effectiveRoomTopic()"
-          [practiseLang]="stageStore.practiseLangLabel()"
-          [hostName]="stageStore.hostName()"
-          [peopleCount]="stageStore.room()?.participantCount ?? 0"
-          [handCount]="stageStore.room()?.handRaiseCount ?? 0"
-          [isHost]="isHost()"
-          [pendingRequests]="stageStore.pendingRequests()"
-          [audioStatus]="roomStore.audio.status()"
-          [noiseIsolationEnabled]="roomStore.audio.noiseIsolationEnabled()"
-          [noiseIsolationMode]="roomStore.audio.noiseIsolationMode()"
-          [audioInputDevices]="roomStore.audio.audioInputDevices()"
-          [selectedAudioInputId]="roomStore.audio.selectedAudioInputId()"
-          (backToRooms)="navigateTo('/rooms')"
-          (copyRoomLink)="onCopyRoomLink()"
-          (findPeople)="navigateTo('/people')"
+          [roomTitle]="facade.effectiveRoomTitle()"
+          [roomTopic]="facade.effectiveRoomTopic()"
+          [practiseLang]="facade.practiseLangLabel()"
+          [hostName]="facade.hostName()"
+          [peopleCount]="facade.participantCount()"
+          [handCount]="facade.handCount()"
+          [isHost]="facade.isHost()"
+          [pendingRequests]="facade.pendingRequests()"
+          [audioStatus]="facade.audioStatus()"
+          [noiseIsolationEnabled]="facade.noiseIsolationEnabled()"
+          [noiseIsolationMode]="facade.noiseIsolationMode()"
+          [audioInputDevices]="facade.audioInputDevices()"
+          [selectedAudioInputId]="facade.selectedAudioInputId()"
+          (backToRooms)="facade.navigateTo('/rooms')"
+          (copyRoomLink)="facade.copyRoomLink()"
+          (findPeople)="facade.navigateTo('/people')"
           (openEditRoom)="openEditRoomDialog()"
           (openEndRoom)="openEndRoomDialog()"
-          (approveRequest)="onApproveRequest($event)"
-          (toggleNoiseIsolation)="onToggleNoiseIsolation()"
-          (selectAudioDevice)="onSelectAudioDevice($event)"
-          (refreshAudioDevices)="roomStore.audio.refreshAudioInputDevices()"
-          (reconnectAudio)="onReconnectAudio()"
+          (approveRequest)="facade.approveRequest(id(), $event)"
+          (toggleNoiseIsolation)="facade.toggleNoiseIsolation()"
+          (selectAudioDevice)="facade.selectAudioDevice($event)"
+          (refreshAudioDevices)="facade.refreshAudioDevices()"
+          (reconnectAudio)="facade.reconnectAudio(id())"
         />
       </div>
 
       <div class="room-top-col">
         <app-room-stage
           #roomStage
-          [speakers]="stageStore.speakers()"
-          [maxSeats]="stageStore.effectiveMaxSeats()"
-          [stageReaction]="stageStore.stageReaction()"
-          [stageReactionKey]="stageStore.stageReactionKey()"
-          [isHost]="isHost()"
-          [hasOpenSeat]="stageStore.canClaimStageSeat()"
-          [pinnedMessage]="chatStore.pinnedMessage()"
+          [speakers]="facade.speakers()"
+          [maxSeats]="facade.effectiveMaxSeats()"
+          [stageReaction]="facade.stageReaction()"
+          [stageReactionKey]="facade.stageReactionKey()"
+          [isHost]="facade.isHost()"
+          [hasOpenSeat]="facade.canClaimStageSeat()"
+          [pinnedMessage]="facade.pinnedMessage()"
           (speakerAction)="onSpeakerAction($event)"
           (endRoom)="openEndRoomDialog()"
-          (claimSeat)="onClaimStageSeat()"
-          (unpinMessage)="onUnpinMessage()"
+          (claimSeat)="facade.claimStageSeat(id())"
+          (unpinMessage)="facade.unpinMessage(id())"
         />
 
         <app-room-audience
-          [listeners]="stageStore.listeners()"
-          listenerLabel="{{ stageStore.audienceCount() }} listening"
-          [hasMore]="stageStore.hasMoreAudience()"
-          [loading]="stageStore.audienceLoading()"
-          [isHost]="isHost()"
-          (loadMore)="onLoadMoreAudience()"
+          [listeners]="facade.listeners()"
+          listenerLabel="{{ facade.audienceCount() }} listening"
+          [hasMore]="facade.hasMoreAudience()"
+          [loading]="facade.audienceLoading()"
+          [isHost]="facade.isHost()"
+          (loadMore)="facade.loadMoreAudience(id())"
           (listenerAction)="onListenerAction($event)"
         />
       </div>
 
       <div class="room-chat-col">
         <app-room-discussion
-          [messages]="chatStore.messages()"
-          [sending]="sendingComment()"
-          [commentCountLabel]="chatStore.commentCountLabel()"
-          [loading]="roomStore.messagesLoading()"
-          [chatError]="chatStore.chatError()"
-          [replyTarget]="chatStore.replyTarget()"
-          [correcting]="chatStore.correcting()"
-          [pinnedTopic]="chatStore.pinnedTopic()"
-          (topicChange)="onChatTopic($event)"
-          [isHost]="isHost()"
-          [mutedUsers]="chatStore.chatMutedUsers()"
-          [canSend]="canSendMessage()"
-          (retryChat)="onRetryChat()"
-          (refreshChat)="onRefreshChat()"
-          (replyCleared)="chatStore.setReplyTarget(null)"
+          [messages]="facade.messages()"
+          [sending]="facade.sendingComment()"
+          [commentCountLabel]="facade.commentCountLabel()"
+          [loading]="facade.messagesLoading()"
+          [chatError]="facade.chatError()"
+          [replyTarget]="facade.replyTarget()"
+          [correcting]="facade.correcting()"
+          [pinnedTopic]="facade.pinnedTopic()"
+          (topicChange)="facade.updateChatTopic(id(), $event)"
+          [isHost]="facade.isHost()"
+          [mutedUsers]="facade.chatMutedUsers()"
+          [canSend]="facade.canSendMessage()"
+          (retryChat)="facade.retryChat()"
+          (refreshChat)="facade.refreshChat()"
+          (replyCleared)="facade.clearReplyTarget()"
           (sendMessage)="onSendMessage($event)"
-          (emptySendAttempt)="toast.show('Write something first.')"
-          (toggleReaction)="onToggleMessageReaction($event)"
-          (commentAction)="onCommentAction($event)"
+          (emptySendAttempt)="facade.notify('Write something first.')"
+          (toggleReaction)="facade.toggleMessageReaction(id(), $event.messageId, $event.reaction)"
+          (commentAction)="facade.commentAction(id(), $event)"
         />
       </div>
 
       <div class="room-dock-col">
         <app-room-controls
-          [muted]="roomStore.muted()"
-          [handRaised]="stageStore.handRaised()"
-          [canEndRoom]="isHost()"
-          [canLeaveStage]="canLeaveStage()"
-          [canUseMic]="canUseMic()"
-          [canRaiseHand]="canRaiseHand()"
-          [canClaimStageSeat]="stageStore.canClaimStageSeat()"
-          [soundBlocked]="roomStore.audio.soundBlocked()"
-          [micError]="roomStore.audio.micError()"
+          [muted]="facade.muted()"
+          [handRaised]="facade.handRaised()"
+          [canEndRoom]="facade.isHost()"
+          [canLeaveStage]="facade.canLeaveStage()"
+          [canUseMic]="facade.canUseMic()"
+          [canRaiseHand]="facade.canRaiseHand()"
+          [canClaimStageSeat]="facade.canClaimStageSeat()"
+          [soundBlocked]="facade.soundBlocked()"
+          [micError]="facade.micError()"
           (reactionPicked)="onStageReaction($event)"
-          (toggleHand)="onToggleHand()"
-          (claimStageSeat)="onClaimStageSeat()"
-          (toggleMute)="onToggleMute()"
-          (enableAudio)="onEnableAudio()"
-          (leaveQuietly)="onLeaveQuietly()"
-          (leaveStage)="onLeaveStage()"
+          (toggleHand)="facade.toggleHand(id())"
+          (claimStageSeat)="facade.claimStageSeat(id())"
+          (toggleMute)="facade.toggleMute(id())"
+          (enableAudio)="facade.enableAudio()"
+          (leaveQuietly)="facade.leaveQuietly(id())"
+          (leaveStage)="facade.leaveStage(id())"
           (openEndRoom)="openEndRoomDialog()"
         />
       </div>
