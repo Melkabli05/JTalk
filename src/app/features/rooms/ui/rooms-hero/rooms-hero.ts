@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -29,6 +29,22 @@ export class RoomsHero {
 
   readonly nextScene = output<void>();
   readonly startRoom = output<void>();
+
+  private readonly visitedSceneIds = linkedSignal<string, ReadonlySet<string>>({
+    source: () => this.activeScene().id,
+    computation: (activeId, previous) => {
+      const next = new Set(previous?.value);
+      next.add(activeId);
+      return next;
+    },
+  });
+
+  readonly renderedScenes = computed(() => {
+    const visited = this.visitedSceneIds();
+    const list = this.scenes().filter((scene) => visited.has(scene.id));
+    const current = this.activeScene();
+    return list.some((scene) => scene.id === current.id) ? list : [...list, current];
+  });
 
   readonly isEmpty = computed(() => this.liveCount() <= 0);
 

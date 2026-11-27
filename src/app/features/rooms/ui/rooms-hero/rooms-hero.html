@@ -1,5 +1,5 @@
 @let current = activeScene();
-@for (item of scenes(); track item.id) {
+@for (item of renderedScenes(); track item.id) {
   @let isActive = item.id === current.id;
   <img
     class="hero-bg"
@@ -7,6 +7,8 @@
     [src]="item.src"
     [alt]="isActive ? item.alt : ''"
     [attr.aria-hidden]="isActive ? null : 'true'"
+    [attr.loading]="isActive ? 'eager' : 'lazy'"
+    decoding="async"
     [attr.fetchpriority]="isActive ? 'high' : 'low'"
     referrerpolicy="no-referrer"
   />
