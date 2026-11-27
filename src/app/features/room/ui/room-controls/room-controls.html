@@ -17,10 +17,12 @@
         <span>Leave stage</span>
       </button>
     }
-    <button mat-menu-item type="button" id="leaveQuietlyMenuItem" (click)="leaveQuietly.emit()">
-      <mat-icon>logout</mat-icon>
-      <span>Leave room</span>
-    </button>
+    @if (canLeaveQuietly()) {
+      <button mat-menu-item type="button" id="leaveQuietlyMenuItem" (click)="leaveQuietly.emit()">
+        <mat-icon>logout</mat-icon>
+        <span>Leave room</span>
+      </button>
+    }
     @if (canEndRoom()) {
       <button
         mat-menu-item
@@ -30,7 +32,7 @@
         (click)="openEndRoom.emit()"
       >
         <mat-icon>power_settings_new</mat-icon>
-        <span>End room for everyone</span>
+        <span>{{ hasOtherParticipants() ? 'End room for everyone' : 'End room' }}</span>
       </button>
     }
   </mat-menu>

@@ -74,6 +74,14 @@ export class RoomFacade {
   readonly participantCount: Signal<number> = computed(
     (): number => this.stageStore.room()?.participantCount ?? 0,
   );
+  readonly hasOtherParticipants: Signal<boolean> = computed(() => {
+    const myId = this.stageStore.currentUserId();
+    return (
+      this.speakers().some((s) => s.id !== myId) ||
+      this.listeners().some((l) => l.id !== myId) ||
+      this.participantCount() > 1
+    );
+  });
   readonly handCount: Signal<number> = computed(
     (): number => this.stageStore.room()?.handRaiseCount ?? 0,
   );

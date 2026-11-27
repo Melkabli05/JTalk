@@ -115,6 +115,8 @@
           [muted]="facade.muted()"
           [handRaised]="facade.handRaised()"
           [canEndRoom]="facade.isHost()"
+          [canLeaveQuietly]="!facade.isHost() || facade.hasOtherParticipants()"
+          [hasOtherParticipants]="facade.hasOtherParticipants()"
           [canLeaveStage]="facade.canLeaveStage()"
           [canUseMic]="facade.canUseMic()"
           [mutedByHost]="facade.mutedByHost()"

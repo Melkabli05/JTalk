@@ -17,6 +17,8 @@ export class RoomControls {
   readonly handRaised = input.required<boolean>();
 
   readonly canEndRoom = input(false);
+  readonly canLeaveQuietly = input(true);
+  readonly hasOtherParticipants = input(true);
   readonly canLeaveStage = input(false);
   readonly canUseMic = input(false);
   readonly mutedByHost = input(false);

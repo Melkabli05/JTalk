@@ -128,7 +128,10 @@ export class RoomPage {
     const ref = this.dialog.open<EndRoomDialog, EndRoomDialogData, boolean>(EndRoomDialog, {
       width: '440px',
       maxWidth: 'calc(100vw - 24px)',
-      data: { roomTitle: this.facade.effectiveRoomTitle() },
+      data: {
+        roomTitle: this.facade.effectiveRoomTitle(),
+        hasOtherParticipants: this.facade.hasOtherParticipants(),
+      },
     });
 
     ref.afterClosed().subscribe((confirmed) => {

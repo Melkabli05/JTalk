@@ -1,12 +1,18 @@
 <h2 mat-dialog-title id="endModalTitle">
   @if (roomTitle) {
-    End “{{ roomTitle }}” for everyone?
+    {{ hasOtherParticipants ? 'End “' + roomTitle + '” for everyone?' : 'End “' + roomTitle + '”?' }}
   } @else {
-    End room for everyone?
+    {{ hasOtherParticipants ? 'End room for everyone?' : 'End room?' }}
   }
 </h2>
 <mat-dialog-content>
-  <p>Closes the room immediately and disconnects all participants.</p>
+  <p>
+    {{
+      hasOtherParticipants
+        ? 'Closes the room immediately and disconnects all participants.'
+        : "You're the only one in this room. Leaving will close it."
+    }}
+  </p>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <button matButton="text" type="button" mat-dialog-close>Cancel</button>

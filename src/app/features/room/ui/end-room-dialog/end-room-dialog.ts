@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 
 export interface EndRoomDialogData {
   readonly roomTitle?: string;
+  readonly hasOtherParticipants?: boolean;
 }
 
 @Component({
@@ -15,4 +16,5 @@ export interface EndRoomDialogData {
 export class EndRoomDialog {
   private readonly data = inject<EndRoomDialogData | null>(MAT_DIALOG_DATA, { optional: true });
   readonly roomTitle = this.data?.roomTitle?.trim() || null;
+  readonly hasOtherParticipants = this.data?.hasOtherParticipants ?? true;
 }
