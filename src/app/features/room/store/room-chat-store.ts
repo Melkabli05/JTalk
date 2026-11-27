@@ -12,8 +12,12 @@ import {
 } from '../../../shared/models/voice-room.model';
 import { avatarChipClassFor } from '../../../shared/utils/avatar-chip.utils';
 import { VoiceRoomApi } from '../data-access/voice-room-api';
-import type { DiscussionMessage, MessageReaction } from '../models/live-room.model';
-import { type ActionFeedback, RoomStageStore } from './room-stage-store';
+import type {
+  ActionFeedback,
+  DiscussionMessage,
+  MessageReaction,
+} from '../models/live-room.model';
+import { RoomStageStore } from './room-stage-store';
 
 function formatTimeLabel(isoDate: string): string {
   const date = new Date(isoDate);

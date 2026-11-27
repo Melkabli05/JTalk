@@ -3,17 +3,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import {
+import type { ToolbarPendingRequest } from '../../models/live-room.model';
+import type {
   AudioDeviceOption,
   LiveKitConnectionStatus,
-} from '../../data-access/livekit-audio-engine';
-import { NoiseIsolationMode } from '../../data-access/livekit-noise-filter';
-
-export interface ToolbarPendingRequest {
-  readonly id: string;
-  readonly name: string;
-  readonly initial: string;
-}
+  NoiseIsolationMode,
+} from '../../models/livekit.model';
 
 @Component({
   selector: 'app-room-toolbar',

@@ -1,16 +1,5 @@
 import type { LocalAudioTrack } from 'livekit-client';
-
-export type NoiseIsolationMode =
-  | 'krisp-active'
-  | 'krisp-bypassed'
-  | 'webrtc-fallback'
-  | 'unsupported';
-
-export interface KrispFilterController {
-  readonly mode: NoiseIsolationMode;
-  setEnabled(enabled: boolean): Promise<NoiseIsolationMode>;
-  dispose(): Promise<void>;
-}
+import type { KrispFilterController, NoiseIsolationMode } from '../models/livekit.model';
 
 /**
  * Attaches LiveKit's official `@livekit/krisp-noise-filter` processor to a published

@@ -18,22 +18,23 @@ import type {
   BackendReaction,
   UpdateVoiceRoomPayload,
 } from '../../../shared/models/voice-room.model';
-import type {
-  AudioDeviceOption,
-  LiveKitConnectionStatus,
-} from '../data-access/livekit-audio-engine';
-import type { NoiseIsolationMode } from '../data-access/livekit-noise-filter';
 import { VoiceRoomApi } from '../data-access/voice-room-api';
 import type {
+  ActionFeedback,
   DiscussionMessage,
+  HostProfileDialogData,
+  ListenerMenuAction,
   ProfilePreviewTarget,
   RoomListener,
   RoomSpeaker,
+  SpeakerMenuAction,
 } from '../models/live-room.model';
-import type { HostProfileDialogData } from '../ui/host-profile-dialog/host-profile-dialog';
-import type { ListenerMenuAction } from '../ui/room-audience/room-audience';
-import type { SpeakerMenuAction } from '../ui/room-stage/room-stage';
-import { type ActionFeedback, LiveRoomStore } from './live-room-store';
+import type {
+  AudioDeviceOption,
+  LiveKitConnectionStatus,
+  NoiseIsolationMode,
+} from '../models/livekit.model';
+import { LiveRoomStore } from './live-room-store';
 import { RoomChatStore } from './room-chat-store';
 import { RoomStageStore } from './room-stage-store';
 

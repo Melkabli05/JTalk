@@ -10,15 +10,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { DiscussionMessage, RoomSpeaker } from '../../models/live-room.model';
-
-export type SpeakerMenuAction =
-  | 'profile'
-  | 'mute'
-  | 'audience'
-  | 'leave-stage'
-  | 'remove'
-  | 'transfer-host';
+import type {
+  DiscussionMessage,
+  RoomSpeaker,
+  SpeakerMenuAction,
+} from '../../models/live-room.model';
 
 @Component({
   selector: 'app-room-stage',

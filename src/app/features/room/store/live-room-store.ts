@@ -18,18 +18,12 @@ import type {
   UpdateVoiceRoomPayload,
 } from '../../../shared/models/voice-room.model';
 import { RoomsApi } from '../../rooms/data-access/rooms-api';
-import { LiveKitAudioEngine, type NetworkModeChange } from '../data-access/livekit-audio-engine';
+import { LiveKitAudioEngine } from '../data-access/livekit-audio-engine';
 import { VoiceRoomApi } from '../data-access/voice-room-api';
+import type { ActionFeedback, RoomConnectionState } from '../models/live-room.model';
+import type { NetworkModeChange } from '../models/livekit.model';
 import { RoomChatStore } from './room-chat-store';
-import { type ActionFeedback, RoomStageStore } from './room-stage-store';
-
-export type { ActionFeedback };
-
-export type RoomConnectionState =
-  | { readonly status: 'idle' }
-  | { readonly status: 'joining'; readonly roomId: string }
-  | { readonly status: 'connected'; readonly roomId: string }
-  | { readonly status: 'error'; readonly message: string };
+import { RoomStageStore } from './room-stage-store';
 
 @Service()
 export class LiveRoomStore {

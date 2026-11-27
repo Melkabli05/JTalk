@@ -4,9 +4,7 @@ import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { RoomListener } from '../../models/live-room.model';
-
-export type ListenerMenuAction = 'stage' | 'approve' | 'profile' | 'remove';
+import type { ListenerMenuAction, RoomListener } from '../../models/live-room.model';
 
 @Component({
   selector: 'app-room-audience',

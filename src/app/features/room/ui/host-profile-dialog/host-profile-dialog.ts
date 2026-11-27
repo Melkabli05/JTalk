@@ -3,17 +3,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
-import { UserProfileResponse, SocialStatsResponse } from '../../../../core/auth/auth.models';
 import { languageFlagFor, languageNameFor } from '../../../../core/utils/language-codes';
 import { AvatarArt } from '../../../../shared/ui/avatar-art/avatar-art';
-import { ProfilePreviewTarget } from '../../models/live-room.model';
-
-export interface HostProfileDialogData {
-  target: ProfilePreviewTarget;
-  profile: UserProfileResponse;
-  stats: SocialStatsResponse;
-  isYou: boolean;
-}
+import type { HostProfileDialogData } from '../../models/live-room.model';
 
 @Component({
   selector: 'app-host-profile-dialog',

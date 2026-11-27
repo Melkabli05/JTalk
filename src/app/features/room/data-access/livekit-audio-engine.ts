@@ -11,38 +11,19 @@ import {
 } from '@angular/core';
 import { BrowserStorage } from '../../../core/services/browser-storage';
 import { MIC_MUTED_STORAGE_KEY } from '../../../shared/constants/storage-keys.constants';
+import type { NetworkMode, RoomSessionDto } from '../../../shared/models/voice-room.model';
 import type {
-  ChatRealtimeEvent,
-  NetworkMode,
-  RoomRealtimeEvent,
-  RoomSessionDto,
-} from '../../../shared/models/voice-room.model';
-import {
-  type AudioDeviceOption,
-  type AudioQualityLevel,
-  type LiveKitConnectionHandle,
-  type LiveKitConnectionStatus,
-  type LiveKitListener,
-} from './livekit-connector';
+  AudioDeviceOption,
+  AudioQualityLevel,
+  LiveKitConnectionHandle,
+  LiveKitConnectionStatus,
+  LiveKitListener,
+  LiveKitRoomEventHandlers,
+  NetworkModeChange,
+  NoiseIsolationMode,
+} from '../models/livekit.model';
 import { LIVEKIT_CONNECTOR } from '../tokens/livekit-connector.token';
-import type { NoiseIsolationMode } from './livekit-noise-filter';
 import { VoiceRoomApi } from './voice-room-api';
-
-export type { AudioDeviceOption, AudioQualityLevel, LiveKitConnectionStatus };
-
-export interface NetworkModeChange {
-  readonly mode: NetworkMode;
-  readonly primarySids: readonly string[];
-  readonly secondarySids: readonly string[];
-}
-
-export interface LiveKitRoomEventHandlers {
-  readonly onRoomEnded?: (message: string) => void;
-  readonly onReconnected?: () => void;
-  readonly onRoomEvent?: (event: RoomRealtimeEvent) => void;
-  readonly onChatEvent?: (event: ChatRealtimeEvent) => void;
-  readonly onNetworkModeChange?: (change: NetworkModeChange) => void;
-}
 
 function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean';

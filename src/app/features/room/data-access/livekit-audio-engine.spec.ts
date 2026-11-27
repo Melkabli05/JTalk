@@ -5,11 +5,11 @@ import { vi } from 'vitest';
 import { RoomSessionDto } from '../../../shared/models/voice-room.model';
 import { VoiceRoomApi } from './voice-room-api';
 import { LiveKitAudioEngine } from './livekit-audio-engine';
-import {
-  type LiveKitConnectionHandle,
-  type LiveKitConnectorFn,
-  type LiveKitListener,
-} from './livekit-connector';
+import type {
+  LiveKitConnectionHandle,
+  LiveKitConnectorFn,
+  LiveKitListener,
+} from '../models/livekit.model';
 import { LIVEKIT_CONNECTOR } from '../tokens/livekit-connector.token';
 
 describe('LiveKitAudioEngine', () => {

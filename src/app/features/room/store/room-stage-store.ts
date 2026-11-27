@@ -22,12 +22,7 @@ import {
 } from '../constants/room.constants';
 import { LiveKitAudioEngine } from '../data-access/livekit-audio-engine';
 import { VoiceRoomApi } from '../data-access/voice-room-api';
-import type { RoomListener, RoomSpeaker } from '../models/live-room.model';
-
-export interface ActionFeedback {
-  readonly ok: boolean;
-  readonly message?: string;
-}
+import type { ActionFeedback, RoomListener, RoomSpeaker } from '../models/live-room.model';
 
 @Service()
 export class RoomStageStore {

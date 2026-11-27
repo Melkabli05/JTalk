@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { provideNoopAuthForTests } from '../../../core/auth/auth.providers';
 import { IdentityStore } from '../../../core/auth/identity';
-import { type LiveKitListener } from '../data-access/livekit-connector';
+import type { LiveKitListener } from '../models/livekit.model';
 import { LIVEKIT_CONNECTOR } from '../tokens/livekit-connector.token';
 import { VoiceRoomApi } from '../data-access/voice-room-api';
 import { LiveRoomStore } from './live-room-store';

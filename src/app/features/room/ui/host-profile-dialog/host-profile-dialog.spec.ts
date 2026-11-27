@@ -2,7 +2,8 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { vi } from 'vitest';
-import { HostProfileDialog, HostProfileDialogData } from './host-profile-dialog';
+import type { HostProfileDialogData } from '../../models/live-room.model';
+import { HostProfileDialog } from './host-profile-dialog';
 
 describe('HostProfileDialog', () => {
   const data: HostProfileDialogData = {
