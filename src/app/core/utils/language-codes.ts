@@ -77,10 +77,6 @@ export function languageFlagFor(code: string | null | undefined): string {
   return findLanguage(code)?.flag ?? '🌐';
 }
 
-export function languageFlagCodeFor(code: string | null | undefined): string | null {
-  return findLanguage(code)?.flagCountryCode ?? null;
-}
-
 export function languageLabelFor(code: string | null | undefined): string {
   return `${languageFlagFor(code)} ${languageNameFor(code)}`;
 }

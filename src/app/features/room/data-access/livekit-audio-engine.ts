@@ -27,8 +27,6 @@ import {
 } from './livekit-noise-filter';
 import { VoiceRoomApi } from './voice-room-api';
 
-export { CHAT_EVENTS_TOPIC, ROOM_EVENTS_TOPIC };
-
 export type LiveKitConnectionStatus =
   | 'idle'
   | 'connecting'
