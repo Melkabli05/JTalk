@@ -32,6 +32,11 @@ import {
 } from '../../models/live-room.model';
 import { RoomFacade } from '../../store/room.facade';
 import { ConfirmActionDialog } from '../../ui/confirm-action-dialog/confirm-action-dialog';
+import {
+  ChooseSuccessorDialog,
+  type ChooseSuccessorDialogData,
+  type ChooseSuccessorDialogResult,
+} from '../../ui/choose-successor-dialog/choose-successor-dialog';
 import { EditRoomDialog, type EditRoomDialogData } from '../../ui/edit-room-dialog/edit-room-dialog';
 import { EndRoomDialog, type EndRoomDialogData } from '../../ui/end-room-dialog/end-room-dialog';
 import { HostProfileDialog } from '../../ui/host-profile-dialog/host-profile-dialog';
@@ -70,8 +75,34 @@ export class RoomPage {
   readonly isCurrentRoom = computed(() => this.facade.roomId() === this.id());
 
   private idleDialogOpen = false;
+  private successorDialogOpen = false;
 
   constructor() {
+    effect(() => {
+      if (!this.facade.chooseSuccessorOpen() || this.successorDialogOpen) return;
+      const roomId = this.id();
+      const candidates = this.facade.eligibleSuccessors();
+      this.successorDialogOpen = true;
+      const ref = this.dialog.open<
+        ChooseSuccessorDialog,
+        ChooseSuccessorDialogData,
+        ChooseSuccessorDialogResult
+      >(ChooseSuccessorDialog, {
+        width: '440px',
+        maxWidth: 'calc(100vw - 24px)',
+        data: { candidates },
+      });
+      ref.afterClosed().subscribe((result) => {
+        this.successorDialogOpen = false;
+        this.facade.dismissSuccessorPrompt();
+        if (!result || this.destroyRef.destroyed || this.id() !== roomId) return;
+        if (result.action === 'end-room') {
+          this.facade.endRoom(roomId);
+        } else {
+          this.facade.leaveQuietly(roomId, result.successorUserId);
+        }
+      });
+    });
     effect(() => {
       if (!this.facade.idleWarning() || this.idleDialogOpen) return;
       const roomId = this.id();

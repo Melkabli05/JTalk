@@ -53,8 +53,13 @@ export class VoiceRoomApi {
     return this.mutate('POST', roomId, 'keepalive');
   }
 
-  leave(roomId: string): Observable<void> {
-    return this.mutate('POST', roomId, 'participants/leave');
+  leave(roomId: string, successorUserId?: string | null): Observable<void> {
+    return this.mutate(
+      'POST',
+      roomId,
+      'participants/leave',
+      successorUserId ? { successorUserId } : undefined,
+    );
   }
 
   kickParticipant(roomId: string, targetUserId: string): Observable<void> {

@@ -140,12 +140,12 @@ export class LiveRoomStore {
     });
   }
 
-  leaveRoom(onDone?: (res: ActionFeedback) => void): void {
+  leaveRoom(onDone?: (res: ActionFeedback) => void, successorUserId?: string | null): void {
     this.runSerialized((release) => {
       this.exitRoom((res) => {
         release();
         onDone?.(res);
-      });
+      }, successorUserId);
     });
   }
 
@@ -373,8 +373,27 @@ export class LiveRoomStore {
     proceedJoin();
   }
 
-  private exitRoom(onDone: (res: ActionFeedback) => void): void {
+  private exitRoom(onDone: (res: ActionFeedback) => void, successorUserId?: string | null): void {
     const id = this.roomId();
+    if (this.stage.isHost() && id) {
+      this.voiceRoomApi.leave(id, successorUserId).subscribe({
+        next: () => {
+          this.teardownAudioEvents();
+          this.resetAll();
+          this.rememberRoom(null);
+          this.audio.disconnectSession(() => onDone({ ok: true }));
+        },
+        error: (err: unknown) => {
+          const code = this.problemCode(err);
+          onDone({
+            ok: false,
+            ...(code ? { code } : {}),
+            message: errorMessage(err, 'Could not leave the room.'),
+          });
+        },
+      });
+      return;
+    }
     this.teardownAudioEvents();
     this.resetAll();
     this.rememberRoom(null);
@@ -383,7 +402,7 @@ export class LiveRoomStore {
         onDone({ ok: true });
         return;
       }
-      this.voiceRoomApi.leave(id).subscribe({
+      this.voiceRoomApi.leave(id, successorUserId).subscribe({
         next: () => onDone({ ok: true }),
         error: (err: unknown) =>
           onDone({
@@ -395,6 +414,17 @@ export class LiveRoomStore {
           }),
       });
     });
+  }
+
+  private problemCode(err: unknown): string | undefined {
+    if (typeof err !== 'object' || err === null) return undefined;
+    const body: unknown = Reflect.get(err, 'error');
+    if (typeof body !== 'object' || body === null) return undefined;
+    const type: unknown = Reflect.get(body, 'type');
+    if (typeof type !== 'string') return undefined;
+    if (type.endsWith(':host-successor-required')) return 'HOST_SUCCESSOR_REQUIRED';
+    if (type.endsWith(':successor-not-in-room')) return 'SUCCESSOR_NOT_IN_ROOM';
+    return undefined;
   }
 
   private applyJoinSnapshot(snapshot: RoomJoinSnapshot): void {
@@ -451,7 +481,20 @@ export class LiveRoomStore {
         this.connectionStateSignal.set({ status, message });
       },
       onReconnected: () => this.resyncRoomSnapshot(roomId),
-      onRoomEvent: (event) => this.stage.applyRoomRealtimeEvent(event),
+      onRoomEvent: (event) => {
+        if (event.type === 'ROOM_CLOSED_HOST_ABSENT') {
+          this.teardownAudioEvents();
+          this.resetAll();
+          this.rememberRoom(null);
+          this.audio.disconnectSession(() => {});
+          this.connectionStateSignal.set({
+            status: 'ended',
+            message: 'This room closed because the host left.',
+          });
+          return;
+        }
+        this.stage.applyRoomRealtimeEvent(event);
+      },
       onChatEvent: (event) => this.chat.applyChatRealtimeEvent(event),
       onNetworkModeChange: (change) => {
         if (

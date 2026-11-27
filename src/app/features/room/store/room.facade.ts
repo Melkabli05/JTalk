@@ -133,6 +133,31 @@ export class RoomFacade {
   );
 
   readonly listeners: Signal<readonly RoomListener[]> = this.stageStore.listeners;
+  private readonly chooseSuccessorOpenState = signal(false);
+  readonly chooseSuccessorOpen: Signal<boolean> = this.chooseSuccessorOpenState.asReadonly();
+  readonly eligibleSuccessors = computed(() => {
+    const mods = this.stageStore.moderatorIds();
+    const speakers = this.stageStore
+      .speakers()
+      .filter((s) => !s.isYou)
+      .map((s) => ({
+        id: s.id,
+        name: s.name,
+        initial: s.initial,
+        avatarUrl: s.avatarUrl,
+        chipClass: s.chipClass,
+        roleLabel: mods.has(s.id) ? 'Moderator · Speaker' : 'Speaker',
+      }));
+    const listeners = this.stageStore.listeners().map((l) => ({
+      id: l.id,
+      name: l.name,
+      initial: l.initial,
+      avatarUrl: l.avatarUrl,
+      chipClass: l.chipClass,
+      roleLabel: mods.has(l.id) ? 'Moderator · Listener' : 'Listener',
+    }));
+    return [...speakers, ...listeners];
+  });
   readonly audienceCount: Signal<number> = this.stageStore.audienceCount;
   readonly hasMoreAudience: Signal<boolean> = this.stageStore.hasMoreAudience;
   readonly audienceLoading: Signal<boolean> = this.stageStore.audienceLoading;
@@ -575,16 +600,32 @@ export class RoomFacade {
     this.chatStore.pinMessage(null, (res) => this.handleFeedback(roomId, res, 'Unpinned.'));
   }
 
-  leaveQuietly(roomId: string): void {
+  dismissSuccessorPrompt(): void {
+    this.chooseSuccessorOpenState.set(false);
+  }
+
+  leaveQuietly(roomId: string, successorUserId?: string | null): void {
     this.leavingRoomState.set(true);
+    this.chooseSuccessorOpenState.set(false);
     this.roomStore.leaveRoom((res) => {
+      if (!res.ok && res.code === 'HOST_SUCCESSOR_REQUIRED') {
+        this.leavingRoomState.set(false);
+        this.chooseSuccessorOpenState.set(true);
+        return;
+      }
+      if (!res.ok && res.code === 'SUCCESSOR_NOT_IN_ROOM') {
+        this.leavingRoomState.set(false);
+        this.chooseSuccessorOpenState.set(true);
+        this.notify('That participant is no longer in the room. Please choose someone else.');
+        return;
+      }
       this.handleFeedback(roomId, res, 'Left the room.');
       if (!this.destroyRef.destroyed && this.roomStore.roomId() !== roomId) {
         void this.router.navigate(['/rooms']);
         return;
       }
       this.leavingRoomState.set(false);
-    });
+    }, successorUserId);
   }
 
   private handleFeedback(roomId: string, res: ActionFeedback, successMessage?: string): boolean {

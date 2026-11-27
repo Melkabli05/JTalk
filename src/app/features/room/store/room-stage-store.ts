@@ -594,6 +594,8 @@ export class RoomStageStore {
           this.idleWarningState.set(true);
         }
         return;
+      case 'ROOM_CLOSED_HOST_ABSENT':
+        return;
     }
   }
 

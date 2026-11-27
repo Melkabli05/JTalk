@@ -4,6 +4,7 @@ import type { ReactionPresentation } from '../../../shared/models/voice-room.mod
 export interface ActionFeedback {
   readonly ok: boolean;
   readonly message?: string;
+  readonly code?: string;
 }
 
 export interface StageReaction {

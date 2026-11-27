@@ -202,7 +202,8 @@ export interface RoomRealtimeEvent {
     | 'HOST_TRANSFERRED'
     | 'ROOM_IDLE_WARNING'
     | 'MODERATOR_ASSIGNED'
-    | 'MODERATOR_REVOKED';
+    | 'MODERATOR_REVOKED'
+    | 'ROOM_CLOSED_HOST_ABSENT';
   readonly roomId?: string;
   readonly targetUserId?: string | null;
   readonly timestamp?: string;
