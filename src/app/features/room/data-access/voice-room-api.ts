@@ -85,6 +85,14 @@ export class VoiceRoomApi {
     return this.mutate('POST', roomId, `stage/demote/${encodeURIComponent(targetUserId)}`);
   }
 
+  grantModerator(roomId: string, targetUserId: string): Observable<void> {
+    return this.mutate('POST', roomId, `stage/moderator/${encodeURIComponent(targetUserId)}`);
+  }
+
+  revokeModerator(roomId: string, targetUserId: string): Observable<void> {
+    return this.mutate('DELETE', roomId, `stage/moderator/${encodeURIComponent(targetUserId)}`);
+  }
+
   muteSpeaker(roomId: string, targetUserId: string): Observable<void> {
     return this.mutate('POST', roomId, `stage/mute/${encodeURIComponent(targetUserId)}`);
   }

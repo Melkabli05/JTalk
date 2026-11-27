@@ -1,4 +1,4 @@
-export type BackendRoomRole = 'HOST' | 'SPEAKER' | 'LISTENER';
+export type BackendRoomRole = 'HOST' | 'MODERATOR' | 'SPEAKER' | 'LISTENER';
 
 export type NetworkMode = 'OPTIMAL' | 'LOW_BANDWIDTH';
 
@@ -123,6 +123,7 @@ export interface RoomSnapshotDto {
 export interface StageDto {
   readonly speakers: readonly string[];
   readonly handRaiseQueue: readonly string[];
+  readonly moderators?: readonly string[];
 }
 
 export interface RoomCommentDto {

@@ -120,6 +120,8 @@ export class RoomFacade {
   readonly idleWarning: Signal<boolean> = this.stageStore.idleWarning;
   readonly hostReconnecting: Signal<boolean> = this.stageStore.hostReconnecting;
   readonly canClaimStageSeat: Signal<boolean> = this.stageStore.canClaimStageSeat;
+  readonly isModerator: Signal<boolean> = this.stageStore.isModerator;
+  readonly canModerate: Signal<boolean> = this.stageStore.canModerate;
   readonly claimingSeat: Signal<boolean> = this.stageStore.claimingSeat;
   readonly togglingHand: Signal<boolean> = this.stageStore.togglingHand;
   readonly handRaised: Signal<boolean> = this.stageStore.handRaised;
@@ -127,7 +129,7 @@ export class RoomFacade {
     (): boolean => this.stageStore.isCurrentUserOnStage() && !this.stageStore.isHost(),
   );
   readonly canRaiseHand: Signal<boolean> = computed(
-    (): boolean => !this.stageStore.isCurrentUserOnStage(),
+    (): boolean => !this.stageStore.isCurrentUserOnStage() && !this.stageStore.isModerator(),
   );
 
   readonly listeners: Signal<readonly RoomListener[]> = this.stageStore.listeners;

@@ -37,6 +37,7 @@
           [peopleCount]="facade.participantCount()"
           [handCount]="facade.handCount()"
           [isHost]="facade.isHost()"
+          [canModerate]="facade.canModerate()"
           [pendingRequests]="facade.pendingRequests()"
           [audioStatus]="facade.audioStatus()"
           [noiseIsolationEnabled]="facade.noiseIsolationEnabled()"
@@ -78,7 +79,7 @@
           listenerLabel="{{ facade.audienceCount() }} listening"
           [hasMore]="facade.hasMoreAudience()"
           [loading]="facade.audienceLoading()"
-          [isHost]="facade.isHost()"
+          [isHost]="facade.canModerate()"
           (loadMore)="facade.loadMoreAudience(id())"
           (listenerAction)="onListenerAction($event)"
         />

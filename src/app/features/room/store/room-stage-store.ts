@@ -61,7 +61,12 @@ export class RoomStageStore {
   readonly roomId = computed(() => this.room()?.id ?? null);
   readonly currentUserId = computed(() => this.identity.userId() ?? '');
   readonly isHost = computed(() => this.roleState() === 'HOST');
-  readonly isCurrentUserOnStage = computed(() => this.roleState() !== 'LISTENER');
+  readonly isModerator = computed(() => this.roleState() === 'MODERATOR');
+  readonly canModerate = computed(() => this.isHost() || this.isModerator());
+  readonly moderatorIds = computed(() => new Set(this.stageState().moderators ?? []));
+  readonly isCurrentUserOnStage = computed(() =>
+    this.stageState().speakers.includes(this.currentUserId()),
+  );
 
   readonly stage = this.stageState.asReadonly();
   readonly claimingSeat = this.claimingSeatState.asReadonly();
@@ -139,7 +144,10 @@ export class RoomStageStore {
   });
 
   readonly canClaimStageSeat = computed(
-    () => !this.isCurrentUserOnStage() && this.stage().speakers.length < this.effectiveMaxSeats(),
+    () =>
+      this.isModerator() &&
+      !this.isCurrentUserOnStage() &&
+      this.stage().speakers.length < this.effectiveMaxSeats(),
   );
 
   constructor() {

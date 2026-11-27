@@ -25,6 +25,7 @@ export class RoomToolbar {
   readonly handCount = input(0);
 
   readonly isHost = input(false);
+  readonly canModerate = input(false);
   readonly pendingRequests = input<readonly ToolbarPendingRequest[]>([]);
 
   readonly audioStatus = input<LiveKitConnectionStatus>('idle');
