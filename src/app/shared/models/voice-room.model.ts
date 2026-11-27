@@ -1,4 +1,4 @@
-export type BackendRoomRole = 'HOST' | 'MODERATOR' | 'SPEAKER' | 'LISTENER';
+export type BackendRoomRole = 'HOST' | 'SPEAKER' | 'LISTENER';
 
 export type NetworkMode = 'OPTIMAL' | 'LOW_BANDWIDTH';
 
@@ -85,6 +85,7 @@ export interface RoomSessionDto {
   readonly mediaUrl: string;
   readonly mediaToken: string;
   readonly role: BackendRoomRole;
+  readonly isModerator?: boolean;
   readonly canPublishAudio: boolean;
   readonly isChatMuted?: boolean;
   readonly isSelfMuted?: boolean;
@@ -117,6 +118,7 @@ export interface RoomJoinSnapshot {
 export interface RoomSnapshotDto {
   readonly room: VoiceRoomDto;
   readonly role: BackendRoomRole;
+  readonly isModerator?: boolean;
   readonly snapshot: RoomJoinSnapshot;
 }
 
@@ -198,7 +200,9 @@ export interface RoomRealtimeEvent {
     | 'HOST_RECONNECTING'
     | 'HOST_RECONNECTED'
     | 'HOST_TRANSFERRED'
-    | 'ROOM_IDLE_WARNING';
+    | 'ROOM_IDLE_WARNING'
+    | 'MODERATOR_ASSIGNED'
+    | 'MODERATOR_REVOKED';
   readonly roomId?: string;
   readonly targetUserId?: string | null;
   readonly timestamp?: string;

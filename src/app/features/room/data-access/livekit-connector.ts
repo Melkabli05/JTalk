@@ -25,6 +25,8 @@ const ROOM_EVENT_TYPES = new Set<string>([
   'HOST_RECONNECTED',
   'HOST_TRANSFERRED',
   'ROOM_IDLE_WARNING',
+  'MODERATOR_ASSIGNED',
+  'MODERATOR_REVOKED',
 ]);
 
 const CHAT_EVENT_TYPES = new Set<string>([

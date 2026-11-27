@@ -53,6 +53,7 @@ export class RoomStageStore {
   private readonly stageReactionsState = signal<readonly StageReaction[]>([]);
   private readonly hostReconnectingState = signal(false);
   private readonly idleWarningState = signal(false);
+  private readonly moderatorIdsState = signal<ReadonlySet<string>>(new Set());
   private readonly reactionTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private nextReactionId = 0;
   private nextReactionLane = 0;
@@ -61,9 +62,9 @@ export class RoomStageStore {
   readonly roomId = computed(() => this.room()?.id ?? null);
   readonly currentUserId = computed(() => this.identity.userId() ?? '');
   readonly isHost = computed(() => this.roleState() === 'HOST');
-  readonly isModerator = computed(() => this.roleState() === 'MODERATOR');
+  readonly moderatorIds = this.moderatorIdsState.asReadonly();
+  readonly isModerator = computed(() => this.moderatorIdsState().has(this.currentUserId()));
   readonly canModerate = computed(() => this.isHost() || this.isModerator());
-  readonly moderatorIds = computed(() => new Set(this.stageState().moderators ?? []));
   readonly isCurrentUserOnStage = computed(() =>
     this.stageState().speakers.includes(this.currentUserId()),
   );
@@ -208,6 +209,8 @@ export class RoomStageStore {
 
   applySessionStart(session: RoomSessionDto): void {
     this.roleState.set(session.role);
+    const myId = this.currentUserId();
+    this.moderatorIdsState.set(session.isModerator && myId ? new Set([myId]) : new Set());
     this.roomState.set(session.room);
     this.stageState.set({ speakers: session.room.speakers, handRaiseQueue: [] });
     const existing = this.identity.userDirectory();
@@ -553,11 +556,36 @@ export class RoomStageStore {
         const newHostId = event.targetUserId;
         if (newHostId) {
           this.roomState.update((curr) => (curr ? { ...curr, hostId: newHostId } : curr));
+          this.moderatorIdsState.update((prev) => {
+            if (!prev.has(newHostId)) return prev;
+            const next = new Set(prev);
+            next.delete(newHostId);
+            return next;
+          });
           if (newHostId === this.currentUserId()) {
             this.roleState.set('HOST');
           } else if (this.roleState() === 'HOST') {
             this.roleState.set('SPEAKER');
           }
+        }
+        return;
+      }
+      case 'MODERATOR_ASSIGNED': {
+        const targetId = event.targetUserId;
+        if (targetId) {
+          this.moderatorIdsState.update((prev) => new Set(prev).add(targetId));
+        }
+        return;
+      }
+      case 'MODERATOR_REVOKED': {
+        const targetId = event.targetUserId;
+        if (targetId) {
+          this.moderatorIdsState.update((prev) => {
+            if (!prev.has(targetId)) return prev;
+            const next = new Set(prev);
+            next.delete(targetId);
+            return next;
+          });
         }
         return;
       }
@@ -580,6 +608,7 @@ export class RoomStageStore {
     this.stageReactionsState.set([]);
     this.hostReconnectingState.set(false);
     this.idleWarningState.set(false);
+    this.moderatorIdsState.set(new Set());
     this.roleState.set('LISTENER');
     this.roomState.set(null);
     this.audienceIdsState.set([]);
