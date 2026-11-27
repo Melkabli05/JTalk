@@ -9,8 +9,16 @@ describe('HostProfileDialog', () => {
   const data: HostProfileDialogData = {
     target: { kind: 'host' },
     profile: {
-      id: 'u1', displayName: 'Jilali', username: 'jilali_dev', createdAt: '2024-05-01T00:00:00Z',
-      nativeLanguage: 'ar', nativeLanguages: ['ar'], learningLanguages: [], countryCode: 'MA', bio: null, avatarUrl: null,
+      id: 'u1',
+      displayName: 'Jilali',
+      username: 'jilali_dev',
+      createdAt: '2024-05-01T00:00:00Z',
+      nativeLanguage: 'ar',
+      nativeLanguages: ['ar'],
+      learningLanguages: [],
+      countryCode: 'MA',
+      bio: null,
+      avatarUrl: null,
     },
     stats: { followerCount: 15, followingCount: 10, followedByMe: false, followsMe: false },
     isYou: true,
@@ -31,7 +39,9 @@ describe('HostProfileDialog', () => {
     const fixture = TestBed.createComponent(HostProfileDialog);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('#hostProfileName')?.textContent).toContain('Jilali');
+    expect(fixture.nativeElement.querySelector('#hostProfileName')?.textContent).toContain(
+      'Jilali',
+    );
     expect(fixture.nativeElement.querySelector('#hostProfileStatus')?.textContent).toContain(
       'Host · On mic · You',
     );

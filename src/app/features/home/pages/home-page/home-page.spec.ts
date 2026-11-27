@@ -30,7 +30,9 @@ describe('HomePage', () => {
           useValue: {
             isLoading$: from([false]),
             isAuthenticated$: from([authenticated]),
-            user$: from([authenticated ? { 'https://jtalk.app/user_id': 'u-1', name: 'Amina' } : null]),
+            user$: from([
+              authenticated ? { 'https://jtalk.app/user_id': 'u-1', name: 'Amina' } : null,
+            ]),
             error$: from([null]),
             getAccessTokenSilently: () => from(['tok']),
             loginWithRedirect: loginSpy,
@@ -120,9 +122,7 @@ describe('HomePage', () => {
     (el.querySelector('.home-live-index') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(fixture.componentInstance.autoCyclePaused()).toBe(true);
-    expect(el.querySelector('.home-live-title')?.textContent?.trim()).toBe(
-      'Café français du soir',
-    );
+    expect(el.querySelector('.home-live-title')?.textContent?.trim()).toBe('Café français du soir');
 
     (el.querySelector('.home-live-join') as HTMLButtonElement).click();
     expect(navSpy).toHaveBeenCalledWith(['/room', 'room-fr']);

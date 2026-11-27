@@ -60,7 +60,10 @@ describe('RoomDiscussion', () => {
     });
     scroll.scrollTop = 50;
     scroll.scrollTo = vi.fn();
-    fixture.componentRef.setInput('messages', [...sampleMessages, { ...sampleMessages[0], id: 'm2' }]);
+    fixture.componentRef.setInput('messages', [
+      ...sampleMessages,
+      { ...sampleMessages[0], id: 'm2' },
+    ]);
     fixture.detectChanges();
     fixture.detectChanges();
 

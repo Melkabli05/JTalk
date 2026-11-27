@@ -78,8 +78,7 @@ export class RoomFacade {
   readonly noiseIsolationMode: Signal<NoiseIsolationMode> = this.roomStore.audio.noiseIsolationMode;
   readonly audioInputDevices: Signal<readonly AudioDeviceOption[]> =
     this.roomStore.audio.audioInputDevices;
-  readonly selectedAudioInputId: Signal<string | null> =
-    this.roomStore.audio.selectedAudioInputId;
+  readonly selectedAudioInputId: Signal<string | null> = this.roomStore.audio.selectedAudioInputId;
   readonly soundBlocked: Signal<boolean> = this.roomStore.audio.soundBlocked;
   readonly micError: Signal<string | null> = this.roomStore.audio.micError;
   readonly muted: Signal<boolean> = this.roomStore.muted;
@@ -112,9 +111,7 @@ export class RoomFacade {
   readonly pinnedTopic: Signal<string | null> = this.chatStore.pinnedTopic;
   readonly pinnedMessage: Signal<DiscussionMessage | null> = this.chatStore.pinnedMessage;
   readonly chatMutedUsers: Signal<ReadonlySet<string>> = this.chatStore.chatMutedUsers;
-  readonly canSendMessage: Signal<boolean> = computed(
-    (): boolean => !this.chatStore.isChatMuted(),
-  );
+  readonly canSendMessage: Signal<boolean> = computed((): boolean => !this.chatStore.isChatMuted());
 
   constructor() {
     effect(() => {
@@ -192,9 +189,7 @@ export class RoomFacade {
   }
 
   reconnectAudio(roomId: string): void {
-    this.roomStore.reconnectAudio((res) =>
-      this.handleFeedback(roomId, res, 'Audio reconnected.'),
-    );
+    this.roomStore.reconnectAudio((res) => this.handleFeedback(roomId, res, 'Audio reconnected.'));
   }
 
   enableAudio(): void {
@@ -206,9 +201,7 @@ export class RoomFacade {
   }
 
   updateRoom(roomId: string, payload: UpdateVoiceRoomPayload): void {
-    this.roomStore.updateRoom(payload, (res) =>
-      this.handleFeedback(roomId, res, 'Room updated.'),
-    );
+    this.roomStore.updateRoom(payload, (res) => this.handleFeedback(roomId, res, 'Room updated.'));
   }
 
   endRoom(roomId: string): void {
@@ -287,8 +280,7 @@ export class RoomFacade {
           (id) => this.voiceRoomApi.transferHost(id, speaker.id),
           'Could not transfer host role.',
           undefined,
-          (res) =>
-            this.handleFeedback(roomId, res, `Host role transferred to ${speaker.name}.`),
+          (res) => this.handleFeedback(roomId, res, `Host role transferred to ${speaker.name}.`),
         );
         return;
       default:
@@ -339,15 +331,11 @@ export class RoomFacade {
   }
 
   claimStageSeat(roomId: string): void {
-    this.stageStore.claimStageSeat((res) =>
-      this.handleFeedback(roomId, res, 'Joined the stage.'),
-    );
+    this.stageStore.claimStageSeat((res) => this.handleFeedback(roomId, res, 'Joined the stage.'));
   }
 
   leaveStage(roomId: string): void {
-    this.stageStore.leaveStage((res) =>
-      this.handleFeedback(roomId, res, 'Returned to audience.'),
-    );
+    this.stageStore.leaveStage((res) => this.handleFeedback(roomId, res, 'Returned to audience.'));
   }
 
   approveRequest(roomId: string, targetId: string): void {
@@ -411,9 +399,7 @@ export class RoomFacade {
   }
 
   toggleMessageReaction(roomId: string, messageId: string, reaction: BackendReaction): void {
-    this.chatStore.toggleReaction(messageId, reaction, (res) =>
-      this.handleFeedback(roomId, res),
-    );
+    this.chatStore.toggleReaction(messageId, reaction, (res) => this.handleFeedback(roomId, res));
   }
 
   commentAction(

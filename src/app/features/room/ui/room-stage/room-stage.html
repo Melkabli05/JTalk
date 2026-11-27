@@ -52,14 +52,19 @@
         [matMenuTriggerData]="{ speaker }"
       >
         <span class="speaker-avatar-shell">
-          <span
-            class="speaker-avatar"
-            [class]="speaker.chipClass"
-            matRipple
-          >
+          <span class="speaker-avatar" [class]="speaker.chipClass" matRipple>
             @if (speaker.avatarUrl; as url) {
-              <img [src]="url" alt="" referrerpolicy="no-referrer" width="100%" height="100%" style="object-fit: cover; border-radius: inherit">
-            } @else { {{ speaker.initial }} }
+              <img
+                [src]="url"
+                alt=""
+                referrerpolicy="no-referrer"
+                width="100%"
+                height="100%"
+                style="object-fit: cover; border-radius: inherit"
+              />
+            } @else {
+              {{ speaker.initial }}
+            }
           </span>
 
           @if (speaker.role === 'host') {
@@ -194,12 +199,7 @@
       }
 
       @if (speaker.role === 'host' && speaker.isYou && isHost()) {
-        <button
-          mat-menu-item
-          class="menu-item-danger"
-          type="button"
-          (click)="endRoom.emit()"
-        >
+        <button mat-menu-item class="menu-item-danger" type="button" (click)="endRoom.emit()">
           <mat-icon>power_settings_new</mat-icon>
           <span>End room</span>
         </button>

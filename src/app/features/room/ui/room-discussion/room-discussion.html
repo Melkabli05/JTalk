@@ -3,11 +3,7 @@
 @let hasMessages = messages().length > 0;
 @let replyingTo = replyTarget();
 
-<section
-  class="discussion-panel"
-  role="complementary"
-  aria-labelledby="disc-h"
->
+<section class="discussion-panel" role="complementary" aria-labelledby="disc-h">
   <div class="disc-head">
     <div class="disc-head-main">
       <span class="disc-live-dot" aria-hidden="true"></span>
@@ -17,7 +13,12 @@
 
     <div class="disc-head-actions">
       @if (isHost()) {
-        <button matIconButton type="button" aria-label="Edit pinned topic" (click)="editingTopic.set(!editingTopic())">
+        <button
+          matIconButton
+          type="button"
+          aria-label="Edit pinned topic"
+          (click)="editingTopic.set(!editingTopic())"
+        >
           <mat-icon>edit_note</mat-icon>
         </button>
       }
@@ -67,7 +68,13 @@
   }
   <div class="chat-error" id="chatError" role="alert" [hidden]="!hasError || isLoading">
     <mat-icon aria-hidden="true">cloud_off</mat-icon>
-    <p>{{ hasMessages ? 'Could not refresh chat. Try again.' : "Chat couldn't connect. Check your connection and try again." }}</p>
+    <p>
+      {{
+        hasMessages
+          ? 'Could not refresh chat. Try again.'
+          : "Chat couldn't connect. Check your connection and try again."
+      }}
+    </p>
     <button matButton="outlined" type="button" id="chatRetry" (click)="retryChat.emit()">
       Retry
     </button>
@@ -87,11 +94,7 @@
       }
       @if (isLoading && !hasMessages) {
         @for (slot of skeletonMessages; track slot.id) {
-          <div
-            class="msg msg-skeleton"
-            [class.msg-thread-reply]="slot.isReply"
-            aria-hidden="true"
-          >
+          <div class="msg msg-skeleton" [class.msg-thread-reply]="slot.isReply" aria-hidden="true">
             <app-skeleton-loader variant="circle" width="34px" height="34px" />
             <div class="msg-body">
               <div class="msg-skeleton-head">
@@ -100,12 +103,7 @@
                   <app-skeleton-loader variant="text" width="30px" height="11px" />
                 </span>
               </div>
-              <app-skeleton-loader
-                variant="text"
-                width="100%"
-                height="13px"
-                [lines]="slot.lines"
-              />
+              <app-skeleton-loader variant="text" width="100%" height="13px" [lines]="slot.lines" />
             </div>
           </div>
         }
@@ -210,7 +208,9 @@
     @if (replyingTo) {
       <div class="reply-banner">
         <mat-icon aria-hidden="true">reply</mat-icon>
-        <span>{{ correcting() ? 'Correcting' : 'Replying to' }} <strong>{{ replyingTo }}</strong></span>
+        <span
+          >{{ correcting() ? 'Correcting' : 'Replying to' }} <strong>{{ replyingTo }}</strong></span
+        >
         <button
           matIconButton
           type="button"
@@ -256,7 +256,11 @@
   <mat-menu #commentActionsMenu="matMenu" class="jtalk-menu" xPosition="before">
     <ng-template matMenuContent let-msg="msg">
       @if (canSend()) {
-        <button mat-menu-item type="button" (click)="commentAction.emit({ action: 'correct', message: msg })">
+        <button
+          mat-menu-item
+          type="button"
+          (click)="commentAction.emit({ action: 'correct', message: msg })"
+        >
           <mat-icon>edit</mat-icon><span>Correct this message</span>
         </button>
         <button mat-menu-item type="button" (click)="onReplyTo(msg)">
@@ -284,7 +288,11 @@
         <span>Copy text</span>
       </button>
       @if (isHost() && !msg.isYou && msg.authorId) {
-        <button mat-menu-item type="button" (click)="commentAction.emit({ action: 'mute', message: msg })">
+        <button
+          mat-menu-item
+          type="button"
+          (click)="commentAction.emit({ action: 'mute', message: msg })"
+        >
           <mat-icon>speaker_notes_off</mat-icon>
           <span>{{ mutedUsers().has(msg.authorId) ? 'Unmute in chat' : 'Mute in chat' }}</span>
         </button>

@@ -139,4 +139,3 @@ describe('hero-scene.utils', () => {
     );
   });
 });
-

@@ -200,7 +200,9 @@ describe('room session', () => {
       createdAt: '2026-01-01T00:00:00Z',
     });
     expect(sendRes?.ok).toBe(true);
-    expect(store.chat.messages().find((message) => message.id === 'reply')?.text).toBe('I goes → I go');
+    expect(store.chat.messages().find((message) => message.id === 'reply')?.text).toBe(
+      'I goes → I go',
+    );
     expect(store.chat.replyTarget()).toBe('New reply');
 
     let leaveRes: { ok: boolean } | undefined;
@@ -402,8 +404,20 @@ describe('room session', () => {
           chat: {
             ...chat,
             comments: [
-              { id: 'c0', type: 'TEXT', authorId: 'host', content: 'Host', createdAt: '2026-01-01T00:00:00Z' },
-              { id: 'c-prev', type: 'TEXT', authorId: 'departed', content: 'Earlier', createdAt: '2026-01-01T00:00:05Z' },
+              {
+                id: 'c0',
+                type: 'TEXT',
+                authorId: 'host',
+                content: 'Host',
+                createdAt: '2026-01-01T00:00:00Z',
+              },
+              {
+                id: 'c-prev',
+                type: 'TEXT',
+                authorId: 'departed',
+                content: 'Earlier',
+                createdAt: '2026-01-01T00:00:05Z',
+              },
             ],
           },
         },
@@ -457,9 +471,27 @@ describe('room session', () => {
     http.expectOne(base + '/comments').flush({
       ...chat,
       comments: [
-        { id: 'c1', type: 'TEXT', authorId: 'host', content: 'Host', createdAt: '2026-01-01T00:00:00Z' },
-        { id: 'c2', type: 'TEXT', authorId: 'guest', content: 'Guest', createdAt: '2026-01-01T00:00:30Z' },
-        { id: 'c3', type: 'TEXT', authorId: 'former-speaker', content: 'Left', createdAt: '2026-01-01T00:01:00Z' },
+        {
+          id: 'c1',
+          type: 'TEXT',
+          authorId: 'host',
+          content: 'Host',
+          createdAt: '2026-01-01T00:00:00Z',
+        },
+        {
+          id: 'c2',
+          type: 'TEXT',
+          authorId: 'guest',
+          content: 'Guest',
+          createdAt: '2026-01-01T00:00:30Z',
+        },
+        {
+          id: 'c3',
+          type: 'TEXT',
+          authorId: 'former-speaker',
+          content: 'Left',
+          createdAt: '2026-01-01T00:01:00Z',
+        },
       ],
     });
     expect(reloaded).toBe(true);

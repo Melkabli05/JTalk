@@ -1,12 +1,6 @@
 <div class="dialog-header-row">
   <h2 mat-dialog-title id="startRoomTitle">Start a room</h2>
-  <button
-    matIconButton
-    class="dialog-close-btn"
-    type="button"
-    aria-label="Close"
-    mat-dialog-close
-  >
+  <button matIconButton class="dialog-close-btn" type="button" aria-label="Close" mat-dialog-close>
     <mat-icon>close</mat-icon>
   </button>
 </div>
@@ -30,12 +24,7 @@
 
       <mat-form-field class="full-width">
         <mat-label>Topic</mat-label>
-        <input
-          matInput
-          id="srTopicInput"
-          type="text"
-          [formField]="roomForm.topic"
-        />
+        <input matInput id="srTopicInput" type="text" [formField]="roomForm.topic" />
         @for (error of roomForm.topic().errors(); track error.kind) {
           <mat-error>{{ error.message }}</mat-error>
         }
@@ -84,7 +73,11 @@
 
   <mat-dialog-actions align="end">
     <button matButton="text" type="button" mat-dialog-close>Cancel</button>
-    <button matButton="tonal" type="submit" [disabled]="roomForm().invalid() || roomForm().submitting()">
+    <button
+      matButton="tonal"
+      type="submit"
+      [disabled]="roomForm().invalid() || roomForm().submitting()"
+    >
       Open the room
     </button>
   </mat-dialog-actions>

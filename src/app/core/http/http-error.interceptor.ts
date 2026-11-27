@@ -3,10 +3,19 @@ import { catchError } from 'rxjs';
 
 const problemMessages = new Map<string, string>([
   ['urn:jtalk:user:problem:user-not-found', 'Profile not found.'],
-  ['urn:jtalk:live-communication:problem:voice-room-not-found', 'This voice room no longer exists.'],
+  [
+    'urn:jtalk:live-communication:problem:voice-room-not-found',
+    'This voice room no longer exists.',
+  ],
   ['urn:jtalk:live-communication:problem:already-on-stage', 'You are already on stage.'],
-  ['urn:jtalk:live-communication:problem:kicked-from-room', 'You have been removed from this room.'],
-  ['urn:jtalk:proxy:problem:upstream-unavailable', 'The JTalk backend service is waking up or temporarily unavailable. Please retry.'],
+  [
+    'urn:jtalk:live-communication:problem:kicked-from-room',
+    'You have been removed from this room.',
+  ],
+  [
+    'urn:jtalk:proxy:problem:upstream-unavailable',
+    'The JTalk backend service is waking up or temporarily unavailable. Please retry.',
+  ],
 ]);
 
 function isPlainObject(value: unknown): value is object {

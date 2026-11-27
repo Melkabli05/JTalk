@@ -33,6 +33,8 @@ describe('ProfileOverview', () => {
 
     fixture.componentRef.setInput('profile', { ...baseProfile, bio: 'Hello world!' });
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('#aboutBioText')?.textContent).toContain('Hello world!');
+    expect(fixture.nativeElement.querySelector('#aboutBioText')?.textContent).toContain(
+      'Hello world!',
+    );
   });
 });

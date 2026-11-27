@@ -18,10 +18,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import type {
-  SocialStatsResponse,
-  UserProfileResponse,
-} from '../../../../core/auth/auth.models';
+import type { SocialStatsResponse, UserProfileResponse } from '../../../../core/auth/auth.models';
 import {
   COUNTRY_CATALOG,
   LANGUAGE_CATALOG,
@@ -162,9 +159,7 @@ export class ProfileEditForm {
       !modelsEqual(this.model(), this.savedModel()),
   );
 
-  readonly canSubmit = computed(
-    () => !this.saving() && this.dirty() && this.profileForm().valid(),
-  );
+  readonly canSubmit = computed(() => !this.saving() && this.dirty() && this.profileForm().valid());
 
   readonly aboutLength = computed(() => this.model().bio.length);
   readonly previewName = computed(() => this.model().displayName.trim() || 'Speaker');

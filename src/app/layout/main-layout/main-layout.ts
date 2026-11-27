@@ -44,9 +44,7 @@ export class MainLayout {
 
   readonly sidebarCollapsed = signal(false);
   readonly isPhoneViewport = toSignal(
-    this.breakpointObserver
-      .observe('(max-width: 767px)')
-      .pipe(map((state) => state.matches)),
+    this.breakpointObserver.observe('(max-width: 767px)').pipe(map((state) => state.matches)),
     { initialValue: false },
   );
 

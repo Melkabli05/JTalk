@@ -172,8 +172,7 @@ export class LiveKitAudioEngine {
         session.isSelfMuted !== undefined
           ? session.isSelfMuted
           : this.wasMicMutedFor(session.room.id);
-      const shouldEnableMic =
-        this.canPublish() && !mutedByHost && !effectivelySelfMuted;
+      const shouldEnableMic = this.canPublish() && !mutedByHost && !effectivelySelfMuted;
       if (shouldEnableMic) {
         await this.setMicrophone(true);
       } else {

@@ -9,9 +9,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 function isBeforeInstallPromptEvent(event: Event): event is BeforeInstallPromptEvent {
   return (
-    'prompt' in event &&
-    typeof Reflect.get(event, 'prompt') === 'function' &&
-    'userChoice' in event
+    'prompt' in event && typeof Reflect.get(event, 'prompt') === 'function' && 'userChoice' in event
   );
 }
 
@@ -58,9 +56,7 @@ export class PwaService {
 
     this.isOnlineState.set(typeof navigator !== 'undefined' ? navigator.onLine : true);
     const standaloneMedia =
-      typeof win.matchMedia === 'function'
-        ? win.matchMedia('(display-mode: standalone)')
-        : null;
+      typeof win.matchMedia === 'function' ? win.matchMedia('(display-mode: standalone)') : null;
     const navStandalone = typeof navigator !== 'undefined' && isStandaloneNavigator(navigator);
     this.isStandaloneState.set(Boolean(standaloneMedia?.matches || navStandalone));
 

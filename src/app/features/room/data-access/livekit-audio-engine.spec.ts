@@ -36,9 +36,9 @@ describe('LiveKitAudioEngine', () => {
     let capturedListener!: LiveKitListener;
     const handle: LiveKitConnectionHandle = {
       setMicrophone: vi.fn().mockResolvedValue(undefined),
-      setNoiseIsolation: vi.fn().mockImplementation(async (on: boolean) =>
-        on ? 'krisp-active' : 'krisp-bypassed',
-      ),
+      setNoiseIsolation: vi
+        .fn()
+        .mockImplementation(async (on: boolean) => (on ? 'krisp-active' : 'krisp-bypassed')),
       selectAudioInputDevice: vi.fn().mockResolvedValue(undefined),
       listAudioInputDevices: vi
         .fn()
@@ -131,9 +131,12 @@ describe('LiveKitAudioEngine', () => {
   it('ignores completed playback work from a disconnected room', async () => {
     const { engine, handle, getListener } = setupMockConnector();
     let finishPlayback!: () => void;
-    vi.mocked(handle.startAudio).mockImplementationOnce(() => new Promise<void>((resolve) => {
-      finishPlayback = resolve;
-    }));
+    vi.mocked(handle.startAudio).mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishPlayback = resolve;
+        }),
+    );
     await engine.connect(session);
     const playback = engine.enableAudio();
     await engine.disconnect();

@@ -40,7 +40,10 @@ export class PeopleFacade {
     ? toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap })
     : null;
 
-  private readonly cursor = linkedSignal<boolean, { afterCreatedAt: string; afterId: string } | null>({
+  private readonly cursor = linkedSignal<
+    boolean,
+    { afterCreatedAt: string; afterId: string } | null
+  >({
     source: () => this.identity.isAuthenticated(),
     computation: () => null,
   });
@@ -196,8 +199,8 @@ export class PeopleFacade {
     (followed ? this.usersApi.follow(person.id) : this.usersApi.unfollow(person.id)).subscribe({
       next: () => {
         this.togglePending(person.id, false);
-        this.followOverrides.update(
-          (prev): ReadonlyMap<string, boolean> => new Map(prev).set(person.id, followed),
+        this.followOverrides.update((prev): ReadonlyMap<string, boolean> =>
+          new Map(prev).set(person.id, followed),
         );
         this.identity.refreshSocialStats();
         if (!this.destroyRef.destroyed) {

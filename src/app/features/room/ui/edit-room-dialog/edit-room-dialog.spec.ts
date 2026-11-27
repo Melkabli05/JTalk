@@ -17,26 +17,43 @@ describe('EditRoomDialog', () => {
       imports: [EditRoomDialog],
       providers: [
         { provide: MatDialogRef, useValue: { close } },
-        { provide: MAT_DIALOG_DATA, useValue: {
-          title: 'Practice room', topic: 'Just chatting', maxStageSeats: 6,
-        } satisfies Required<UpdateVoiceRoomPayload> },
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {
+            title: 'Practice room',
+            topic: 'Just chatting',
+            maxStageSeats: 6,
+          } satisfies Required<UpdateVoiceRoomPayload>,
+        },
       ],
     });
   });
 
   it('submits trimmed details from the Material fields', async () => {
     const loader = TestbedHarnessEnvironment.loader(TestBed.createComponent(EditRoomDialog));
-    await (await loader.getHarness(MatInputHarness.with({ selector: '#roomTitleInput' }))).setValue('  Café Español  ');
-    await (await loader.getHarness(MatInputHarness.with({ selector: '#roomTopicInput' }))).setValue('  Food & Travel  ');
-    await (await loader.getHarness(MatInputHarness.with({ selector: '#roomSeatsInput' }))).setValue('10');
+    await (
+      await loader.getHarness(MatInputHarness.with({ selector: '#roomTitleInput' }))
+    ).setValue('  Café Español  ');
+    await (
+      await loader.getHarness(MatInputHarness.with({ selector: '#roomTopicInput' }))
+    ).setValue('  Food & Travel  ');
+    await (
+      await loader.getHarness(MatInputHarness.with({ selector: '#roomSeatsInput' }))
+    ).setValue('10');
     await (await loader.getHarness(MatButtonHarness.with({ text: 'Save' }))).click();
 
-    expect(close).toHaveBeenCalledWith({ title: 'Café Español', topic: 'Food & Travel', maxStageSeats: 10 });
+    expect(close).toHaveBeenCalledWith({
+      title: 'Café Español',
+      topic: 'Food & Travel',
+      maxStageSeats: 10,
+    });
   });
 
   it('sends only the changed topic when the host clears it', async () => {
     const loader = TestbedHarnessEnvironment.loader(TestBed.createComponent(EditRoomDialog));
-    await (await loader.getHarness(MatInputHarness.with({ selector: '#roomTopicInput' }))).setValue('');
+    await (
+      await loader.getHarness(MatInputHarness.with({ selector: '#roomTopicInput' }))
+    ).setValue('');
     await (await loader.getHarness(MatButtonHarness.with({ text: 'Save' }))).click();
     expect(close).toHaveBeenCalledWith({ topic: '' });
   });
@@ -45,7 +62,9 @@ describe('EditRoomDialog', () => {
     const loader = TestbedHarnessEnvironment.loader(TestBed.createComponent(EditRoomDialog));
     const seats = await loader.getHarness(MatInputHarness.with({ selector: '#roomSeatsInput' }));
     const save = await loader.getHarness(MatButtonHarness.with({ text: 'Save' }));
-    const field = await loader.getHarness(MatFormFieldHarness.with({ floatingLabelText: 'Stage seats including the host' }));
+    const field = await loader.getHarness(
+      MatFormFieldHarness.with({ floatingLabelText: 'Stage seats including the host' }),
+    );
 
     await seats.focus();
     await seats.setValue('2.5');

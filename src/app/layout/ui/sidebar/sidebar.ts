@@ -47,13 +47,9 @@ export class Sidebar {
 
   readonly showInRoomCard = computed(() => this.inRoom() && this.activeView() !== 'room');
 
-  readonly toggleLabel = computed(() =>
-    this.collapsed() ? 'Open sidebar' : 'Collapse sidebar',
-  );
+  readonly toggleLabel = computed(() => (this.collapsed() ? 'Open sidebar' : 'Collapse sidebar'));
 
-  readonly themeIcon = computed(() =>
-    this.colorScheme() === 'dark' ? 'light_mode' : 'dark_mode',
-  );
+  readonly themeIcon = computed(() => (this.colorScheme() === 'dark' ? 'light_mode' : 'dark_mode'));
 
   readonly themeLabel = computed(() =>
     this.colorScheme() === 'dark' ? 'Light mode' : 'Dark mode',

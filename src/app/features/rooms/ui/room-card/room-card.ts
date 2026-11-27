@@ -81,7 +81,10 @@ export class RoomCard {
   readonly moreCount = computed(() => {
     const r = this.room();
     const hostOnStage = Boolean(r.hostId && r.speakers.includes(r.hostId));
-    const overflow = Math.max(0, r.participantCount - (this.avatars().length + (hostOnStage ? 1 : 0)));
+    const overflow = Math.max(
+      0,
+      r.participantCount - (this.avatars().length + (hostOnStage ? 1 : 0)),
+    );
     return overflow > 0 ? `+${overflow}` : '';
   });
 

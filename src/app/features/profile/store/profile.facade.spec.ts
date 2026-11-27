@@ -88,7 +88,13 @@ describe('ProfileFacade', () => {
     TestBed.tick();
     http.expectOne('/api/v1/users/me-1/followers?page=0&size=30').flush({
       content: [
-        { id: 'u-2', displayName: 'Amira', username: 'amira', avatarUrl: null, nativeLanguage: 'ar' },
+        {
+          id: 'u-2',
+          displayName: 'Amira',
+          username: 'amira',
+          avatarUrl: null,
+          nativeLanguage: 'ar',
+        },
       ],
       page: 0,
       size: 30,
@@ -112,7 +118,11 @@ describe('ProfileFacade', () => {
       languageType: 'LEARNING',
       proficiencyLevel: 'BEGINNER',
     });
-    const matrix = { userId: 'me-1', nativeLanguages: ['ja'], learningLanguages: [{ languageCode: 'fr', proficiencyLevel: 'BEGINNER' }] };
+    const matrix = {
+      userId: 'me-1',
+      nativeLanguages: ['ja'],
+      learningLanguages: [{ languageCode: 'fr', proficiencyLevel: 'BEGINNER' }],
+    };
     req.flush(matrix);
     expect(facade.languageBusy()).toBe(false);
     expect(identityMock.applyLanguageMatrix).toHaveBeenCalledWith(matrix);

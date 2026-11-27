@@ -86,12 +86,7 @@ export interface AddLanguageRequest {
   readonly proficiencyLevel?: ProficiencyLevel;
 }
 
-export type ProfileLoadStatus =
-  | 'unauthenticated'
-  | 'loading'
-  | 'ready'
-  | 'missing'
-  | 'error';
+export type ProfileLoadStatus = 'unauthenticated' | 'loading' | 'ready' | 'missing' | 'error';
 
 export interface ProfileSaveInput {
   readonly displayName: string;

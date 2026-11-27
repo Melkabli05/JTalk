@@ -13,7 +13,9 @@
       {{ initial() }}
     </span>
   }
-  <span matListItemTitle>{{ p.displayName }} <span class="person-handle">&#64;{{ p.username }}</span></span>
+  <span matListItemTitle
+    >{{ p.displayName }} <span class="person-handle">&#64;{{ p.username }}</span></span
+  >
   <span matListItemLine>{{ languages() }}</span>
   <span matListItemMeta class="directory-list-meta">
     <button
@@ -34,12 +36,7 @@
       <mat-icon>more_vert</mat-icon>
     </button>
     <mat-menu #personMenu="matMenu" class="jtalk-menu" xPosition="before">
-      <button
-        mat-menu-item
-        class="menu-item-danger"
-        type="button"
-        (click)="blockUser.emit(p)"
-      >
+      <button mat-menu-item class="menu-item-danger" type="button" (click)="blockUser.emit(p)">
         <mat-icon>block</mat-icon>
         <span>Block &#64;{{ p.username }}</span>
       </button>

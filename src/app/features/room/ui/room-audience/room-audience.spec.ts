@@ -47,7 +47,8 @@ describe('RoomAudience', () => {
     expect(tiles.length).toBe(2);
     expect(fixture.nativeElement.querySelector('#audienceEmpty')).toBeNull();
 
-    const toggleBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector('#audienceToggle');
+    const toggleBtn: HTMLButtonElement | null =
+      fixture.nativeElement.querySelector('#audienceToggle');
     toggleBtn?.click();
     fixture.detectChanges();
     expect(toggleBtn?.getAttribute('aria-expanded')).toBe('false');

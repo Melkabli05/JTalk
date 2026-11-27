@@ -15,9 +15,8 @@ export async function attachKrispNoiseIsolation(
   initialEnabled = true,
 ): Promise<KrispFilterController> {
   try {
-    const { isKrispNoiseFilterSupported, KrispNoiseFilter } = await import(
-      '@livekit/krisp-noise-filter'
-    );
+    const { isKrispNoiseFilterSupported, KrispNoiseFilter } =
+      await import('@livekit/krisp-noise-filter');
 
     if (!isKrispNoiseFilterSupported()) {
       return createFallbackController('webrtc-fallback');
@@ -27,7 +26,11 @@ export async function attachKrispNoiseIsolation(
     await track.setProcessor(processor);
     const setMode = async (enabled: boolean): Promise<NoiseIsolationMode> => {
       await processor.setEnabled(enabled);
-      return processor.isEnabled() ? 'krisp-active' : enabled ? 'webrtc-fallback' : 'krisp-bypassed';
+      return processor.isEnabled()
+        ? 'krisp-active'
+        : enabled
+          ? 'webrtc-fallback'
+          : 'krisp-bypassed';
     };
     let currentMode = await setMode(initialEnabled);
 

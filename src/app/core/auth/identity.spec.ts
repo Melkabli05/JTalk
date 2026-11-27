@@ -70,7 +70,9 @@ describe('IdentityStore profile edits', () => {
 
     identity.updateCachedAvatar('person', '/api/v1/users/person/avatar/42');
     expect(identity.me()?.avatarUrl).toBe('/api/v1/users/person/avatar/42');
-    expect(identity.userDirectory().get('person')?.avatarUrl).toBe('/api/v1/users/person/avatar/42');
+    expect(identity.userDirectory().get('person')?.avatarUrl).toBe(
+      '/api/v1/users/person/avatar/42',
+    );
     http.verify();
   });
 
@@ -125,15 +127,13 @@ describe('IdentityStore profile edits', () => {
         saveResult = res;
       },
     );
-    http
-      .expectOne({ method: 'POST', url })
-      .flush(
-        {
-          type: 'urn:jtalk:user:problem:profile-already-exists',
-          detail: 'You already have a profile',
-        },
-        { status: 409, statusText: 'Conflict' },
-      );
+    http.expectOne({ method: 'POST', url }).flush(
+      {
+        type: 'urn:jtalk:user:problem:profile-already-exists',
+        detail: 'You already have a profile',
+      },
+      { status: 409, statusText: 'Conflict' },
+    );
     expect(saveResult?.ok).toBe(false);
     await flushResources();
     http.expectOne({ method: 'GET', url }).flush({

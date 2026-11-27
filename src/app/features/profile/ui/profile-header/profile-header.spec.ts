@@ -41,7 +41,9 @@ describe('ProfileHeader', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('#profileName')?.textContent).toContain('Jilali');
-    expect(fixture.nativeElement.querySelector('#profileHandle')?.textContent).toContain('@jilali_dev');
+    expect(fixture.nativeElement.querySelector('#profileHandle')?.textContent).toContain(
+      '@jilali_dev',
+    );
 
     const btn: HTMLButtonElement | null = fixture.nativeElement.querySelector('button');
     btn?.click();

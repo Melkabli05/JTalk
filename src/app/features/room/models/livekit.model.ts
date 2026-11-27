@@ -1,10 +1,11 @@
-import type { ChatRealtimeEvent, NetworkMode, RoomRealtimeEvent } from '../../../shared/models/voice-room.model';
+import type {
+  ChatRealtimeEvent,
+  NetworkMode,
+  RoomRealtimeEvent,
+} from '../../../shared/models/voice-room.model';
 
 export type NoiseIsolationMode =
-  | 'krisp-active'
-  | 'krisp-bypassed'
-  | 'webrtc-fallback'
-  | 'unsupported';
+  'krisp-active' | 'krisp-bypassed' | 'webrtc-fallback' | 'unsupported';
 
 export interface KrispFilterController {
   readonly mode: NoiseIsolationMode;
@@ -13,11 +14,7 @@ export interface KrispFilterController {
 }
 
 export type LiveKitConnectionStatus =
-  | 'idle'
-  | 'connecting'
-  | 'connected'
-  | 'reconnecting'
-  | 'failed';
+  'idle' | 'connecting' | 'connected' | 'reconnecting' | 'failed';
 
 export type AudioQualityLevel = 'unknown' | 'excellent' | 'good' | 'poor' | 'lost';
 

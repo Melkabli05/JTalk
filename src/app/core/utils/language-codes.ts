@@ -35,7 +35,10 @@ const PRIMARY_COUNTRY_FOR_LANGUAGE: Readonly<Record<string, TCountryCode>> = {
 const FIRST_COUNTRY_BY_LANG = new Map<string, TCountryCode>();
 const countryEntries: CountryCatalogEntry[] = [];
 
-for (const [code, data] of Object.entries(countries) as [TCountryCode, (typeof countries)[TCountryCode]][]) {
+for (const [code, data] of Object.entries(countries) as [
+  TCountryCode,
+  (typeof countries)[TCountryCode],
+][]) {
   if (code === 'EH') continue;
   countryEntries.push({ code, name: data.name, flagCode: code.toLowerCase() });
   for (const lang of data.languages) {
@@ -51,7 +54,8 @@ export const LANGUAGE_CATALOG: readonly LanguageCatalogEntry[] = (
   Object.entries(languages) as [TLanguageCode, (typeof languages)[TLanguageCode]][]
 )
   .map(([code, data]) => {
-    const countryCode = PRIMARY_COUNTRY_FOR_LANGUAGE[code] ?? FIRST_COUNTRY_BY_LANG.get(code) ?? null;
+    const countryCode =
+      PRIMARY_COUNTRY_FOR_LANGUAGE[code] ?? FIRST_COUNTRY_BY_LANG.get(code) ?? null;
     return {
       code,
       name: data.name,

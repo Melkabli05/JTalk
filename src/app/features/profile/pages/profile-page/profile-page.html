@@ -2,11 +2,7 @@
 @let stats = facade.socialStats() ?? null;
 <div class="view view-profile">
   <div class="profile-wrap">
-    <app-profile-header
-      [profile]="me"
-      [stats]="stats"
-      (editProfile)="facade.selectTab('edit')"
-    />
+    <app-profile-header [profile]="me" [stats]="stats" (editProfile)="facade.selectTab('edit')" />
 
     <mat-tab-group
       animationDuration="0ms"
@@ -54,10 +50,16 @@
                       <div class="profile-connection-row">
                         <span>
                           <strong>{{ account.displayName }}</strong>
-                          <span class="profile-connection-handle">(&#64;{{ account.username }})</span>
+                          <span class="profile-connection-handle"
+                            >(&#64;{{ account.username }})</span
+                          >
                         </span>
                         @if (list === 'blocks') {
-                          <button matButton="outlined" type="button" (click)="facade.unblock(account.id)">
+                          <button
+                            matButton="outlined"
+                            type="button"
+                            (click)="facade.unblock(account.id)"
+                          >
                             Unblock
                           </button>
                         }
@@ -90,7 +92,11 @@
                       <div class="profile-empty" role="alert">
                         <p>{{ facade.connectionsError() }}</p>
                         <div class="profile-action-row">
-                          <button matButton="outlined" type="button" (click)="facade.retryConnections()">
+                          <button
+                            matButton="outlined"
+                            type="button"
+                            (click)="facade.retryConnections()"
+                          >
                             <mat-icon aria-hidden="true">refresh</mat-icon>
                             Retry
                           </button>
@@ -142,7 +148,11 @@
                         @if (code === me.nativeLanguage) {
                           <span class="profile-chip">Primary</span>
                         } @else {
-                          <button matButton="text" type="button" (click)="facade.changeLanguage(code)">
+                          <button
+                            matButton="text"
+                            type="button"
+                            (click)="facade.changeLanguage(code)"
+                          >
                             Remove
                           </button>
                         }
@@ -151,7 +161,10 @@
                     @for (entry of me.learningLanguages; track entry.languageCode) {
                       <div class="profile-lang-item">
                         <span>
-                          <strong>{{ languageName(entry.languageCode) }}</strong> · Learning@if (formatLevel(entry.proficiencyLevel); as lvl) { ({{ lvl }})}
+                          <strong>{{ languageName(entry.languageCode) }}</strong> · Learning
+                          @if (formatLevel(entry.proficiencyLevel); as lvl) {
+                            ({{ lvl }})
+                          }
                         </span>
                         <button
                           matButton="text"
@@ -190,7 +203,9 @@
                     <button
                       matButton="outlined"
                       type="button"
-                      (click)="facade.changeLanguage(facade.addLanguageForm.code().value(), 'NATIVE')"
+                      (click)="
+                        facade.changeLanguage(facade.addLanguageForm.code().value(), 'NATIVE')
+                      "
                     >
                       Add native
                     </button>
@@ -273,7 +288,11 @@
             [canInstall]="facade.canInstall()"
             [showIosInstallHint]="facade.isIosInstallable()"
             (settingsClicked)="facade.selectTab('edit')"
-            (helpClicked)="facade.notify('Open the audio menu in a room to choose a microphone or check noise isolation.')"
+            (helpClicked)="
+              facade.notify(
+                'Open the audio menu in a room to choose a microphone or check noise isolation.'
+              )
+            "
             (installClicked)="facade.promptInstall()"
             (signOutClicked)="facade.signOut()"
             (deleteClicked)="openDeleteDialog()"

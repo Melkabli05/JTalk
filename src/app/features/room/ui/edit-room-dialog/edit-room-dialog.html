@@ -36,7 +36,11 @@
 
   <mat-dialog-actions align="end">
     <button matButton="text" type="button" mat-dialog-close>Cancel</button>
-    <button matButton="tonal" type="submit" [disabled]="roomForm().invalid() || roomForm().submitting()">
+    <button
+      matButton="tonal"
+      type="submit"
+      [disabled]="roomForm().invalid() || roomForm().submitting()"
+    >
       Save
     </button>
   </mat-dialog-actions>

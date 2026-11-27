@@ -10,79 +10,95 @@
 html {
   color-scheme: light dark;
 
-  @include mat.theme((
-    color: (
-      primary: mat.$azure-palette,
-      tertiary: mat.$green-palette,
-      theme-type: color-scheme,
-    ),
-    typography: (
-      brand-family: ('Google Sans Flex', system-ui, -apple-system, 'Segoe UI', sans-serif),
-      plain-family: ('Google Sans Flex', system-ui, -apple-system, 'Segoe UI', sans-serif),
-      bold-weight: 540,
-      medium-weight: 500,
-      regular-weight: 400,
-    ),
-    density: 0,
-  ));
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$green-palette,
+        theme-type: color-scheme,
+      ),
+      typography: (
+        brand-family: (
+          'Google Sans Flex',
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif,
+        ),
+        plain-family: (
+          'Google Sans Flex',
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif,
+        ),
+        bold-weight: 540,
+        medium-weight: 500,
+        regular-weight: 400,
+      ),
+      density: 0,
+    )
+  );
 
   // Override Material 3 system tokens with the verified Jtalk / NotebookLM palette
-  @include mat.theme-overrides((
-    // Surface & background hierarchy
-    background: light-dark(#F8F7F4, #131314),
-    surface: light-dark(#FFFFFF, #0F0F0F),
-    surface-dim: light-dark(#EDEBE6, #131314),
-    surface-bright: light-dark(#FFFFFF, #1F1F1F),
-    surface-container-lowest: light-dark(#FFFFFF, #0F0F0F),
-    surface-container-low: light-dark(#F5F4F0, #1B1B1B),
-    surface-container: light-dark(#F0EEE9, #1E1F20),
-    surface-container-high: light-dark(#EDEBE6, #28292B),
-    surface-container-highest: light-dark(#E6E4DF, #35373A),
-    surface-variant: light-dark(#F0EEE9, #1E1F20),
+  @include mat.theme-overrides(
+    (
+      // Surface & background hierarchy
+      background: light-dark(#f8f7f4, #131314),
+      surface: light-dark(#ffffff, #0f0f0f),
+      surface-dim: light-dark(#edebe6, #131314),
+      surface-bright: light-dark(#ffffff, #1f1f1f),
+      surface-container-lowest: light-dark(#ffffff, #0f0f0f),
+      surface-container-low: light-dark(#f5f4f0, #1b1b1b),
+      surface-container: light-dark(#f0eee9, #1e1f20),
+      surface-container-high: light-dark(#edebe6, #28292b),
+      surface-container-highest: light-dark(#e6e4df, #35373a),
+      surface-variant: light-dark(#f0eee9, #1e1f20),
 
-    // Text & icon roles
-    on-background: light-dark(#1F1F1F, #E6E6E6),
-    on-surface: light-dark(#1F1F1F, #E6E6E6),
-    on-surface-variant: light-dark(#444746, #C4C7C5),
+      // Text & icon roles
+      on-background: light-dark(#1f1f1f, #e6e6e6),
+      on-surface: light-dark(#1f1f1f, #e6e6e6),
+      on-surface-variant: light-dark(#444746, #c4c7c5),
 
-    // Outlines
-    outline: light-dark(#E5E3DE, #444746),
-    outline-variant: light-dark(#DADCE0, #444746),
+      // Outlines
+      outline: light-dark(#e5e3de, #444746),
+      outline-variant: light-dark(#dadce0, #444746),
 
-    // Primary / Secondary / Tertiary / Error semantic roles
-    primary: light-dark(#0B57D0, #A8C7FA),
-    on-primary: light-dark(#FFFFFF, #001D35),
-    primary-container: light-dark(#D3E3FD, #0842A0),
-    on-primary-container: light-dark(#041E49, #D3E3FD),
+      // Primary / Secondary / Tertiary / Error semantic roles
+      primary: light-dark(#0b57d0, #a8c7fa),
+      on-primary: light-dark(#ffffff, #001d35),
+      primary-container: light-dark(#d3e3fd, #0842a0),
+      on-primary-container: light-dark(#041e49, #d3e3fd),
 
-    secondary: light-dark(#004A77, #C2E7FF),
-    on-secondary: light-dark(#FFFFFF, #001D35),
-    secondary-container: light-dark(#C2E7FF, #004A77),
-    on-secondary-container: light-dark(#001D35, #C2E7FF),
+      secondary: light-dark(#004a77, #c2e7ff),
+      on-secondary: light-dark(#ffffff, #001d35),
+      secondary-container: light-dark(#c2e7ff, #004a77),
+      on-secondary-container: light-dark(#001d35, #c2e7ff),
 
-    tertiary: light-dark(#0A7D3F, #6DD58C),
-    on-tertiary: light-dark(#FFFFFF, #072711),
-    tertiary-container: light-dark(#C4EED0, #0F5223),
-    on-tertiary-container: light-dark(#072711, #C4EED0),
+      tertiary: light-dark(#0a7d3f, #6dd58c),
+      on-tertiary: light-dark(#ffffff, #072711),
+      tertiary-container: light-dark(#c4eed0, #0f5223),
+      on-tertiary-container: light-dark(#072711, #c4eed0),
 
-    error: light-dark(#8C1D18, #FF4C45),
-    on-error: light-dark(#F9DEDC, #3C0202),
-    error-container: light-dark(#F9DEDC, #3C0202),
-    on-error-container: light-dark(#601410, #FF4C45),
+      error: light-dark(#8c1d18, #ff4c45),
+      on-error: light-dark(#f9dedc, #3c0202),
+      error-container: light-dark(#f9dedc, #3c0202),
+      on-error-container: light-dark(#601410, #ff4c45),
 
-    // Inverse roles (Snackbar / Tooltip)
-    inverse-surface: light-dark(#1F1F1F, #E6E6E6),
-    inverse-on-surface: light-dark(#F8F7F4, #131314),
-    inverse-primary: light-dark(#A8C7FA, #0B57D0),
+      // Inverse roles (Snackbar / Tooltip)
+      inverse-surface: light-dark(#1f1f1f, #e6e6e6),
+      inverse-on-surface: light-dark(#f8f7f4, #131314),
+      inverse-primary: light-dark(#a8c7fa, #0b57d0),
 
-    // Shape corner scale
-    corner-extra-small: 4px,
-    corner-small: 8px,
-    corner-medium: 12px,
-    corner-large: 16px,
-    corner-extra-large: 28px,
-    corner-full: 9999px,
-  ));
+      // Shape corner scale
+      corner-extra-small: 4px,
+      corner-small: 8px,
+      corner-medium: 12px,
+      corner-large: 16px,
+      corner-extra-large: 28px,
+      corner-full: 9999px,
+    )
+  );
 }
 
 :root {
@@ -93,13 +109,13 @@ html {
   --surface-container-low: var(--mat-sys-surface-container-low);
   --surface-container: var(--mat-sys-surface-container);
   --container: var(--mat-sys-surface-container);
-  --card: light-dark(#F3F1EC, #1B1B1B);
-  --card-hover: light-dark(#EDEBE6, #1F1F1F);
+  --card: light-dark(#f3f1ec, #1b1b1b);
+  --card-hover: light-dark(#edebe6, #1f1f1f);
 
   --on-surface: var(--mat-sys-on-surface);
   --on-variant: var(--mat-sys-on-surface-variant);
-  --muted: light-dark(#5F6368, rgba(255, 255, 255, 0.55));
-  --placeholder: light-dark(#80868B, rgba(230, 230, 230, 0.38));
+  --muted: light-dark(#5f6368, rgba(255, 255, 255, 0.55));
+  --placeholder: light-dark(#80868b, rgba(230, 230, 230, 0.38));
 
   --outline: var(--mat-sys-outline);
   --outline-2: var(--mat-sys-outline-variant);
@@ -113,29 +129,29 @@ html {
   --tertiary-container: var(--mat-sys-tertiary-container);
   --on-tertiary-container: var(--mat-sys-on-tertiary-container);
   --error: var(--mat-sys-error);
-  --error-solid: #8C1D18;
-  --on-error-solid: #F9DEDC;
+  --error-solid: #8c1d18;
+  --on-error-solid: #f9dedc;
   --error-container: var(--mat-sys-error-container);
   --on-error-container: var(--mat-sys-on-error-container);
   --focus-ring: var(--mat-sys-primary);
 
   // Signature NotebookLM soft-sky pill CTA (consistent in both light & dark)
-  --primary-btn: #C2E7FF;
-  --on-primary-btn: #001D35;
-  --brand-blue: #3186FF;
-  --positive: light-dark(#0A7D3F, #6DD58C);
-  --on-positive: light-dark(#FFFFFF, #072711);
-  --positive-ink: light-dark(#0A3818, #6DD58C);
-  --host-ring: light-dark(#0F5223, #6DD58C);
+  --primary-btn: #c2e7ff;
+  --on-primary-btn: #001d35;
+  --brand-blue: #3186ff;
+  --positive: light-dark(#0a7d3f, #6dd58c);
+  --on-positive: light-dark(#ffffff, #072711);
+  --positive-ink: light-dark(#0a3818, #6dd58c);
+  --host-ring: light-dark(#0f5223, #6dd58c);
 
   // Floating menu, select, elevated surface & dialog tokens (unified light & dark Material 3 surfaces)
-  --dialog-surface: light-dark(#FFFFFF, #1E1F20);
-  --chip-on-card: light-dark(#FFFFFF, #1E1F20);
-  --surface-elevated: light-dark(#FFFFFF, #1B1B1B);
-  --menu-bg: light-dark(#FFFFFF, #28292B);
+  --dialog-surface: light-dark(#ffffff, #1e1f20);
+  --chip-on-card: light-dark(#ffffff, #1e1f20);
+  --surface-elevated: light-dark(#ffffff, #1b1b1b);
+  --menu-bg: light-dark(#ffffff, #28292b);
   --menu-ink: var(--mat-sys-on-surface);
   --menu-variant: var(--mat-sys-on-surface-variant);
-  --menu-hover: light-dark(#F0EEE9, rgba(230, 230, 230, 0.08));
+  --menu-hover: light-dark(#f0eee9, rgba(230, 230, 230, 0.08));
   --menu-muted: var(--muted);
   --menu-danger: var(--mat-sys-error);
   --elevation-1: light-dark(0 4px 20px 0 rgba(0, 0, 0, 0.14), 0 6px 24px 0 rgba(0, 0, 0, 0.45));
@@ -206,32 +222,37 @@ html {
   --icon-xxl: 2rem;
 
   // Brand, scrim, artwork, avatar chips, and skeleton accents
-  --scrim-grad: linear-gradient(90deg, rgba(10, 17, 40, 0.82) 0%, rgba(10, 17, 40, 0.55) 46%, rgba(10, 17, 40, 0.05) 78%);
-  --ai-gradient: linear-gradient(135deg, #217BFE, #078EFB, #AC87EB, #217BFE);
-  --logo-grad: linear-gradient(180deg, #4285F4, #A142F5, #EA4335);
-  --photo-bg: #16121F;
-  --photo-accent: #A142F5;
-  --crown: light-dark(#B58900, #E8C547);
-  --nb-white: #FFFFFF;
-  --nb-error: #FF4C45;
+  --scrim-grad: linear-gradient(
+    90deg,
+    rgba(10, 17, 40, 0.82) 0%,
+    rgba(10, 17, 40, 0.55) 46%,
+    rgba(10, 17, 40, 0.05) 78%
+  );
+  --ai-gradient: linear-gradient(135deg, #217bfe, #078efb, #ac87eb, #217bfe);
+  --logo-grad: linear-gradient(180deg, #4285f4, #a142f5, #ea4335);
+  --photo-bg: #16121f;
+  --photo-accent: #a142f5;
+  --crown: light-dark(#b58900, #e8c547);
+  --nb-white: #ffffff;
+  --nb-error: #ff4c45;
 
-  --chip-blue-bg: #C2E7FF;
-  --chip-blue-ink: #001D35;
-  --chip-green-bg: #C4EED0;
+  --chip-blue-bg: #c2e7ff;
+  --chip-blue-ink: #001d35;
+  --chip-green-bg: #c4eed0;
   --chip-green-ink: #072711;
-  --chip-red-bg: #F9DEDC;
+  --chip-red-bg: #f9dedc;
   --chip-red-ink: #601410;
-  --chip-lav-bg: #D3E3FD;
-  --chip-lav-ink: #041E49;
-  --chip-warm-bg: #ECDF77;
-  --chip-warm-ink: #1F1F1F;
-  --chip-purple-bg: #A9A8FF;
-  --chip-purple-ink: #1F1F1F;
+  --chip-lav-bg: #d3e3fd;
+  --chip-lav-ink: #041e49;
+  --chip-warm-bg: #ecdf77;
+  --chip-warm-ink: #1f1f1f;
+  --chip-purple-bg: #a9a8ff;
+  --chip-purple-ink: #1f1f1f;
 
-  --sage-cover: light-dark(#D3E3FD, #0842A0);
-  --tan-shape: light-dark(#C2E7FF, #004A77);
-  --profile-green: light-dark(#0B57D0, #6DD58C);
+  --sage-cover: light-dark(#d3e3fd, #0842a0);
+  --tan-shape: light-dark(#c2e7ff, #004a77);
+  --profile-green: light-dark(#0b57d0, #6dd58c);
   --chip-bg: var(--mat-sys-surface-container);
-  --skeleton-base: light-dark(#E6E4DF, #28292B);
-  --skeleton-sheen: light-dark(#F5F4F0, #35373A);
+  --skeleton-base: light-dark(#e6e4df, #28292b);
+  --skeleton-sheen: light-dark(#f5f4f0, #35373a);
 }

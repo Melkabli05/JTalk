@@ -1,7 +1,9 @@
 @let p = profile();
 <mat-card class="profile-card" appearance="outlined" aria-labelledby="account-h">
   <h3 id="account-h">Account</h3>
-  <p class="card-sub">Signed in as {{ p?.displayName || 'Speaker' }} (&#64;{{ p?.username ?? '' }}).</p>
+  <p class="card-sub">
+    Signed in as {{ p?.displayName || 'Speaker' }} (&#64;{{ p?.username ?? '' }}).
+  </p>
   <mat-action-list>
     <button mat-list-item type="button" (click)="settingsClicked.emit()">
       <mat-icon matListItemIcon aria-hidden="true">settings</mat-icon>
@@ -33,11 +35,7 @@
   }
 </mat-card>
 
-<mat-card
-  class="profile-card delete-card"
-  appearance="outlined"
-  aria-labelledby="delete-h"
->
+<mat-card class="profile-card delete-card" appearance="outlined" aria-labelledby="delete-h">
   <h3 id="delete-h">Delete your account</h3>
   <p class="card-sub">Deletes your profile and data. Can't be undone.</p>
   <button

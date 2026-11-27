@@ -51,7 +51,10 @@ describe('RoomsFacade', () => {
 
   it('updates room stats and embedded speakerProfiles in place without batch user lookups', () => {
     const store = TestBed.inject(RoomsFacade);
-    store.applyFeedEvent({ type: 'SNAPSHOT', rooms: [{ ...room, speakers: [], speakerProfiles: [] }] });
+    store.applyFeedEvent({
+      type: 'SNAPSHOT',
+      rooms: [{ ...room, speakers: [], speakerProfiles: [] }],
+    });
     expect(store.rooms()[0]?.speakers).toEqual([]);
     expect(store.rooms()[0]?.host?.displayName).toBe('Host');
 

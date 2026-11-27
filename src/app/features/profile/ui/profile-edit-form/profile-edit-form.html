@@ -26,7 +26,11 @@
           <div class="info-banner" role="note">
             <mat-icon class="icon-20" aria-hidden="true">info</mat-icon>
             <span>
-              {{ onboarding() ? 'Leave blank to let Jtalk assign a handle on signup, or set your own.' : 'Handle, like @mona.' }}
+              {{
+                onboarding()
+                  ? 'Leave blank to let Jtalk assign a handle on signup, or set your own.'
+                  : 'Handle, like @mona.'
+              }}
             </span>
           </div>
 
@@ -162,20 +166,10 @@
 
       <div class="save-bar" id="profileSaveBar" [hidden]="!isDirty">
         <span class="save-bar-text">Unsaved changes</span>
-        <button
-          matButton="text"
-          type="button"
-          id="profileDiscard"
-          (click)="onDiscard()"
-        >
+        <button matButton="text" type="button" id="profileDiscard" (click)="onDiscard()">
           Discard
         </button>
-        <button
-          matButton="tonal"
-          type="submit"
-          id="profileSave"
-          [disabled]="!canSubmit()"
-        >
+        <button matButton="tonal" type="submit" id="profileSave" [disabled]="!canSubmit()">
           Save
         </button>
       </div>
@@ -212,8 +206,12 @@
         }
       </div>
       <div class="profile-stats">
-        <span><b>{{ s?.followerCount ?? 0 }}</b> Followers</span>
-        <span><b>{{ s?.followingCount ?? 0 }}</b> Following</span>
+        <span
+          ><b>{{ s?.followerCount ?? 0 }}</b> Followers</span
+        >
+        <span
+          ><b>{{ s?.followingCount ?? 0 }}</b> Following</span
+        >
       </div>
       <p class="live-bio" id="livePreviewBio">{{ previewBio() }}</p>
     </div>

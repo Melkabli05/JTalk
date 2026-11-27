@@ -28,7 +28,8 @@ export class HostProfileDialog {
         level: entry.proficiencyLevel?.toLowerCase() ?? '',
       });
     }
-    const role = target.kind === 'host' ? 'Host' : target.kind === 'speaker' ? 'Speaker' : 'Listener';
+    const role =
+      target.kind === 'host' ? 'Host' : target.kind === 'speaker' ? 'Speaker' : 'Listener';
     const audio = target.kind === 'listener' ? 'In audience' : target.muted ? 'Muted' : 'On mic';
     return {
       status: [role, audio, ...(isYou ? ['You'] : [])].join(' · '),

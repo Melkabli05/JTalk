@@ -86,4 +86,3 @@ describe('RoomsHero', () => {
     expect(startSpy).toHaveBeenCalledTimes(1);
   });
 });
-

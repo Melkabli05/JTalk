@@ -110,11 +110,7 @@ export class VoiceRoomApi {
     return this.mutate('DELETE', roomId, `comments/${encodeURIComponent(commentId)}`);
   }
 
-  reactToComment(
-    roomId: string,
-    commentId: string,
-    reaction: BackendReaction,
-  ): Observable<void> {
+  reactToComment(roomId: string, commentId: string, reaction: BackendReaction): Observable<void> {
     return this.mutate('PUT', roomId, `comments/${encodeURIComponent(commentId)}/reaction`, {
       reaction,
     });

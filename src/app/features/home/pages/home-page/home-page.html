@@ -30,12 +30,7 @@
         <mat-icon aria-hidden="true">{{ theme.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
       </button>
 
-      <button
-        matButton="outlined"
-        type="button"
-        class="home-signin-btn"
-        (click)="enterRooms()"
-      >
+      <button matButton="outlined" type="button" class="home-signin-btn" (click)="enterRooms()">
         {{ identity.isAuthenticated() ? 'Open rooms' : 'Sign in' }}
       </button>
     </div>
@@ -60,7 +55,8 @@
       <h1 id="homeHeroHeading" class="home-headline">
         <span class="home-line-mask"
           ><span class="home-line-reveal home-title-light">Learn a language</span></span
-        >{{ ' ' }}<span class="home-line-mask"
+        >{{ ' '
+        }}<span class="home-line-mask"
           ><span class="home-line-reveal home-title-heavy">by talking.</span></span
         >
       </h1>
@@ -84,12 +80,7 @@
           >
         </button>
 
-        <button
-          matButton="text"
-          type="button"
-          class="home-secondary-btn"
-          (click)="openStartRoom()"
-        >
+        <button matButton="text" type="button" class="home-secondary-btn" (click)="openStartRoom()">
           <mat-icon aria-hidden="true">add</mat-icon>
           <span>Start a room</span>
         </button>
@@ -124,7 +115,9 @@
             (click)="joinRoom(currentRoom)"
           >
             <span>Join</span>
-            <mat-icon class="home-live-join-icon" iconPositionEnd aria-hidden="true">arrow_outward</mat-icon>
+            <mat-icon class="home-live-join-icon" iconPositionEnd aria-hidden="true"
+              >arrow_outward</mat-icon
+            >
           </button>
         </div>
       }
@@ -136,12 +129,7 @@
       <div class="home-footer-left">
         <span class="home-footer-note">Audio only · No camera</span>
         @if (pwa.canInstall()) {
-          <button
-            matButton="text"
-            type="button"
-            class="home-install-btn"
-            (click)="onInstallApp()"
-          >
+          <button matButton="text" type="button" class="home-install-btn" (click)="onInstallApp()">
             <mat-icon aria-hidden="true">download</mat-icon>
             <span>Install app</span>
           </button>

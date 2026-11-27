@@ -118,15 +118,12 @@ async function proxyToUpstream(req: Request, res: Response, upstreamOrigin: stri
     }
     const detail =
       err instanceof Error ? err.message : 'Unable to reach the JTalk backend service.';
-    res
-      .status(502)
-      .type('application/problem+json')
-      .json({
-        type: 'urn:jtalk:proxy:problem:upstream-unavailable',
-        title: 'Backend service unavailable',
-        status: 502,
-        detail,
-      });
+    res.status(502).type('application/problem+json').json({
+      type: 'urn:jtalk:proxy:problem:upstream-unavailable',
+      title: 'Backend service unavailable',
+      status: 502,
+      detail,
+    });
   }
 }
 

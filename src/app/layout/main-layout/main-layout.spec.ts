@@ -127,9 +127,13 @@ describe('MainLayout', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.inroom-meta')?.textContent).toContain('6 seats');
 
-    room.update(current => current ? { ...current, title: 'Renamed room', maxStageSeats: 9 } : null);
+    room.update((current) =>
+      current ? { ...current, title: 'Renamed room', maxStageSeats: 9 } : null,
+    );
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.inroom-room-name')?.textContent).toContain('Renamed room');
+    expect(fixture.nativeElement.querySelector('.inroom-room-name')?.textContent).toContain(
+      'Renamed room',
+    );
     expect(fixture.nativeElement.querySelector('.inroom-meta')?.textContent).toContain('9 seats');
 
     room.set(null);

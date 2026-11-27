@@ -1,11 +1,4 @@
-import {
-  Component,
-  computed,
-  ElementRef,
-  input,
-  output,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, ElementRef, input, output, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
@@ -63,11 +56,7 @@ export class RoomStage {
 
   speakerAriaLabel(speaker: RoomSpeaker): string {
     const role = speaker.role === 'host' ? 'Host' : 'Speaker';
-    const state = speaker.muted
-      ? 'muted'
-      : speaker.speaking
-        ? 'speaking'
-        : 'microphone on';
+    const state = speaker.muted ? 'muted' : speaker.speaking ? 'speaking' : 'microphone on';
     return `${speaker.name}, ${role}, ${state}. Open speaker options`;
   }
 

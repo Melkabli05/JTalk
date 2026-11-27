@@ -16,10 +16,7 @@ import {
   type VoiceRoomDto,
 } from '../../../shared/models/voice-room.model';
 import { avatarChipClassFor } from '../../../shared/utils/avatar-chip.utils';
-import {
-  AUDIENCE_INITIAL_LIMIT,
-  DEFAULT_MAX_STAGE_SEATS,
-} from '../constants/room.constants';
+import { AUDIENCE_INITIAL_LIMIT, DEFAULT_MAX_STAGE_SEATS } from '../constants/room.constants';
 import { LiveKitAudioEngine } from '../data-access/livekit-audio-engine';
 import { VoiceRoomApi } from '../data-access/voice-room-api';
 import type { ActionFeedback, RoomListener, RoomSpeaker } from '../models/live-room.model';
@@ -275,7 +272,9 @@ export class RoomStageStore {
           this.roleState.set(session.role);
           this.stageState.set({
             speakers: session.room.speakers,
-            handRaiseQueue: stage.handRaiseQueue.filter((userId) => userId !== this.currentUserId()),
+            handRaiseQueue: stage.handRaiseQueue.filter(
+              (userId) => userId !== this.currentUserId(),
+            ),
           });
         }
         if (!this.audio.canPublish()) {
@@ -316,7 +315,8 @@ export class RoomStageStore {
 
   toggleHandRaised(onDone?: (res: ActionFeedback) => void): void {
     this.runRoomCommand(
-      (id) => (this.handRaised() ? this.voiceRoomApi.lowerHand(id) : this.voiceRoomApi.raiseHand(id)),
+      (id) =>
+        this.handRaised() ? this.voiceRoomApi.lowerHand(id) : this.voiceRoomApi.raiseHand(id),
       'Could not update hand state.',
       undefined,
       onDone,
@@ -349,7 +349,8 @@ export class RoomStageStore {
         const presence = event.presence;
         if (!presence) return;
         const speakers = new Set(this.stage().speakers);
-        if (presence.audienceCount !== undefined) this.audienceCountState.set(presence.audienceCount);
+        if (presence.audienceCount !== undefined)
+          this.audienceCountState.set(presence.audienceCount);
         this.roomState.update((curr): VoiceRoomDto | null =>
           curr ? { ...curr, participantCount: presence.participantCount } : curr,
         );

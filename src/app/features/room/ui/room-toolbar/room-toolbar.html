@@ -49,7 +49,13 @@
         (click)="refreshAudioDevices.emit()"
       >
         <mat-icon>
-          {{ audioStatus() === 'failed' ? 'signal_wifi_off' : noiseIsolationMode() === 'krisp-active' ? 'noise_aware' : 'graphic_eq' }}
+          {{
+            audioStatus() === 'failed'
+              ? 'signal_wifi_off'
+              : noiseIsolationMode() === 'krisp-active'
+                ? 'noise_aware'
+                : 'graphic_eq'
+          }}
         </mat-icon>
       </button>
       <mat-menu #audioMenu="matMenu" class="jtalk-menu" xPosition="before">
@@ -69,13 +75,13 @@
         @if (audioInputDevices().length > 0) {
           <div class="mod-menu-section-label">Microphone</div>
           @for (device of audioInputDevices(); track device.deviceId) {
-            <button
-              mat-menu-item
-              type="button"
-              (click)="selectAudioDevice.emit(device.deviceId)"
-            >
+            <button mat-menu-item type="button" (click)="selectAudioDevice.emit(device.deviceId)">
               <mat-icon>
-                {{ device.deviceId === selectedAudioInputId() ? 'radio_button_checked' : 'radio_button_unchecked' }}
+                {{
+                  device.deviceId === selectedAudioInputId()
+                    ? 'radio_button_checked'
+                    : 'radio_button_unchecked'
+                }}
               </mat-icon>
               <span>{{ device.label }}</span>
             </button>
@@ -101,9 +107,7 @@
           }
         </button>
         <mat-menu #modQueueMenu="matMenu" class="jtalk-menu mod-queue-menu" xPosition="before">
-          <div class="mod-menu-section-label">
-            Raised hands ({{ pendingRequests().length }})
-          </div>
+          <div class="mod-menu-section-label">Raised hands ({{ pendingRequests().length }})</div>
           @if (pendingRequests().length === 0) {
             <div class="mod-menu-empty">No raised hands right now.</div>
           } @else {

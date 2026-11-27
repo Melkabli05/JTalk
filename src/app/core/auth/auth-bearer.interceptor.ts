@@ -21,9 +21,7 @@ export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
 
   const apiBase = inject(API_BASE_URL);
   const isApiRequest =
-    req.url.startsWith(`${apiBase}/`) ||
-    req.url === apiBase ||
-    req.url.startsWith('/api/');
+    req.url.startsWith(`${apiBase}/`) || req.url === apiBase || req.url.startsWith('/api/');
 
   if (!isApiRequest || (req.method === 'GET' && PUBLIC_AVATAR_PATH_RE.test(req.url))) {
     return next(req);
@@ -40,19 +38,21 @@ export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
       if (!authenticated) {
         return next(req);
       }
-      return auth.getAccessTokenSilently({
-        authorizationParams: { audience: environment.auth0.audience },
-      }).pipe(
-        switchMap((token) =>
-          next(
-            req.clone({
-              setHeaders: {
-                Authorization: `Bearer ${token}`,
-              },
-            }),
+      return auth
+        .getAccessTokenSilently({
+          authorizationParams: { audience: environment.auth0.audience },
+        })
+        .pipe(
+          switchMap((token) =>
+            next(
+              req.clone({
+                setHeaders: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }),
+            ),
           ),
-        ),
-      );
+        );
     }),
   );
 };

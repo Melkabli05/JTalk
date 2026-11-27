@@ -23,17 +23,20 @@ export const roomFeedTransport: HttpInterceptorFn = (request, next) => {
     return delivered;
   };
 
-  return next(request.clone({ transferCache: false })).pipe(map(event => {
-    if (event.type === HttpEventType.DownloadProgress && event.partialText !== undefined) {
-      hooks.activity();
-      return { ...event, partialText: completeFrames(event.partialText, false) };
-    }
-    if (event.type === HttpEventType.Response && typeof event.body === 'string') {
-      return event.clone({ body: completeFrames(event.body, true) });
-    }
-    return event;
-  }), tap({
-    // Version 21 can swallow status-zero network failures with keepAlive disabled.
-    error: () => hooks.disconnected(),
-  }));
+  return next(request.clone({ transferCache: false })).pipe(
+    map((event) => {
+      if (event.type === HttpEventType.DownloadProgress && event.partialText !== undefined) {
+        hooks.activity();
+        return { ...event, partialText: completeFrames(event.partialText, false) };
+      }
+      if (event.type === HttpEventType.Response && typeof event.body === 'string') {
+        return event.clone({ body: completeFrames(event.body, true) });
+      }
+      return event;
+    }),
+    tap({
+      // Version 21 can swallow status-zero network failures with keepAlive disabled.
+      error: () => hooks.disconnected(),
+    }),
+  );
 };

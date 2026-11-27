@@ -45,7 +45,8 @@ describe('Sidebar', () => {
     fixture.componentRef.setInput('avatarUrl', '/avatars/avatar-03.svg');
     fixture.detectChanges();
 
-    const img: HTMLImageElement | null = fixture.nativeElement.querySelector('.account .avatar img');
+    const img: HTMLImageElement | null =
+      fixture.nativeElement.querySelector('.account .avatar img');
     expect(img).toBeTruthy();
     expect(img?.getAttribute('src')).toBe('/avatars/avatar-03.svg');
   });
@@ -58,7 +59,9 @@ describe('Sidebar', () => {
     fixture.componentInstance.toggleTheme.subscribe(spy);
     fixture.detectChanges();
 
-    const btn = fixture.nativeElement.querySelector('.theme-account-btn') as HTMLButtonElement | null;
+    const btn = fixture.nativeElement.querySelector(
+      '.theme-account-btn',
+    ) as HTMLButtonElement | null;
     expect(btn).toBeTruthy();
     expect(btn?.textContent).toContain('Dark mode');
     btn?.click();

@@ -51,10 +51,7 @@ describe('BrowserStorage', () => {
   it('returns null and fallbacks cleanly during SSR', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [
-        provideZonelessChangeDetection(),
-        { provide: PLATFORM_ID, useValue: 'server' },
-      ],
+      providers: [provideZonelessChangeDetection(), { provide: PLATFORM_ID, useValue: 'server' }],
     });
     const storage = TestBed.inject(BrowserStorage);
     storage.setString('local', key, 'dark');

@@ -21,9 +21,15 @@ describe('StartRoomDialog', () => {
 
   it('submits trimmed room settings from the Material controls', async () => {
     const loader = TestbedHarnessEnvironment.loader(TestBed.createComponent(StartRoomDialog));
-    await (await loader.getHarness(MatInputHarness.with({ selector: '#srTitleInput' }))).setValue('  Evening Spanish  ');
-    await (await loader.getHarness(MatInputHarness.with({ selector: '#srTopicInput' }))).setValue('  Travel stories  ');
-    const seats = await loader.getHarness(MatSelectHarness.with({ selector: '[aria-label="Stage seats, including you"]' }));
+    await (
+      await loader.getHarness(MatInputHarness.with({ selector: '#srTitleInput' }))
+    ).setValue('  Evening Spanish  ');
+    await (
+      await loader.getHarness(MatInputHarness.with({ selector: '#srTopicInput' }))
+    ).setValue('  Travel stories  ');
+    const seats = await loader.getHarness(
+      MatSelectHarness.with({ selector: '[aria-label="Stage seats, including you"]' }),
+    );
     await seats.clickOptions({ text: '4' });
     await (await loader.getHarness(MatButtonHarness.with({ text: 'Open the room' }))).click();
 
@@ -46,16 +52,22 @@ describe('StartRoomDialog', () => {
     await title.setValue('x'.repeat(81));
     await title.blur();
     expect(await open.isDisabled()).toBe(true);
-    expect(await (await loader.getHarness(MatFormFieldHarness.with({ floatingLabelText: 'Title' }))).getTextErrors())
-      .toContain('Use 80 characters or fewer.');
+    expect(
+      await (
+        await loader.getHarness(MatFormFieldHarness.with({ floatingLabelText: 'Title' }))
+      ).getTextErrors(),
+    ).toContain('Use 80 characters or fewer.');
 
     await title.setValue('Practice');
     await topic.focus();
     await topic.setValue('x'.repeat(256));
     await topic.blur();
     expect(await open.isDisabled()).toBe(true);
-    expect(await (await loader.getHarness(MatFormFieldHarness.with({ floatingLabelText: 'Topic' }))).getTextErrors())
-      .toContain('Use 255 characters or fewer.');
+    expect(
+      await (
+        await loader.getHarness(MatFormFieldHarness.with({ floatingLabelText: 'Topic' }))
+      ).getTextErrors(),
+    ).toContain('Use 255 characters or fewer.');
     expect(closeSpy).not.toHaveBeenCalled();
   });
 });

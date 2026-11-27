@@ -1,12 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import {
-  computed,
-  inject,
-  linkedSignal,
-  PLATFORM_ID,
-  Service,
-  signal,
-} from '@angular/core';
+import { computed, inject, linkedSignal, PLATFORM_ID, Service, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '@auth0/auth0-angular';
 import { catchError, finalize, map, type Observable, of, switchMap, throwError } from 'rxjs';
@@ -48,7 +41,9 @@ function buildProfilePatch(
   const bio = input.bio.trim();
 
   return {
-    ...(trimmedUsername && trimmedUsername !== current.username ? { username: trimmedUsername } : {}),
+    ...(trimmedUsername && trimmedUsername !== current.username
+      ? { username: trimmedUsername }
+      : {}),
     ...(displayName && displayName !== current.displayName ? { displayName } : {}),
     ...(bio !== (current.bio ?? '') ? { bio } : {}),
     ...(nextNative !== current.nativeLanguage ? { nativeLanguage: nextNative } : {}),
@@ -57,7 +52,9 @@ function buildProfilePatch(
           learningLanguages: [
             ...(nextLearning
               ? [
-                  current.learningLanguages.find((entry) => entry.languageCode === nextLearning) ?? {
+                  current.learningLanguages.find(
+                    (entry) => entry.languageCode === nextLearning,
+                  ) ?? {
                     languageCode: nextLearning,
                   },
                 ]
@@ -184,15 +181,14 @@ export class IdentityStore {
   }
 
   applyLanguageMatrix(matrix: LanguageMatrixResponse): void {
-    this.meState.update(
-      (profile): UserProfileResponse | null =>
-        profile?.id === matrix.userId
-          ? {
-              ...profile,
-              nativeLanguages: matrix.nativeLanguages,
-              learningLanguages: matrix.learningLanguages,
-            }
-          : profile,
+    this.meState.update((profile): UserProfileResponse | null =>
+      profile?.id === matrix.userId
+        ? {
+            ...profile,
+            nativeLanguages: matrix.nativeLanguages,
+            learningLanguages: matrix.learningLanguages,
+          }
+        : profile,
     );
   }
 
@@ -342,7 +338,10 @@ export class IdentityStore {
     };
     return this.usersApi.createMe(createReq).pipe(
       catchError((err: unknown) => {
-        if (err instanceof ApiError && err.type === 'urn:jtalk:user:problem:profile-already-exists') {
+        if (
+          err instanceof ApiError &&
+          err.type === 'urn:jtalk:user:problem:profile-already-exists'
+        ) {
           this.loadMe();
         }
         return throwError(() => err);

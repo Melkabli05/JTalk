@@ -39,20 +39,24 @@ export class StartRoomDialog {
     maxStageSeats: 6,
   });
 
-  readonly roomForm = form(this.model, (schemaPath) => {
-    trimmedRequired(schemaPath.title, 'Room title is required.');
-    maxLength(schemaPath.title, 80, { message: 'Use 80 characters or fewer.' });
-    maxLength(schemaPath.topic, 255, { message: 'Use 255 characters or fewer.' });
-  }, {
-    submission: {
-      action: async (field) => {
-        const config = field().value();
-        this.dialogRef.close({
-          ...config,
-          title: config.title.trim(),
-          topic: config.topic.trim() || 'Just chatting',
-        });
+  readonly roomForm = form(
+    this.model,
+    (schemaPath) => {
+      trimmedRequired(schemaPath.title, 'Room title is required.');
+      maxLength(schemaPath.title, 80, { message: 'Use 80 characters or fewer.' });
+      maxLength(schemaPath.topic, 255, { message: 'Use 255 characters or fewer.' });
+    },
+    {
+      submission: {
+        action: async (field) => {
+          const config = field().value();
+          this.dialogRef.close({
+            ...config,
+            title: config.title.trim(),
+            topic: config.topic.trim() || 'Just chatting',
+          });
+        },
       },
     },
-  });
+  );
 }

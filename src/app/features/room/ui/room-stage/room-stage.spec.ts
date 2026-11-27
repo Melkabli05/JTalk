@@ -40,8 +40,9 @@ describe('RoomStage', () => {
     fixture.componentRef.setInput('hasOpenSeat', true);
     fixture.detectChanges();
 
-    const tiles: NodeListOf<HTMLButtonElement> =
-      fixture.nativeElement.querySelectorAll('.speaker-tile:not(.speaker-tile-open)');
+    const tiles: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll(
+      '.speaker-tile:not(.speaker-tile-open)',
+    );
     expect(tiles.length).toBe(2);
     expect(tiles[0]?.classList.contains('is-muted')).toBe(true);
     expect(tiles[1]?.classList.contains('is-speaking')).toBe(true);

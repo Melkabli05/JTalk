@@ -1,7 +1,4 @@
-<div
-  class="view view-room"
-  [style.--room-kb-offset.px]="keyboardOffset()"
->
+<div class="view view-room" [style.--room-kb-offset.px]="keyboardOffset()">
   @if (!isCurrentRoom() && (!facade.roomError() || facade.roomLoading())) {
     <div class="room-joining-state" role="status" aria-busy="true">
       <div class="room-joining-card">

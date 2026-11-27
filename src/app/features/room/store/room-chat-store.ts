@@ -12,11 +12,7 @@ import {
 } from '../../../shared/models/voice-room.model';
 import { avatarChipClassFor } from '../../../shared/utils/avatar-chip.utils';
 import { VoiceRoomApi } from '../data-access/voice-room-api';
-import type {
-  ActionFeedback,
-  DiscussionMessage,
-  MessageReaction,
-} from '../models/live-room.model';
+import type { ActionFeedback, DiscussionMessage, MessageReaction } from '../models/live-room.model';
 import { RoomStageStore } from './room-stage-store';
 
 function formatTimeLabel(isoDate: string): string {
@@ -343,14 +339,12 @@ export class RoomChatStore {
         this.rawCommentsState.update((list): readonly RoomCommentDto[] =>
           list.filter((c) => c.id !== commentId),
         );
-        this.commentReactionsState.update(
-          (prev): ReadonlyMap<string, CommentReactionTallyDto> => {
-            if (!prev.has(commentId)) return prev;
-            const next = new Map(prev);
-            next.delete(commentId);
-            return next;
-          },
-        );
+        this.commentReactionsState.update((prev): ReadonlyMap<string, CommentReactionTallyDto> => {
+          if (!prev.has(commentId)) return prev;
+          const next = new Map(prev);
+          next.delete(commentId);
+          return next;
+        });
         this.updatePin(commentId, false);
         return;
       }
@@ -361,28 +355,26 @@ export class RoomChatStore {
         const reaction = isBackendReaction(event.reaction) ? event.reaction : null;
         const previous = isBackendReaction(event.previous) ? event.previous : null;
         const myId = this.stageStore.currentUserId();
-        this.commentReactionsState.update(
-          (prev): ReadonlyMap<string, CommentReactionTallyDto> => {
-            const next = new Map(prev);
-            const existing = next.get(commentId) ?? { counts: {}, mine: null };
-            const counts: Partial<Record<BackendReaction, number>> = { ...existing.counts };
+        this.commentReactionsState.update((prev): ReadonlyMap<string, CommentReactionTallyDto> => {
+          const next = new Map(prev);
+          const existing = next.get(commentId) ?? { counts: {}, mine: null };
+          const counts: Partial<Record<BackendReaction, number>> = { ...existing.counts };
 
-            if (previous) {
-              const dec = (counts[previous] ?? 1) - 1;
-              if (dec > 0) counts[previous] = dec;
-              else delete counts[previous];
-            }
-            if (reaction) {
-              counts[reaction] = (counts[reaction] ?? 0) + 1;
-            }
+          if (previous) {
+            const dec = (counts[previous] ?? 1) - 1;
+            if (dec > 0) counts[previous] = dec;
+            else delete counts[previous];
+          }
+          if (reaction) {
+            counts[reaction] = (counts[reaction] ?? 0) + 1;
+          }
 
-            next.set(commentId, {
-              counts,
-              mine: userId === myId ? reaction : existing.mine,
-            });
-            return next;
-          },
-        );
+          next.set(commentId, {
+            counts,
+            mine: userId === myId ? reaction : existing.mine,
+          });
+          return next;
+        });
         return;
       }
       case 'COMMENT_PINNED':
@@ -394,7 +386,9 @@ export class RoomChatStore {
       case 'CHAT_MUTED': {
         const targetUserId = event.targetUserId;
         if (!targetUserId) return;
-        this.chatMutedUsersState.update((prev): ReadonlySet<string> => new Set(prev).add(targetUserId));
+        this.chatMutedUsersState.update((prev): ReadonlySet<string> =>
+          new Set(prev).add(targetUserId),
+        );
         if (targetUserId === this.stageStore.currentUserId()) this.isChatMutedState.set(true);
         return;
       }

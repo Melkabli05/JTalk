@@ -49,7 +49,13 @@ describe('PeopleFacade', () => {
   it('debounces the query, cancels obsolete requests and retains matchmaking on clear', async () => {
     const facade = TestBed.inject(PeopleFacade);
     const http = TestBed.inject(HttpTestingController);
-    const partner = makeUser({ id: 'match', username: 'match', displayName: 'Partner', nativeLanguage: 'ar', followedByMe: true });
+    const partner = makeUser({
+      id: 'match',
+      username: 'match',
+      displayName: 'Partner',
+      nativeLanguage: 'ar',
+      followedByMe: true,
+    });
 
     TestBed.tick();
     http.expectOne('/api/v1/users/matchmaking?size=24').flush({
@@ -63,13 +69,19 @@ describe('PeopleFacade', () => {
 
     facade.setQuery('am');
     TestBed.tick();
-    const oldRequest = await vi.waitFor(() => http.expectOne('/api/v1/users/search?q=am&size=30'), { timeout: 2000 });
+    const oldRequest = await vi.waitFor(() => http.expectOne('/api/v1/users/search?q=am&size=30'), {
+      timeout: 2000,
+    });
     facade.setQuery('amira');
     TestBed.tick();
     expect(oldRequest.cancelled).toBe(true);
 
-    const request = await vi.waitFor(() => http.expectOne('/api/v1/users/search?q=amira&size=30'), { timeout: 2000 });
-    const searchResult = [makeUser({ id: 'search', username: 'amira', displayName: 'Amira', nativeLanguage: 'ar' })];
+    const request = await vi.waitFor(() => http.expectOne('/api/v1/users/search?q=amira&size=30'), {
+      timeout: 2000,
+    });
+    const searchResult = [
+      makeUser({ id: 'search', username: 'amira', displayName: 'Amira', nativeLanguage: 'ar' }),
+    ];
     request.flush(searchResult);
     await vi.waitFor(() => expect(facade.people().map((p) => p.displayName)).toEqual(['Amira']));
     expect(identityMock.mergeUserSummaries).toHaveBeenCalledWith(searchResult);
@@ -115,7 +127,9 @@ describe('PeopleFacade', () => {
     facade.refresh();
     TestBed.tick();
     http.expectOne('/api/v1/users/matchmaking?size=24').flush({
-      content: [makeUser({ id: 'p-1', username: 'kenji', displayName: 'Kenji', nativeLanguage: 'ja' })],
+      content: [
+        makeUser({ id: 'p-1', username: 'kenji', displayName: 'Kenji', nativeLanguage: 'ja' }),
+      ],
       hasNext: false,
       nextAfterCreatedAt: null,
       nextAfterId: null,

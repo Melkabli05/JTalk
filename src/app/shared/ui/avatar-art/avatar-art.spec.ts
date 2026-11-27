@@ -15,7 +15,9 @@ describe('AvatarArt', () => {
     fixture.componentRef.setInput('avatarId', 'preset-3');
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('img')?.getAttribute('src')).toBe('/avatars/preset-3.svg');
+    expect(fixture.nativeElement.querySelector('img')?.getAttribute('src')).toBe(
+      '/avatars/preset-3.svg',
+    );
   });
 
   it('should render own photo or thumb fallback for custom avatar', () => {

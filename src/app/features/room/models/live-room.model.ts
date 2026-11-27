@@ -15,12 +15,7 @@ export type RoomConnectionState =
 export type ListenerMenuAction = 'stage' | 'approve' | 'profile' | 'remove';
 
 export type SpeakerMenuAction =
-  | 'profile'
-  | 'mute'
-  | 'audience'
-  | 'leave-stage'
-  | 'remove'
-  | 'transfer-host';
+  'profile' | 'mute' | 'audience' | 'leave-stage' | 'remove' | 'transfer-host';
 
 export interface ToolbarPendingRequest {
   readonly id: string;

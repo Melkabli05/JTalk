@@ -36,7 +36,10 @@ function isRoomFeedEvent(value: unknown): value is RoomFeedEvent {
     case 'ROOM_CLOSED':
       return typeof Reflect.get(value, 'roomId') === 'string';
     case 'ROOM_STATS':
-      return typeof Reflect.get(value, 'roomId') === 'string' && isObjectRecord(Reflect.get(value, 'live'));
+      return (
+        typeof Reflect.get(value, 'roomId') === 'string' &&
+        isObjectRecord(Reflect.get(value, 'live'))
+      );
     default:
       return false;
   }

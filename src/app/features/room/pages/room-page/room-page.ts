@@ -121,7 +121,12 @@ export class RoomPage {
     });
 
     ref.afterClosed().subscribe((confirmed) => {
-      if (!confirmed || this.destroyRef.destroyed || this.id() !== roomId || !this.isCurrentRoom()) {
+      if (
+        !confirmed ||
+        this.destroyRef.destroyed ||
+        this.id() !== roomId ||
+        !this.isCurrentRoom()
+      ) {
         return;
       }
       this.facade.endRoom(roomId);
@@ -157,11 +162,15 @@ export class RoomPage {
   }
 
   onListenerAction(event: { action: ListenerMenuAction; listener: RoomListener }): void {
-    this.facade.listenerAction(this.id(), event, (id, target) => this.openProfilePreview(id, target));
+    this.facade.listenerAction(this.id(), event, (id, target) =>
+      this.openProfilePreview(id, target),
+    );
   }
 
   onSpeakerAction(event: { action: SpeakerMenuAction; speaker: RoomSpeaker }): void {
-    this.facade.speakerAction(this.id(), event, (id, target) => this.openProfilePreview(id, target));
+    this.facade.speakerAction(this.id(), event, (id, target) =>
+      this.openProfilePreview(id, target),
+    );
   }
 
   private bindVisualViewportKeyboard(): void {

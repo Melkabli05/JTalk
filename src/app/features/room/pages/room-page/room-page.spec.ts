@@ -36,10 +36,13 @@ describe('RoomPage', () => {
         provideHttpClient(withInterceptors([httpErrorInterceptor])),
         provideHttpClientTesting(),
         provideNoopAuthForTests(),
-        provideRouter([
-          { path: 'room', children: ROOM_ROUTES },
-          { path: 'rooms', component: HallwayRoute },
-        ], withComponentInputBinding()),
+        provideRouter(
+          [
+            { path: 'room', children: ROOM_ROUTES },
+            { path: 'rooms', component: HallwayRoute },
+          ],
+          withComponentInputBinding(),
+        ),
         LiveRoomStore,
         { provide: ToastNotifier, useValue: toastSpy },
         { provide: MatDialog, useValue: dialogSpy },
@@ -73,16 +76,35 @@ describe('RoomPage', () => {
 
     const join = await vi.waitFor(() => http.expectOne(base + '/participants/join'));
     join.flush({
-      room, role: 'LISTENER', canPublishAudio: false, isChatMuted: true,
-      liveKitUrl: 'wss://example.invalid', liveKitToken: 'token',
+      room,
+      role: 'LISTENER',
+      canPublishAudio: false,
+      isChatMuted: true,
+      liveKitUrl: 'wss://example.invalid',
+      liveKitToken: 'token',
       snapshot: {
         speakers: [{ userId: 'host', displayName: 'Cached speaker', nativeLanguage: 'en' }],
         audienceCount: 301,
-        audience: { audiencePreview: [{ userId: 'listener', displayName: 'First listener' }], hasMoreAudience: true, nextCursor: 'listener' },
+        audience: {
+          audiencePreview: [{ userId: 'listener', displayName: 'First listener' }],
+          hasMoreAudience: true,
+          nextCursor: 'listener',
+        },
         handRaiseQueue: [],
         chat: {
-          comments: [{ id: 'comment', authorId: 'host', type: 'TEXT', content: 'Bundled comment', createdAt: '2026-01-01T00:00:00Z' }],
-          muted: true, topic: 'Travel', mutedUsers: [], reactions: [],
+          comments: [
+            {
+              id: 'comment',
+              authorId: 'host',
+              type: 'TEXT',
+              content: 'Bundled comment',
+              createdAt: '2026-01-01T00:00:00Z',
+            },
+          ],
+          muted: true,
+          topic: 'Travel',
+          mutedUsers: [],
+          reactions: [],
         },
       },
     });
@@ -93,19 +115,29 @@ describe('RoomPage', () => {
     expect(fixture.nativeElement.textContent).toContain('Cached speaker');
     expect(fixture.nativeElement.textContent).toContain('Bundled comment');
     expect(fixture.nativeElement.textContent).toContain('301 listening');
-    http.expectNone(request => request.method === 'GET' && request.url.startsWith(base));
+    http.expectNone((request) => request.method === 'GET' && request.url.startsWith(base));
 
-    for (const selector of ['app-room-toolbar', 'app-room-stage', 'app-room-audience', 'app-room-controls', 'app-room-discussion']) {
+    for (const selector of [
+      'app-room-toolbar',
+      'app-room-stage',
+      'app-room-audience',
+      'app-room-controls',
+      'app-room-discussion',
+    ]) {
       expect(fixture.nativeElement.querySelector(selector)).toBeTruthy();
     }
 
     const audience = fixture.nativeElement.querySelector('app-room-audience') as HTMLElement;
-    const more = Array.from(audience.querySelectorAll('button')).find(button => button.textContent?.includes('Show more listeners'));
+    const more = Array.from(audience.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Show more listeners'),
+    );
     expect(more).toBeDefined();
     more!.click();
     TestBed.tick();
     http.expectOne(base + '/participants/audience?cursor=listener').flush({
-      audiencePreview: [{ userId: 'next', displayName: 'Next listener' }], hasMoreAudience: false, nextCursor: null,
+      audiencePreview: [{ userId: 'next', displayName: 'Next listener' }],
+      hasMoreAudience: false,
+      nextCursor: null,
     });
     await fixture.whenStable();
     fixture.detectChanges();
@@ -125,13 +157,25 @@ describe('RoomPage', () => {
     const join = await vi.waitFor(() => http.expectOne(base + '/participants/join'));
     join.flush({
       room: {
-        id: 'current', title: 'Practice', hostId: 'host', targetLanguage: 'ar', nativeLanguage: 'en',
-        maxStageSeats: 8, speakers: ['host'], participantCount: 2, handRaiseCount: 0,
+        id: 'current',
+        title: 'Practice',
+        hostId: 'host',
+        targetLanguage: 'ar',
+        nativeLanguage: 'en',
+        maxStageSeats: 8,
+        speakers: ['host'],
+        participantCount: 2,
+        handRaiseCount: 0,
       },
-      role, canPublishAudio: role === 'HOST', liveKitUrl: 'wss://example.invalid', liveKitToken: 'local',
+      role,
+      canPublishAudio: role === 'HOST',
+      liveKitUrl: 'wss://example.invalid',
+      liveKitToken: 'local',
       snapshot: {
-        speakers: [{ userId: 'host', displayName: 'Host' }], audienceCount: 1,
-        audience: { audiencePreview: [], nextCursor: null, hasMoreAudience: false }, handRaiseQueue: [],
+        speakers: [{ userId: 'host', displayName: 'Host' }],
+        audienceCount: 1,
+        audience: { audiencePreview: [], nextCursor: null, hasMoreAudience: false },
+        handRaiseQueue: [],
         chat: { comments: [], muted: false, mutedUsers: [], reactions: [], topic: null },
       },
     });
@@ -169,16 +213,22 @@ describe('RoomPage', () => {
     http.verify();
   });
 
-  it.each([204, 503])('logs out after the leave endpoint returns %i', async status => {
+  it.each([204, 503])('logs out after the leave endpoint returns %i', async (status) => {
     const { store, http, base, header } = await joinForHeaderAction('LISTENER');
     expect(header.querySelector('#endRoomBtn')).toBeNull();
     expect(header.querySelector('[aria-label="Log out"]')).toBeNull();
-    const logout = vi.spyOn(TestBed.inject(AuthService), 'logout').mockReturnValue(from(Promise.resolve()));
+    const logout = vi
+      .spyOn(TestBed.inject(AuthService), 'logout')
+      .mockReturnValue(from(Promise.resolve()));
     void store.signOut();
-    const leave = await vi.waitFor(() => http.expectOne({ method: 'POST', url: base + '/participants/leave' }));
+    const leave = await vi.waitFor(() =>
+      http.expectOne({ method: 'POST', url: base + '/participants/leave' }),
+    );
     expect(logout).not.toHaveBeenCalled();
     leave.flush(null, { status, statusText: status === 204 ? 'No Content' : 'Unavailable' });
-    await vi.waitFor(() => expect(logout).toHaveBeenCalledWith({ logoutParams: { returnTo: window.location.origin } }));
+    await vi.waitFor(() =>
+      expect(logout).toHaveBeenCalledWith({ logoutParams: { returnTo: window.location.origin } }),
+    );
     expect(store.room()).toBeNull();
     http.verify();
   });
@@ -224,10 +274,13 @@ describe('RoomPage', () => {
         provideHttpClient(withInterceptors([httpErrorInterceptor])),
         provideHttpClientTesting(),
         provideNoopAuthForTests(),
-        provideRouter([
-          { path: 'room', children: ROOM_ROUTES },
-          { path: 'rooms', component: HallwayRoute },
-        ], withComponentInputBinding()),
+        provideRouter(
+          [
+            { path: 'room', children: ROOM_ROUTES },
+            { path: 'rooms', component: HallwayRoute },
+          ],
+          withComponentInputBinding(),
+        ),
         LiveRoomStore,
         {
           provide: LIVEKIT_CONNECTOR,
@@ -264,13 +317,25 @@ describe('RoomPage', () => {
     );
     join.flush({
       room: {
-        id: 'current', title: 'Practice', hostId: 'host', targetLanguage: 'ar', nativeLanguage: 'en',
-        maxStageSeats: 8, speakers: ['host'], participantCount: 1, handRaiseCount: 0,
+        id: 'current',
+        title: 'Practice',
+        hostId: 'host',
+        targetLanguage: 'ar',
+        nativeLanguage: 'en',
+        maxStageSeats: 8,
+        speakers: ['host'],
+        participantCount: 1,
+        handRaiseCount: 0,
       },
-      role: 'LISTENER', canPublishAudio: false, liveKitUrl: 'wss://example.invalid', liveKitToken: 'token',
+      role: 'LISTENER',
+      canPublishAudio: false,
+      liveKitUrl: 'wss://example.invalid',
+      liveKitToken: 'token',
       snapshot: {
-        speakers: [{ userId: 'host', displayName: 'Host', isReconnecting: false }], audienceCount: 0,
-        audience: { audiencePreview: [], nextCursor: null, hasMoreAudience: false }, handRaiseQueue: [],
+        speakers: [{ userId: 'host', displayName: 'Host', isReconnecting: false }],
+        audienceCount: 0,
+        audience: { audiencePreview: [], nextCursor: null, hasMoreAudience: false },
+        handRaiseQueue: [],
         chat: { comments: [], muted: false, mutedUsers: [], reactions: [], topic: null },
       },
     });

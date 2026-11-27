@@ -1,10 +1,4 @@
-import {
-  PathKind,
-  required,
-  SchemaPath,
-  SchemaPathRules,
-  validate,
-} from '@angular/forms/signals';
+import { PathKind, required, SchemaPath, SchemaPathRules, validate } from '@angular/forms/signals';
 
 export function isTrimmedNonEmpty(value: string): boolean {
   return value.trim().length > 0;

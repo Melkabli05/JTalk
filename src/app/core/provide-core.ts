@@ -11,7 +11,11 @@ import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MatIconRegistry } from '@angular/material/icon';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
-import { provideClientHydration, withEventReplay, withNoIncrementalHydration } from '@angular/platform-browser';
+import {
+  provideClientHydration,
+  withEventReplay,
+  withNoIncrementalHydration,
+} from '@angular/platform-browser';
 import {
   provideRouter,
   Routes,
@@ -26,7 +30,9 @@ import { AppTitleStrategy } from './routing/app-title-strategy';
 export function provideCore(routes: Routes): EnvironmentProviders {
   return makeEnvironmentProviders([
     provideBrowserGlobalErrorListeners(),
-    provideHttpClient(withInterceptors([httpErrorInterceptor, authBearerInterceptor, roomFeedTransport])),
+    provideHttpClient(
+      withInterceptors([httpErrorInterceptor, authBearerInterceptor, roomFeedTransport]),
+    ),
     provideClientHydration(withEventReplay(), withNoIncrementalHydration()),
     provideAppInitializer(() => {
       inject(MatIconRegistry).setDefaultFontSetClass('material-icons-round');

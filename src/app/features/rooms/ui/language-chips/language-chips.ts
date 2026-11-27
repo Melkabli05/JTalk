@@ -117,7 +117,7 @@ export class LanguageChips {
   }
 
   onSelectionChange(event: MatChipListboxChange): void {
-    const selected = this.chips().find(chip => chip.value === event.value);
+    const selected = this.chips().find((chip) => chip.value === event.value);
     this.filterChange.emit(selected?.value ?? 'all');
   }
 }

@@ -122,8 +122,9 @@ export class RoomDiscussion {
         if (!snapshot) return;
 
         const { scrollEl, bottom, nearBottom, messageCount, lastMessageId } = snapshot;
-        const appended = messageCount > this.lastMessageCount
-          || (lastMessageId !== null && lastMessageId !== this.lastBottomMessageId);
+        const appended =
+          messageCount > this.lastMessageCount ||
+          (lastMessageId !== null && lastMessageId !== this.lastBottomMessageId);
         this.lastMessageCount = messageCount;
         this.lastBottomMessageId = lastMessageId;
 
@@ -188,8 +189,7 @@ export class RoomDiscussion {
   onScrollMessages(): void {
     const scrollEl = this.discScrollRef()?.nativeElement;
     if (!scrollEl) return;
-    const distanceFromBottom =
-      scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
+    const distanceFromBottom = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
     this.showNewMessagesPill.set(distanceFromBottom > 80);
   }
 

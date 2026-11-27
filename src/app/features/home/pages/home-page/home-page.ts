@@ -211,10 +211,12 @@ export class HomePage {
     const root = this.shellRef()?.nativeElement;
     if (!root) return;
 
-    root.querySelector('.home-header')?.animate(
-      { opacity: [0, 1], transform: ['translateY(-6px)', 'translateY(0)'] },
-      { duration: 450, easing: EASE_SNAPPY },
-    );
+    root
+      .querySelector('.home-header')
+      ?.animate(
+        { opacity: [0, 1], transform: ['translateY(-6px)', 'translateY(0)'] },
+        { duration: 450, easing: EASE_SNAPPY },
+      );
     root.querySelectorAll('.home-line-reveal').forEach((line, index) => {
       line.animate(
         { opacity: [0.01, 1], transform: ['translateY(106%)', 'translateY(0)'] },

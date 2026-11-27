@@ -7,13 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 
 @Component({
   selector: 'app-delete-account-dialog',
-  imports: [
-    FormField,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-  ],
+  imports: [FormField, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule],
   templateUrl: './delete-account-dialog.html',
   styleUrl: './delete-account-dialog.scss',
 })

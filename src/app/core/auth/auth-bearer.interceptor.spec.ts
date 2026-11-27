@@ -16,16 +16,23 @@ describe('authenticated HTTP requests', () => {
     token.mockReset().mockReturnValue(from(['test-token']));
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(withInterceptors([httpErrorInterceptor, authBearerInterceptor, roomFeedTransport])),
+        provideHttpClient(
+          withInterceptors([httpErrorInterceptor, authBearerInterceptor, roomFeedTransport]),
+        ),
         provideHttpClientTesting(),
-        { provide: AuthService, useValue: { isAuthenticated$: from([true]), getAccessTokenSilently: token } },
+        {
+          provide: AuthService,
+          useValue: { isAuthenticated$: from([true]), getAccessTokenSilently: token },
+        },
       ],
     });
   });
   afterEach(() => TestBed.inject(HttpTestingController).verify());
 
   it('authenticates the room feed and releases the request on unsubscribe', () => {
-    const stream = TestBed.inject(RoomsApi).roomFeed({ activity: vi.fn(), disconnected: vi.fn() }).subscribe();
+    const stream = TestBed.inject(RoomsApi)
+      .roomFeed({ activity: vi.fn(), disconnected: vi.fn() })
+      .subscribe();
     const request = TestBed.inject(HttpTestingController).expectOne('/api/v1/voice-rooms/feed');
     expect(request.request.headers.get('Authorization')).toBe('Bearer test-token');
     expect(request.request.headers.get('Accept')).toBe('text/event-stream');
@@ -44,8 +51,9 @@ describe('authenticated HTTP requests', () => {
 
   it('propagates a token acquisition failure before sending the request', async () => {
     token.mockReturnValueOnce(throwError(() => new Error('login required')));
-    await expect(lastValueFrom(TestBed.inject(HttpClient).get('/api/v1/users/me')))
-      .rejects.toThrow('login required');
+    await expect(lastValueFrom(TestBed.inject(HttpClient).get('/api/v1/users/me'))).rejects.toThrow(
+      'login required',
+    );
   });
 
   it('leaves public avatar and external requests anonymous', async () => {

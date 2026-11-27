@@ -29,8 +29,12 @@
       }
     </div>
     <div class="profile-stats">
-      <span><b>{{ s?.followerCount ?? 0 }}</b> Followers</span>
-      <span><b>{{ s?.followingCount ?? 0 }}</b> Following</span>
+      <span
+        ><b>{{ s?.followerCount ?? 0 }}</b> Followers</span
+      >
+      <span
+        ><b>{{ s?.followingCount ?? 0 }}</b> Following</span
+      >
     </div>
     <div class="profile-header-actions">
       <button matButton="tonal" type="button" (click)="editProfile.emit()">

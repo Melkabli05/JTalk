@@ -229,7 +229,11 @@ button {
 
 // Material icon sizing & centering alignment
 mat-icon {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
   user-select: none;
 }
 
@@ -735,7 +739,11 @@ a[matIconButton] mat-icon {
 }
 
 .mobile-tab-pill mat-icon {
-  font-variation-settings: 'FILL' 0, 'wght' 350, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 350,
+    'GRAD' 0,
+    'opsz' 24;
 }
 
 .mobile-tab-label {
@@ -752,7 +760,11 @@ a[matIconButton] mat-icon {
 }
 
 .mobile-tab.active .mobile-tab-pill mat-icon {
-  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 500,
+    'GRAD' 0,
+    'opsz' 24;
 }
 
 .mobile-tab.active .mobile-tab-label {
@@ -807,7 +819,11 @@ a[matIconButton] mat-icon {
   height: 26px !important;
   font-size: 26px !important;
   line-height: 26px !important;
-  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 300,
+    'GRAD' 0,
+    'opsz' 24;
 }
 
 // ---- Mobile In-Room Persistent Top Banner ----
@@ -820,8 +836,9 @@ a[matIconButton] mat-icon {
   background: var(--mat-sys-surface);
   border-bottom: 1px solid var(--mat-sys-outline-variant);
   margin: 0;
-  padding: calc(6px + env(safe-area-inset-top, 0px)) max(var(--sp-m), env(safe-area-inset-right, 0px))
-    6px max(var(--sp-m), env(safe-area-inset-left, 0px));
+  padding: calc(6px + env(safe-area-inset-top, 0px))
+    max(var(--sp-m), env(safe-area-inset-right, 0px)) 6px
+    max(var(--sp-m), env(safe-area-inset-left, 0px));
 }
 
 .inroom-banner-inner {
@@ -883,7 +900,9 @@ a[matIconButton] mat-icon {
 }
 
 .app.banner-visible .main {
-  padding-top: calc(var(--page-pad-y) + var(--inroom-banner-height) + env(safe-area-inset-top, 0px));
+  padding-top: calc(
+    var(--page-pad-y) + var(--inroom-banner-height) + env(safe-area-inset-top, 0px)
+  );
 }
 
 .view {
@@ -1625,7 +1644,9 @@ app-room-card {
   color: var(--mat-sys-on-surface-variant) !important;
   background: transparent !important;
   border-radius: var(--r-full) !important;
-  transition: background-color 0.16s ease, color 0.16s ease;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
 }
 
 .room-header-icon-btn:hover {
@@ -1661,7 +1682,9 @@ app-room-card {
   font-weight: 540;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color 0.14s ease, color 0.14s ease;
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease;
 }
 
 .role-switch-btn span {
@@ -1892,7 +1915,9 @@ app-room-card {
   color: var(--mat-sys-on-surface);
   font: inherit;
   cursor: pointer;
-  transition: background-color 0.16s ease, transform 0.16s ease;
+  transition:
+    background-color 0.16s ease,
+    transform 0.16s ease;
 }
 
 .speaker-tile:hover {
@@ -1926,7 +1951,9 @@ app-room-card {
   border: 2px solid var(--positive);
   opacity: 0;
   transform: scale(0.92);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
   pointer-events: none;
 }
 
@@ -1961,7 +1988,9 @@ app-room-card {
   overflow: hidden;
   border: 2px solid var(--mat-sys-surface);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: opacity 0.18s ease, border-color 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    border-color 0.18s ease;
 }
 
 .speaker-avatar-host {
@@ -2364,7 +2393,9 @@ app-room-card {
   font: inherit;
   cursor: pointer;
   scroll-snap-align: start;
-  transition: background-color 0.15s ease, transform 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .listener-tile:hover {
@@ -2500,7 +2531,9 @@ app-room-card {
   white-space: nowrap;
   flex-shrink: 0;
   cursor: pointer;
-  transition: transform 0.14s ease, filter 0.14s ease;
+  transition:
+    transform 0.14s ease,
+    filter 0.14s ease;
 }
 
 .ctrl-leave-btn mat-icon {
@@ -2521,7 +2554,10 @@ app-room-card {
   background: var(--mat-sys-surface) !important;
   border: 1px solid var(--mat-sys-outline-variant) !important;
   color: var(--mat-sys-on-surface-variant) !important;
-  transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease,
+    border-color 0.16s ease;
 }
 
 .ctrl-action-btn.is-active,
@@ -2548,7 +2584,10 @@ app-room-card {
   font-weight: 540;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.16s ease, color 0.16s ease, transform 0.14s ease;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.14s ease;
 }
 
 .ctrl-hand-btn.is-active {
@@ -2588,7 +2627,10 @@ app-room-card {
   font-weight: 540;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.16s ease, color 0.16s ease, transform 0.14s ease;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.14s ease;
 }
 
 .ctrl-mic-btn mat-icon {
@@ -2889,7 +2931,9 @@ app-room-card {
   line-height: 1rem;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  transition: background-color 0.14s ease, border-color 0.14s ease;
+  transition:
+    background-color 0.14s ease,
+    border-color 0.14s ease;
 }
 
 .reaction-chip:hover {
@@ -2917,7 +2961,9 @@ app-room-card {
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.14s ease, color 0.14s ease;
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease;
 }
 
 .msg-inline-action mat-icon {
@@ -3022,7 +3068,9 @@ app-room-card {
   border-radius: var(--r-full);
   padding: 2px 3px;
   gap: 2px;
-  transition: border-color 0.16s ease, background-color 0.16s ease;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease;
 }
 
 .composer-enhanced:focus-within {
@@ -3086,7 +3134,9 @@ app-room-card {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.14s ease, background-color 0.14s ease;
+  transition:
+    transform 0.14s ease,
+    background-color 0.14s ease;
 }
 
 .emoji-row button:hover {

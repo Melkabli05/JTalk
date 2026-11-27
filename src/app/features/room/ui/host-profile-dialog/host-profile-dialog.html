@@ -6,16 +6,16 @@
       <span id="hostProfileStatus">{{ preview.status }}</span>
     </p>
     @if (data.isYou) {
-    <button
-      matButton="tonal"
-      class="hp-view-btn"
-      type="button"
-      id="hostProfileView"
-      [mat-dialog-close]="'view-profile'"
-    >
-      <mat-icon aria-hidden="true">person</mat-icon>
-      View profile
-    </button>
+      <button
+        matButton="tonal"
+        class="hp-view-btn"
+        type="button"
+        id="hostProfileView"
+        [mat-dialog-close]="'view-profile'"
+      >
+        <mat-icon aria-hidden="true">person</mat-icon>
+        View profile
+      </button>
     }
     <button
       matIconButton
@@ -32,11 +32,7 @@
 
   <div class="hp-body">
     <div class="hp-avatar-wrap">
-      <div
-        class="hp-avatar"
-        id="hostProfileAvatar"
-        [class.is-initial]="!preview.avatarUrl"
-      >
+      <div class="hp-avatar" id="hostProfileAvatar" [class.is-initial]="!preview.avatarUrl">
         @if (preview.avatarUrl; as url) {
           <app-avatar-art avatarId="own" [imageUrl]="url" />
         } @else {

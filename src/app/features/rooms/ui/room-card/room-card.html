@@ -1,10 +1,5 @@
 @let item = room();
-<mat-card
-  class="room-card"
-  appearance="filled"
-  role="article"
-  [attr.data-lang]="langKey()"
->
+<mat-card class="room-card" appearance="filled" role="article" [attr.data-lang]="langKey()">
   <div class="room-top">
     <span class="lang-chip">
       <span class="lang-dot" [class]="dotClass()"></span>{{ langLabel() }}
