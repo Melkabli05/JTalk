@@ -143,7 +143,7 @@ export class RoomStageStore {
   );
 
   constructor() {
-    this.destroyRef.onDestroy(() => this.clearReactionTimer());
+    this.destroyRef.onDestroy(() => this.clearReactionTimers());
   }
 
   generation(): number {

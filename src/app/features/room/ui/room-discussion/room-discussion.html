@@ -111,7 +111,7 @@
             class="msg"
             [class.msg-thread-reply]="msg.isThreadReply"
             [class.msg-is-you]="msg.isYou"
-            [class.msg-correction]="Boolean(msg.correction)"
+            [class.msg-correction]="!!msg.correction"
             [attr.data-author]="msg.author"
           >
             @if (msg.authorId) {

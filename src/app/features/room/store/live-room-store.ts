@@ -522,7 +522,7 @@ export class LiveRoomStore {
       if (this.stage.isHost()) {
         this.stage.applyRoomRealtimeEvent({ type: 'ROOM_IDLE_WARNING', roomId: activeRoomId });
       } else {
-        this.leaveStage(activeRoomId);
+        this.stage.leaveStage();
       }
     }, 300_000);
   }
