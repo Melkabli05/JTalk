@@ -3304,16 +3304,17 @@ app-room-card {
 .composer-enhanced textarea {
   resize: none;
   field-sizing: content;
+  min-height: 1.375rem;
   max-height: 8rem;
   flex: 1 1 auto;
   min-width: 0;
-  height: 40px;
   border: 0;
   background: transparent;
   color: var(--mat-sys-on-surface);
-  padding: 0 6px;
+  padding: 9px 10px;
   font: inherit;
   font-size: 1rem;
+  line-height: 1.375;
   outline: 0;
 }
 
