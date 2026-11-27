@@ -1,5 +1,15 @@
 import { isPlatformBrowser } from '@angular/common';
-import { computed, effect, inject, linkedSignal, PLATFORM_ID, Service, signal } from '@angular/core';
+import {
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  linkedSignal,
+  PLATFORM_ID,
+  Service,
+  signal,
+  untracked,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '@auth0/auth0-angular';
 import { catchError, finalize, map, type Observable, of, switchMap, throwError } from 'rxjs';
@@ -17,8 +27,17 @@ import type {
   UserProfileResponse,
   UserSummaryResponse,
 } from './auth.models';
+import { isTransientProfileError, sanitizeReturnUrl } from './auth.utils';
 import { UsersApi } from './users-api';
 import { SessionExpiryHandler } from '../http/session-expiry';
+
+const ME_RETRY_DELAYS_MS: readonly number[] = [2000, 4000];
+
+function readAuthUserString(user: unknown, key: string): string | null {
+  if (!user || typeof user !== 'object') return null;
+  const value: unknown = Reflect.get(user, key);
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
 
 function buildProfilePatch(
   current: UserProfileResponse,
@@ -80,6 +99,7 @@ function buildProfilePatch(
 @Service()
 export class IdentityStore {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly auth = inject(AuthService, { optional: true });
   private readonly usersApi = inject(UsersApi);
   private readonly sessionExpiry = inject(SessionExpiryHandler);
@@ -107,6 +127,12 @@ export class IdentityStore {
   );
   private readonly meResource = this.usersApi.meResource(() => this.meEnabled());
 
+  private readonly meRetryCount = signal(0);
+  private readonly meRetryingState = signal(false);
+  readonly meRetrying = this.meRetryingState.asReadonly();
+  private meRetryTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastRetriedError: unknown = null;
+
   private readonly meState = linkedSignal<
     { signedIn: boolean; profile: UserProfileResponse | undefined },
     UserProfileResponse | null
@@ -126,15 +152,26 @@ export class IdentityStore {
     () => this.me()?.socialStats ?? undefined,
   );
 
+  readonly displayNameFallback = computed<string>(() => {
+    const profileName = this.me()?.displayName?.trim();
+    if (profileName) return profileName;
+    const user = this.authUser();
+    return (
+      readAuthUserString(user, 'name') ??
+      readAuthUserString(user, 'nickname') ??
+      'Account'
+    );
+  });
+
   readonly profileStatus = computed<ProfileLoadStatus>(() => {
-    if (!this.isAuthenticated()) return 'unauthenticated';
     if (this.me() !== null) return 'ready';
-    if (this.meResource.isLoading()) return 'loading';
+    if (!this.isAuthenticated()) return 'unauthenticated';
+    if (this.meResource.isLoading() || this.meRetryingState()) return 'loading';
     const err = this.meResource.error();
     if (err instanceof ApiError && err.type === 'urn:jtalk:user:problem:user-not-found') {
       return 'missing';
     }
-    return err ? 'error' : 'unauthenticated';
+    return err ? 'error' : 'loading';
   });
 
   readonly profileError = computed<string | null>(() => {
@@ -145,6 +182,9 @@ export class IdentityStore {
 
   private readonly savingProfileState = signal(false);
   readonly savingProfile = this.savingProfileState.asReadonly();
+
+  private readonly deletingAccountState = signal(false);
+  readonly deletingAccount = this.deletingAccountState.asReadonly();
 
   private readonly directoryCache = signal<ReadonlyMap<string, UserSummaryResponse>>(new Map());
   private readonly inFlightBatchIds = new Set<string>();
@@ -173,16 +213,60 @@ export class IdentityStore {
   );
 
   constructor() {
+    let wasAuthenticated = false;
+    effect(() => {
+      const signedIn = this.isAuthenticated();
+      if (wasAuthenticated && !signedIn) {
+        this.clearCachedState();
+      }
+      wasAuthenticated = signedIn;
+    });
     effect(() => {
       const err = this.authErrorSignal();
       if (err && isAuthSessionError(err)) {
-        this.meState.set(null);
+        this.clearCachedState();
         this.sessionExpiry.handle();
       }
     });
+    effect(() => {
+      const enabled = this.meEnabled();
+      const loaded = this.me() !== null;
+      const loading = this.meResource.isLoading();
+      const err = this.meResource.error();
+      untracked(() => {
+        if (!enabled || loaded) {
+          this.resetMeRetry();
+          return;
+        }
+        if (loading || !err || err === this.lastRetriedError) return;
+        if (!isTransientProfileError(err)) {
+          this.cancelMeRetryTimer();
+          return;
+        }
+        const attempt = this.meRetryCount();
+        const delay = ME_RETRY_DELAYS_MS[attempt];
+        if (delay === undefined) {
+          this.meRetryingState.set(false);
+          return;
+        }
+        this.lastRetriedError = err;
+        this.meRetryCount.set(attempt + 1);
+        this.meRetryingState.set(true);
+        this.cancelMeRetryTimer();
+        this.meRetryTimer = setTimeout(() => {
+          this.meRetryTimer = null;
+          this.meRetryingState.set(false);
+          if (this.meEnabled() && this.me() === null) {
+            this.meResource.reload();
+          }
+        }, delay);
+      });
+    });
+    this.destroyRef.onDestroy(() => this.cancelMeRetryTimer());
   }
 
   loadMe(): void {
+    this.resetMeRetry();
     if (this.meEnabled()) {
       this.meResource.reload();
     }
@@ -249,38 +333,78 @@ export class IdentityStore {
         onDone?.({ ok: true, profile: saved });
       },
       error: (err: unknown) => {
-        onDone?.({ ok: false, error: errorMessage(err, 'Could not save profile.') });
+        onDone?.({
+          ok: false,
+          error: errorMessage(err, 'Could not save profile.'),
+          ...(err instanceof ApiError ? { errorType: err.type } : {}),
+        });
       },
     });
   }
 
   deleteAccount(onDone?: (result: AccountActionResult) => void): void {
-    this.usersApi.deleteMe().subscribe({
-      next: () => {
-        this.meState.set(null);
-        this.signOut();
-        onDone?.({ ok: true });
-      },
-      error: (err: unknown) => {
-        onDone?.({ ok: false, error: errorMessage(err, 'Could not delete account.') });
-      },
-    });
+    if (this.deletingAccountState()) {
+      onDone?.({ ok: false, error: 'Account deletion is already in progress.' });
+      return;
+    }
+    this.deletingAccountState.set(true);
+    this.usersApi
+      .deleteMe()
+      .pipe(finalize(() => this.deletingAccountState.set(false)))
+      .subscribe({
+        next: () => {
+          this.clearCachedState();
+          this.signOut();
+          onDone?.({ ok: true });
+        },
+        error: (err: unknown) => {
+          onDone?.({ ok: false, error: errorMessage(err, 'Could not delete account.') });
+        },
+      });
   }
 
   signIn(mode: 'login' | 'signup' = 'login', targetPath = '/rooms'): void {
-    if (!this.auth || !isPlatformBrowser(this.platformId)) return;
+    if (!this.auth || !isPlatformBrowser(this.platformId) || this.isLoading()) return;
     this.sessionExpiry.clear();
-    this.auth.loginWithRedirect({
-      appState: { target: targetPath },
+    const safeTarget = sanitizeReturnUrl(targetPath, '/rooms');
+    const redirect$ = this.auth.loginWithRedirect({
+      appState: { target: safeTarget },
       ...(mode === 'signup' ? { authorizationParams: { screen_hint: 'signup' } } : {}),
+    });
+    redirect$?.subscribe?.({
+      error: () => {
+        // AuthService publishes redirect failures via auth.error$.
+      },
     });
   }
 
   signOut(): void {
+    this.clearCachedState();
     if (!this.auth || !isPlatformBrowser(this.platformId)) return;
     this.auth.logout({ logoutParams: { returnTo: window.location.origin } }).subscribe({
       error: () => window.location.assign('/'),
     });
+  }
+
+  private clearCachedState(): void {
+    this.resetMeRetry();
+    this.meState.set(null);
+    this.directoryCache.set(new Map());
+    this.inFlightBatchIds.clear();
+  }
+
+  private cancelMeRetryTimer(): void {
+    if (this.meRetryTimer !== null) {
+      clearTimeout(this.meRetryTimer);
+      this.meRetryTimer = null;
+    }
+  }
+
+  private resetMeRetry(): void {
+    this.cancelMeRetryTimer();
+    this.meRetryCount.set(0);
+    this.meRetryingState.set(false);
+    this.lastRetriedError = null;
   }
 
   resolveUsers(ids: readonly string[]): void {
@@ -338,13 +462,17 @@ export class IdentityStore {
 
   private createInitialProfile(input: ProfileSaveInput): Observable<UserProfileResponse> {
     const trimmedUsername = input.username.trim();
+    const learningList =
+      input.learningLanguages && input.learningLanguages.length > 0
+        ? input.learningLanguages
+        : input.learningLanguage
+          ? [{ languageCode: input.learningLanguage }]
+          : undefined;
     const createReq: CreateProfileRequest = {
       ...(trimmedUsername ? { username: trimmedUsername } : {}),
       displayName: input.displayName.trim(),
       nativeLanguage: input.nativeLanguage,
-      ...(input.learningLanguage
-        ? { learningLanguages: [{ languageCode: input.learningLanguage }] }
-        : {}),
+      ...(learningList ? { learningLanguages: learningList } : {}),
       ...(input.bio.trim() ? { bio: input.bio.trim() } : {}),
       ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
       ...(input.countryCode ? { countryCode: input.countryCode } : {}),

@@ -1,46 +1,141 @@
-@let p = profile();
-@let s = stats();
-<mat-card
-  class="profile-card profile-header-card"
-  appearance="outlined"
-  aria-labelledby="profileName"
+@let isCompact = compact();
+@let img = avatarSrc();
+@let nativeLang = primaryNative();
+@let learnLang = primaryLearning();
+
+<section
+  class="phead-surface"
+  [class.phead-compact]="isCompact"
+  [attr.aria-labelledby]="isCompact ? null : 'profileName'"
 >
-  <div class="profile-cover" aria-hidden="true">
-    <span class="cover-semicircle"></span>
-  </div>
-  <div class="profile-header-body">
+  <div class="phead-top">
     <div
-      class="profile-avatar"
-      id="profileHeaderAvatar"
+      class="phead-avatar"
+      [class.phead-avatar-live]="isLive()"
+      [attr.id]="isCompact ? 'livePreviewAvatar' : 'profileHeaderAvatar'"
       role="img"
       [attr.aria-label]="avatarAriaLabel()"
-      style="background: var(--photo-bg)"
     >
-      <app-avatar-art [imageUrl]="p?.avatarUrl ?? null" />
-    </div>
-    <h1 class="profile-name" id="profileName">{{ name() }}</h1>
-    <p class="profile-meta">
-      <span id="profileHandle">&#64;{{ username() }}</span> · Joined {{ joined() }}
-    </p>
-    <div class="profile-chips">
-      <span class="profile-chip" id="profileSpeakChip">Speaks {{ speak() }}</span>
-      @if (learn(); as learning) {
-        <span class="profile-chip" id="profileLearnChip">Learning {{ learning }}</span>
+      @if (img) {
+        <img
+          [src]="img"
+          alt=""
+          referrerpolicy="no-referrer"
+          (error)="onImageError(img)"
+        />
+      } @else {
+        <span class="phead-initials" aria-hidden="true">{{ initials() }}</span>
+      }
+      @if (isLive()) {
+        <span class="phead-live-dot" aria-label="Currently in a live room"></span>
       }
     </div>
-    <div class="profile-stats">
-      <span
-        ><b>{{ s?.followerCount ?? 0 }}</b> Followers</span
-      >
-      <span
-        ><b>{{ s?.followingCount ?? 0 }}</b> Following</span
-      >
+
+    <div class="phead-identity">
+      @if (isCompact) {
+        <p class="phead-name" id="livePreviewName" dir="auto">{{ name() }}</p>
+      } @else {
+        <h1 class="phead-name" id="profileName" dir="auto">{{ name() }}</h1>
+      }
+
+      <p class="phead-meta">
+        @if (username(); as handle) {
+          <span
+            class="phead-handle"
+            [attr.id]="isCompact ? 'livePreviewHandle' : 'profileHandle'"
+            dir="ltr"
+            >&#64;{{ handle }}</span
+          >
+        }
+        @if (location(); as country) {
+          @if (username()) {
+            <span class="phead-sep" aria-hidden="true">·</span>
+          }
+          <span class="phead-meta-item">{{ country }}</span>
+        }
+        @if (joined(); as joinedMonth) {
+          @if (username() || location()) {
+            <span class="phead-sep" aria-hidden="true">·</span>
+          }
+          <span class="phead-meta-item">Joined {{ joinedMonth }}</span>
+        }
+      </p>
+
+      @if (nativeLang || learnLang) {
+        <div class="phead-pair" aria-label="Primary language exchange pair">
+          <span class="phead-jtalk-bars" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+          @if (nativeLang) {
+            <span
+              class="phead-pair-lang"
+              [attr.id]="isCompact ? 'liveSpeakChip' : 'profileSpeakChip'"
+              >{{ nativeLang }}</span
+            >
+          }
+          @if (nativeLang && learnLang) {
+            <mat-icon class="phead-pair-arrow" aria-hidden="true">arrow_forward</mat-icon>
+          }
+          @if (learnLang) {
+            <span
+              class="phead-pair-lang phead-pair-learning"
+              [attr.id]="isCompact ? 'liveLearnChip' : 'profileLearnChip'"
+              >{{ learnLang }}</span
+            >
+          }
+          @if (extraLanguageCount(); as extra) {
+            <span class="phead-pair-more">+{{ extra }}</span>
+          }
+        </div>
+      }
     </div>
-    <div class="profile-header-actions">
-      <button matButton="tonal" type="button" (click)="editProfile.emit()">
-        <mat-icon aria-hidden="true">edit</mat-icon>
-        Edit profile
-      </button>
-    </div>
+
+    @if (!isCompact && isOwner()) {
+      <div class="phead-action">
+        <button
+          matButton="tonal"
+          type="button"
+          id="headerEditProfileBtn"
+          (click)="editProfile.emit()"
+        >
+          <mat-icon aria-hidden="true">edit</mat-icon>
+          Edit profile
+        </button>
+      </div>
+    }
   </div>
-</mat-card>
+
+  <div class="phead-counts">
+    @if (isCompact) {
+      <span class="phead-count-static">
+        <strong>{{ followers().formattedCount }}</strong> {{ followers().unit }}
+      </span>
+      <span class="phead-count-static">
+        <strong>{{ following().formattedCount }}</strong> {{ following().unit }}
+      </span>
+    } @else {
+      <button
+        type="button"
+        class="phead-count-btn"
+        id="followersCountBtn"
+        [attr.aria-label]="followers().fullText"
+        (click)="openConnections.emit('followers')"
+      >
+        <strong>{{ followers().formattedCount }}</strong><span>{{ ' ' + followers().unit }}</span>
+      </button>
+      <button
+        type="button"
+        class="phead-count-btn"
+        id="followingCountBtn"
+        [attr.aria-label]="following().fullText"
+        (click)="openConnections.emit('following')"
+      >
+        <strong>{{ following().formattedCount }}</strong><span>{{ ' ' + following().unit }}</span>
+      </button>
+    }
+  </div>
+
+  @if (isCompact && previewBio(); as bioText) {
+    <p class="phead-preview-bio" id="livePreviewBio" dir="auto">{{ bioText }}</p>
+  }
+</section>

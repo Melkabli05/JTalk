@@ -8,13 +8,14 @@ import {
   type Signal,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { form } from '@angular/forms/signals';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
+import { switchMap } from 'rxjs';
 import type {
   FollowListResponse,
   LanguageType,
   ProficiencyLevel,
+  ProfileLoadStatus,
+  ProfileSaveResult,
   SocialStatsResponse,
   UserProfileResponse,
   UserSummaryResponse,
@@ -22,18 +23,25 @@ import type {
 import { IdentityStore } from '../../../core/auth/identity';
 import { UsersApi } from '../../../core/auth/users-api';
 import { errorMessage } from '../../../core/http/http-error.interceptor';
-import { type ColorScheme, isColorScheme } from '../../../core/models/theme.model';
+import {
+  type ColorScheme,
+  isColorScheme,
+  isThemePreference,
+  type ThemePreference,
+} from '../../../core/models/theme.model';
 import { PwaService } from '../../../core/services/pwa';
 import { ThemeService } from '../../../core/services/theme';
 import { ToastNotifier } from '../../../core/services/toast-notifier';
 import { LiveRoomStore } from '../../room/store/live-room-store';
 import {
-  parseProfileTab,
   PROFILE_CONNECTIONS_PAGE_SIZE,
-  PROFILE_TAB_ORDER,
-  type ProfileTab,
+  PROFILE_MAX_LANGUAGES,
 } from '../constants/profile.constants';
 import type { ProfileConnectionList, ProfileEditSaveEvent } from '../models/profile.model';
+import {
+  buildOrderedLanguageRows,
+  type ProfileLanguageRow,
+} from '../utils/profile-format.utils';
 
 interface ConnectionsRequest {
   readonly userId: string;
@@ -41,9 +49,10 @@ interface ConnectionsRequest {
   readonly page: number;
 }
 
-interface AddLanguageFormModel {
-  code: string;
-  level: ProficiencyLevel;
+function readAuthString(user: unknown, key: string): string | null {
+  if (!user || typeof user !== 'object') return null;
+  const value: unknown = Reflect.get(user, key);
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
 
 @Service({ autoProvided: false })
@@ -54,25 +63,14 @@ export class ProfileFacade {
   private readonly usersApi = inject(UsersApi);
   private readonly roomStore = inject(LiveRoomStore);
   private readonly toast = inject(ToastNotifier, { optional: true });
-  private readonly route = inject(ActivatedRoute, { optional: true });
   private readonly router = inject(Router, { optional: true });
   private readonly destroyRef = inject(DestroyRef);
 
-  private readonly queryParams = this.route
-    ? toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap })
-    : null;
-
-  private readonly addLanguageModel = signal<AddLanguageFormModel>({
-    code: 'en',
-    level: 'BEGINNER',
-  });
-  readonly addLanguageForm = form(this.addLanguageModel);
-
-  private readonly editingLanguagesState = signal(false);
-  readonly editingLanguages: Signal<boolean> = this.editingLanguagesState.asReadonly();
-
   private readonly languageBusyState = signal(false);
   readonly languageBusy: Signal<boolean> = this.languageBusyState.asReadonly();
+
+  private readonly unblockingIdsState = signal<ReadonlySet<string>>(new Set());
+  readonly unblockingIds: Signal<ReadonlySet<string>> = this.unblockingIdsState.asReadonly();
 
   private readonly connectionsRequest = signal<ConnectionsRequest | null>(null);
   private readonly connectionsRes = this.usersApi.connectionsResource(() => {
@@ -84,12 +82,28 @@ export class ProfileFacade {
 
   readonly me: Signal<UserProfileResponse | null> = this.identity.me;
   readonly socialStats: Signal<SocialStatsResponse | undefined> = this.identity.socialStats;
+  readonly profileStatus: Signal<ProfileLoadStatus> = this.identity.profileStatus;
+  readonly meRetrying: Signal<boolean> = this.identity.meRetrying;
   readonly profileError: Signal<string | null> = this.identity.profileError;
   readonly hasProfile: Signal<boolean> = this.identity.hasProfile;
   readonly needsOnboarding: Signal<boolean> = this.identity.needsOnboarding;
   readonly savingProfile: Signal<boolean> = this.identity.savingProfile;
+  readonly deletingAccount: Signal<boolean> = this.identity.deletingAccount;
+
+  readonly authEmail: Signal<string | null> = computed(() =>
+    readAuthString(this.identity.authUser(), 'email'),
+  );
+  readonly isInLiveRoom: Signal<boolean> = computed(() => this.roomStore.room() !== null);
+
+  readonly maxLanguages = PROFILE_MAX_LANGUAGES;
+  readonly languageRows: Signal<readonly ProfileLanguageRow[]> = computed(() => {
+    const me = this.me();
+    return me ? buildOrderedLanguageRows(me) : [];
+  });
+  readonly totalLanguages: Signal<number> = computed(() => this.languageRows().length);
 
   readonly colorScheme: Signal<ColorScheme> = this.theme.colorScheme;
+  readonly themePreference: Signal<ThemePreference> = this.theme.preference;
   readonly canInstall: Signal<boolean> = this.pwa.canInstall;
   readonly isIosInstallable: Signal<boolean> = this.pwa.isIosInstallable;
 
@@ -129,28 +143,16 @@ export class ProfileFacade {
     return !Array.isArray(page) && (page.page + 1) * page.size < page.total;
   });
 
-  private readonly activeTabState = linkedSignal<ProfileTab>(
-    () =>
-      parseProfileTab(this.queryParams?.().get('tab') ?? null) ??
-      (this.identity.needsOnboarding() ? 'edit' : 'overview'),
-  );
-  readonly activeTab: Signal<ProfileTab> = this.activeTabState.asReadonly();
-
-  readonly selectedTabIndex: Signal<number> = computed((): number => {
-    const idx = PROFILE_TAB_ORDER.indexOf(this.activeTab());
-    return idx === -1 ? 0 : idx;
-  });
-
   loadMe(): void {
     this.identity.loadMe();
   }
 
-  toggleEditingLanguages(): void {
-    this.editingLanguagesState.update((v): boolean => !v);
-  }
-
   retryConnections(): void {
     this.connectionsRes.reload();
+  }
+
+  closeConnections(): void {
+    this.connectionsRequest.set(null);
   }
 
   loadConnections(list: ProfileConnectionList, append = false): void {
@@ -171,11 +173,22 @@ export class ProfileFacade {
   }
 
   unblock(id: string): void {
+    if (this.unblockingIdsState().has(id)) return;
+    this.unblockingIdsState.update((prev): ReadonlySet<string> => new Set(prev).add(id));
+    const clearPending = (): void => {
+      this.unblockingIdsState.update((prev): ReadonlySet<string> => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    };
     this.usersApi.unblock(id).subscribe({
       next: () => {
+        clearPending();
         if (this.connectionList() === 'blocks') this.loadConnections('blocks');
       },
       error: (err: unknown) => {
+        clearPending();
         if (!this.destroyRef.destroyed) {
           this.toast?.show(errorMessage(err, 'Could not unblock account.'));
         }
@@ -183,44 +196,83 @@ export class ProfileFacade {
     });
   }
 
-  changeLanguage(code: string, type?: LanguageType, proficiencyLevel?: ProficiencyLevel): void {
+  changeLanguage(
+    code: string,
+    type?: LanguageType,
+    proficiencyLevel?: ProficiencyLevel,
+    onDone?: (ok: boolean, error?: string) => void,
+  ): void {
     if (this.languageBusyState()) return;
     this.languageBusyState.set(true);
-    const req$ = type
-      ? this.usersApi.addMyLanguage({
-          languageCode: code,
-          languageType: type,
-          ...(type === 'LEARNING' && proficiencyLevel ? { proficiencyLevel } : {}),
-        })
-      : this.usersApi.removeMyLanguage(code);
+
+    const me = this.me();
+    const isCurrentlyNative = me?.nativeLanguages.includes(code) ?? false;
+    const isCurrentlyLearning =
+      me?.learningLanguages.some((entry) => entry.languageCode === code) ?? false;
+    const switchingRole =
+      (type === 'NATIVE' && isCurrentlyLearning) || (type === 'LEARNING' && isCurrentlyNative);
+
+    const addRequest = () =>
+      this.usersApi.addMyLanguage({
+        languageCode: code,
+        languageType: type ?? 'LEARNING',
+        ...(type === 'LEARNING' && proficiencyLevel ? { proficiencyLevel } : {}),
+      });
+
+    const req$ = !type
+      ? this.usersApi.removeMyLanguage(code)
+      : switchingRole
+        ? this.usersApi.removeMyLanguage(code).pipe(switchMap(() => addRequest()))
+        : addRequest();
+
     req$.subscribe({
       next: (matrix) => {
         this.languageBusyState.set(false);
         this.identity.applyLanguageMatrix(matrix);
+        onDone?.(true);
+      },
+      error: (err: unknown) => {
+        this.languageBusyState.set(false);
+        const msg = errorMessage(err, 'Could not update languages.');
+        if (!this.destroyRef.destroyed) {
+          this.toast?.show(msg);
+        }
+        onDone?.(false, msg);
+      },
+    });
+  }
+
+  setPrimaryNativeLanguage(code: string): void {
+    const current = this.me();
+    if (!current || this.languageBusyState() || current.nativeLanguage === code) return;
+    this.languageBusyState.set(true);
+    this.usersApi.updateMe({ nativeLanguage: code }).subscribe({
+      next: (updated) => {
+        this.languageBusyState.set(false);
+        const merged: UserProfileResponse =
+          updated.socialStats !== undefined
+            ? updated
+            : current.socialStats
+              ? { ...updated, socialStats: current.socialStats }
+              : updated;
+        this.identity.setProfile(merged);
+        if (!this.destroyRef.destroyed) {
+          this.toast?.show('Primary language updated.');
+        }
       },
       error: (err: unknown) => {
         this.languageBusyState.set(false);
         if (!this.destroyRef.destroyed) {
-          this.toast?.show(errorMessage(err, 'Could not update languages.'));
+          this.toast?.show(errorMessage(err, 'Could not update primary language.'));
         }
       },
     });
   }
 
-  selectTab(tab: ProfileTab): void {
-    this.activeTabState.set(tab);
-    if (this.router && this.route) {
-      void this.router.navigate([], {
-        relativeTo: this.route,
-        queryParams: { tab: tab === 'overview' ? null : tab },
-        queryParamsHandling: 'merge',
-        replaceUrl: true,
-      });
+  setThemePreference(value: unknown): void {
+    if (isThemePreference(value)) {
+      this.theme.setPreference(value);
     }
-  }
-
-  selectTabIndex(index: number): void {
-    this.selectTab(PROFILE_TAB_ORDER[index] ?? 'overview');
   }
 
   setColorScheme(value: unknown): void {
@@ -237,12 +289,12 @@ export class ProfileFacade {
     });
   }
 
-  saveProfile(event: ProfileEditSaveEvent, onSaved?: () => void): void {
+  saveProfile(event: ProfileEditSaveEvent, onResult?: (res: ProfileSaveResult) => void): void {
     const wasOnboarding = this.identity.needsOnboarding();
     this.identity.saveProfile(event.input, event.avatarBlob, (res) => {
       if (this.destroyRef.destroyed) return;
+      onResult?.(res);
       if (res.ok) {
-        onSaved?.();
         this.toast?.show(wasOnboarding ? 'Profile created.' : 'Profile saved.');
         if (wasOnboarding) {
           void this.router?.navigate(['/rooms']);

@@ -38,6 +38,10 @@ export class RoomStageStore {
   private readonly audienceLimit = signal(AUDIENCE_INITIAL_LIMIT);
 
   private readonly stageState = signal<StageDto>({ speakers: [], handRaiseQueue: [] });
+  private readonly reconnectingSpeakerIdsState = signal<ReadonlySet<string>>(new Set());
+  private readonly claimingSeatState = signal(false);
+  private readonly leavingStageState = signal(false);
+  private readonly togglingHandState = signal(false);
   private readonly audienceIdsState = signal<readonly string[]>([]);
   private readonly audienceCountState = signal(0);
   private readonly hasMoreAudienceState = signal(false);
@@ -52,6 +56,9 @@ export class RoomStageStore {
   readonly isCurrentUserOnStage = computed(() => this.roleState() !== 'LISTENER');
 
   readonly stage = this.stageState.asReadonly();
+  readonly claimingSeat = this.claimingSeatState.asReadonly();
+  readonly leavingStage = this.leavingStageState.asReadonly();
+  readonly togglingHand = this.togglingHandState.asReadonly();
   readonly audienceIds = this.audienceIdsState.asReadonly();
   readonly audienceCount = this.audienceCountState.asReadonly();
   readonly hasMoreAudience = this.hasMoreAudienceState.asReadonly();
@@ -77,15 +84,18 @@ export class RoomStageStore {
     const myId = this.currentUserId();
     const activeIds = new Set(this.audio.speakingIds());
     const mutedIds = new Set(this.audio.mutedIds());
+    const reconnectingIds = this.reconnectingSpeakerIdsState();
     return this.stage().speakers.map((userId) => {
       const isYou = userId === myId;
       const muted = isYou ? !this.audio.micOn() : mutedIds.has(userId);
+      const reconnecting = reconnectingIds.has(userId);
       return {
         ...this.resolveParticipantCard(userId, 'Speaker'),
         role: hostId === userId ? 'host' : 'speaker',
         isYou,
         muted,
-        speaking: activeIds.has(userId) && !muted,
+        speaking: activeIds.has(userId) && !muted && !reconnecting,
+        reconnecting,
       };
     });
   });
@@ -171,6 +181,9 @@ export class RoomStageStore {
 
   applyJoinSnapshot(snapshot: RoomJoinSnapshot): void {
     this.cachePreviews([...snapshot.speakers, ...snapshot.audience.audiencePreview]);
+    this.reconnectingSpeakerIdsState.set(
+      new Set(snapshot.speakers.filter((s) => s.isReconnecting).map((s) => s.userId)),
+    );
     this.stageState.set({
       speakers: snapshot.speakers.map(({ userId }) => userId),
       handRaiseQueue: snapshot.handRaiseQueue,
@@ -190,6 +203,9 @@ export class RoomStageStore {
     }
     this.cachePreviews([...res.snapshot.speakers, ...res.snapshot.audience.audiencePreview]);
     if (this.stage() === before.stage) {
+      this.reconnectingSpeakerIdsState.set(
+        new Set(res.snapshot.speakers.filter((s) => s.isReconnecting).map((s) => s.userId)),
+      );
       this.stageState.set({
         speakers: res.snapshot.speakers.map(({ userId }) => userId),
         handRaiseQueue: res.snapshot.handRaiseQueue,
@@ -260,47 +276,58 @@ export class RoomStageStore {
       onDone?.({ ok: false, message: 'No active room.' });
       return;
     }
+    if (this.claimingSeatState()) return;
     const generation = this.sessionGeneration;
     const stage = this.stage();
-    this.voiceRoomApi.claimStageSeat(id).subscribe({
-      next: (session) => {
-        if (generation !== this.sessionGeneration) {
-          onDone?.({ ok: false });
-          return;
-        }
-        if (this.stage() === stage) {
-          this.roleState.set(session.role);
-          this.stageState.set({
-            speakers: session.room.speakers,
-            handRaiseQueue: stage.handRaiseQueue.filter(
-              (userId) => userId !== this.currentUserId(),
-            ),
-          });
-        }
-        if (!this.audio.canPublish()) {
-          this.audio.connectSession(session, (connected) => {
-            if (generation !== this.sessionGeneration) {
-              onDone?.({ ok: false });
-              return;
-            }
-            onDone?.(
-              connected
-                ? { ok: true }
-                : { ok: false, message: 'Stage seat claimed. Tap Retry audio to reconnect.' },
-            );
-          });
-          return;
-        }
-        onDone?.({ ok: true });
-      },
-      error: (err: unknown) => {
-        onDone?.({ ok: false, message: errorMessage(err, 'Could not join the stage.') });
-      },
-    });
+    this.claimingSeatState.set(true);
+    this.voiceRoomApi
+      .claimStageSeat(id)
+      .pipe(
+        finalize(() => {
+          if (generation === this.sessionGeneration) this.claimingSeatState.set(false);
+        }),
+      )
+      .subscribe({
+        next: (session) => {
+          if (generation !== this.sessionGeneration) {
+            onDone?.({ ok: false });
+            return;
+          }
+          if (this.stage() === stage) {
+            this.roleState.set(session.role);
+            this.stageState.set({
+              speakers: session.room.speakers,
+              handRaiseQueue: stage.handRaiseQueue.filter(
+                (userId) => userId !== this.currentUserId(),
+              ),
+            });
+          }
+          if (!this.audio.canPublish()) {
+            this.audio.connectSession(session, (connected) => {
+              if (generation !== this.sessionGeneration) {
+                onDone?.({ ok: false });
+                return;
+              }
+              onDone?.(
+                connected
+                  ? { ok: true }
+                  : { ok: false, message: 'Stage seat claimed. Tap Retry audio to reconnect.' },
+              );
+            });
+            return;
+          }
+          onDone?.({ ok: true });
+        },
+        error: (err: unknown) => {
+          onDone?.({ ok: false, message: errorMessage(err, 'Could not join the stage.') });
+        },
+      });
   }
 
   leaveStage(onDone?: (res: ActionFeedback) => void): void {
+    if (this.leavingStageState()) return;
     const generation = this.sessionGeneration;
+    this.leavingStageState.set(true);
     this.runRoomCommand(
       (id) => this.voiceRoomApi.leaveStageSeat(id),
       'Could not leave stage.',
@@ -309,17 +336,26 @@ export class RoomStageStore {
           void this.audio.setMicrophone(false);
         }
       },
-      onDone,
+      (res) => {
+        if (generation === this.sessionGeneration) this.leavingStageState.set(false);
+        onDone?.(res);
+      },
     );
   }
 
   toggleHandRaised(onDone?: (res: ActionFeedback) => void): void {
+    if (this.togglingHandState()) return;
+    const generation = this.sessionGeneration;
+    this.togglingHandState.set(true);
     this.runRoomCommand(
       (id) =>
         this.handRaised() ? this.voiceRoomApi.lowerHand(id) : this.voiceRoomApi.raiseHand(id),
       'Could not update hand state.',
       undefined,
-      onDone,
+      (res) => {
+        if (generation === this.sessionGeneration) this.togglingHandState.set(false);
+        onDone?.(res);
+      },
     );
   }
 
@@ -403,8 +439,27 @@ export class RoomStageStore {
           );
         }
         return;
-      case 'SPEAKER_RECONNECTING':
-      case 'SPEAKER_RECONNECTED':
+      case 'SPEAKER_RECONNECTING': {
+        const userId = event.targetUserId;
+        if (userId) {
+          this.reconnectingSpeakerIdsState.update((prev): ReadonlySet<string> =>
+            new Set(prev).add(userId),
+          );
+        }
+        return;
+      }
+      case 'SPEAKER_RECONNECTED': {
+        const userId = event.targetUserId;
+        if (userId) {
+          this.reconnectingSpeakerIdsState.update((prev): ReadonlySet<string> => {
+            if (!prev.has(userId)) return prev;
+            const next = new Set(prev);
+            next.delete(userId);
+            return next;
+          });
+        }
+        return;
+      }
       case 'COMMENT_PINNED':
       case 'COMMENT_UNPINNED':
         return;
@@ -414,6 +469,10 @@ export class RoomStageStore {
   reset(): void {
     this.sessionGeneration++;
     this.audienceLoadingState.set(false);
+    this.claimingSeatState.set(false);
+    this.leavingStageState.set(false);
+    this.togglingHandState.set(false);
+    this.reconnectingSpeakerIdsState.set(new Set());
     this.clearReactionTimer();
     this.stageReactionState.set(null);
     this.roleState.set('LISTENER');

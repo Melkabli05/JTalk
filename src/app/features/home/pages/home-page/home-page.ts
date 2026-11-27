@@ -7,13 +7,17 @@ import {
   ElementRef,
   inject,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { sanitizeReturnUrl } from '../../../../core/auth/auth.utils';
 import { IdentityStore } from '../../../../core/auth/identity';
+import { SessionExpiryHandler } from '../../../../core/http/session-expiry';
 import { PwaService } from '../../../../core/services/pwa';
 import { RoomLauncher } from '../../../../core/services/room-launcher';
 import { ThemeService } from '../../../../core/services/theme';
@@ -26,7 +30,6 @@ import {
   GREETING_INTERVAL_MS,
   ROOM_CYCLE_INTERVAL_MS,
 } from '../../constants/home.constants';
-import { SessionExpiryHandler } from '../../../../core/http/session-expiry';
 
 interface HomeGreeting {
   readonly text: string;
@@ -60,12 +63,23 @@ export class HomePage {
   readonly pwa = inject(PwaService);
   readonly sessionExpiry = inject(SessionExpiryHandler);
 
+  private readonly queryParams = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+
+  readonly isAuthCallback = computed(
+    () => this.queryParams().has('code') && this.queryParams().has('state'),
+  );
+  readonly nextTarget = computed(() => sanitizeReturnUrl(this.queryParams().get('next'), '/rooms'));
+  readonly authBusy = computed(() => this.identity.isLoading() || this.isAuthCallback());
+
   readonly themeToggleLabel = computed(() =>
     this.theme.isDark() ? 'Switch to light mode' : 'Switch to dark mode',
   );
 
   private readonly shellRef = viewChild<ElementRef<HTMLElement>>('homeShell');
   private readonly liveStripRef = viewChild<ElementRef<HTMLElement>>('liveStrip');
+  private redirected = false;
 
   readonly greetings = HOME_GREETINGS;
   readonly greetingIndex = signal(1);
@@ -107,9 +121,17 @@ export class HomePage {
 
   constructor() {
     effect(() => {
-      if (this.identity.isAuthenticated()) {
-        this.roomsStore.ensureLoaded();
-      }
+      if (this.identity.isLoading() || !this.identity.isAuthenticated()) return;
+      const target = this.nextTarget();
+      untracked(() => {
+        if (this.redirected) return;
+        this.redirected = true;
+        void this.router.navigateByUrl(target, { replaceUrl: true });
+      });
+    });
+
+    this.destroyRef.onDestroy(() => {
+      this.sessionExpiry.clear();
     });
 
     afterNextRender(() => {
@@ -136,7 +158,6 @@ export class HomePage {
       this.destroyRef.onDestroy(() => {
         window.clearInterval(greetingTimer);
         window.clearInterval(roomTimer);
-        this.sessionExpiry.clear();
       });
     });
   }
@@ -170,23 +191,26 @@ export class HomePage {
   }
 
   enterRooms(): void {
+    if (this.authBusy()) return;
+    const target = this.nextTarget();
     if (this.identity.isAuthenticated()) {
-      void this.router.navigate(['/rooms']);
+      void this.router.navigateByUrl(target);
       return;
     }
-    const nextPath = this.route.snapshot.queryParamMap.get('next') || '/rooms';
-    this.identity.signIn('login', nextPath);
+    this.identity.signIn('login', target);
   }
 
   openStartRoom(): void {
+    if (this.authBusy()) return;
     if (!this.identity.isAuthenticated()) {
-      this.identity.signIn('signup', '/rooms');
+      this.identity.signIn('login', '/rooms?action=start');
       return;
     }
     this.roomLauncher.openStartRoom(this.destroyRef);
   }
 
   joinRoom(room: VoiceRoomDto): void {
+    if (this.authBusy()) return;
     if (!this.identity.isAuthenticated()) {
       this.identity.signIn('login', `/room/${room.id}`);
       return;

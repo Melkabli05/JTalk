@@ -1,12 +1,12 @@
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { TestBed } from '@angular/core/testing';
 import { MatButtonHarness } from '@angular/material/button/testing';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldHarness } from '@angular/material/form-field/testing';
 import { MatInputHarness } from '@angular/material/input/testing';
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { vi } from 'vitest';
-import { StartRoomDialog } from './start-room-dialog';
+import { StartRoomDialog, type StartRoomDialogData } from './start-room-dialog';
 
 describe('StartRoomDialog', () => {
   const closeSpy = vi.fn();
@@ -69,5 +69,43 @@ describe('StartRoomDialog', () => {
       ).getTextErrors(),
     ).toContain('Use 255 characters or fewer.');
     expect(closeSpy).not.toHaveBeenCalled();
+  });
+
+  it('defaults to 8 stage seats and preserves input with an inline error when submit fails', async () => {
+    const submit = vi.fn().mockResolvedValueOnce('Unable to reach JTalk right now.');
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [StartRoomDialog],
+      providers: [
+        { provide: MatDialogRef, useValue: { close: closeSpy } },
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {
+            defaults: { targetLanguage: 'ja', nativeLanguage: 'fr' },
+            submit,
+          } satisfies StartRoomDialogData,
+        },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(StartRoomDialog);
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const title = await loader.getHarness(MatInputHarness.with({ selector: '#srTitleInput' }));
+    await title.setValue('Tokyo Tea Chat');
+    await (await loader.getHarness(MatButtonHarness.with({ text: 'Open the room' }))).click();
+    fixture.detectChanges();
+
+    expect(submit).toHaveBeenCalledWith({
+      title: 'Tokyo Tea Chat',
+      topic: 'Just chatting',
+      targetLanguage: 'ja',
+      nativeLanguage: 'fr',
+      maxStageSeats: 8,
+    });
+    expect(closeSpy).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain(
+      'Unable to reach JTalk right now.',
+    );
+    expect(await title.getValue()).toBe('Tokyo Tea Chat');
   });
 });

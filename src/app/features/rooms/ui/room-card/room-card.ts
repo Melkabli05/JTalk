@@ -40,6 +40,7 @@ function toAvatarBadge(
 })
 export class RoomCard {
   readonly room = input.required<VoiceRoomDto>();
+  readonly pinned = input(false);
   readonly join = output<VoiceRoomDto>();
   readonly pin = output<VoiceRoomDto>();
   readonly notInterested = output<VoiceRoomDto>();

@@ -14,6 +14,7 @@ export function provideBrowserAuth0(): EnvironmentProviders {
     domain: environment.auth0.domain,
     clientId: environment.auth0.clientId,
     useRefreshTokens: true,
+    useRefreshTokensFallback: true,
     cacheLocation: 'localstorage',
     authorizationParams: {
       redirect_uri: redirectUri,

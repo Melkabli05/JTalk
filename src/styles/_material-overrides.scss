@@ -258,6 +258,10 @@
       list-item-container-shape: 12px,
       list-item-container-color: transparent,
       list-item-label-text-color: var(--mat-sys-on-surface),
+      list-item-supporting-text-color: var(--muted),
+      list-item-supporting-text-font: var(--font),
+      list-item-supporting-text-size: 0.8125rem,
+      list-item-supporting-text-tracking: 0,
       list-item-leading-icon-color: var(--mat-sys-on-surface-variant),
       list-item-hover-state-layer-color: var(--mat-sys-on-surface),
       list-item-hover-state-layer-opacity: 0.08,
@@ -266,6 +270,32 @@
       list-item-label-text-weight: 400,
       list-item-label-text-tracking: 0,
       list-item-one-line-container-height: 52px,
+    )
+  );
+
+  // Segmented button toggles (Appearance theme selector, connections & role switchers)
+  @include mat.button-toggle-overrides(
+    (
+      shape: 9999px,
+      height: 44px,
+      background-color: transparent,
+      divider-color: var(--mat-sys-outline-variant),
+      text-color: var(--mat-sys-on-surface-variant),
+      selected-state-background-color: var(--primary-btn),
+      selected-state-text-color: var(--on-primary-btn),
+      label-text-font: var(--font),
+      label-text-size: 0.875rem,
+      label-text-weight: 500,
+      label-text-tracking: 0,
+    )
+  );
+
+  // Autocomplete dropdown panel (Country & Language search pickers)
+  @include mat.autocomplete-overrides(
+    (
+      background-color: var(--menu-bg),
+      container-shape: 16px,
+      container-elevation-shadow: var(--elevation-1),
     )
   );
 }

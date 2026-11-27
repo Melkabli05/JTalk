@@ -1,149 +1,238 @@
-@let s = stats();
 @let isDirty = dirty();
-<div class="edit-layout">
-  <mat-card class="profile-card" appearance="outlined" aria-labelledby="edit-profile-h">
-    <h3 id="edit-profile-h">Edit profile</h3>
-    <p class="card-sub">Name and picture shown in rooms.</p>
+@let isOnboarding = onboarding();
+<div class="pe-layout">
+  <section class="pe-surface" aria-labelledby="edit-profile-h">
+    <header class="pe-head">
+      <h2 class="pe-title" id="edit-profile-h">
+        {{ isOnboarding ? 'Create your profile' : 'Edit profile' }}
+      </h2>
+      <p class="pe-subtitle">Name, languages, and picture shown in rooms.</p>
+    </header>
 
-    <form class="profile-form" id="profileForm" (submit)="onSave($event)">
-      <div class="form-section">
-        <h4>Identity</h4>
-        <div class="stack-fields">
+    <form class="pe-form" id="profileForm" (submit)="onSave($event)">
+      <div class="pe-section">
+        <h3 class="pe-section-title">Picture</h3>
+        <div class="pe-avatar-row">
+          <div
+            class="pe-avatar-circle"
+            role="img"
+            [attr.aria-label]="previewImageUrl() ? 'Current profile picture' : 'Profile initial preview'"
+          >
+            @if (previewImageUrl(); as currentImg) {
+              <img
+                class="pe-avatar-img"
+                [src]="currentImg"
+                alt=""
+                referrerpolicy="no-referrer"
+                (error)="onAvatarImageError(currentImg)"
+              />
+            } @else {
+              <span class="pe-avatar-initials" aria-hidden="true">{{ previewInitials() }}</span>
+            }
+          </div>
+
+          <div class="pe-avatar-controls">
+            <input
+              #avatarFileInput
+              type="file"
+              accept="image/jpeg,image/png"
+              hidden
+              (change)="onFileSelected($event)"
+            />
+            <div class="pe-avatar-btns">
+              <button
+                matButton="tonal"
+                type="button"
+                id="avatarUpload"
+                [disabled]="saving()"
+                (click)="triggerAvatarUpload()"
+              >
+                <mat-icon aria-hidden="true">photo_camera</mat-icon>
+                <span>{{ previewImageUrl() ? 'Change picture' : 'Upload picture' }}</span>
+              </button>
+              @if (pendingAvatarBlob()) {
+                <button
+                  matButton="text"
+                  type="button"
+                  [disabled]="saving()"
+                  (click)="clearPendingAvatar()"
+                >
+                  Undo pick
+                </button>
+              }
+            </div>
+            <p class="pe-caption">JPEG or PNG, up to 5 MB. Crop before saving.</p>
+            @if (serverErrors().avatar; as avatarErr) {
+              <p class="pe-inline-error" role="alert">{{ avatarErr }}</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <hr class="pe-divider" />
+
+      <div class="pe-section">
+        <h3 class="pe-section-title">Identity</h3>
+        <div class="pe-stack">
           <mat-form-field class="full-width">
-            <mat-label>Your name</mat-label>
+            <mat-label>Display name</mat-label>
             <input
               matInput
               id="profileNameInput"
               type="text"
+              dir="auto"
               [formField]="profileForm.displayName"
               autocomplete="name"
             />
             @for (error of profileForm.displayName().errors(); track error.kind) {
               <mat-error>{{ error.message }}</mat-error>
             }
+            <mat-hint align="end">{{ displayNameLength() }} / {{ displayNameMax }}</mat-hint>
           </mat-form-field>
-
-          <div class="info-banner" role="note">
-            <mat-icon class="icon-20" aria-hidden="true">info</mat-icon>
-            <span>
-              {{
-                onboarding()
-                  ? 'Leave blank to let Jtalk assign a handle on signup, or set your own.'
-                  : 'Handle, like @mona.'
-              }}
-            </span>
-          </div>
 
           <mat-form-field class="full-width">
             <mat-label>Username</mat-label>
+            <span matTextPrefix class="pe-at-prefix" aria-hidden="true">&#64;</span>
             <input
               matInput
               id="profileUsernameInput"
               type="text"
+              dir="ltr"
+              class="pe-ltr-input"
               [formField]="profileForm.username"
+              [errorStateMatcher]="usernameErrorMatcher"
               autocomplete="username"
+              (input)="onUsernameInput()"
             />
             @for (error of profileForm.username().errors(); track error.kind) {
               <mat-error>{{ error.message }}</mat-error>
             }
+            <mat-hint>
+              {{
+                isOnboarding
+                  ? 'Optional. Leave blank to generate one, or pick 3–30 letters, numbers, dots, or underscores.'
+                  : 'Lowercase letters, numbers, dots, or underscores. Can be changed once every 30 days.'
+              }}
+            </mat-hint>
           </mat-form-field>
         </div>
       </div>
 
-      <div class="form-section">
-        <h4>Picture</h4>
-        <div class="avatar-row">
-          @if (previewImageUrl(); as currentImg) {
-            <div class="avatar-option avatar-preview-tile">
-              <div class="avatar-choice selected" aria-label="Current profile picture">
-                <app-avatar-art [imageUrl]="currentImg" variant="thumb" />
-              </div>
-            </div>
-          }
+      <hr class="pe-divider" />
 
-          <input
-            #avatarFileInput
-            type="file"
-            accept="image/jpeg,image/png"
-            hidden
-            (change)="onFileSelected($event)"
-          />
-          <button
-            matButton="tonal"
-            type="button"
-            class="avatar-upload-btn"
-            id="avatarUpload"
-            (click)="triggerAvatarUpload()"
-          >
-            <mat-icon aria-hidden="true">photo_camera</mat-icon>
-            <span>{{ previewImageUrl() ? 'Change picture' : 'Upload picture' }}</span>
-          </button>
-        </div>
-        <p class="avatar-caption">Uploads are cropped to a square.</p>
-      </div>
-
-      <div class="form-section">
-        <h4>Languages &amp; location</h4>
-        <div class="stack-fields">
-          <div class="select-row">
-            <mat-form-field class="full-width">
-              <mat-label>I speak</mat-label>
-              <mat-select [formField]="profileForm.nativeLanguage" aria-label="I speak">
-                @for (lang of languages; track lang.code) {
-                  <mat-option [value]="lang.code">
-                    @if (lang.flagCountryCode; as cc) {
-                      <span [class]="'fi fi-' + cc" aria-hidden="true"></span>
-                    }
-                    {{ lang.name }}
-                  </mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field class="full-width">
-              <mat-label>I am learning</mat-label>
-              <mat-select [formField]="profileForm.learningLanguage" aria-label="I am learning">
-                <mat-option value="">Not set</mat-option>
-                @for (lang of languages; track lang.code) {
-                  <mat-option [value]="lang.code">
-                    @if (lang.flagCountryCode; as cc) {
-                      <span [class]="'fi fi-' + cc" aria-hidden="true"></span>
-                    }
-                    {{ lang.name }}
-                  </mat-option>
-                }
-              </mat-select>
-              @for (error of profileForm.learningLanguage().errors(); track error.kind) {
-                <mat-error>{{ error.message }}</mat-error>
-              }
-            </mat-form-field>
+      <div class="pe-section" id="languages">
+        <div class="pe-section-head">
+          <div>
+            <h3 class="pe-section-title">Languages</h3>
+            <p class="pe-caption">
+              {{
+                isOnboarding
+                  ? 'Pick your primary native language and add any languages you are learning.'
+                  : 'Language changes save immediately.'
+              }}
+            </p>
           </div>
+        </div>
 
-          <mat-form-field class="full-width">
-            <mat-label>Where you live</mat-label>
-            <mat-select [formField]="profileForm.countryCode" aria-label="Where you live">
-              <mat-option value="">Not set</mat-option>
-              @for (country of countries; track country.code) {
-                <mat-option [value]="country.code">
-                  <span [class]="'fi fi-' + country.flagCode" aria-hidden="true"></span>
-                  {{ country.name }}
+        @if (isOnboarding) {
+          <mat-form-field class="full-width pe-onboarding-native">
+            <mat-label>Primary native language</mat-label>
+            <mat-select
+              [value]="model().nativeLanguage"
+              aria-label="Primary native language"
+              (valueChange)="onOnboardingNativeChange($event)"
+            >
+              @for (lang of languages; track lang.code) {
+                <mat-option [value]="lang.code">
+                  @if (lang.flagCountryCode; as cc) {
+                    <span [class]="'fi fi-' + cc" aria-hidden="true"></span>
+                  }
+                  {{ displayLangName(lang.code) }}
                 </mat-option>
               }
             </mat-select>
           </mat-form-field>
-        </div>
+        }
+
+        @if (serverErrors().languages; as langErr) {
+          <p class="pe-inline-error" role="alert">{{ langErr }}</p>
+        }
+
+        <app-language-list
+          [rows]="languageRows()"
+          [editable]="true"
+          [busy]="languageBusy()"
+          [maxLanguages]="maxLanguages"
+          [allowSetPrimary]="!isOnboarding"
+          (addClicked)="addLanguageRequested.emit()"
+          (editRow)="editLanguageRequested.emit($event)"
+          (removeRow)="onRemoveLanguageRow($event)"
+          (setPrimaryRow)="setPrimaryLanguageRequested.emit($event)"
+        />
       </div>
 
-      <div class="form-section">
-        <h4>About</h4>
+      <hr class="pe-divider" />
+
+      <div class="pe-section">
+        <h3 class="pe-section-title">Location</h3>
         <mat-form-field class="full-width">
-          <mat-label>About you</mat-label>
+          <mat-label>Country</mat-label>
+          @if (selectedCountryFlag(); as flagCode) {
+            <span matTextPrefix class="pe-flag-prefix">
+              <span [class]="'fi fi-' + flagCode" aria-hidden="true"></span>
+            </span>
+          }
+          <input
+            matInput
+            id="profileCountryInput"
+            type="text"
+            [value]="countryQuery()"
+            [matAutocomplete]="countryAuto"
+            placeholder="Search country…"
+            aria-label="Country"
+            (input)="onCountryInput($event)"
+            (blur)="onCountryBlur()"
+          />
+          <mat-autocomplete
+            #countryAuto="matAutocomplete"
+            (optionSelected)="onCountrySelected($event.option.value)"
+          >
+            @if (canClearCountry()) {
+              <mat-option value="">Not set</mat-option>
+            }
+            @for (country of filteredCountries(); track country.code) {
+              <mat-option [value]="country.code">
+                <span class="pe-country-option">
+                  <span [class]="'fi fi-' + country.flagCode" aria-hidden="true"></span>
+                  <span>{{ country.name }}</span>
+                </span>
+              </mat-option>
+            }
+          </mat-autocomplete>
+          <mat-hint>
+            {{
+              canClearCountry()
+                ? 'Optional. Shown on your profile.'
+                : 'Select another country to update your location.'
+            }}
+          </mat-hint>
+        </mat-form-field>
+      </div>
+
+      <hr class="pe-divider" />
+
+      <div class="pe-section" id="bio">
+        <h3 class="pe-section-title">About</h3>
+        <mat-form-field class="full-width">
+          <mat-label>Short bio</mat-label>
           <textarea
             #aboutTextarea
             matInput
             id="profileAbout"
+            dir="auto"
             rows="4"
             [formField]="profileForm.bio"
+            placeholder="Share what you like to talk about in rooms…"
           ></textarea>
           @if (aboutLength() > 0) {
             <button
@@ -151,7 +240,7 @@
               matSuffix
               type="button"
               id="aboutClear"
-              aria-label="Clear about you"
+              aria-label="Clear bio"
               (click)="clearAbout()"
             >
               <mat-icon class="icon-18">close</mat-icon>
@@ -160,60 +249,37 @@
           @for (error of profileForm.bio().errors(); track error.kind) {
             <mat-error>{{ error.message }}</mat-error>
           }
-          <mat-hint align="end" id="aboutCounter">{{ aboutLength() }} / 300</mat-hint>
+          <mat-hint align="end" id="aboutCounter">{{ aboutLength() }} / {{ bioMax }}</mat-hint>
         </mat-form-field>
       </div>
 
-      <div class="save-bar" id="profileSaveBar" [hidden]="!isDirty">
-        <span class="save-bar-text">Unsaved changes</span>
-        <button matButton="text" type="button" id="profileDiscard" (click)="onDiscard()">
-          Discard
-        </button>
-        <button matButton="tonal" type="submit" id="profileSave" [disabled]="!canSubmit()">
-          Save
-        </button>
-      </div>
+      <app-profile-save-bar
+        [visible]="isDirty"
+        [saving]="saving()"
+        [canSave]="canSubmit()"
+        [showDiscard]="!isOnboarding"
+        [statusLabel]="isOnboarding ? 'Ready to create your profile' : 'Unsaved changes'"
+        [saveLabel]="isOnboarding ? 'Create profile' : 'Save'"
+        (discard)="onDiscard()"
+        (save)="onSave()"
+      />
     </form>
-  </mat-card>
+  </section>
 
-  <mat-card
-    class="profile-card live-preview-card"
-    appearance="outlined"
-    aria-labelledby="livePreviewH"
-  >
-    <div class="live-preview-head" id="livePreviewH">Live preview</div>
-    <div class="live-cover" aria-hidden="true">
-      <span class="cover-semicircle"></span>
+  <aside class="pe-preview-aside" aria-labelledby="livePreviewH">
+    <div class="pe-preview-sticky">
+      <div class="pe-preview-card">
+        <div class="pe-preview-label" id="livePreviewH">Live preview</div>
+        <app-profile-header
+          [profile]="previewProfile()"
+          [stats]="stats()"
+          [compact]="true"
+          [isOwner]="false"
+          [isLive]="isLive()"
+          [previewImageUrl]="previewImageUrl()"
+          [previewBio]="previewBio()"
+        />
+      </div>
     </div>
-    <div class="live-body">
-      <div
-        class="live-avatar"
-        id="livePreviewAvatar"
-        role="img"
-        aria-label="Preview of your profile picture"
-        style="background: var(--photo-bg)"
-      >
-        <app-avatar-art [imageUrl]="previewImageUrl()" />
-      </div>
-      <p class="live-name" id="livePreviewName">{{ previewName() }}</p>
-      <p class="live-meta">
-        <span id="livePreviewHandle">&#64;{{ previewHandle() }}</span> · Joined {{ joinedLabel() }}
-      </p>
-      <div class="profile-chips">
-        <span class="profile-chip" id="liveSpeakChip">Speaks {{ previewSpeak() }}</span>
-        @if (previewLearn(); as learning) {
-          <span class="profile-chip" id="liveLearnChip">Learning {{ learning }}</span>
-        }
-      </div>
-      <div class="profile-stats">
-        <span
-          ><b>{{ s?.followerCount ?? 0 }}</b> Followers</span
-        >
-        <span
-          ><b>{{ s?.followingCount ?? 0 }}</b> Following</span
-        >
-      </div>
-      <p class="live-bio" id="livePreviewBio">{{ previewBio() }}</p>
-    </div>
-  </mat-card>
+  </aside>
 </div>

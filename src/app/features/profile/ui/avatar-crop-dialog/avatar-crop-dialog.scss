@@ -1,0 +1,50 @@
+.crop-stage-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-m);
+  padding-block: var(--sp-s);
+}
+
+.crop-stage {
+  width: 224px;
+  height: 224px;
+  border-radius: var(--r-full);
+  overflow: hidden;
+  border: 2px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container);
+  cursor: grab;
+  touch-action: none;
+}
+
+.crop-stage:active {
+  cursor: grabbing;
+}
+
+.crop-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.crop-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--mat-sys-body-small-size);
+}
+
+.crop-zoom-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-s);
+}
+
+.crop-slider {
+  flex: 1 1 auto;
+}
+
+.crop-error {
+  margin: 0;
+  color: var(--mat-sys-error);
+  font-size: var(--mat-sys-body-medium-size);
+}

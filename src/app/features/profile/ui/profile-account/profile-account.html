@@ -1,51 +1,97 @@
 @let p = profile();
-<mat-card class="profile-card" appearance="outlined" aria-labelledby="account-h">
-  <h3 id="account-h">Account</h3>
-  <p class="card-sub">
-    Signed in as {{ p?.displayName || 'Speaker' }} (&#64;{{ p?.username ?? '' }}).
-  </p>
-  <mat-action-list>
-    <button mat-list-item type="button" (click)="settingsClicked.emit()">
-      <mat-icon matListItemIcon aria-hidden="true">settings</mat-icon>
-      <span matListItemTitle>Settings</span>
-    </button>
-    <mat-divider />
-    <button mat-list-item type="button" (click)="helpClicked.emit()">
-      <mat-icon matListItemIcon aria-hidden="true">help_outline</mat-icon>
-      <span matListItemTitle>Help and support</span>
-    </button>
-    @if (canInstall()) {
-      <mat-divider />
-      <button mat-list-item type="button" id="installAppBtn" (click)="installClicked.emit()">
-        <mat-icon matListItemIcon aria-hidden="true">download</mat-icon>
-        <span matListItemTitle>Install Jtalk app</span>
-      </button>
-    }
-    <mat-divider />
-    <button mat-list-item type="button" id="signOutBtn" (click)="signOutClicked.emit()">
-      <mat-icon matListItemIcon aria-hidden="true">logout</mat-icon>
-      <span matListItemTitle>Sign out</span>
-    </button>
-  </mat-action-list>
-  @if (showIosInstallHint()) {
-    <p class="pwa-ios-hint">
-      <mat-icon class="icon-18" aria-hidden="true">ios_share</mat-icon>
-      <span>To install on iPhone or iPad, tap Share in Safari and choose Add to Home Screen.</span>
-    </p>
-  }
-</mat-card>
+<div class="pa-stack">
+  <section class="pa-surface" aria-labelledby="appearance-h">
+    <div class="pa-head">
+      <h2 class="pa-title" id="appearance-h">Appearance</h2>
+      <p class="pa-sub">Match your device or choose a theme across Jtalk.</p>
+    </div>
 
-<mat-card class="profile-card delete-card" appearance="outlined" aria-labelledby="delete-h">
-  <h3 id="delete-h">Delete your account</h3>
-  <p class="card-sub">Deletes your profile and data. Can't be undone.</p>
-  <button
-    matButton="outlined"
-    class="btn-danger-outlined"
-    type="button"
-    id="deleteAccountBtn"
-    (click)="deleteClicked.emit()"
-  >
-    <mat-icon aria-hidden="true">delete_outline</mat-icon>
-    Delete your account
-  </button>
-</mat-card>
+    <mat-button-toggle-group
+      class="pa-theme-group"
+      [value]="themePreference()"
+      aria-label="Theme preference"
+      (change)="themePreferenceChange.emit($event.value)"
+    >
+      <mat-button-toggle value="system" id="themeSystemBtn">
+        <mat-icon class="pa-toggle-icon" aria-hidden="true">brightness_auto</mat-icon>
+        <span>System</span>
+      </mat-button-toggle>
+      <mat-button-toggle value="light" id="themeLightBtn">
+        <mat-icon class="pa-toggle-icon" aria-hidden="true">light_mode</mat-icon>
+        <span>Light</span>
+      </mat-button-toggle>
+      <mat-button-toggle value="dark" id="themeDarkBtn">
+        <mat-icon class="pa-toggle-icon" aria-hidden="true">dark_mode</mat-icon>
+        <span>Dark</span>
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+  </section>
+
+  <section class="pa-surface" aria-labelledby="account-h">
+    <div class="pa-head">
+      <h2 class="pa-title" id="account-h">Session &amp; app</h2>
+      <p class="pa-identity">
+        <span dir="auto">{{ p?.displayName || 'Account' }}</span>
+        @if (p?.username) {
+          <span class="pa-sep" aria-hidden="true">·</span>
+          <span class="pa-handle" dir="ltr">&#64;{{ p?.username }}</span>
+        }
+        @if (authEmail(); as email) {
+          <span class="pa-sep" aria-hidden="true">·</span>
+          <span class="pa-email" dir="ltr">{{ email }}</span>
+        }
+      </p>
+    </div>
+
+    <mat-action-list class="pa-list">
+      @if (canInstall()) {
+        <button mat-list-item type="button" id="installAppBtn" (click)="installClicked.emit()">
+          <mat-icon matListItemIcon aria-hidden="true">download</mat-icon>
+          <span matListItemTitle>Install Jtalk app</span>
+          <span matListItemLine>Launch rooms directly from your home screen</span>
+        </button>
+        <mat-divider />
+      }
+      <button mat-list-item type="button" id="accountHelpBtn" (click)="helpClicked.emit()">
+        <mat-icon matListItemIcon aria-hidden="true">headset_mic</mat-icon>
+        <span matListItemTitle>Audio &amp; help</span>
+        <span matListItemLine>Microphone selection and noise isolation tips</span>
+      </button>
+      <mat-divider />
+      <button mat-list-item type="button" id="signOutBtn" (click)="signOutClicked.emit()">
+        <mat-icon matListItemIcon aria-hidden="true">logout</mat-icon>
+        <span matListItemTitle>Sign out</span>
+      </button>
+    </mat-action-list>
+
+    @if (showIosInstallHint()) {
+      <p class="pa-ios-hint">
+        <mat-icon class="icon-18" aria-hidden="true">ios_share</mat-icon>
+        <span>To install on iPhone or iPad, tap Share in Safari and choose Add to Home Screen.</span>
+      </p>
+    }
+  </section>
+
+  <section class="pa-surface pa-danger" aria-labelledby="delete-h">
+    <div class="pa-head">
+      <h2 class="pa-title pa-danger-title" id="delete-h">Danger zone</h2>
+      <p class="pa-sub">
+        Permanently removes your Jtalk profile, languages, uploaded photo, followers, following, and
+        block list. This can't be undone.
+      </p>
+    </div>
+    <div class="pa-danger-actions">
+      <button
+        matButton="outlined"
+        class="btn-danger-outlined"
+        type="button"
+        id="deleteAccountBtn"
+        [disabled]="deleting()"
+        (click)="deleteClicked.emit()"
+      >
+        <mat-icon aria-hidden="true">delete_outline</mat-icon>
+        <span>{{ deleting() ? 'Deleting…' : 'Delete your account' }}</span>
+      </button>
+    </div>
+  </section>
+</div>

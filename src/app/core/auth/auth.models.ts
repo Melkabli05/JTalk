@@ -93,6 +93,7 @@ export interface ProfileSaveInput {
   readonly username: string;
   readonly nativeLanguage: string;
   readonly learningLanguage: string | null;
+  readonly learningLanguages?: readonly LearningLanguageEntry[];
   readonly countryCode: string | null;
   readonly bio: string;
   readonly avatarUrl?: string | null;
@@ -102,6 +103,7 @@ export interface ProfileSaveResult {
   readonly ok: boolean;
   readonly profile?: UserProfileResponse;
   readonly error?: string;
+  readonly errorType?: string;
 }
 
 export interface AccountActionResult {

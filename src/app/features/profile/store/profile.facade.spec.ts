@@ -18,8 +18,8 @@ function makeProfile(overrides: Partial<UserProfileResponse> = {}): UserProfileR
     avatarUrl: null,
     countryCode: 'JP',
     nativeLanguage: 'ja',
-    nativeLanguages: ['ja'],
-    learningLanguages: [],
+    nativeLanguages: ['ja', 'fr'],
+    learningLanguages: [{ languageCode: 'en', proficiencyLevel: 'INTERMEDIATE' }],
     createdAt: '2026-01-01T00:00:00Z',
     ...overrides,
   };
@@ -31,16 +31,22 @@ describe('ProfileFacade', () => {
   const identityMock = {
     me: meSignal,
     socialStats: signal(undefined),
+    authUser: signal({ email: 'yuki@example.com' }),
+    profileStatus: signal<'ready'>('ready'),
+    meRetrying: signal(false),
     profileError: signal<string | null>(null),
     hasProfile: signal(true),
     needsOnboarding: signal(false),
     savingProfile: signal(false),
+    deletingAccount: signal(false),
     loadMe: vi.fn(),
+    setProfile: vi.fn(),
     applyLanguageMatrix: vi.fn(),
     saveProfile: vi.fn(),
     deleteAccount: vi.fn(),
   };
   const roomStoreMock = {
+    room: signal(null),
     signOut: vi.fn(),
     rememberRoom: vi.fn(),
   };
@@ -49,6 +55,7 @@ describe('ProfileFacade', () => {
     meSignal.set(makeProfile());
     toastSpy.show.mockReset();
     identityMock.loadMe.mockReset();
+    identityMock.setProfile.mockReset();
     identityMock.applyLanguageMatrix.mockReset();
     identityMock.saveProfile.mockReset();
     identityMock.deleteAccount.mockReset();
@@ -73,6 +80,7 @@ describe('ProfileFacade', () => {
 
     expect(facade.connectionList()).toBeNull();
     expect(facade.connections()).toEqual([]);
+    expect(facade.authEmail()).toBe('yuki@example.com');
 
     facade.loadConnections('followers');
     TestBed.tick();
@@ -106,26 +114,51 @@ describe('ProfileFacade', () => {
     http.verify();
   });
 
-  it('updates languages with pending flag and delegates deleteAccount', () => {
+  it('updates languages, switches roles cleanly via DELETE+POST, promotes primary native, and delegates deleteAccount', () => {
     const facade = TestBed.inject(ProfileFacade);
     const http = TestBed.inject(HttpTestingController);
 
-    facade.changeLanguage('fr', 'LEARNING', 'BEGINNER');
+    // Add new learning language
+    facade.changeLanguage('de', 'LEARNING', 'BEGINNER');
     expect(facade.languageBusy()).toBe(true);
-    const req = http.expectOne({ method: 'POST', url: '/api/v1/users/me/languages' });
-    expect(req.request.body).toEqual({
-      languageCode: 'fr',
+    const addReq = http.expectOne({ method: 'POST', url: '/api/v1/users/me/languages' });
+    expect(addReq.request.body).toEqual({
+      languageCode: 'de',
       languageType: 'LEARNING',
       proficiencyLevel: 'BEGINNER',
     });
     const matrix = {
       userId: 'me-1',
-      nativeLanguages: ['ja'],
-      learningLanguages: [{ languageCode: 'fr', proficiencyLevel: 'BEGINNER' }],
+      nativeLanguages: ['ja', 'fr'],
+      learningLanguages: [
+        { languageCode: 'en', proficiencyLevel: 'INTERMEDIATE' as const },
+        { languageCode: 'de', proficiencyLevel: 'BEGINNER' as const },
+      ],
     };
-    req.flush(matrix);
+    addReq.flush(matrix);
     expect(facade.languageBusy()).toBe(false);
     expect(identityMock.applyLanguageMatrix).toHaveBeenCalledWith(matrix);
+
+    // Switch existing learning language ('en') to NATIVE -> DELETE then POST without proficiencyLevel
+    facade.changeLanguage('en', 'NATIVE');
+    const delReq = http.expectOne({ method: 'DELETE', url: '/api/v1/users/me/languages/en' });
+    delReq.flush({ userId: 'me-1', nativeLanguages: ['ja', 'fr'], learningLanguages: [] });
+    const reAddReq = http.expectOne({ method: 'POST', url: '/api/v1/users/me/languages' });
+    expect(reAddReq.request.body).toEqual({
+      languageCode: 'en',
+      languageType: 'NATIVE',
+    });
+    reAddReq.flush({ userId: 'me-1', nativeLanguages: ['ja', 'fr', 'en'], learningLanguages: [] });
+    expect(facade.languageBusy()).toBe(false);
+
+    // Promote secondary native ('fr') to primary native -> PATCH /api/v1/users/me
+    facade.setPrimaryNativeLanguage('fr');
+    const patchReq = http.expectOne({ method: 'PATCH', url: '/api/v1/users/me' });
+    expect(patchReq.request.body).toEqual({ nativeLanguage: 'fr' });
+    patchReq.flush(makeProfile({ nativeLanguage: 'fr' }));
+    expect(identityMock.setProfile).toHaveBeenCalledWith(
+      expect.objectContaining({ nativeLanguage: 'fr' }),
+    );
 
     identityMock.deleteAccount.mockImplementation((onDone?: (res: { ok: boolean }) => void) => {
       onDone?.({ ok: true });

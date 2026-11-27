@@ -10,12 +10,21 @@ export type RoomConnectionState =
   | { readonly status: 'idle' }
   | { readonly status: 'joining'; readonly roomId: string }
   | { readonly status: 'connected'; readonly roomId: string }
+  | { readonly status: 'ended'; readonly message: string }
+  | { readonly status: 'kicked'; readonly message: string }
   | { readonly status: 'error'; readonly message: string };
 
-export type ListenerMenuAction = 'stage' | 'approve' | 'profile' | 'remove';
+export type ListenerMenuAction = 'stage' | 'approve' | 'profile' | 'transfer-host' | 'remove';
 
 export type SpeakerMenuAction =
   'profile' | 'mute' | 'audience' | 'leave-stage' | 'remove' | 'transfer-host';
+
+export interface ConfirmActionDialogData {
+  readonly title: string;
+  readonly message: string;
+  readonly confirmLabel: string;
+  readonly danger?: boolean;
+}
 
 export interface ToolbarPendingRequest {
   readonly id: string;
@@ -28,6 +37,7 @@ export interface HostProfileDialogData {
   profile: UserProfileResponse;
   stats: SocialStatsResponse;
   isYou: boolean;
+  onToggleFollow?: (follow: boolean) => Promise<boolean>;
 }
 
 export type RoomSpeakerRole = 'host' | 'speaker';
@@ -42,6 +52,7 @@ export interface RoomSpeaker {
   isYou?: boolean;
   muted: boolean;
   speaking: boolean;
+  reconnecting?: boolean;
 }
 
 export interface RoomListener {

@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { UserProfileResponse } from '../../../../core/auth/auth.models';
+import { vi } from 'vitest';
+import type { UserProfileResponse } from '../../../../core/auth/auth.models';
 import { ProfileOverview } from './profile-overview';
 
 describe('ProfileOverview', () => {
@@ -24,17 +25,48 @@ describe('ProfileOverview', () => {
     }).compileComponents();
   });
 
-  it('should render empty state when bio is blank and show bio when provided', () => {
+  it('shows an inline bio prompt for the owner when blank and emits addBio on click', () => {
     const fixture = TestBed.createComponent(ProfileOverview);
+    const addBioSpy = vi.fn();
     fixture.componentRef.setInput('profile', baseProfile);
+    fixture.componentRef.setInput('isOwner', true);
+    fixture.componentInstance.addBio.subscribe(addBioSpy);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('#aboutEmptyText')).toBeTruthy();
+    const promptBtn = fixture.nativeElement.querySelector('#addBioPromptBtn') as HTMLButtonElement;
+    expect(promptBtn).toBeTruthy();
+    promptBtn.click();
+    expect(addBioSpy).toHaveBeenCalledTimes(1);
 
-    fixture.componentRef.setInput('profile', { ...baseProfile, bio: 'Hello world!' });
+    fixture.componentRef.setInput('profile', { ...baseProfile, bio: 'Practising Japanese daily.' });
     fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#addBioPromptBtn')).toBeNull();
     expect(fixture.nativeElement.querySelector('#aboutBioText')?.textContent).toContain(
-      'Hello world!',
+      'Practising Japanese daily.',
     );
+  });
+
+  it('renders ordered native and learning languages with level meters only for learning languages', () => {
+    const fixture = TestBed.createComponent(ProfileOverview);
+    fixture.componentRef.setInput('profile', {
+      ...baseProfile,
+      nativeLanguages: ['ar', 'fr'],
+      learningLanguages: [{ languageCode: 'ja', proficiencyLevel: 'ADVANCED' }],
+    });
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('Arabic');
+    expect(host.textContent).toContain('العربية');
+    expect(host.textContent).toContain('French');
+    expect(host.textContent).toContain('Japanese');
+    expect(host.textContent).toContain('日本語');
+    const meters = host.querySelectorAll('app-level-meter');
+    expect(meters.length).toBe(1);
+    expect(meters[0]?.textContent).toContain('Advanced');
+
+    fixture.componentRef.setInput('profile', { ...baseProfile, learningLanguages: [] });
+    fixture.detectChanges();
+    expect(host.querySelectorAll('app-level-meter').length).toBe(0);
   });
 });

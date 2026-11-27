@@ -42,6 +42,7 @@ export class LiveRoomStore {
   private networkModeQueue: NetworkModeChange[] = [];
   private flushingNetworkMode = false;
   private signingOut = false;
+  private endingRoom = false;
   private transitioning = false;
   private readonly pendingTransitions: (() => void)[] = [];
   private readonly snapshotLoading = signal(false);
@@ -65,7 +66,9 @@ export class LiveRoomStore {
   readonly roomLoading = computed(() => this.connectionStateSignal().status === 'joining');
   readonly roomError = computed<string | null>(() => {
     const state = this.connectionStateSignal();
-    return state.status === 'error' ? state.message : null;
+    return state.status === 'error' || state.status === 'ended' || state.status === 'kicked'
+      ? state.message
+      : null;
   });
   readonly muted = computed(() => !this.audio.micOn());
   readonly effectiveRoomTopic = computed(
@@ -169,9 +172,12 @@ export class LiveRoomStore {
       onDone?.({ ok: false, message: 'No active room.' });
       return;
     }
+    if (this.endingRoom) return;
+    this.endingRoom = true;
     const generation = this.stage.generation();
     this.roomsApi.closeRoom(id).subscribe({
       next: () => {
+        this.endingRoom = false;
         if (generation !== this.stage.generation()) {
           onDone?.({ ok: true });
           return;
@@ -182,6 +188,7 @@ export class LiveRoomStore {
         this.audio.disconnectSession(() => onDone?.({ ok: true }));
       },
       error: (err: unknown) => {
+        this.endingRoom = false;
         onDone?.({ ok: false, message: errorMessage(err, 'Could not end the room.') });
       },
     });
@@ -206,6 +213,15 @@ export class LiveRoomStore {
   }
 
   toggleSelfMic(onDone?: (res: ActionFeedback) => void): void {
+    if (
+      this.audio.isMutedByHost() ||
+      (this.stage.isCurrentUserOnStage() &&
+        this.audio.status() === 'connected' &&
+        !this.audio.canPublish())
+    ) {
+      onDone?.({ ok: false, message: 'The host muted your microphone.' });
+      return;
+    }
     if (!this.audio.canPublish()) {
       onDone?.({ ok: false, message: 'Join the stage to use your microphone.' });
       return;
@@ -386,7 +402,8 @@ export class LiveRoomStore {
         this.teardownAudioEvents();
         this.resetAll();
         this.rememberRoom(null);
-        this.connectionStateSignal.set({ status: 'error', message });
+        const status = message.toLowerCase().includes('removed') ? 'kicked' : 'ended';
+        this.connectionStateSignal.set({ status, message });
       },
       onReconnected: () => this.resyncRoomSnapshot(roomId),
       onRoomEvent: (event) => this.stage.applyRoomRealtimeEvent(event),
@@ -430,6 +447,7 @@ export class LiveRoomStore {
   }
 
   private resetAll(): void {
+    this.endingRoom = false;
     this.snapshotLoading.set(false);
     this.connectionStateSignal.set({ status: 'idle' });
     this.stage.reset();

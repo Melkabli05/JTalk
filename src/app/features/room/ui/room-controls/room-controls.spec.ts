@@ -59,4 +59,29 @@ describe('RoomControls', () => {
     expect(claimSpy).toHaveBeenCalledTimes(1);
     expect(audioSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('shows Muted by host when host-muted and Retry audio when audio failed', () => {
+    const fixture = TestBed.createComponent(RoomControls);
+    fixture.componentRef.setInput('muted', true);
+    fixture.componentRef.setInput('handRaised', false);
+    fixture.componentRef.setInput('canUseMic', false);
+    fixture.componentRef.setInput('mutedByHost', true);
+    fixture.componentRef.setInput('audioFailed', true);
+    const retrySpy = vi.fn();
+    fixture.componentInstance.reconnectAudio.subscribe(retrySpy);
+    fixture.detectChanges();
+
+    const hostMutedBtn = fixture.nativeElement.querySelector(
+      '#hostMutedBtn',
+    ) as HTMLButtonElement | null;
+    expect(hostMutedBtn?.disabled).toBe(true);
+    expect(hostMutedBtn?.textContent).toContain('Muted by host');
+
+    const retryBtn = fixture.nativeElement.querySelector(
+      '#retryAudioBtn',
+    ) as HTMLButtonElement | null;
+    expect(retryBtn).toBeTruthy();
+    retryBtn?.click();
+    expect(retrySpy).toHaveBeenCalledOnce();
+  });
 });

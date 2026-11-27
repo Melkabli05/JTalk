@@ -73,4 +73,22 @@ describe('RoomStage', () => {
     expect(fixture.nativeElement.querySelector('#openSeatButton')).toBeNull();
     expect(fixture.componentInstance.stageColumns()).toBe(4);
   });
+
+  it('renders reconnecting state on speakers and hides self-mute when canUseMic is false', () => {
+    const fixture = TestBed.createComponent(RoomStage);
+    fixture.componentRef.setInput('speakers', [
+      { ...sampleSpeakers[0]!, reconnecting: false },
+      { ...sampleSpeakers[1]!, reconnecting: true },
+    ]);
+    fixture.componentRef.setInput('maxSeats', 8);
+    fixture.componentRef.setInput('canUseMic', false);
+    fixture.detectChanges();
+
+    const reconnectingTile = fixture.nativeElement.querySelector(
+      '[data-speaker-id="elena"]',
+    ) as HTMLButtonElement | null;
+    expect(reconnectingTile?.classList.contains('is-reconnecting')).toBe(true);
+    expect(reconnectingTile?.textContent).toContain('Reconnecting');
+    expect(fixture.componentInstance.canMuteSpeaker(sampleSpeakers[0]!)).toBe(false);
+  });
 });

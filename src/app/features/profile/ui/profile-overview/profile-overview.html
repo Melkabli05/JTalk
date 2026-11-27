@@ -1,22 +1,28 @@
 @let bio = trimmedBio();
-<mat-card class="profile-card" appearance="outlined" aria-labelledby="about-h">
-  <h3 id="about-h">About</h3>
-  @if (bio) {
-    <p class="profile-bio" id="aboutBioText">{{ bio }}</p>
-  } @else {
-    <p class="profile-empty" id="aboutEmptyText">No bio yet.</p>
-  }
-  <mat-divider class="profile-divider" />
-  <h3 id="languages-h">Languages</h3>
-  <ul class="lang-rows">
-    <li>
-      <span class="lang-row-label">Speaks</span>
-      <span class="profile-chip" id="aboutSpeakChip">{{ speak() }}</span>
-    </li>
-    <li>
-      <span class="lang-row-label">Learning</span>
-      <span class="profile-chip" id="aboutLearnChip">{{ learn() }}</span>
-      <span class="mini-chip">Beginner</span>
-    </li>
-  </ul>
-</mat-card>
+<section class="overview-surface" aria-label="Profile details">
+  <div class="overview-section" aria-labelledby="about-h">
+    <h2 class="overview-heading" id="about-h">About</h2>
+    @if (bio) {
+      <p class="overview-bio" id="aboutBioText" dir="auto">{{ bio }}</p>
+    } @else if (isOwner()) {
+      <button
+        type="button"
+        class="overview-bio-prompt"
+        id="addBioPromptBtn"
+        (click)="addBio.emit()"
+      >
+        <mat-icon aria-hidden="true">edit_note</mat-icon>
+        <span>Add a short bio so speakers know what you like to talk about</span>
+      </button>
+    } @else {
+      <p class="overview-empty" id="aboutEmptyText">No bio added.</p>
+    }
+  </div>
+
+  <mat-divider />
+
+  <div class="overview-section" aria-labelledby="languages-h">
+    <h2 class="overview-heading" id="languages-h">Languages</h2>
+    <app-language-list [rows]="languageRows()" [editable]="false" />
+  </div>
+</section>

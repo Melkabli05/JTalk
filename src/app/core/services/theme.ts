@@ -1,7 +1,11 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { computed, DestroyRef, inject, PLATFORM_ID, Service, signal } from '@angular/core';
 import { COLOR_SCHEME_STORAGE_KEY } from '../../shared/constants/storage-keys.constants';
-import { type ColorScheme, isColorScheme } from '../models/theme.model';
+import {
+  type ColorScheme,
+  isColorScheme,
+  type ThemePreference,
+} from '../models/theme.model';
 import { BrowserStorage } from './browser-storage';
 
 // Matches --mat-sys-background: light-dark(#F8F7F4, #131314) in src/styles/_theme.scss
@@ -16,51 +20,71 @@ export class ThemeService {
   private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
   private readonly storage = inject(BrowserStorage);
-  private readonly scheme = signal<ColorScheme>('light');
-  private hasExplicitPreference = false;
 
-  readonly colorScheme = this.scheme.asReadonly();
-  readonly isDark = computed(() => this.scheme() === 'dark');
+  private readonly preferenceState = signal<ThemePreference>('system');
+  private readonly systemScheme = signal<ColorScheme>('light');
+
+  readonly preference = this.preferenceState.asReadonly();
+  readonly colorScheme = computed<ColorScheme>(() => {
+    const pref = this.preferenceState();
+    return pref === 'system' ? this.systemScheme() : pref;
+  });
+  readonly isDark = computed(() => this.colorScheme() === 'dark');
 
   constructor() {
     if (!isPlatformBrowser(this.platformId)) return;
-    const saved = this.storage.getString('local', COLOR_SCHEME_STORAGE_KEY);
-    if (isColorScheme(saved)) {
-      this.setColorScheme(saved);
-      return;
-    }
 
     const mediaQuery =
       typeof window !== 'undefined' && typeof window.matchMedia === 'function'
         ? window.matchMedia('(prefers-color-scheme: dark)')
         : null;
-    const resolved: ColorScheme = mediaQuery?.matches ? 'dark' : 'light';
-    this.scheme.set(resolved);
-    this.syncThemeColorMeta(resolved, false);
+    this.systemScheme.set(mediaQuery?.matches ? 'dark' : 'light');
 
     if (mediaQuery) {
       const onSystemChange = (event: MediaQueryListEvent): void => {
-        if (this.hasExplicitPreference) return;
         const next: ColorScheme = event.matches ? 'dark' : 'light';
-        this.scheme.set(next);
-        this.syncThemeColorMeta(next, false);
+        this.systemScheme.set(next);
+        if (this.preferenceState() === 'system') {
+          this.syncThemeColorMeta(next, false);
+        }
       };
       mediaQuery.addEventListener('change', onSystemChange);
       this.destroyRef.onDestroy(() => mediaQuery.removeEventListener('change', onSystemChange));
     }
+
+    const saved = this.storage.getString('local', COLOR_SCHEME_STORAGE_KEY);
+    if (isColorScheme(saved)) {
+      this.setPreference(saved);
+      return;
+    }
+
+    this.preferenceState.set('system');
+    this.document.documentElement.style.colorScheme = '';
+    this.syncThemeColorMeta(this.systemScheme(), false);
+  }
+
+  setPreference(preference: ThemePreference): void {
+    this.preferenceState.set(preference);
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    if (preference === 'system') {
+      this.document.documentElement.style.colorScheme = '';
+      this.storage.remove('local', COLOR_SCHEME_STORAGE_KEY);
+      this.syncThemeColorMeta(this.systemScheme(), false);
+      return;
+    }
+
+    this.document.documentElement.style.colorScheme = preference;
+    this.syncThemeColorMeta(preference, true);
+    this.storage.setString('local', COLOR_SCHEME_STORAGE_KEY, preference);
   }
 
   setColorScheme(scheme: ColorScheme): void {
-    this.hasExplicitPreference = true;
-    this.scheme.set(scheme);
-    if (!isPlatformBrowser(this.platformId)) return;
-    this.document.documentElement.style.colorScheme = scheme;
-    this.syncThemeColorMeta(scheme, true);
-    this.storage.setString('local', COLOR_SCHEME_STORAGE_KEY, scheme);
+    this.setPreference(scheme);
   }
 
   toggle(): void {
-    this.setColorScheme(this.scheme() === 'dark' ? 'light' : 'dark');
+    this.setPreference(this.colorScheme() === 'dark' ? 'light' : 'dark');
   }
 
   private syncThemeColorMeta(scheme: ColorScheme, explicit: boolean): void {

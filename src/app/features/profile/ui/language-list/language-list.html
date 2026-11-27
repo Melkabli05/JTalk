@@ -1,0 +1,101 @@
+@let items = rows();
+@let isEditable = editable();
+@let isBusy = busy();
+
+<div class="lang-list-root">
+  @if (items.length > 0) {
+    <ul class="lang-list" [attr.aria-busy]="isBusy || null">
+      @for (row of items; track row.code) {
+        <li class="lang-row">
+          <div class="lang-main">
+            @if (row.flagCountryCode; as cc) {
+              <span class="lang-flag" [class]="'fi fi-' + cc" aria-hidden="true"></span>
+            } @else {
+              <mat-icon class="lang-fallback-icon" aria-hidden="true">translate</mat-icon>
+            }
+
+            <div class="lang-names">
+              <span class="lang-title">
+                <span class="lang-display">{{ row.displayName }}</span>
+                @if (row.nativeName; as native) {
+                  <span class="lang-native" [attr.lang]="row.code" dir="auto">{{ native }}</span>
+                }
+              </span>
+              <span class="lang-role">
+                @if (row.role === 'NATIVE') {
+                  {{ row.isPrimaryNative ? 'Native · Primary' : 'Native' }}
+                } @else {
+                  Learning
+                }
+              </span>
+            </div>
+          </div>
+
+          <div class="lang-trail">
+            @if (row.role === 'LEARNING' && row.level) {
+              <app-level-meter [level]="row.level" />
+            }
+
+            @if (isEditable) {
+              <div class="lang-actions">
+                @if (row.role === 'NATIVE' && !row.isPrimaryNative && allowSetPrimary()) {
+                  <button
+                    matButton="text"
+                    type="button"
+                    class="lang-text-action"
+                    [disabled]="isBusy"
+                    (click)="setPrimaryRow.emit(row)"
+                  >
+                    Make primary
+                  </button>
+                }
+                @if (row.role === 'LEARNING') {
+                  <button
+                    matIconButton
+                    type="button"
+                    [disabled]="isBusy"
+                    [attr.aria-label]="'Edit ' + row.displayName"
+                    matTooltip="Change level"
+                    (click)="editRow.emit(row)"
+                  >
+                    <mat-icon aria-hidden="true">tune</mat-icon>
+                  </button>
+                }
+                @if (!row.isPrimaryNative) {
+                  <button
+                    matIconButton
+                    type="button"
+                    [disabled]="isBusy"
+                    [attr.aria-label]="'Remove ' + row.displayName"
+                    matTooltip="Remove"
+                    (click)="removeRow.emit(row)"
+                  >
+                    <mat-icon aria-hidden="true">close</mat-icon>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="lang-empty">No languages listed yet.</p>
+  }
+
+  @if (isEditable) {
+    <div class="lang-footer">
+      <button
+        matButton="outlined"
+        type="button"
+        id="addLanguageBtn"
+        [disabled]="isBusy || atLimit()"
+        (click)="addClicked.emit()"
+      >
+        <mat-icon aria-hidden="true">add</mat-icon>
+        Add language
+      </button>
+      <span class="lang-counter" aria-live="polite">{{ countText() }}</span>
+    </div>
+  }
+</div>

@@ -1,31 +1,43 @@
-<h2 mat-dialog-title id="deleteModalTitle">Delete your account?</h2>
-<mat-dialog-content>
-  <p>Deletes your profile and data. Can't be undone.</p>
-  <div class="dialog-form-stack">
-    <mat-form-field class="full-width">
-      <mat-label>Type DELETE to confirm</mat-label>
-      <input
-        matInput
-        id="deleteConfirmInput"
-        type="text"
-        autocomplete="off"
-        placeholder="DELETE"
-        [formField]="confirmField"
-        cdkFocusInitial
-      />
-    </mat-form-field>
-  </div>
-</mat-dialog-content>
-<mat-dialog-actions align="end">
-  <button matButton="text" type="button" mat-dialog-close>Cancel</button>
-  <button
-    matButton="filled"
-    class="btn-danger-filled"
-    type="button"
-    id="confirmDeleteProfile"
-    [disabled]="!canDelete()"
-    (click)="onConfirm()"
-  >
-    Delete your account
-  </button>
-</mat-dialog-actions>
+<h2 mat-dialog-title id="deleteModalTitle">Delete your Jtalk account?</h2>
+<form (submit)="$event.preventDefault(); onConfirm()">
+  <mat-dialog-content class="da-content">
+    <p class="da-lead">This action permanently removes your Jtalk data and cannot be undone:</p>
+    <ul class="da-list">
+      <li>Your profile, display name, bio, and username</li>
+      <li>Your native and learning language list</li>
+      <li>Your uploaded profile picture</li>
+      <li>Your followers, following, and block list</li>
+    </ul>
+    <p class="da-note">
+      You will be signed out immediately. Your sign-in account with Auth0 is managed separately.
+    </p>
+    <div class="da-confirm">
+      <mat-form-field class="full-width">
+        <mat-label>Type DELETE to confirm</mat-label>
+        <input
+          matInput
+          id="deleteConfirmInput"
+          type="text"
+          dir="ltr"
+          autocomplete="off"
+          placeholder="DELETE"
+          [formField]="confirmField"
+          cdkFocusInitial
+        />
+        <mat-hint>Must match DELETE in all capital letters.</mat-hint>
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button matButton="text" type="button" mat-dialog-close>Cancel</button>
+    <button
+      matButton="filled"
+      class="btn-danger-filled"
+      type="submit"
+      id="confirmDeleteProfile"
+      [disabled]="!canDelete()"
+    >
+      Delete your account
+    </button>
+  </mat-dialog-actions>
+</form>

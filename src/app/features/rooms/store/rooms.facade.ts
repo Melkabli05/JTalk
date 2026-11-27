@@ -16,6 +16,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, tap } from 'rxjs';
 import { IdentityStore } from '../../../core/auth/identity';
 import { errorMessage } from '../../../core/http/http-error.interceptor';
+import { PwaService } from '../../../core/services/pwa';
 import { RoomLauncher } from '../../../core/services/room-launcher';
 import { ToastNotifier } from '../../../core/services/toast-notifier';
 import type { VoiceRoomDto } from '../../../shared/models/voice-room.model';
@@ -37,6 +38,7 @@ export class RoomsFacade {
   private readonly destroyRef = inject(DestroyRef);
   private readonly roomsApi = inject(RoomsApi);
   private readonly identity = inject(IdentityStore);
+  private readonly pwa = inject(PwaService, { optional: true });
   private readonly toast = inject(ToastNotifier, { optional: true });
   private readonly router = inject(Router, { optional: true });
   private readonly roomLauncher = inject(RoomLauncher, { optional: true });
@@ -64,6 +66,7 @@ export class RoomsFacade {
     computation: (signedIn, previous) => (signedIn ? (previous?.value ?? null) : null),
   });
   private readonly listLoading = signal(false);
+  private readonly switchingFilterState = signal(false);
   private readonly feedActive = signal(false);
   private readonly feedRequested = signal(false);
 
@@ -71,6 +74,7 @@ export class RoomsFacade {
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private reconnectAttempts = 0;
   private feedRevision = 0;
+  private wasOffline = false;
 
   // Bridge external ngx-sse-client Observable via rxResource so teardown is automatic.
   private readonly feedResource = rxResource({
@@ -112,9 +116,15 @@ export class RoomsFacade {
   readonly targetLanguage: Signal<RoomLangFilter> = this.targetLanguageState.asReadonly();
   readonly hasLoaded: Signal<boolean> = computed((): boolean => this.rawRooms() !== null);
   readonly error: Signal<string | null> = this.errorState.asReadonly();
+  readonly pinnedIdsSet: Signal<ReadonlySet<string>> = computed(
+    (): ReadonlySet<string> => new Set(this.pinnedIds()),
+  );
 
   readonly loading: Signal<boolean> = computed(
-    (): boolean => this.listLoading() || (this.feedRequested() && !this.hasLoaded()),
+    (): boolean =>
+      this.listLoading() ||
+      this.switchingFilterState() ||
+      (this.feedRequested() && !this.hasLoaded()),
   );
 
   readonly rooms: Signal<readonly VoiceRoomDto[]> = computed((): readonly VoiceRoomDto[] => {
@@ -143,6 +153,37 @@ export class RoomsFacade {
       }
     });
 
+    effect(() => {
+      const online = this.isOnline();
+      if (!online) {
+        this.wasOffline = true;
+        untracked(() => {
+          this.feedRequested.set(false);
+          if (this.reconnectTimer !== null) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+          }
+          this.stopPollingFallback();
+        });
+        return;
+      }
+      if (this.wasOffline) {
+        this.wasOffline = false;
+        untracked(() => {
+          if (this.feedActive() && this.canFetch()) {
+            this.reconnectAttempts = 0;
+            this.errorState.set(null);
+            if (this.reconnectTimer !== null) {
+              clearTimeout(this.reconnectTimer);
+              this.reconnectTimer = null;
+            }
+            this.stopPollingFallback();
+            this.feedRequested.set(true);
+          }
+        });
+      }
+    });
+
     this.destroyRef.onDestroy(() => this.stopLiveFeed());
   }
 
@@ -151,7 +192,9 @@ export class RoomsFacade {
     this.feedRevision++;
     this.feedActive.set(true);
     this.errorState.set(null);
-    this.feedRequested.set(true);
+    if (this.isOnline()) {
+      this.feedRequested.set(true);
+    }
   }
 
   setTargetLanguage(filter: RoomLangFilter, route?: ActivatedRoute): void {
@@ -160,14 +203,18 @@ export class RoomsFacade {
       this.feedRevision++;
       this.errorState.set(null);
       if (this.feedActive()) {
-        this.rawRooms.set(null);
+        this.switchingFilterState.set(true);
         this.reconnectAttempts = 0;
         if (this.reconnectTimer !== null) {
           clearTimeout(this.reconnectTimer);
           this.reconnectTimer = null;
         }
         this.stopPollingFallback();
-        this.feedRequested.set(true);
+        if (this.isOnline()) {
+          this.feedRequested.set(true);
+        } else {
+          this.switchingFilterState.set(false);
+        }
       }
     }
     if (route && this.router) {
@@ -203,6 +250,11 @@ export class RoomsFacade {
   }
 
   pinRoom(roomId: string): void {
+    if (this.pinnedIds().includes(roomId)) {
+      this.pinnedIds.update((list): readonly string[] => list.filter((id) => id !== roomId));
+      this.toast?.show('Unpinned.');
+      return;
+    }
     this.pinnedIds.update((list): readonly string[] => [
       roomId,
       ...list.filter((id) => id !== roomId),
@@ -212,7 +264,19 @@ export class RoomsFacade {
 
   hideRoom(roomId: string): void {
     this.hiddenIds.update((prev): ReadonlySet<string> => new Set(prev).add(roomId));
-    this.toast?.show('Hidden from list.');
+    if (typeof this.toast?.showAction === 'function') {
+      this.toast.showAction('Hidden from list.', 'Undo', () => this.unhideRoom(roomId));
+    } else {
+      this.toast?.show('Hidden from list.');
+    }
+  }
+
+  unhideRoom(roomId: string): void {
+    this.hiddenIds.update((prev): ReadonlySet<string> => {
+      const next = new Set(prev);
+      next.delete(roomId);
+      return next;
+    });
   }
 
   applyFeedEvent(event: RoomFeedEvent): void {
@@ -220,6 +284,7 @@ export class RoomsFacade {
     switch (event.type) {
       case 'SNAPSHOT':
         this.rawRooms.set(event.rooms);
+        this.switchingFilterState.set(false);
         this.errorState.set(null);
         return;
       case 'ROOM_OPENED':
@@ -258,6 +323,10 @@ export class RoomsFacade {
     }
   }
 
+  private isOnline(): boolean {
+    return this.pwa?.isOnline() ?? true;
+  }
+
   private canFetch(): boolean {
     return isPlatformBrowser(this.platformId) && this.identity.isAuthenticated();
   }
@@ -266,6 +335,9 @@ export class RoomsFacade {
     if (!this.feedRequested() || !this.canFetch()) return;
 
     this.feedRequested.set(false);
+    this.switchingFilterState.set(false);
+    if (!this.isOnline()) return;
+
     this.reconnectAttempts++;
     this.loadRoomsList(false);
 
@@ -277,7 +349,7 @@ export class RoomsFacade {
       : ROOMS_RECONNECT_BASE_DELAY_MS * 2 ** (this.reconnectAttempts - 1);
     if (this.reconnectTimer !== null) clearTimeout(this.reconnectTimer);
     this.reconnectTimer = setTimeout(() => {
-      if (this.feedActive() && this.canFetch()) this.feedRequested.set(true);
+      if (this.feedActive() && this.canFetch() && this.isOnline()) this.feedRequested.set(true);
     }, delayMs);
   }
 
@@ -300,11 +372,13 @@ export class RoomsFacade {
             return;
           }
           this.rawRooms.set(rooms);
+          this.switchingFilterState.set(false);
           if (ensureFeed) this.ensureLoaded();
           onDone?.(true);
         },
         error: (err: unknown) => {
           if (this.identity.isAuthenticated() && revision === this.feedRevision) {
+            this.switchingFilterState.set(false);
             this.errorState.set(errorMessage(err, 'Could not load live rooms right now.'));
           }
           onDone?.(false);
@@ -315,7 +389,9 @@ export class RoomsFacade {
   private startPollingFallback(): void {
     if (this.pollTimer !== null) return;
     this.pollTimer = setInterval(() => {
-      if (this.feedActive() && this.identity.isAuthenticated()) this.loadRoomsList(false);
+      if (this.feedActive() && this.identity.isAuthenticated() && this.isOnline()) {
+        this.loadRoomsList(false);
+      }
     }, ROOMS_POLL_INTERVAL_MS);
   }
 
@@ -329,6 +405,7 @@ export class RoomsFacade {
   private stopLiveFeed(): void {
     this.feedActive.set(false);
     this.feedRequested.set(false);
+    this.switchingFilterState.set(false);
     this.feedRevision++;
     this.reconnectAttempts = 0;
     if (this.reconnectTimer !== null) {

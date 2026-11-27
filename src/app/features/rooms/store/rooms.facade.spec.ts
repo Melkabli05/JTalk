@@ -6,6 +6,8 @@ import { vi } from 'vitest';
 import { IdentityStore } from '../../../core/auth/identity';
 import { httpErrorInterceptor } from '../../../core/http/http-error.interceptor';
 import { roomFeedTransport } from '../../../core/http/room-feed-transport';
+import { PwaService } from '../../../core/services/pwa';
+import { ToastNotifier } from '../../../core/services/toast-notifier';
 import { RoomsFacade } from './rooms.facade';
 
 describe('RoomsFacade', () => {
@@ -336,5 +338,104 @@ describe('RoomsFacade', () => {
       TestBed.resetTestingModule();
       vi.useRealTimers();
     }
+  });
+
+  it('toggles pin state and exposes Undo when hiding a room', () => {
+    const show = vi.fn();
+    let undoCallback: (() => void) | undefined;
+    const showAction = vi.fn((_msg: string, _action: string, onAction: () => void) => {
+      undoCallback = onAction;
+    });
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([httpErrorInterceptor, roomFeedTransport])),
+        provideHttpClientTesting(),
+        { provide: IdentityStore, useValue: { isAuthenticated: signedIn } },
+        { provide: ToastNotifier, useValue: { show, showAction } },
+      ],
+    });
+    const store = TestBed.inject(RoomsFacade);
+    const secondRoom = { ...room, id: 'room-2', title: 'Second' };
+    store.applyFeedEvent({ type: 'SNAPSHOT', rooms: [room, secondRoom] });
+
+    store.pinRoom('room-2');
+    expect(store.pinnedIdsSet().has('room-2')).toBe(true);
+    expect(store.rooms().map((r) => r.id)).toEqual(['room-2', 'room']);
+    expect(show).toHaveBeenCalledWith('Pinned to top.');
+
+    store.pinRoom('room-2');
+    expect(store.pinnedIdsSet().has('room-2')).toBe(false);
+    expect(store.rooms().map((r) => r.id)).toEqual(['room', 'room-2']);
+    expect(show).toHaveBeenCalledWith('Unpinned.');
+
+    store.hideRoom('room-2');
+    expect(store.rooms().map((r) => r.id)).toEqual(['room']);
+    expect(showAction).toHaveBeenCalledWith('Hidden from list.', 'Undo', expect.any(Function));
+
+    undoCallback?.();
+    expect(store.rooms().map((r) => r.id)).toEqual(['room', 'room-2']);
+  });
+
+  it('keeps existing rooms visible while switching target language filter', async () => {
+    const store = TestBed.inject(RoomsFacade);
+    const http = TestBed.inject(HttpTestingController);
+    store.ensureLoaded();
+    await flushResources();
+
+    const allFeed = http.expectOne(feedUrl);
+    const initial = `data: ${JSON.stringify({ type: 'SNAPSHOT', rooms: [room] })}\n\n`;
+    allFeed.event({ type: HttpEventType.DownloadProgress, loaded: initial.length, partialText: initial });
+    await flushResources();
+    expect(store.hasLoaded()).toBe(true);
+    expect(store.rooms().map((r) => r.id)).toEqual(['room']);
+
+    store.setTargetLanguage('ja');
+    await flushResources();
+    expect(store.hasLoaded()).toBe(true);
+    expect(store.loading()).toBe(true);
+    expect(store.rooms().map((r) => r.id)).toEqual(['room']);
+
+    const jaFeed = http.expectOne(`${feedUrl}?targetLanguage=ja`);
+    const jaSnap = `data: ${JSON.stringify({ type: 'SNAPSHOT', rooms: [{ ...room, id: 'ja-1', targetLanguage: 'ja' }] })}\n\n`;
+    jaFeed.event({ type: HttpEventType.DownloadProgress, loaded: jaSnap.length, partialText: jaSnap });
+    await flushResources();
+    expect(store.loading()).toBe(false);
+    expect(store.rooms().map((r) => r.id)).toEqual(['ja-1']);
+
+    signedIn.set(false);
+    await flushResources();
+    http.verify();
+  });
+
+  it('pauses live feed while offline and reconnects immediately when back online', async () => {
+    const online = signal(true);
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([httpErrorInterceptor, roomFeedTransport])),
+        provideHttpClientTesting(),
+        { provide: IdentityStore, useValue: { isAuthenticated: signedIn } },
+        { provide: PwaService, useValue: { isOnline: online.asReadonly() } },
+      ],
+    });
+    const store = TestBed.inject(RoomsFacade);
+    const http = TestBed.inject(HttpTestingController);
+    store.ensureLoaded();
+    await flushResources();
+
+    const initialFeed = http.expectOne(feedUrl);
+    online.set(false);
+    await flushResources();
+    expect(initialFeed.cancelled).toBe(true);
+    http.expectNone(listUrl);
+
+    online.set(true);
+    await flushResources();
+    const resumedFeed = http.expectOne(feedUrl);
+    signedIn.set(false);
+    await flushResources();
+    expect(resumedFeed.cancelled).toBe(true);
+    http.verify();
   });
 });

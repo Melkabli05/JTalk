@@ -67,4 +67,32 @@ describe('Sidebar', () => {
     btn?.click();
     expect(spy).toHaveBeenCalledTimes(1);
   });
+
+  it('should display the user role accurately and show crown only for host', () => {
+    const fixture = TestBed.createComponent(Sidebar);
+    fixture.componentRef.setInput('collapsed', false);
+    fixture.componentRef.setInput('inRoom', true);
+    fixture.componentRef.setInput('activeView', 'rooms');
+    fixture.componentRef.setInput('activeRoomRole', 'listener');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.inroom-host-role')?.textContent).toContain(
+      'Listening',
+    );
+    expect(fixture.nativeElement.querySelector('.inroom-crown')).toBeNull();
+
+    fixture.componentRef.setInput('activeRoomRole', 'speaker');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.inroom-host-role')?.textContent).toContain(
+      'Speaker · You',
+    );
+    expect(fixture.nativeElement.querySelector('.inroom-crown')).toBeNull();
+
+    fixture.componentRef.setInput('activeRoomRole', 'host');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.inroom-host-role')?.textContent).toContain(
+      'Host · You',
+    );
+    expect(fixture.nativeElement.querySelector('.inroom-crown')).toBeTruthy();
+  });
 });

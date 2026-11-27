@@ -7,6 +7,7 @@ import { lastValueFrom, from, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { RoomsApi } from '../../features/rooms/data-access/rooms-api';
 import { roomFeedTransport } from '../http/room-feed-transport';
+import { SessionExpiryHandler } from '../http/session-expiry';
 import { authBearerInterceptor } from './auth-bearer.interceptor';
 
 describe('authenticated HTTP requests', () => {
@@ -22,7 +23,11 @@ describe('authenticated HTTP requests', () => {
         provideHttpClientTesting(),
         {
           provide: AuthService,
-          useValue: { isAuthenticated$: from([true]), getAccessTokenSilently: token },
+          useValue: {
+            isAuthenticated$: from([true]),
+            getAccessTokenSilently: token,
+            logout: () => from([undefined]),
+          },
         },
       ],
     });
@@ -47,6 +52,17 @@ describe('authenticated HTTP requests', () => {
     expect(request.request.headers.get('Authorization')).toBe('Bearer test-token');
     request.flush({ detail: 'Room limit reached' }, { status: 409, statusText: 'Conflict' });
     await expect(result).rejects.toMatchObject({ status: 409 });
+  });
+
+  it('triggers session expiry when a bearer-authenticated request returns 401', async () => {
+    const sessionExpiry = TestBed.inject(SessionExpiryHandler);
+    const handleSpy = vi.spyOn(sessionExpiry, 'handle');
+    const result = lastValueFrom(TestBed.inject(HttpClient).get('/api/v1/users/me'));
+    const request = TestBed.inject(HttpTestingController).expectOne('/api/v1/users/me');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer test-token');
+    request.flush(null, { status: 401, statusText: 'Unauthorized' });
+    await expect(result).rejects.toMatchObject({ status: 401 });
+    expect(handleSpy).toHaveBeenCalledTimes(1);
   });
 
   it('propagates a token acquisition failure before sending the request', async () => {

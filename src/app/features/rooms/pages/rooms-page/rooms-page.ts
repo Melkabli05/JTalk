@@ -13,7 +13,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SkeletonLoader } from '../../../../shared/ui/skeleton-loader/skeleton-loader';
 import { DEFAULT_HERO_SCENE } from '../../constants/hero-scenes.constants';
 import {
@@ -50,6 +50,7 @@ import {
 export class RoomsPage {
   readonly facade = inject(RoomsFacade);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly heroClock = signal<Date | null>(null);
   private readonly heroOffset = signal(0);
@@ -85,6 +86,19 @@ export class RoomsPage {
     effect(() => {
       const filter = this.selectedFilter();
       untracked(() => this.facade.setTargetLanguage(filter));
+    });
+
+    effect(() => {
+      if (this.queryParams().get('action') !== 'start') return;
+      untracked(() => {
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { action: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+        this.facade.startRoom(this.destroyRef);
+      });
     });
 
     this.destroyRef.onDestroy(() => this.facade.setTargetLanguage('all'));

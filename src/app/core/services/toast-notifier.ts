@@ -16,4 +16,18 @@ export class ToastNotifier {
       panelClass: ['jtalk-snackbar'],
     });
   }
+
+  showAction(msg: string, actionLabel: string, onAction: () => void, durationMs = 4500): void {
+    if (!this.isBrowser) return;
+    const ref = this.snackBar.open(msg, actionLabel, {
+      duration: durationMs,
+      horizontalPosition: 'center',
+      verticalPosition: 'bottom',
+      panelClass: ['jtalk-snackbar'],
+    });
+    const sub = ref.onAction().subscribe(() => {
+      sub.unsubscribe();
+      onAction();
+    });
+  }
 }

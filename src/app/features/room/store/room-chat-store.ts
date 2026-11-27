@@ -28,6 +28,9 @@ export class RoomChatStore {
   private readonly stageStore = inject(RoomStageStore);
 
   private chatRevision = 0;
+  private readonly pendingReactionCommentIds = new Set<string>();
+  private readonly pendingDeleteCommentIds = new Set<string>();
+  private readonly pendingMuteUserIds = new Set<string>();
 
   private readonly loadingState = signal(false);
   private readonly rawCommentsState = signal<readonly RoomCommentDto[]>([]);
@@ -225,6 +228,8 @@ export class RoomChatStore {
   }
 
   deleteMessage(commentId: string, onDone?: (res: ActionFeedback) => void): void {
+    if (this.pendingDeleteCommentIds.has(commentId)) return;
+    this.pendingDeleteCommentIds.add(commentId);
     const generation = this.stageStore.generation();
     this.stageStore.runRoomCommand(
       (id) => this.voiceRoomApi.deleteComment(id, commentId),
@@ -234,7 +239,10 @@ export class RoomChatStore {
           this.applyChatRealtimeEvent({ type: 'COMMENT_DELETED', commentId });
         }
       },
-      onDone,
+      (res) => {
+        this.pendingDeleteCommentIds.delete(commentId);
+        onDone?.(res);
+      },
     );
   }
 
@@ -243,6 +251,8 @@ export class RoomChatStore {
     reaction: BackendReaction,
     onDone?: (res: ActionFeedback) => void,
   ): void {
+    if (this.pendingReactionCommentIds.has(commentId)) return;
+    this.pendingReactionCommentIds.add(commentId);
     this.stageStore.runRoomCommand(
       (id) =>
         this.commentReactions().get(commentId)?.mine === reaction
@@ -250,7 +260,10 @@ export class RoomChatStore {
           : this.voiceRoomApi.reactToComment(id, commentId, reaction),
       'Could not update reaction.',
       undefined,
-      onDone,
+      (res) => {
+        this.pendingReactionCommentIds.delete(commentId);
+        onDone?.(res);
+      },
     );
   }
 
@@ -305,6 +318,8 @@ export class RoomChatStore {
   }
 
   muteChatUser(targetUserId: string, onDone?: (res: ActionFeedback) => void): void {
+    if (this.pendingMuteUserIds.has(targetUserId)) return;
+    this.pendingMuteUserIds.add(targetUserId);
     this.stageStore.runRoomCommand(
       (id) =>
         this.chatMutedUsers().has(targetUserId)
@@ -312,7 +327,10 @@ export class RoomChatStore {
           : this.voiceRoomApi.muteChatUser(id, targetUserId),
       'Could not update chat mute.',
       undefined,
-      onDone,
+      (res) => {
+        this.pendingMuteUserIds.delete(targetUserId);
+        onDone?.(res);
+      },
     );
   }
 
@@ -409,6 +427,9 @@ export class RoomChatStore {
   }
 
   reset(): void {
+    this.pendingReactionCommentIds.clear();
+    this.pendingDeleteCommentIds.clear();
+    this.pendingMuteUserIds.clear();
     this.loadingState.set(false);
     this.chatErrorState.set(false);
     this.setReplyTarget(null);

@@ -25,6 +25,7 @@ export class RoomStage {
 
   readonly isHost = input(false);
   readonly hasOpenSeat = input(false);
+  readonly canUseMic = input(true);
   readonly pinnedMessage = input<DiscussionMessage | null>(null);
 
   readonly speakerAction = output<{ action: SpeakerMenuAction; speaker: RoomSpeaker }>();
@@ -42,7 +43,7 @@ export class RoomStage {
   }
 
   canMuteSpeaker(speaker: RoomSpeaker): boolean {
-    return Boolean(speaker.isYou) || this.canModerateTarget(speaker);
+    return (Boolean(speaker.isYou) && this.canUseMic()) || this.canModerateTarget(speaker);
   }
 
   canLeaveOwnStage(speaker: RoomSpeaker): boolean {
@@ -50,13 +51,20 @@ export class RoomStage {
   }
 
   speakerRoleLabel(speaker: RoomSpeaker): string {
+    if (speaker.reconnecting) return 'Reconnecting…';
     if (speaker.role === 'host') return 'Host';
     return speaker.isYou ? 'You' : '';
   }
 
   speakerAriaLabel(speaker: RoomSpeaker): string {
     const role = speaker.role === 'host' ? 'Host' : 'Speaker';
-    const state = speaker.muted ? 'muted' : speaker.speaking ? 'speaking' : 'microphone on';
+    const state = speaker.reconnecting
+      ? 'reconnecting'
+      : speaker.muted
+        ? 'muted'
+        : speaker.speaking
+          ? 'speaking'
+          : 'microphone on';
     return `${speaker.name}, ${role}, ${state}. Open speaker options`;
   }
 

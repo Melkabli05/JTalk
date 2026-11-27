@@ -95,4 +95,26 @@ describe('RoomDiscussion', () => {
     expect(element.querySelector<HTMLElement>('#discScroll')?.hidden).toBe(false);
     expect(element.querySelector<HTMLElement>('#chatError')?.hidden).toBe(false);
   });
+
+  it('disables reactions when chat-muted and shows character count near the 500-char limit', () => {
+    const fixture = TestBed.createComponent(RoomDiscussion);
+    fixture.componentRef.setInput('messages', sampleMessages);
+    fixture.componentRef.setInput('commentCountLabel', '1 comment');
+    fixture.componentRef.setInput('chatError', false);
+    fixture.componentRef.setInput('canSend', false);
+    fixture.detectChanges();
+
+    const reactionChip = fixture.nativeElement.querySelector(
+      '.reaction-chip',
+    ) as HTMLButtonElement | null;
+    expect(reactionChip?.disabled).toBe(true);
+    expect(fixture.nativeElement.querySelector('[aria-label="Add a reaction"]')).toBeNull();
+
+    fixture.componentRef.setInput('canSend', true);
+    fixture.componentInstance.draftMessage.set('a'.repeat(420));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.composer-char-count')?.textContent).toContain(
+      '420 / 500',
+    );
+  });
 });

@@ -1,3 +1,9 @@
 :host {
   display: block;
 }
+
+.dialog-submit-error {
+  margin: 0;
+  color: var(--mat-sys-error);
+  font-size: 0.875rem;
+}

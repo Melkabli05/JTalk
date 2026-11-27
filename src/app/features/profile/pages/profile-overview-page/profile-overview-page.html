@@ -1,0 +1,141 @@
+@let me = facade.me();
+@let stats = facade.socialStats() ?? null;
+@let activeList = facade.connectionList();
+
+<div class="overview-page">
+  <app-profile-header
+    [profile]="me"
+    [stats]="stats"
+    [isOwner]="true"
+    [isLive]="facade.isInLiveRoom()"
+    (editProfile)="goToEdit()"
+    (openConnections)="openConnections($event)"
+  />
+
+  <app-profile-overview
+    [profile]="me"
+    [isOwner]="true"
+    (addBio)="goToEdit('bio')"
+  />
+
+  @if (activeList; as list) {
+    <section
+      class="connections-surface"
+      id="profileConnectionsPanel"
+      aria-label="Connections"
+      aria-live="polite"
+    >
+      <div class="connections-head">
+        <mat-button-toggle-group
+          class="connections-toggle"
+          aria-label="Connection lists"
+          [value]="list"
+          (valueChange)="onConnectionSegmentChange($event)"
+        >
+          <mat-button-toggle value="followers">Followers</mat-button-toggle>
+          <mat-button-toggle value="following">Following</mat-button-toggle>
+          <mat-button-toggle value="blocks">Blocked</mat-button-toggle>
+        </mat-button-toggle-group>
+
+        <button
+          matIconButton
+          type="button"
+          aria-label="Close connections"
+          (click)="facade.closeConnections()"
+        >
+          <mat-icon aria-hidden="true">close</mat-icon>
+        </button>
+      </div>
+
+      @let connStatus = facade.connectionsStatus();
+      @let accounts = facade.connections();
+
+      <ng-template #connectionsRows>
+        <ul class="connections-list">
+          @for (account of accounts; track account.id) {
+            <li class="connection-row">
+              <div class="connection-identity">
+                <span class="connection-name" dir="auto">{{ account.displayName }}</span>
+                <span class="connection-handle" dir="ltr">&#64;{{ account.username }}</span>
+              </div>
+              @if (list === 'blocks') {
+                <button
+                  matButton="outlined"
+                  type="button"
+                  [disabled]="facade.unblockingIds().has(account.id)"
+                  (click)="facade.unblock(account.id)"
+                >
+                  {{ facade.unblockingIds().has(account.id) ? 'Unblocking…' : 'Unblock' }}
+                </button>
+              }
+            </li>
+          } @empty {
+            <li class="connection-empty">
+              @switch (list) {
+                @case ('followers') {
+                  No followers yet.
+                }
+                @case ('following') {
+                  Not following anyone yet.
+                }
+                @case ('blocks') {
+                  No blocked accounts.
+                }
+              }
+            </li>
+          }
+        </ul>
+
+        @if (facade.moreConnections()) {
+          <div class="connections-more">
+            <button
+              matButton="outlined"
+              type="button"
+              [disabled]="facade.connectionsBusy()"
+              (click)="facade.loadConnections(list, true)"
+            >
+              Load more
+            </button>
+          </div>
+        }
+      </ng-template>
+
+      @switch (connStatus) {
+        @case ('loading')
+        @case ('reloading') {
+          <p class="connection-empty" role="status">Loading accounts…</p>
+          @if (accounts.length > 0) {
+            <ng-container [ngTemplateOutlet]="connectionsRows" />
+          }
+        }
+        @case ('error') {
+          <div class="connections-error" role="alert">
+            <p>{{ facade.connectionsError() }}</p>
+            <button matButton="outlined" type="button" (click)="facade.retryConnections()">
+              <mat-icon aria-hidden="true">refresh</mat-icon>
+              Retry
+            </button>
+          </div>
+        }
+        @case ('idle')
+        @case ('resolved')
+        @case ('local') {
+          <ng-container [ngTemplateOutlet]="connectionsRows" />
+        }
+        @default never;
+      }
+    </section>
+  } @else if (me) {
+    <div class="overview-quiet-links">
+      <button
+        matButton="text"
+        type="button"
+        id="blockedAccountsTrigger"
+        (click)="openConnections('blocks')"
+      >
+        <mat-icon aria-hidden="true">block</mat-icon>
+        Blocked accounts
+      </button>
+    </div>
+  }
+</div>

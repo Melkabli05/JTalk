@@ -1,10 +1,11 @@
 import { isPlatformBrowser } from '@angular/common';
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject, PLATFORM_ID } from '@angular/core';
 import { AuthService } from '@auth0/auth0-angular';
-import { switchMap, take } from 'rxjs';
+import { catchError, switchMap, take, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { API_BASE_URL } from '../http/api-base-url.token';
+import { SessionExpiryHandler } from '../http/session-expiry';
 
 const PUBLIC_AVATAR_PATH_RE = /\/v1\/users\/[^/]+\/avatar\/[^/]+$/;
 
@@ -32,6 +33,8 @@ export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
+  const sessionExpiry = inject(SessionExpiryHandler);
+
   return auth.isAuthenticated$.pipe(
     take(1),
     switchMap((authenticated) => {
@@ -49,6 +52,13 @@ export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
                 setHeaders: {
                   Authorization: `Bearer ${token}`,
                 },
+              }),
+            ).pipe(
+              catchError((error: unknown) => {
+                if (error instanceof HttpErrorResponse && error.status === 401) {
+                  sessionExpiry.handle();
+                }
+                return throwError(() => error);
               }),
             ),
           ),

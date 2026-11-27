@@ -36,6 +36,20 @@
   </mat-menu>
 
   <div class="room-controls-group">
+    @if (audioFailed()) {
+      <button
+        matButton="tonal"
+        type="button"
+        class="ctrl-invite-accept-btn"
+        id="retryAudioBtn"
+        [disabled]="reconnectingAudio()"
+        (click)="reconnectAudio.emit()"
+      >
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        <span>{{ reconnectingAudio() ? 'Reconnecting…' : 'Retry audio' }}</span>
+      </button>
+    }
+
     @if (soundBlocked()) {
       <button
         matButton="tonal"
@@ -83,10 +97,11 @@
         type="button"
         class="ctrl-invite-accept-btn"
         id="joinStageBtn"
+        [disabled]="claimingSeat()"
         (click)="claimStageSeat.emit()"
       >
         <mat-icon aria-hidden="true">mic</mat-icon>
-        <span>Join stage</span>
+        <span>{{ claimingSeat() ? 'Joining…' : 'Join stage' }}</span>
       </button>
     }
 
@@ -96,6 +111,7 @@
         type="button"
         class="ctrl-hand-btn"
         id="raiseHandBtn"
+        [disabled]="togglingHand()"
         [class.is-active]="handRaised()"
         [attr.aria-pressed]="handRaised()"
         [attr.aria-label]="handRaised() ? 'Lower hand' : 'Raise hand to speak'"
@@ -125,6 +141,19 @@
         <span class="ctrl-mic-label" id="muteLabel">
           {{ muted() ? 'Muted' : 'Mic on' }}
         </span>
+      </button>
+    } @else if (mutedByHost()) {
+      <button
+        matButton="filled"
+        type="button"
+        class="ctrl-mic-btn is-muted is-locked"
+        id="hostMutedBtn"
+        disabled
+        aria-label="Muted by host"
+        matTooltip="The host muted your microphone"
+      >
+        <mat-icon aria-hidden="true">mic_off</mat-icon>
+        <span class="ctrl-mic-label">Muted by host</span>
       </button>
     }
   </div>

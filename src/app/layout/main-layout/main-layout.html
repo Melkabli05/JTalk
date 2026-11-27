@@ -1,4 +1,4 @@
-@let profileName = identity.me()?.displayName ?? 'Speaker';
+@let profileName = identity.displayNameFallback();
 @let profileAvatarUrl = identity.me()?.avatarUrl ?? null;
 @let room = roomStore.room();
 @let inRoom = room !== null;
@@ -24,6 +24,13 @@
     [activeRoomTitle]="room?.title ?? 'Live room'"
     [activeRoomLang]="roomStore.practiseLangLabel()"
     [activeRoomSeats]="room?.maxStageSeats ?? 8"
+    [activeRoomRole]="
+      roomStore.stage.isHost()
+        ? 'host'
+        : roomStore.stage.isCurrentUserOnStage()
+          ? 'speaker'
+          : 'listener'
+    "
     [colorScheme]="theme.colorScheme()"
     (toggleCollapse)="toggleSidebar()"
     (startRoom)="onOpenStartRoom()"

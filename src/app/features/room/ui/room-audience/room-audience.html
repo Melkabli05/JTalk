@@ -114,6 +114,16 @@
         @if (isHost()) {
           <button
             mat-menu-item
+            type="button"
+            (click)="listenerAction.emit({ action: 'transfer-host', listener })"
+          >
+            <mat-icon>swap_horiz</mat-icon>
+            <span>Transfer host</span>
+            <span class="ca-chip-inline">Host</span>
+          </button>
+
+          <button
+            mat-menu-item
             class="menu-item-danger"
             type="button"
             (click)="listenerAction.emit({ action: 'remove', listener })"

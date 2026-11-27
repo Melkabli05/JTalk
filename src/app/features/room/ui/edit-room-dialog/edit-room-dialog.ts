@@ -16,6 +16,10 @@ import { MatInputModule } from '@angular/material/input';
 import type { UpdateVoiceRoomPayload } from '../../../../shared/models/voice-room.model';
 import { trimmedRequired } from '../../../../shared/utils/form-validators';
 
+export interface EditRoomDialogData extends Required<UpdateVoiceRoomPayload> {
+  readonly submit?: (patch: UpdateVoiceRoomPayload) => Promise<string | null>;
+}
+
 interface EditRoomFormModel {
   title: string;
   topic: string;
@@ -37,7 +41,9 @@ interface EditRoomFormModel {
 })
 export class EditRoomDialog {
   private readonly dialogRef = inject(MatDialogRef<EditRoomDialog, UpdateVoiceRoomPayload>);
-  private readonly data = inject<Required<UpdateVoiceRoomPayload>>(MAT_DIALOG_DATA);
+  private readonly data = inject<EditRoomDialogData>(MAT_DIALOG_DATA);
+
+  readonly submitError = signal<string | null>(null);
 
   private readonly model = signal<EditRoomFormModel>({
     title: this.data.title,
@@ -65,6 +71,7 @@ export class EditRoomDialog {
     {
       submission: {
         action: async (field) => {
+          this.submitError.set(null);
           const values = field().value();
           const title = values.title.trim();
           const topic = values.topic.trim();
@@ -74,7 +81,20 @@ export class EditRoomDialog {
             ...(topic !== this.data.topic && { topic }),
             ...(seats !== null && seats !== this.data.maxStageSeats && { maxStageSeats: seats }),
           };
-          this.dialogRef.close(Object.keys(patch).length ? patch : undefined);
+          if (Object.keys(patch).length === 0) {
+            this.dialogRef.close(undefined);
+            return;
+          }
+          if (this.data.submit) {
+            const err = await this.data.submit(patch);
+            if (err) {
+              this.submitError.set(err);
+              return;
+            }
+            this.dialogRef.close(undefined);
+            return;
+          }
+          this.dialogRef.close(patch);
         },
       },
     },

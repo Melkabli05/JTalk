@@ -1,3 +1,113 @@
 :host {
   display: block;
+  min-width: 0;
+}
+
+.pa-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-l);
+}
+
+.pa-surface {
+  background: var(--mat-sys-surface);
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: var(--r-l-inc);
+  padding: var(--card-pad);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-m);
+  min-width: 0;
+}
+
+.pa-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xs);
+}
+
+.pa-title {
+  margin: 0;
+  font-size: var(--mat-sys-title-large-size);
+  line-height: var(--mat-sys-title-large-line-height);
+  font-weight: var(--mat-sys-title-large-weight);
+  color: var(--mat-sys-on-surface);
+}
+
+.pa-sub,
+.pa-identity {
+  margin: 0;
+  font-size: var(--mat-sys-body-medium-size);
+  line-height: var(--mat-sys-body-medium-line-height);
+  color: var(--muted);
+}
+
+.pa-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-xs) var(--sp-s);
+}
+
+.pa-handle,
+.pa-email {
+  unicode-bidi: isolate;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.pa-sep {
+  opacity: 0.6;
+}
+
+.pa-theme-group {
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.pa-toggle-icon {
+  font-size: var(--icon-m);
+  width: var(--icon-m);
+  height: var(--icon-m);
+  margin-inline-end: var(--sp-xs);
+  vertical-align: middle;
+}
+
+.pa-list {
+  padding-block: 0;
+  margin-inline: calc(var(--sp-m) * -1);
+}
+
+.pa-ios-hint {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-s);
+  padding: var(--sp-m);
+  border-radius: var(--r-m);
+  background: var(--mat-sys-surface-container-low);
+  font-size: var(--mat-sys-body-small-size);
+  line-height: var(--mat-sys-body-small-line-height);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.pa-danger {
+  border-color: color-mix(in srgb, var(--mat-sys-error) 35%, var(--mat-sys-outline));
+}
+
+.pa-danger-title {
+  color: var(--mat-sys-error);
+}
+
+.pa-danger-actions {
+  display: flex;
+  align-items: center;
+  padding-block-start: var(--sp-xs);
+}
+
+@media (max-width: 37.5rem) {
+  .pa-theme-group {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }

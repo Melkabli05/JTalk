@@ -2,7 +2,8 @@ import { isPlatformBrowser } from '@angular/common';
 import { inject, PLATFORM_ID } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '@auth0/auth0-angular';
-import { combineLatest, filter, map, take } from 'rxjs';
+import { catchError, combineLatest, filter, map, of, take } from 'rxjs';
+import { sanitizeReturnUrl } from './auth.utils';
 
 /**
  * Protects authenticated app views (`/rooms`, `/room/:id`, `/people`, `/profile`).
@@ -21,6 +22,8 @@ export const authGuard: CanActivateFn = (_route, state) => {
     return router.createUrlTree(['/']);
   }
 
+  const nextUrl = sanitizeReturnUrl(state.url, '');
+
   return combineLatest([auth.isLoading$, auth.isAuthenticated$]).pipe(
     filter(([loading]) => !loading),
     take(1),
@@ -29,8 +32,15 @@ export const authGuard: CanActivateFn = (_route, state) => {
         return true;
       }
       return router.createUrlTree(['/'], {
-        queryParams: state.url && state.url !== '/' ? { next: state.url } : undefined,
+        queryParams: nextUrl ? { next: nextUrl } : undefined,
       });
     }),
+    catchError(() =>
+      of(
+        router.createUrlTree(['/'], {
+          queryParams: nextUrl ? { next: nextUrl } : undefined,
+        }),
+      ),
+    ),
   );
 };

@@ -77,4 +77,38 @@ describe('EditRoomDialog', () => {
     expect(await field.getTextErrors()).toContain('Enter the number of stage seats.');
     expect(close).not.toHaveBeenCalled();
   });
+
+  it('keeps the dialog open and preserves edits when async submit fails', async () => {
+    const submit = vi.fn().mockResolvedValueOnce('Only the room host can update settings.');
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [EditRoomDialog],
+      providers: [
+        { provide: MatDialogRef, useValue: { close } },
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {
+            title: 'Practice room',
+            topic: 'Just chatting',
+            maxStageSeats: 8,
+            submit,
+          },
+        },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(EditRoomDialog);
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const title = await loader.getHarness(MatInputHarness.with({ selector: '#roomTitleInput' }));
+    await title.setValue('New title');
+    await (await loader.getHarness(MatButtonHarness.with({ text: 'Save' }))).click();
+    fixture.detectChanges();
+
+    expect(submit).toHaveBeenCalledWith({ title: 'New title' });
+    expect(close).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain(
+      'Only the room host can update settings.',
+    );
+    expect(await title.getValue()).toBe('New title');
+  });
 });

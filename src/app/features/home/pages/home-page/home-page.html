@@ -30,8 +30,14 @@
         <mat-icon aria-hidden="true">{{ theme.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
       </button>
 
-      <button matButton="outlined" type="button" class="home-signin-btn" (click)="enterRooms()">
-        {{ identity.isAuthenticated() ? 'Open rooms' : 'Sign in' }}
+      <button
+        matButton="outlined"
+        type="button"
+        class="home-signin-btn"
+        [disabled]="authBusy()"
+        (click)="enterRooms()"
+      >
+        {{ authBusy() ? 'Signing in…' : identity.isAuthenticated() ? 'Open rooms' : 'Sign in' }}
       </button>
     </div>
   </header>
@@ -55,6 +61,11 @@
       >
         <mat-icon class="icon-18" aria-hidden="true">close</mat-icon>
       </button>
+    </div>
+  } @else if (identity.authError(); as authErr) {
+    <div class="offline-banner home-offline-banner" role="alert">
+      <mat-icon class="icon-18" aria-hidden="true">error_outline</mat-icon>
+      <span>{{ authErr }}</span>
     </div>
   }
 
@@ -85,17 +96,24 @@
           matButton="tonal"
           type="button"
           class="btn-lg-pill home-primary-btn"
+          [disabled]="authBusy()"
           (pointermove)="onPrimaryMagnetMove($event)"
           (pointerleave)="onPrimaryMagnetLeave($event)"
           (click)="enterRooms()"
         >
-          <span>Enter live rooms</span>
+          <span>{{ isAuthCallback() ? 'Signing in…' : 'Enter live rooms' }}</span>
           <mat-icon class="home-primary-arrow" iconPositionEnd aria-hidden="true"
             >arrow_forward</mat-icon
           >
         </button>
 
-        <button matButton="text" type="button" class="home-secondary-btn" (click)="openStartRoom()">
+        <button
+          matButton="text"
+          type="button"
+          class="home-secondary-btn"
+          [disabled]="authBusy()"
+          (click)="openStartRoom()"
+        >
           <mat-icon aria-hidden="true">add</mat-icon>
           <span>Start a room</span>
         </button>

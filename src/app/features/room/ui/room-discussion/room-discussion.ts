@@ -48,6 +48,7 @@ export class RoomDiscussion {
   readonly showNewMessagesPill = signal(false);
   readonly correcting = input(false);
   readonly pinnedTopic = input<string | null>(null);
+  readonly pinnedMessageId = input<string | null>(null);
   readonly topicChange = output<string>();
   readonly editingTopic = signal(false);
   readonly isHost = input(false);
@@ -101,6 +102,8 @@ export class RoomDiscussion {
     return target ? `Reply to ${target}` : 'Say something to the room';
   });
 
+  readonly showCharCount = computed(() => this.draftMessage().length > 400);
+
   constructor() {
     afterRenderEffect({
       earlyRead: () => {
@@ -152,6 +155,22 @@ export class RoomDiscussion {
   onReplyTo(message: DiscussionMessage): void {
     this.commentAction.emit({ action: 'reply', message });
     this.composerInputRef()?.nativeElement.focus();
+  }
+
+  onCorrectMessage(message: DiscussionMessage): void {
+    this.commentAction.emit({ action: 'correct', message });
+    this.composerInputRef()?.nativeElement.focus();
+  }
+
+  onSaveTopic(event: Event, rawValue: string): void {
+    event.preventDefault();
+    const trimmed = rawValue.trim();
+    if (!trimmed && !this.pinnedTopic()) {
+      this.editingTopic.set(false);
+      return;
+    }
+    this.topicChange.emit(trimmed);
+    this.editingTopic.set(false);
   }
 
   clearReplyTarget(): void {

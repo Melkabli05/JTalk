@@ -1,0 +1,115 @@
+<div class="lang-editor">
+  <header class="lang-editor-head">
+    <h2 class="lang-editor-title" id="langEditorTitle">
+      {{ isEdit ? 'Update language' : 'Add language' }}
+    </h2>
+    <button
+      matIconButton
+      type="button"
+      aria-label="Close"
+      (click)="cancel()"
+    >
+      <mat-icon aria-hidden="true">close</mat-icon>
+    </button>
+  </header>
+
+  <form class="lang-editor-form" (submit)="submit($event)">
+    @if (isEdit) {
+      <div class="lang-selected-summary">
+        @if (selectedFlagCode(); as cc) {
+          <span class="lang-opt-flag" [class]="'fi fi-' + cc" aria-hidden="true"></span>
+        }
+        <span class="lang-selected-name">{{ selectedDisplayName() }}</span>
+        @if (selectedNativeName(); as native) {
+          <span class="lang-selected-native" [attr.lang]="selectedCode()" dir="auto">{{
+            native
+          }}</span>
+        }
+      </div>
+    } @else {
+      <mat-form-field class="full-width">
+        <mat-label>Language</mat-label>
+        <input
+          matInput
+          type="text"
+          id="languageSearchInput"
+          [value]="query()"
+          [matAutocomplete]="langAuto"
+          placeholder="Search language"
+          autocomplete="off"
+          (input)="onQueryInput($event)"
+        />
+        <mat-autocomplete
+          #langAuto="matAutocomplete"
+          (optionSelected)="onOptionSelected($event.option.value)"
+        >
+          @for (opt of filteredOptions(); track opt.code) {
+            <mat-option [value]="opt.code">
+              <span class="lang-opt-row">
+                @if (opt.flagCountryCode; as cc) {
+                  <span class="lang-opt-flag" [class]="'fi fi-' + cc" aria-hidden="true"></span>
+                }
+                <span class="lang-opt-name">{{ opt.displayName }}</span>
+                @if (opt.nativeName; as native) {
+                  <span class="lang-opt-native" [attr.lang]="opt.code" dir="auto">{{
+                    native
+                  }}</span>
+                }
+              </span>
+            </mat-option>
+          } @empty {
+            <mat-option disabled>No matching languages</mat-option>
+          }
+        </mat-autocomplete>
+      </mat-form-field>
+    }
+
+    @if (allowNativeRole && !isEdit) {
+      <div class="lang-role-field">
+        <span class="lang-field-label" id="langRoleLabel">Role</span>
+        <mat-button-toggle-group
+          class="lang-role-toggle"
+          aria-labelledby="langRoleLabel"
+          [value]="role()"
+          (valueChange)="onRoleChange($event)"
+        >
+          <mat-button-toggle value="LEARNING">Learning</mat-button-toggle>
+          <mat-button-toggle value="NATIVE">Native</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+    }
+
+    @if (role() === 'LEARNING') {
+      <mat-form-field class="full-width">
+        <mat-label>Proficiency level</mat-label>
+        <mat-select
+          id="languageLevelSelect"
+          [value]="level()"
+          (valueChange)="onLevelChange($event)"
+        >
+          @for (option of levels; track option) {
+            <mat-option [value]="option">
+              <span class="level-opt-row">
+                <span>{{ formatLevel(option) }}</span>
+                <app-level-meter [level]="option" [showLabel]="false" />
+              </span>
+            </mat-option>
+          }
+        </mat-select>
+        <mat-hint>Shown next to your learning languages in rooms and on your profile.</mat-hint>
+      </mat-form-field>
+    }
+
+    <footer class="lang-editor-actions">
+      <button matButton="text" type="button" (click)="cancel()">Cancel</button>
+      <button
+        matButton="tonal"
+        type="submit"
+        id="saveLanguageBtn"
+        [disabled]="!canSubmit()"
+      >
+        {{ isEdit ? 'Save level' : 'Add language' }}
+      </button>
+    </footer>
+  </form>
+</div>

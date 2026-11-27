@@ -19,7 +19,7 @@ describe('ProfileHeader', () => {
   };
 
   const sampleStats: SocialStatsResponse = {
-    followerCount: 12,
+    followerCount: 1,
     followingCount: 9,
     followedByMe: false,
     followsMe: false,
@@ -32,21 +32,48 @@ describe('ProfileHeader', () => {
     }).compileComponents();
   });
 
-  it('should render profile identity and emit editProfile on click', () => {
+  it('renders identity, focal language pair, pluralized counts, and emits actions', () => {
     const fixture = TestBed.createComponent(ProfileHeader);
     fixture.componentRef.setInput('profile', sampleProfile);
     fixture.componentRef.setInput('stats', sampleStats);
-    const spy = vi.fn();
-    fixture.componentInstance.editProfile.subscribe(spy);
+    const editSpy = vi.fn();
+    const connSpy = vi.fn();
+    fixture.componentInstance.editProfile.subscribe(editSpy);
+    fixture.componentInstance.openConnections.subscribe(connSpy);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('#profileName')?.textContent).toContain('Jilali');
-    expect(fixture.nativeElement.querySelector('#profileHandle')?.textContent).toContain(
-      '@jilali_dev',
-    );
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('#profileName')?.textContent).toContain('Jilali');
+    expect(host.querySelector('#profileHandle')?.textContent).toContain('@jilali_dev');
+    expect(host.querySelector('.phead-pair')?.textContent).toContain('Arabic');
+    expect(host.querySelector('.phead-pair')?.textContent).toContain('English');
+    expect(host.querySelector('#followersCountBtn')?.textContent).toContain('1 follower');
+    expect(host.querySelector('.phead-avatar-live')).toBeNull();
 
-    const btn: HTMLButtonElement | null = fixture.nativeElement.querySelector('button');
-    btn?.click();
-    expect(spy).toHaveBeenCalledTimes(1);
+    (host.querySelector('#followersCountBtn') as HTMLButtonElement).click();
+    expect(connSpy).toHaveBeenCalledWith('followers');
+
+    (host.querySelector('#headerEditProfileBtn') as HTMLButtonElement).click();
+    expect(editSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders live ring indicator only when isLive is true', () => {
+    const fixture = TestBed.createComponent(ProfileHeader);
+    fixture.componentRef.setInput('profile', sampleProfile);
+    fixture.componentRef.setInput('isLive', true);
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('.phead-avatar-live')).toBeTruthy();
+    expect(host.querySelector('.phead-live-dot')?.getAttribute('aria-label')).toContain('live room');
+  });
+
+  it('does not fabricate Speaks English when profile is null', () => {
+    const fixture = TestBed.createComponent(ProfileHeader);
+    fixture.componentRef.setInput('profile', null);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#profileSpeakChip')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Speaks English');
   });
 });

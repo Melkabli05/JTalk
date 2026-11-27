@@ -1,304 +1,145 @@
-@let me = facade.me();
-@let stats = facade.socialStats() ?? null;
+@let status = facade.profileStatus();
 <div class="view view-profile">
   <div class="profile-wrap">
-    <app-profile-header [profile]="me" [stats]="stats" (editProfile)="facade.selectTab('edit')" />
-
-    <mat-tab-group
-      animationDuration="0ms"
-      mat-stretch-tabs="false"
-      [selectedIndex]="facade.selectedTabIndex()"
-      (selectedIndexChange)="facade.selectTabIndex($event)"
-    >
-      <mat-tab label="Overview">
-        <div class="profile-tab-content">
-          <app-profile-overview [profile]="me" />
-          @if (me) {
-            <mat-card class="profile-card" appearance="outlined" aria-labelledby="connections-h">
-              <h3 id="connections-h">Connections</h3>
-              <p class="card-sub">View followers, people you follow, or blocked accounts.</p>
-              <div class="profile-action-row">
-                <button
-                  matButton="outlined"
-                  type="button"
-                  (click)="facade.loadConnections('followers')"
-                >
-                  Followers
-                </button>
-                <button
-                  matButton="outlined"
-                  type="button"
-                  (click)="facade.loadConnections('following')"
-                >
-                  Following
-                </button>
-                <button
-                  matButton="outlined"
-                  type="button"
-                  (click)="facade.loadConnections('blocks')"
-                >
-                  Blocked accounts
-                </button>
+    @switch (status) {
+      @case ('loading')
+      @case ('unauthenticated') {
+        <section
+          class="profile-skeleton-card"
+          role="status"
+          aria-live="polite"
+          id="profileLoadingState"
+        >
+          <div class="profile-skeleton-top">
+            <app-skeleton-loader variant="circle" width="72px" height="72px" />
+            <div class="profile-skeleton-lines">
+              <app-skeleton-loader width="190px" height="24px" />
+              <app-skeleton-loader width="140px" height="16px" />
+              <div class="profile-skeleton-bars" aria-hidden="true">
+                <span></span><span></span><span></span>
+                <app-skeleton-loader width="128px" height="16px" />
               </div>
-              @if (facade.connectionList(); as list) {
-                <section class="profile-connections-list" aria-live="polite">
-                  <mat-divider class="profile-divider" />
-                  @let connStatus = facade.connectionsStatus();
-                  @let accounts = facade.connections();
-                  <ng-template #connectionsRows>
-                    @for (account of accounts; track account.id) {
-                      <div class="profile-connection-row">
-                        <span>
-                          <strong>{{ account.displayName }}</strong>
-                          <span class="profile-connection-handle"
-                            >(&#64;{{ account.username }})</span
-                          >
-                        </span>
-                        @if (list === 'blocks') {
-                          <button
-                            matButton="outlined"
-                            type="button"
-                            (click)="facade.unblock(account.id)"
-                          >
-                            Unblock
-                          </button>
-                        }
-                      </div>
-                    } @empty {
-                      <p class="profile-empty">No accounts to show.</p>
-                    }
-                    @if (facade.moreConnections()) {
-                      <div class="profile-action-row">
-                        <button
-                          matButton="outlined"
-                          type="button"
-                          [disabled]="facade.connectionsBusy()"
-                          (click)="facade.loadConnections(list, true)"
-                        >
-                          Load more
-                        </button>
-                      </div>
-                    }
-                  </ng-template>
-                  @switch (connStatus) {
-                    @case ('loading')
-                    @case ('reloading') {
-                      <p class="profile-empty" role="status">Loading accounts…</p>
-                      @if (accounts.length > 0) {
-                        <ng-container [ngTemplateOutlet]="connectionsRows" />
-                      }
-                    }
-                    @case ('error') {
-                      <div class="profile-empty" role="alert">
-                        <p>{{ facade.connectionsError() }}</p>
-                        <div class="profile-action-row">
-                          <button
-                            matButton="outlined"
-                            type="button"
-                            (click)="facade.retryConnections()"
-                          >
-                            <mat-icon aria-hidden="true">refresh</mat-icon>
-                            Retry
-                          </button>
-                        </div>
-                      </div>
-                    }
-                    @case ('idle')
-                    @case ('resolved')
-                    @case ('local') {
-                      <ng-container [ngTemplateOutlet]="connectionsRows" />
-                    }
-                    @default never;
-                  }
-                </section>
-              }
-            </mat-card>
-          }
-        </div>
-      </mat-tab>
+            </div>
+          </div>
+          <p class="profile-loading-note">
+            {{
+              facade.meRetrying()
+                ? 'Waking up Jtalk server and loading your profile…'
+                : 'Loading your profile…'
+            }}
+          </p>
+        </section>
+      }
 
-      <mat-tab label="Edit profile">
-        <div class="profile-tab-content">
-          @if (me) {
-            <mat-card class="profile-card" appearance="outlined" aria-labelledby="manage-langs-h">
-              <div class="profile-langs-head">
-                <div>
-                  <h3 id="manage-langs-h">Additional languages</h3>
-                  <p class="card-sub">Add native or learning languages with proficiency levels.</p>
-                </div>
-                <button
-                  matButton="outlined"
-                  type="button"
-                  [attr.aria-expanded]="facade.editingLanguages()"
-                  (click)="facade.toggleEditingLanguages()"
-                >
-                  <mat-icon aria-hidden="true">translate</mat-icon>
-                  Manage languages
-                </button>
-              </div>
-              @if (facade.editingLanguages()) {
-                <fieldset class="profile-lang-fieldset" [disabled]="facade.languageBusy()">
-                  <legend class="sr-only">Languages</legend>
-                  <div class="profile-lang-items">
-                    @for (code of me.nativeLanguages; track code) {
-                      <div class="profile-lang-item">
-                        <span>
-                          <strong>{{ languageName(code) }}</strong> · Native
-                        </span>
-                        @if (code === me.nativeLanguage) {
-                          <span class="profile-chip">Primary</span>
-                        } @else {
-                          <button
-                            matButton="text"
-                            type="button"
-                            (click)="facade.changeLanguage(code)"
-                          >
-                            Remove
-                          </button>
-                        }
-                      </div>
-                    }
-                    @for (entry of me.learningLanguages; track entry.languageCode) {
-                      <div class="profile-lang-item">
-                        <span>
-                          <strong>{{ languageName(entry.languageCode) }}</strong> · Learning
-                          @if (formatLevel(entry.proficiencyLevel); as lvl) {
-                            ({{ lvl }})
-                          }
-                        </span>
-                        <button
-                          matButton="text"
-                          type="button"
-                          (click)="facade.changeLanguage(entry.languageCode)"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    }
-                  </div>
-                  <div class="select-row">
-                    <mat-form-field class="full-width">
-                      <mat-label>Language</mat-label>
-                      <mat-select [formField]="facade.addLanguageForm.code" aria-label="Language">
-                        @for (lang of languages; track lang.code) {
-                          <mat-option [value]="lang.code">
-                            @if (lang.flagCountryCode; as cc) {
-                              <span [class]="'fi fi-' + cc" aria-hidden="true"></span>
-                            }
-                            {{ lang.name }}
-                          </mat-option>
-                        }
-                      </mat-select>
-                    </mat-form-field>
-                    <mat-form-field class="full-width">
-                      <mat-label>Level</mat-label>
-                      <mat-select [formField]="facade.addLanguageForm.level" aria-label="Level">
-                        @for (option of levels; track option) {
-                          <mat-option [value]="option">{{ formatLevel(option) }}</mat-option>
-                        }
-                      </mat-select>
-                    </mat-form-field>
-                  </div>
-                  <div class="profile-action-row">
-                    <button
-                      matButton="outlined"
-                      type="button"
-                      (click)="
-                        facade.changeLanguage(facade.addLanguageForm.code().value(), 'NATIVE')
-                      "
-                    >
-                      Add native
-                    </button>
-                    <button
-                      matButton="tonal"
-                      type="button"
-                      (click)="
-                        facade.changeLanguage(
-                          facade.addLanguageForm.code().value(),
-                          'LEARNING',
-                          facade.addLanguageForm.level().value()
-                        )
-                      "
-                    >
-                      Save learning language
-                    </button>
-                  </div>
-                </fieldset>
-              }
-            </mat-card>
-          }
-          @if (facade.profileError(); as error) {
-            <mat-card class="profile-card" appearance="outlined" role="alert">
-              <p class="profile-empty">{{ error }}</p>
-              <div class="profile-action-row">
-                <button matButton="outlined" type="button" (click)="facade.loadMe()">
-                  Retry profile
-                </button>
-              </div>
-            </mat-card>
-          }
-          @if (facade.hasProfile() || facade.needsOnboarding()) {
-            @defer (when facade.selectedTabIndex() === 1; prefetch on idle) {
-              <app-profile-edit-form
-                [profile]="me"
-                [stats]="stats"
-                [onboarding]="facade.needsOnboarding()"
-                [saving]="facade.savingProfile()"
-                (saved)="onProfileSaved($event)"
-                (discarded)="facade.discardProfile()"
-                (avatarPicked)="facade.notify('Picture ready to save.')"
-                (uploadError)="facade.notify($event)"
-              />
-            } @placeholder {
-              <mat-card class="profile-card" appearance="outlined">
-                <p class="profile-empty">Open Edit profile to update your details.</p>
-              </mat-card>
-            } @loading (minimum 150ms) {
-              <mat-card class="profile-card" appearance="outlined" role="status">
-                <p class="profile-empty">Loading profile editor…</p>
-              </mat-card>
-            } @error {
-              <mat-card class="profile-card" appearance="outlined" role="alert">
-                <p class="profile-empty">Could not load the profile editor.</p>
-              </mat-card>
-            }
-          }
-        </div>
-      </mat-tab>
+      @case ('error') {
+        <mat-card
+          class="profile-card profile-state-card"
+          appearance="outlined"
+          role="alert"
+          id="profileLoadError"
+        >
+          <div class="profile-state-head">
+            <mat-icon class="profile-state-icon" aria-hidden="true">cloud_off</mat-icon>
+            <div>
+              <h2>Couldn't load your profile</h2>
+              <p class="card-sub">
+                {{ facade.profileError() ?? 'Unable to reach Jtalk right now. Please try again.' }}
+              </p>
+            </div>
+          </div>
+          <div class="profile-action-row">
+            <button matButton="tonal" type="button" (click)="facade.loadMe()">
+              <mat-icon aria-hidden="true">refresh</mat-icon>
+              Retry
+            </button>
+            <button matButton="outlined" type="button" (click)="facade.signOut()">
+              <mat-icon aria-hidden="true">logout</mat-icon>
+              Sign out
+            </button>
+          </div>
+        </mat-card>
+      }
 
-      <mat-tab label="Account">
-        <div class="profile-tab-content">
-          <mat-card class="profile-card" appearance="outlined" aria-labelledby="appearance-h">
-            <h3 id="appearance-h">Appearance</h3>
-            <p class="card-sub">Choose light or dark mode across Jtalk.</p>
-            <mat-form-field class="full-width">
-              <mat-label>Theme</mat-label>
-              <mat-select
-                [value]="facade.colorScheme()"
-                (valueChange)="facade.setColorScheme($event)"
-                aria-label="Appearance"
-              >
-                <mat-option value="light">Light</mat-option>
-                <mat-option value="dark">Dark</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </mat-card>
-          <app-profile-account
-            [profile]="me"
-            [canInstall]="facade.canInstall()"
-            [showIosInstallHint]="facade.isIosInstallable()"
-            (settingsClicked)="facade.selectTab('edit')"
-            (helpClicked)="
-              facade.notify(
-                'Open the audio menu in a room to choose a microphone or check noise isolation.'
-              )
-            "
-            (installClicked)="facade.promptInstall()"
-            (signOutClicked)="facade.signOut()"
-            (deleteClicked)="openDeleteDialog()"
-          />
-        </div>
-      </mat-tab>
-    </mat-tab-group>
+      @case ('missing') {
+        <mat-card
+          class="profile-card profile-state-card"
+          appearance="outlined"
+          id="profileOnboardingBanner"
+        >
+          <div class="profile-onboarding-head">
+            <div>
+              <h2>Finish setting up your profile</h2>
+              <p class="card-sub">
+                Choose your display name and languages so people know who they are practising with.
+              </p>
+            </div>
+            <button matButton="outlined" type="button" (click)="facade.signOut()">
+              <mat-icon aria-hidden="true">logout</mat-icon>
+              Sign out
+            </button>
+          </div>
+        </mat-card>
+
+        <app-profile-edit-form
+          [profile]="null"
+          [stats]="null"
+          [onboarding]="true"
+          [saving]="facade.savingProfile()"
+          [serverErrors]="onboardingErrors()"
+          (saved)="onOnboardingSaved($event)"
+          (discarded)="facade.discardProfile()"
+          (cropFileRequested)="onOnboardingCropRequested($event)"
+          (avatarPicked)="facade.notify('Picture ready to save.')"
+          (uploadError)="facade.notify($event)"
+          (serverErrorCleared)="clearOnboardingError($event)"
+          (addLanguageRequested)="openOnboardingAddLanguage()"
+          (editLanguageRequested)="openOnboardingEditLanguage($event)"
+        />
+      }
+
+      @case ('ready') {
+        <nav
+          mat-tab-nav-bar
+          class="profile-nav-bar"
+          [tabPanel]="profileTabPanel"
+          aria-label="Profile sections"
+        >
+          <a
+            mat-tab-link
+            routerLink="/profile"
+            routerLinkActive
+            #overviewLink="routerLinkActive"
+            [routerLinkActiveOptions]="{ exact: true }"
+            [active]="overviewLink.isActive"
+          >
+            Overview
+          </a>
+          <a
+            mat-tab-link
+            routerLink="/profile/edit"
+            routerLinkActive
+            #editLink="routerLinkActive"
+            [active]="editLink.isActive"
+          >
+            Edit
+          </a>
+          <a
+            mat-tab-link
+            routerLink="/profile/account"
+            routerLinkActive
+            #accountLink="routerLinkActive"
+            [active]="accountLink.isActive"
+          >
+            Account
+          </a>
+        </nav>
+
+        <mat-tab-nav-panel #profileTabPanel class="profile-route-panel">
+          <router-outlet />
+        </mat-tab-nav-panel>
+      }
+
+      @default never;
+    }
   </div>
 </div>

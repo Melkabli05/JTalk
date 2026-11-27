@@ -38,10 +38,7 @@
   </div>
 
   @if (editingTopic() && isHost()) {
-    <form
-      class="topic-editor-form"
-      (submit)="$event.preventDefault(); topicChange.emit(topic.value); editingTopic.set(false)"
-    >
+    <form class="topic-editor-form" (submit)="onSaveTopic($event, topic.value)">
       <mat-form-field class="topic-editor-field" subscriptSizing="dynamic">
         <mat-label>Pinned chat topic</mat-label>
         <input
@@ -63,6 +60,7 @@
             Unpin
           </button>
         }
+        <button matButton="text" type="button" (click)="editingTopic.set(false)">Cancel</button>
       </div>
     </form>
   }
@@ -151,6 +149,7 @@
                       matRipple
                       class="reaction-chip"
                       [class.is-active]="rx.active"
+                      [disabled]="!canSend()"
                       [attr.aria-label]="rx.label + ', ' + rx.count + ' reactions'"
                       (click)="toggleReaction.emit({ messageId: msg.id, reaction: rx.code })"
                     >
@@ -160,17 +159,17 @@
                   }
                 </div>
 
-                <button
-                  type="button"
-                  class="msg-inline-action"
-                  aria-label="Add a reaction"
-                  [matMenuTriggerFor]="msgReactionMenu"
-                  [matMenuTriggerData]="{ msg }"
-                >
-                  <mat-icon aria-hidden="true">add_reaction</mat-icon>
-                </button>
-
                 @if (canSend()) {
+                  <button
+                    type="button"
+                    class="msg-inline-action"
+                    aria-label="Add a reaction"
+                    [matMenuTriggerFor]="msgReactionMenu"
+                    [matMenuTriggerData]="{ msg }"
+                  >
+                    <mat-icon aria-hidden="true">add_reaction</mat-icon>
+                  </button>
+
                   <button
                     type="button"
                     class="msg-inline-action msg-reply-action"
@@ -251,16 +250,22 @@
         <mat-icon>arrow_upward</mat-icon>
       </button>
     </form>
+    @if (showCharCount()) {
+      <p
+        class="composer-char-count"
+        [class.is-over]="messageField().invalid()"
+        role="status"
+        aria-live="polite"
+      >
+        {{ draftMessage().length }} / 500
+      </p>
+    }
   </div>
 
   <mat-menu #commentActionsMenu="matMenu" class="jtalk-menu" xPosition="before">
     <ng-template matMenuContent let-msg="msg">
       @if (canSend()) {
-        <button
-          mat-menu-item
-          type="button"
-          (click)="commentAction.emit({ action: 'correct', message: msg })"
-        >
+        <button mat-menu-item type="button" (click)="onCorrectMessage(msg)">
           <mat-icon>edit</mat-icon><span>Correct this message</span>
         </button>
         <button mat-menu-item type="button" (click)="onReplyTo(msg)">
@@ -275,7 +280,7 @@
           (click)="commentAction.emit({ action: 'pin', message: msg })"
         >
           <mat-icon>push_pin</mat-icon>
-          <span>Pin to Stage</span>
+          <span>{{ pinnedMessageId() === msg.id ? 'Unpin from stage' : 'Pin to Stage' }}</span>
           <span class="ca-chip-inline">Host</span>
         </button>
       }

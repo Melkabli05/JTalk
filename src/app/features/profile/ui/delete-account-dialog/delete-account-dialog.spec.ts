@@ -18,9 +18,14 @@ describe('DeleteAccountDialog', () => {
     }).compileComponents();
   });
 
-  it('should only enable confirmation when DELETE is typed', () => {
+  it('lists exact deletion consequences and only enables confirmation when DELETE is typed', () => {
     const fixture = TestBed.createComponent(DeleteAccountDialog);
     fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('uploaded profile picture');
+    expect(text).toContain('followers, following, and block list');
+    expect(text).toContain('Auth0');
 
     expect(fixture.componentInstance.canDelete()).toBe(false);
     fixture.componentInstance.onConfirm();

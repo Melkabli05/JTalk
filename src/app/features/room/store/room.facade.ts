@@ -9,7 +9,9 @@ import {
   untracked,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { firstValueFrom, forkJoin } from 'rxjs';
+import type { UserProfileResponse } from '../../../core/auth/auth.models';
+import { IdentityStore } from '../../../core/auth/identity';
 import { UsersApi } from '../../../core/auth/users-api';
 import { errorMessage } from '../../../core/http/http-error.interceptor';
 import { AppTitleStrategy } from '../../../core/routing/app-title-strategy';
@@ -45,6 +47,7 @@ export class RoomFacade {
   private readonly chatStore = inject(RoomChatStore);
   private readonly voiceRoomApi = inject(VoiceRoomApi);
   private readonly usersApi = inject(UsersApi);
+  private readonly identity = inject(IdentityStore, { optional: true });
   private readonly router = inject(Router);
   private readonly toast = inject(ToastNotifier);
   private readonly destroyRef = inject(DestroyRef);
@@ -54,6 +57,8 @@ export class RoomFacade {
 
   private readonly sendingCommentState = signal(false);
   readonly sendingComment: Signal<boolean> = this.sendingCommentState.asReadonly();
+  private readonly reconnectingAudioState = signal(false);
+  readonly reconnectingAudio: Signal<boolean> = this.reconnectingAudioState.asReadonly();
 
   readonly roomId: Signal<string | null> = this.roomStore.roomId;
   readonly roomLoading: Signal<boolean> = this.roomStore.roomLoading;
@@ -74,6 +79,7 @@ export class RoomFacade {
   readonly pendingRequests = this.stageStore.pendingRequests;
 
   readonly audioStatus: Signal<LiveKitConnectionStatus> = this.roomStore.audio.status;
+  readonly audioFailed: Signal<boolean> = computed((): boolean => this.audioStatus() === 'failed');
   readonly noiseIsolationEnabled: Signal<boolean> = this.roomStore.audio.noiseIsolationEnabled;
   readonly noiseIsolationMode: Signal<NoiseIsolationMode> = this.roomStore.audio.noiseIsolationMode;
   readonly audioInputDevices: Signal<readonly AudioDeviceOption[]> =
@@ -83,12 +89,21 @@ export class RoomFacade {
   readonly micError: Signal<string | null> = this.roomStore.audio.micError;
   readonly muted: Signal<boolean> = this.roomStore.muted;
   readonly canUseMic: Signal<boolean> = this.roomStore.audio.canPublish;
+  readonly mutedByHost: Signal<boolean> = computed(
+    (): boolean =>
+      this.roomStore.audio.isMutedByHost() ||
+      (this.stageStore.isCurrentUserOnStage() &&
+        this.audioStatus() === 'connected' &&
+        !this.canUseMic()),
+  );
 
   readonly speakers: Signal<readonly RoomSpeaker[]> = this.stageStore.speakers;
   readonly effectiveMaxSeats: Signal<number> = this.stageStore.effectiveMaxSeats;
   readonly stageReaction: Signal<string | null> = this.stageStore.stageReaction;
   readonly stageReactionKey: Signal<number> = this.stageStore.stageReactionKey;
   readonly canClaimStageSeat: Signal<boolean> = this.stageStore.canClaimStageSeat;
+  readonly claimingSeat: Signal<boolean> = this.stageStore.claimingSeat;
+  readonly togglingHand: Signal<boolean> = this.stageStore.togglingHand;
   readonly handRaised: Signal<boolean> = this.stageStore.handRaised;
   readonly canLeaveStage: Signal<boolean> = computed(
     (): boolean => this.stageStore.isCurrentUserOnStage() && !this.stageStore.isHost(),
@@ -110,15 +125,16 @@ export class RoomFacade {
   readonly correcting: Signal<boolean> = this.chatStore.correcting;
   readonly pinnedTopic: Signal<string | null> = this.chatStore.pinnedTopic;
   readonly pinnedMessage: Signal<DiscussionMessage | null> = this.chatStore.pinnedMessage;
+  readonly pinnedMessageId: Signal<string | null> = this.chatStore.pinnedCommentId;
   readonly chatMutedUsers: Signal<ReadonlySet<string>> = this.chatStore.chatMutedUsers;
   readonly canSendMessage: Signal<boolean> = computed((): boolean => !this.chatStore.isChatMuted());
 
   constructor() {
     effect(() => {
-      const err = this.roomStore.roomError();
-      if (err === 'This room has ended.' || err === 'You were removed from this room.') {
+      const state = this.roomStore.connectionState();
+      if (state.status === 'ended' || state.status === 'kicked') {
         untracked(() => {
-          this.toast.show(err === 'This room has ended.' ? 'Room closed.' : err);
+          this.toast.show(state.status === 'ended' ? 'Room closed.' : state.message);
           void this.router.navigate(['/rooms']);
         });
       }
@@ -126,6 +142,10 @@ export class RoomFacade {
   }
 
   enterRoom(roomId: string): void {
+    this.roomStore.enterRoom(roomId);
+  }
+
+  retryJoin(roomId: string): void {
     this.roomStore.enterRoom(roomId);
   }
 
@@ -189,7 +209,12 @@ export class RoomFacade {
   }
 
   reconnectAudio(roomId: string): void {
-    this.roomStore.reconnectAudio((res) => this.handleFeedback(roomId, res, 'Audio reconnected.'));
+    if (this.reconnectingAudioState()) return;
+    this.reconnectingAudioState.set(true);
+    this.roomStore.reconnectAudio((res) => {
+      this.reconnectingAudioState.set(false);
+      this.handleFeedback(roomId, res, 'Audio reconnected.');
+    });
   }
 
   enableAudio(): void {
@@ -202,6 +227,19 @@ export class RoomFacade {
 
   updateRoom(roomId: string, payload: UpdateVoiceRoomPayload): void {
     this.roomStore.updateRoom(payload, (res) => this.handleFeedback(roomId, res, 'Room updated.'));
+  }
+
+  saveRoomSettings(roomId: string, payload: UpdateVoiceRoomPayload): Promise<string | null> {
+    return new Promise((resolve) => {
+      this.roomStore.updateRoom(payload, (res) => {
+        if (res.ok) {
+          this.handleFeedback(roomId, res, 'Room updated.');
+          resolve(null);
+          return;
+        }
+        resolve(res.message ?? 'Could not update room.');
+      });
+    });
   }
 
   endRoom(roomId: string): void {
@@ -222,7 +260,15 @@ export class RoomFacade {
       next: ([profile, stats]) => {
         if (this.destroyRef.destroyed || seq !== this.profilePreviewSeq) return;
         const isYou = id === this.stageStore.currentUserId();
-        onReady({ profile, stats, target, isYou });
+        onReady({
+          profile,
+          stats,
+          target,
+          isYou,
+          onToggleFollow: isYou
+            ? undefined
+            : (follow) => this.toggleFollowUser(profile, follow),
+        });
       },
       error: (err: unknown) => {
         if (!this.destroyRef.destroyed && seq === this.profilePreviewSeq) {
@@ -230,6 +276,26 @@ export class RoomFacade {
         }
       },
     });
+  }
+
+  private async toggleFollowUser(profile: UserProfileResponse, follow: boolean): Promise<boolean> {
+    try {
+      await firstValueFrom(
+        follow ? this.usersApi.follow(profile.id) : this.usersApi.unfollow(profile.id),
+      );
+      this.identity?.refreshSocialStats();
+      if (!this.destroyRef.destroyed) {
+        this.toast.show(
+          follow ? `Following ${profile.displayName}.` : `Unfollowed ${profile.displayName}.`,
+        );
+      }
+      return true;
+    } catch (err: unknown) {
+      if (!this.destroyRef.destroyed) {
+        this.toast.show(errorMessage(err, 'Could not update follow status.'));
+      }
+      return false;
+    }
   }
 
   speakerAction(
@@ -307,6 +373,14 @@ export class RoomFacade {
           'Could not promote to stage.',
           undefined,
           (res) => this.handleFeedback(roomId, res, `${listener.name} moved to stage.`),
+        );
+        return;
+      case 'transfer-host':
+        this.stageStore.runRoomCommand(
+          (id) => this.voiceRoomApi.transferHost(id, listener.id),
+          'Could not transfer host role.',
+          undefined,
+          (res) => this.handleFeedback(roomId, res, `Host role transferred to ${listener.name}.`),
         );
         return;
       case 'remove':
@@ -420,9 +494,13 @@ export class RoomFacade {
         this.chatStore.setReplyTarget(message.author, message.id);
         return;
       case 'pin':
-        this.chatStore.pinMessage(message.id, (res) =>
-          this.handleFeedback(roomId, res, 'Pinned comment.'),
-        );
+        if (this.chatStore.pinnedCommentId() === message.id) {
+          this.unpinMessage(roomId);
+        } else {
+          this.chatStore.pinMessage(message.id, (res) =>
+            this.handleFeedback(roomId, res, 'Pinned comment.'),
+          );
+        }
         return;
       case 'copy':
         if (typeof navigator === 'undefined' || !navigator.clipboard) {

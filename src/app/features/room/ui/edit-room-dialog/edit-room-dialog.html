@@ -31,17 +31,23 @@
           <mat-error>{{ error.message }}</mat-error>
         }
       </mat-form-field>
+
+      @if (submitError(); as error) {
+        <p class="dialog-submit-error" role="alert">{{ error }}</p>
+      }
     </div>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">
-    <button matButton="text" type="button" mat-dialog-close>Cancel</button>
+    <button matButton="text" type="button" mat-dialog-close [disabled]="roomForm().submitting()">
+      Cancel
+    </button>
     <button
       matButton="tonal"
       type="submit"
       [disabled]="roomForm().invalid() || roomForm().submitting()"
     >
-      Save
+      {{ roomForm().submitting() ? 'Saving…' : 'Save' }}
     </button>
   </mat-dialog-actions>
 </form>

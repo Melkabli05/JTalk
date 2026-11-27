@@ -1,3 +1,10 @@
 :host {
   display: contents;
 }
+
+.room-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}

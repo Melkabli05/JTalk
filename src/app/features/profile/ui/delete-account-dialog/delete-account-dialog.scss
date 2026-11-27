@@ -1,3 +1,38 @@
 :host {
   display: block;
 }
+
+.da-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-m);
+}
+
+.da-lead {
+  margin: 0;
+  font-size: var(--mat-sys-body-medium-size);
+  line-height: var(--mat-sys-body-medium-line-height);
+  color: var(--mat-sys-on-surface);
+}
+
+.da-list {
+  margin: 0;
+  padding-inline-start: var(--sp-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xs);
+  font-size: var(--mat-sys-body-medium-size);
+  line-height: var(--mat-sys-body-medium-line-height);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.da-note {
+  margin: 0;
+  font-size: var(--mat-sys-body-small-size);
+  line-height: var(--mat-sys-body-small-line-height);
+  color: var(--muted);
+}
+
+.da-confirm {
+  padding-block-start: var(--sp-xs);
+}

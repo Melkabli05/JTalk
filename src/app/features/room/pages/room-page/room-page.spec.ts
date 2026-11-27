@@ -364,4 +364,60 @@ describe('RoomPage', () => {
     });
     expect(reloaded).toBe(false);
   });
+
+  it('requires confirmation before removing a speaker from the room', async () => {
+    const { fixture, http, base } = await joinForHeaderAction('HOST');
+    const targetSpeaker = {
+      id: 'guest-1',
+      name: 'Sam',
+      initial: 'S',
+      chipClass: 'avatar-chip-blue',
+      role: 'speaker' as const,
+      muted: false,
+      speaking: false,
+    };
+
+    dialogSpy.open.mockReturnValueOnce({ afterClosed: () => from(Promise.resolve(false)) });
+    fixture.componentInstance.onSpeakerAction({ action: 'remove', speaker: targetSpeaker });
+    await Promise.resolve();
+    http.expectNone({ method: 'DELETE', url: base + '/participants/guest-1' });
+
+    dialogSpy.open.mockReturnValueOnce({ afterClosed: () => from(Promise.resolve(true)) });
+    fixture.componentInstance.onSpeakerAction({ action: 'remove', speaker: targetSpeaker });
+    const kick = await vi.waitFor(() =>
+      http.expectOne({ method: 'DELETE', url: base + '/participants/guest-1' }),
+    );
+    kick.flush(null, { status: 204, statusText: 'No Content' });
+    await vi.waitFor(() =>
+      expect(toastSpy.show).toHaveBeenCalledWith('Sam removed from the room.'),
+    );
+    http.verify();
+  });
+
+  it('offers a Try again button when joining a room fails', async () => {
+    const fixture = TestBed.createComponent(RoomPage);
+    const http = TestBed.inject(HttpTestingController);
+    fixture.componentRef.setInput('id', 'broken-room');
+    fixture.detectChanges();
+
+    const firstAttempt = await vi.waitFor(() =>
+      http.expectOne('/api/v1/voice-rooms/broken-room/participants/join'),
+    );
+    firstAttempt.flush({ detail: 'Temporary error' }, { status: 503, statusText: 'Unavailable' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const retryBtn = fixture.nativeElement.querySelector(
+      '#retryJoinRoomBtn',
+    ) as HTMLButtonElement | null;
+    expect(retryBtn).toBeTruthy();
+    retryBtn?.click();
+    fixture.detectChanges();
+
+    const secondAttempt = await vi.waitFor(() =>
+      http.expectOne('/api/v1/voice-rooms/broken-room/participants/join'),
+    );
+    secondAttempt.flush({ detail: 'Still down' }, { status: 503, statusText: 'Unavailable' });
+    http.verify();
+  });
 });

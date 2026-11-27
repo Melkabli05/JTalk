@@ -21,6 +21,7 @@ import {
 import { SkeletonLoader } from '../../../../shared/ui/skeleton-loader/skeleton-loader';
 import { KEYBOARD_OFFSET_THRESHOLD_PX } from '../../constants/room.constants';
 import {
+  ConfirmActionDialogData,
   HostProfileDialogData,
   ListenerMenuAction,
   ProfilePreviewTarget,
@@ -29,8 +30,9 @@ import {
   SpeakerMenuAction,
 } from '../../models/live-room.model';
 import { RoomFacade } from '../../store/room.facade';
-import { EditRoomDialog } from '../../ui/edit-room-dialog/edit-room-dialog';
-import { EndRoomDialog } from '../../ui/end-room-dialog/end-room-dialog';
+import { ConfirmActionDialog } from '../../ui/confirm-action-dialog/confirm-action-dialog';
+import { EditRoomDialog, type EditRoomDialogData } from '../../ui/edit-room-dialog/edit-room-dialog';
+import { EndRoomDialog, type EndRoomDialogData } from '../../ui/end-room-dialog/end-room-dialog';
 import { HostProfileDialog } from '../../ui/host-profile-dialog/host-profile-dialog';
 import { RoomAudience } from '../../ui/room-audience/room-audience';
 import { RoomControls } from '../../ui/room-controls/room-controls';
@@ -95,15 +97,22 @@ export class RoomPage {
 
   openEditRoomDialog(): void {
     const roomId = this.id();
-    const ref = this.dialog.open<
+    const ref = this.dialog.open<EditRoomDialog, EditRoomDialogData, UpdateVoiceRoomPayload>(
       EditRoomDialog,
-      Required<UpdateVoiceRoomPayload>,
-      UpdateVoiceRoomPayload
-    >(EditRoomDialog, {
-      width: '440px',
-      maxWidth: 'calc(100vw - 24px)',
-      data: this.facade.editRoomData(),
-    });
+      {
+        width: '440px',
+        maxWidth: 'calc(100vw - 24px)',
+        data: {
+          ...this.facade.editRoomData(),
+          submit: (patch) => {
+            if (this.destroyRef.destroyed || this.id() !== roomId || !this.isCurrentRoom()) {
+              return Promise.resolve('You are no longer in this room.');
+            }
+            return this.facade.saveRoomSettings(roomId, patch);
+          },
+        },
+      },
+    );
 
     ref.afterClosed().subscribe((result) => {
       if (!result || this.destroyRef.destroyed || this.id() !== roomId || !this.isCurrentRoom()) {
@@ -115,9 +124,10 @@ export class RoomPage {
 
   openEndRoomDialog(): void {
     const roomId = this.id();
-    const ref = this.dialog.open<EndRoomDialog, void, boolean>(EndRoomDialog, {
+    const ref = this.dialog.open<EndRoomDialog, EndRoomDialogData, boolean>(EndRoomDialog, {
       width: '440px',
       maxWidth: 'calc(100vw - 24px)',
+      data: { roomTitle: this.facade.effectiveRoomTitle() },
     });
 
     ref.afterClosed().subscribe((confirmed) => {
@@ -162,15 +172,98 @@ export class RoomPage {
   }
 
   onListenerAction(event: { action: ListenerMenuAction; listener: RoomListener }): void {
+    if (event.action === 'remove') {
+      this.confirmHostAction(
+        {
+          title: `Remove ${event.listener.name} from the room?`,
+          message:
+            'They will be disconnected immediately and cannot rejoin this room.',
+          confirmLabel: 'Remove',
+          danger: true,
+        },
+        () =>
+          this.facade.listenerAction(this.id(), event, (id, target) =>
+            this.openProfilePreview(id, target),
+          ),
+      );
+      return;
+    }
+    if (event.action === 'transfer-host') {
+      this.confirmHostAction(
+        {
+          title: `Make ${event.listener.name} the host?`,
+          message: `You will no longer control this room, and ${event.listener.name} will become the host.`,
+          confirmLabel: 'Transfer host',
+        },
+        () =>
+          this.facade.listenerAction(this.id(), event, (id, target) =>
+            this.openProfilePreview(id, target),
+          ),
+      );
+      return;
+    }
     this.facade.listenerAction(this.id(), event, (id, target) =>
       this.openProfilePreview(id, target),
     );
   }
 
   onSpeakerAction(event: { action: SpeakerMenuAction; speaker: RoomSpeaker }): void {
+    if (event.action === 'remove') {
+      this.confirmHostAction(
+        {
+          title: `Remove ${event.speaker.name} from the room?`,
+          message:
+            'They will be disconnected immediately and cannot rejoin this room.',
+          confirmLabel: 'Remove',
+          danger: true,
+        },
+        () =>
+          this.facade.speakerAction(this.id(), event, (id, target) =>
+            this.openProfilePreview(id, target),
+          ),
+      );
+      return;
+    }
+    if (event.action === 'transfer-host') {
+      this.confirmHostAction(
+        {
+          title: `Make ${event.speaker.name} the host?`,
+          message: `You will remain on stage as a speaker, and ${event.speaker.name} will control this room.`,
+          confirmLabel: 'Transfer host',
+        },
+        () =>
+          this.facade.speakerAction(this.id(), event, (id, target) =>
+            this.openProfilePreview(id, target),
+          ),
+      );
+      return;
+    }
     this.facade.speakerAction(this.id(), event, (id, target) =>
       this.openProfilePreview(id, target),
     );
+  }
+
+  private confirmHostAction(data: ConfirmActionDialogData, onConfirmed: () => void): void {
+    const roomId = this.id();
+    const ref = this.dialog.open<ConfirmActionDialog, ConfirmActionDialogData, boolean>(
+      ConfirmActionDialog,
+      {
+        width: '440px',
+        maxWidth: 'calc(100vw - 24px)',
+        data,
+      },
+    );
+    ref.afterClosed().subscribe((confirmed) => {
+      if (
+        !confirmed ||
+        this.destroyRef.destroyed ||
+        this.id() !== roomId ||
+        !this.isCurrentRoom()
+      ) {
+        return;
+      }
+      onConfirmed();
+    });
   }
 
   private bindVisualViewportKeyboard(): void {

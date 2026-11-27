@@ -1,3 +1,7 @@
 :host {
   display: contents;
 }
+
+.speaker-tile.is-reconnecting .speaker-avatar {
+  opacity: 0.65;
+}

@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
@@ -15,6 +15,10 @@ import type { HostProfileDialogData } from '../../models/live-room.model';
 })
 export class HostProfileDialog {
   readonly data = inject<HostProfileDialogData>(MAT_DIALOG_DATA);
+
+  readonly following = signal(this.data.stats.followedByMe);
+  readonly followerCount = signal(this.data.stats.followerCount);
+  readonly followBusy = signal(false);
 
   readonly previewData = computed(() => {
     const { target, profile, isYou } = this.data;
@@ -40,4 +44,20 @@ export class HostProfileDialog {
       langs: languages.map((lang) => ({ ...lang, flag: languageFlagFor(lang.name) })),
     };
   });
+
+  async onToggleFollow(): Promise<void> {
+    const toggle = this.data.onToggleFollow;
+    if (!toggle || this.followBusy()) return;
+    const next = !this.following();
+    this.followBusy.set(true);
+    try {
+      const ok = await toggle(next);
+      if (ok) {
+        this.following.set(next);
+        this.followerCount.update((count) => Math.max(0, count + (next ? 1 : -1)));
+      }
+    } finally {
+      this.followBusy.set(false);
+    }
+  }
 }

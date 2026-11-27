@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { AuthService } from '@auth0/auth0-angular';
 import { from } from 'rxjs';
+import { vi } from 'vitest';
 import { IdentityStore } from './identity';
 
 describe('IdentityStore profile edits', () => {
@@ -25,6 +26,7 @@ describe('IdentityStore profile edits', () => {
             isAuthenticated$: from([true]),
             user$: from([null]),
             error$: from([null]),
+            logout: () => from([undefined]),
           },
         },
       ],
@@ -221,5 +223,75 @@ describe('IdentityStore profile edits', () => {
     await flushResources();
     expect(identity.socialStats()?.followerCount).toBe(9);
     http.verify();
+  });
+
+  it('clears cached profile and user directory on signOut and guards deleteAccount against double submit', () => {
+    const identity = TestBed.inject(IdentityStore);
+    const http = TestBed.inject(HttpTestingController);
+    identity.setProfile({
+      id: 'u-1',
+      username: 'amina',
+      displayName: 'Amina',
+      nativeLanguage: 'en',
+      nativeLanguages: ['en'],
+      learningLanguages: [],
+      createdAt: '2026-01-01T00:00:00Z',
+    });
+    identity.mergeUserSummaries([
+      { id: 'u-2', username: 'karim', displayName: 'Karim', nativeLanguage: 'ar' },
+    ]);
+    expect(identity.userDirectory().size).toBe(2);
+
+    const results: { ok: boolean; error?: string }[] = [];
+    identity.deleteAccount((r) => results.push(r));
+    identity.deleteAccount((r) => results.push(r));
+    expect(results).toEqual([{ ok: false, error: 'Account deletion is already in progress.' }]);
+
+    const req = http.expectOne({ method: 'DELETE', url: '/api/v1/users/me' });
+    req.flush(null, { status: 204, statusText: 'No Content' });
+    expect(results[1]?.ok).toBe(true);
+    expect(identity.me()).toBeNull();
+    expect(identity.userDirectory().size).toBe(0);
+    http.verify();
+  });
+
+  it('automatically retries transient 504 cold-start failures on /me and recovers cleanly', async () => {
+    vi.useFakeTimers();
+    try {
+      const identity = TestBed.inject(IdentityStore);
+      const http = TestBed.inject(HttpTestingController);
+      const url = '/api/v1/users/me';
+
+      expect(identity.profileStatus()).toBe('loading');
+      await flushResources();
+
+      http.expectOne(url).flush(null, { status: 504, statusText: 'Gateway Timeout' });
+      await flushResources();
+
+      // Stays in loading state while bounded cold-start retry is scheduled.
+      expect(identity.meRetrying()).toBe(true);
+      expect(identity.profileStatus()).toBe('loading');
+
+      await vi.advanceTimersByTimeAsync(2000);
+      await flushResources();
+
+      http.expectOne(url).flush({
+        id: 'u-retry',
+        username: 'mohammed',
+        displayName: 'Mohammed',
+        nativeLanguage: 'ar',
+        nativeLanguages: ['ar'],
+        learningLanguages: [{ languageCode: 'en', proficiencyLevel: 'INTERMEDIATE' }],
+        createdAt: '2026-01-01T00:00:00Z',
+      });
+      await flushResources();
+
+      expect(identity.meRetrying()).toBe(false);
+      expect(identity.profileStatus()).toBe('ready');
+      expect(identity.me()?.displayName).toBe('Mohammed');
+      http.verify();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

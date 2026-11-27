@@ -23,7 +23,7 @@
       </button>
       <button mat-menu-item type="button" (click)="pin.emit(item)">
         <mat-icon>push_pin</mat-icon>
-        <span>Pin to top</span>
+        <span>{{ pinned() ? 'Unpin' : 'Pin to top' }}</span>
       </button>
       <button mat-menu-item type="button" (click)="notInterested.emit(item)">
         <mat-icon>delete_outline</mat-icon>

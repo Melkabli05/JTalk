@@ -558,4 +558,63 @@ describe('room session', () => {
     expect(store.connectionState()).toEqual({ status: 'idle' });
     http.verify();
   });
+
+  it('tracks speaker reconnecting events, host-muted microphone feedback, and kicked status', async () => {
+    let listener!: LiveKitListener;
+    const connector = vi.fn(async (_url, _token, _opts, events: LiveKitListener) => {
+      listener = events;
+      return {
+        setMicrophone: async () => undefined,
+        setNoiseIsolation: async () => 'webrtc-fallback' as const,
+        selectAudioInputDevice: async () => undefined,
+        listAudioInputDevices: async () => [],
+        startAudio: async () => undefined,
+        disconnect: async () => undefined,
+      };
+    });
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAuthForTests(),
+        { provide: LIVEKIT_CONNECTOR, useValue: connector },
+      ],
+    });
+    const store = TestBed.inject(LiveRoomStore);
+    const http = TestBed.inject(HttpTestingController);
+
+    let entered: boolean | undefined;
+    store.enterRoom(room.id, (ok) => {
+      entered = ok;
+    });
+    await vi.waitFor(() =>
+      http.expectOne(base + '/participants/join').flush({
+        ...session,
+        role: 'SPEAKER',
+        canPublishAudio: true,
+        isMutedByHost: true,
+      }),
+    );
+    await vi.waitFor(() => expect(entered).toBe(true));
+
+    let micFeedback: { ok: boolean; message?: string } | undefined;
+    store.toggleSelfMic((res) => {
+      micFeedback = res;
+    });
+    expect(micFeedback).toEqual({ ok: false, message: 'The host muted your microphone.' });
+
+    listener.onRoomEvent({ type: 'SPEAKER_RECONNECTING', targetUserId: 'host' });
+    expect(store.stage.speakers().find((s) => s.id === 'host')?.reconnecting).toBe(true);
+
+    listener.onRoomEvent({ type: 'SPEAKER_RECONNECTED', targetUserId: 'host' });
+    expect(store.stage.speakers().find((s) => s.id === 'host')?.reconnecting).toBe(false);
+
+    listener.onDisconnected('You were removed from this room.');
+    expect(store.connectionState()).toEqual({
+      status: 'kicked',
+      message: 'You were removed from this room.',
+    });
+    http.verify();
+  });
 });

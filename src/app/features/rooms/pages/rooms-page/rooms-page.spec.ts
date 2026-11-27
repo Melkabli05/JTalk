@@ -79,4 +79,15 @@ describe('RoomsPage', () => {
     await vi.waitFor(() => expect(router.url).toBe('/rooms'));
     expect(store.targetLanguage()).toBe('all');
   });
+
+  it('opens the Start Room flow once when arriving with ?action=start and clears the query param', async () => {
+    const facade = TestBed.inject(RoomsFacade);
+    const startSpy = vi.spyOn(facade, 'startRoom').mockImplementation(() => undefined);
+    const router = TestBed.inject(Router);
+    const harness = await RouterTestingHarness.create();
+
+    await harness.navigateByUrl('/rooms?action=start', RoomsPage);
+    await vi.waitFor(() => expect(router.url).toBe('/rooms'));
+    expect(startSpy).toHaveBeenCalledTimes(1);
+  });
 });

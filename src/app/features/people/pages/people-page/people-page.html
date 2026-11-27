@@ -66,10 +66,22 @@
       @case ('error') {
         <div class="people-state-hint" role="alert">
           <p>{{ facade.error() }}</p>
-          <button matButton="outlined" type="button" (click)="facade.refresh()">
-            <mat-icon aria-hidden="true">refresh</mat-icon>
-            Retry
-          </button>
+          @if (facade.needsLearningLanguage()) {
+            <a
+              matButton="tonal"
+              id="addLearningLangCta"
+              routerLink="/profile"
+              [queryParams]="{ tab: 'edit' }"
+            >
+              <mat-icon aria-hidden="true">translate</mat-icon>
+              Add a learning language
+            </a>
+          } @else {
+            <button matButton="outlined" type="button" (click)="facade.refresh()">
+              <mat-icon aria-hidden="true">refresh</mat-icon>
+              Retry
+            </button>
+          }
         </div>
       }
       @case ('idle')

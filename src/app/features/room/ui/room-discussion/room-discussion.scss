@@ -1,3 +1,15 @@
 :host {
   display: contents;
 }
+
+.composer-char-count {
+  margin: 4px 8px 0;
+  font-size: 0.75rem;
+  text-align: right;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.composer-char-count.is-over {
+  color: var(--mat-sys-error);
+  font-weight: 600;
+}

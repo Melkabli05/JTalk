@@ -46,4 +46,37 @@ describe('HostProfileDialog', () => {
       'Host · On mic · You',
     );
   });
+
+  it('toggles follow state and updates follower count for another participant', async () => {
+    const onToggleFollow = vi.fn().mockResolvedValue(true);
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [HostProfileDialog],
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {
+            ...data,
+            isYou: false,
+            onToggleFollow,
+          },
+        },
+        { provide: MatDialogRef, useValue: { close: vi.fn() } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HostProfileDialog);
+    fixture.detectChanges();
+
+    const followBtn = fixture.nativeElement.querySelector('#hostProfileFollowBtn') as HTMLButtonElement;
+    expect(followBtn).toBeTruthy();
+    expect(followBtn.textContent).toContain('Follow');
+
+    await fixture.componentInstance.onToggleFollow();
+    fixture.detectChanges();
+    expect(onToggleFollow).toHaveBeenCalledWith(true);
+    expect(followBtn.textContent).toContain('Following');
+    expect(fixture.nativeElement.querySelector('#hostProfileFollowerCount')?.textContent).toBe('16');
+  });
 });

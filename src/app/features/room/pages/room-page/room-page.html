@@ -15,10 +15,16 @@
   } @else if (!isCurrentRoom()) {
     <div class="rooms-empty-hint" role="alert">
       <p>{{ facade.roomError() }}</p>
-      <button matButton="outlined" type="button" (click)="facade.navigateTo('/rooms')">
-        <mat-icon aria-hidden="true">arrow_back</mat-icon>
-        Back to live rooms
-      </button>
+      <div class="room-error-actions">
+        <button matButton="tonal" type="button" id="retryJoinRoomBtn" (click)="facade.retryJoin(id())">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Try again
+        </button>
+        <button matButton="outlined" type="button" (click)="facade.navigateTo('/rooms')">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Back to live rooms
+        </button>
+      </div>
     </div>
   } @else {
     <div class="room-layout">
@@ -59,6 +65,7 @@
           [stageReactionKey]="facade.stageReactionKey()"
           [isHost]="facade.isHost()"
           [hasOpenSeat]="facade.canClaimStageSeat()"
+          [canUseMic]="facade.canUseMic()"
           [pinnedMessage]="facade.pinnedMessage()"
           (speakerAction)="onSpeakerAction($event)"
           (endRoom)="openEndRoomDialog()"
@@ -87,6 +94,7 @@
           [replyTarget]="facade.replyTarget()"
           [correcting]="facade.correcting()"
           [pinnedTopic]="facade.pinnedTopic()"
+          [pinnedMessageId]="facade.pinnedMessageId()"
           (topicChange)="facade.updateChatTopic(id(), $event)"
           [isHost]="facade.isHost()"
           [mutedUsers]="facade.chatMutedUsers()"
@@ -108,15 +116,21 @@
           [canEndRoom]="facade.isHost()"
           [canLeaveStage]="facade.canLeaveStage()"
           [canUseMic]="facade.canUseMic()"
+          [mutedByHost]="facade.mutedByHost()"
           [canRaiseHand]="facade.canRaiseHand()"
           [canClaimStageSeat]="facade.canClaimStageSeat()"
+          [claimingSeat]="facade.claimingSeat()"
+          [togglingHand]="facade.togglingHand()"
           [soundBlocked]="facade.soundBlocked()"
+          [audioFailed]="facade.audioFailed()"
+          [reconnectingAudio]="facade.reconnectingAudio()"
           [micError]="facade.micError()"
           (reactionPicked)="onStageReaction($event)"
           (toggleHand)="facade.toggleHand(id())"
           (claimStageSeat)="facade.claimStageSeat(id())"
           (toggleMute)="facade.toggleMute(id())"
           (enableAudio)="facade.enableAudio()"
+          (reconnectAudio)="facade.reconnectAudio(id())"
           (leaveQuietly)="facade.leaveQuietly(id())"
           (leaveStage)="facade.leaveStage(id())"
           (openEndRoom)="openEndRoomDialog()"

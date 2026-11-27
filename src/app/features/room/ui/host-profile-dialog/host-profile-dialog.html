@@ -16,6 +16,18 @@
         <mat-icon aria-hidden="true">person</mat-icon>
         View profile
       </button>
+    } @else if (data.onToggleFollow) {
+      <button
+        [matButton]="following() ? 'outlined' : 'tonal'"
+        class="hp-view-btn"
+        type="button"
+        id="hostProfileFollowBtn"
+        [disabled]="followBusy()"
+        (click)="onToggleFollow()"
+      >
+        <mat-icon aria-hidden="true">{{ following() ? 'person_remove' : 'person_add' }}</mat-icon>
+        {{ following() ? 'Following' : 'Follow' }}
+      </button>
     }
     <button
       matIconButton
@@ -60,7 +72,7 @@
 
   <div class="hp-stats" id="hostProfileStats">
     <span class="hp-stat">
-      <b>{{ data.stats.followerCount }}</b>
+      <b id="hostProfileFollowerCount">{{ followerCount() }}</b>
       <span class="hp-stat-label">Followers</span>
     </span>
     <span class="hp-stat">

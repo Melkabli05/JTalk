@@ -1,0 +1,61 @@
+<h2 mat-dialog-title>Adjust profile photo</h2>
+<mat-dialog-content>
+  @if (errorMessage(); as err) {
+    <p class="crop-error" role="alert">{{ err }}</p>
+  } @else {
+    <div class="crop-stage-wrap">
+      <div
+        class="crop-stage"
+        (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="onPointerUp($event)"
+      >
+        <canvas
+          #cropCanvas
+          width="256"
+          height="256"
+          class="crop-canvas"
+          aria-label="Circular profile photo crop preview"
+        ></canvas>
+      </div>
+      <p class="crop-hint">Drag to position inside the circle.</p>
+    </div>
+
+    <div class="crop-zoom-row">
+      <button
+        matIconButton
+        type="button"
+        aria-label="Zoom out"
+        [disabled]="zoom() <= 1"
+        (click)="nudgeZoom(-0.2)"
+      >
+        <mat-icon aria-hidden="true">remove</mat-icon>
+      </button>
+      <mat-slider class="crop-slider" min="1" max="3" step="0.05" aria-label="Zoom">
+        <input matSliderThumb [value]="zoom()" (valueChange)="onZoomChange($event)" />
+      </mat-slider>
+      <button
+        matIconButton
+        type="button"
+        aria-label="Zoom in"
+        [disabled]="zoom() >= 3"
+        (click)="nudgeZoom(0.2)"
+      >
+        <mat-icon aria-hidden="true">add</mat-icon>
+      </button>
+    </div>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button matButton="text" type="button" (click)="cancel()">Cancel</button>
+  <button
+    matButton="tonal"
+    type="button"
+    id="applyAvatarCropBtn"
+    [disabled]="!canApply()"
+    (click)="applyCrop()"
+  >
+    {{ exporting() ? 'Preparing…' : 'Use photo' }}
+  </button>
+</mat-dialog-actions>

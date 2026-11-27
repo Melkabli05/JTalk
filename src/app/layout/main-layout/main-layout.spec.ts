@@ -27,6 +27,10 @@ describe('MainLayout', () => {
     room: room.asReadonly(),
     roomId: computed(() => room()?.id ?? null),
     practiseLangLabel: signal('French'),
+    stage: {
+      isHost: signal(false),
+      isCurrentUserOnStage: signal(false),
+    },
   };
 
   beforeEach(async () => {

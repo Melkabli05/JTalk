@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
+import { RouterLink } from '@angular/router';
 import { SkeletonLoader } from '../../../../shared/ui/skeleton-loader/skeleton-loader';
 import { PeopleFacade } from '../../store/people.facade';
 import { PersonRow } from '../../ui/person-row/person-row';
@@ -15,6 +16,7 @@ import { PersonRow } from '../../ui/person-row/person-row';
   selector: 'app-people-page',
   imports: [
     NgTemplateOutlet,
+    RouterLink,
     MatButtonModule,
     MatCardModule,
     MatDividerModule,

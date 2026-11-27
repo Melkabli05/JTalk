@@ -78,6 +78,7 @@
         @for (room of visibleRooms; track room.id) {
           <app-room-card
             [room]="room"
+            [pinned]="facade.pinnedIdsSet().has(room.id)"
             (join)="facade.joinRoom($event.id)"
             (pin)="facade.pinRoom($event.id)"
             (notInterested)="facade.hideRoom($event.id)"

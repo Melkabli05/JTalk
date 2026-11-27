@@ -1,7 +1,7 @@
 @let name = profileName();
 @let collapseText = toggleLabel();
 <div class="brand">
-  <a class="brand-link" routerLink="/" aria-label="Jtalk home">
+  <a class="brand-link" routerLink="/rooms" aria-label="Jtalk rooms">
     <img
       class="brand-mark"
       [src]="colorScheme() === 'dark' ? 'brand/jtalk-mark-dark.svg' : 'brand/jtalk-mark.svg'"
@@ -99,11 +99,13 @@
       </span>
       <div>
         <p class="inroom-host-name">{{ name }}</p>
-        <p class="inroom-host-role">Host · You</p>
+        <p class="inroom-host-role">{{ activeRoomRoleLabel() }}</p>
       </div>
-      <span class="inroom-crown" aria-hidden="true">
-        <mat-icon class="icon-20">workspace_premium</mat-icon>
-      </span>
+      @if (activeRoomRole() === 'host') {
+        <span class="inroom-crown" aria-hidden="true">
+          <mat-icon class="icon-20">workspace_premium</mat-icon>
+        </span>
+      }
     </div>
     <button
       matButton="tonal"

@@ -37,7 +37,8 @@ export class Sidebar {
   readonly activeView = input<AppView>('rooms');
   readonly activeRoomTitle = input('Practice room');
   readonly activeRoomLang = input('English');
-  readonly activeRoomSeats = input(6);
+  readonly activeRoomSeats = input(8);
+  readonly activeRoomRole = input<'host' | 'speaker' | 'listener'>('listener');
   readonly colorScheme = input<ColorScheme>('light');
 
   readonly toggleCollapse = output<void>();
@@ -46,6 +47,17 @@ export class Sidebar {
   readonly toggleTheme = output<void>();
 
   readonly showInRoomCard = computed(() => this.inRoom() && this.activeView() !== 'room');
+
+  readonly activeRoomRoleLabel = computed(() => {
+    switch (this.activeRoomRole()) {
+      case 'host':
+        return 'Host · You';
+      case 'speaker':
+        return 'Speaker · You';
+      case 'listener':
+        return 'Listening';
+    }
+  });
 
   readonly toggleLabel = computed(() => (this.collapsed() ? 'Open sidebar' : 'Collapse sidebar'));
 

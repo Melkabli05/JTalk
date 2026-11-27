@@ -1,10 +1,14 @@
 import { HttpErrorResponse, type HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
 import { catchError } from 'rxjs';
 import { SessionExpiryHandler } from './session-expiry';
-import { inject } from '@angular/core/primitives/di';
 
 const problemMessages = new Map<string, string>([
   ['urn:jtalk:user:problem:user-not-found', 'Profile not found.'],
+  [
+    'urn:jtalk:user:problem:no-learning-language',
+    'Add a language you are learning on your profile to see matches.',
+  ],
   [
     'urn:jtalk:live-communication:problem:voice-room-not-found',
     'This voice room no longer exists.',
@@ -13,6 +17,22 @@ const problemMessages = new Map<string, string>([
   [
     'urn:jtalk:live-communication:problem:kicked-from-room',
     'You have been removed from this room.',
+  ],
+  [
+    'urn:jtalk:live-communication:problem:not-a-participant',
+    'That person is no longer in this room.',
+  ],
+  [
+    'urn:jtalk:live-communication:problem:comment-not-found',
+    'That message is no longer in this room.',
+  ],
+  [
+    'urn:jtalk:live-communication:problem:media-server-error',
+    'Audio connection failed. Please try again.',
+  ],
+  [
+    'urn:jtalk:live-communication:problem:media-server-unreachable',
+    'Voice audio is temporarily unavailable. Please try again shortly.',
   ],
   [
     'urn:jtalk:proxy:problem:upstream-unavailable',
@@ -41,6 +61,12 @@ function readBody(body: unknown): object | undefined {
 function messageFor(response: HttpErrorResponse, type: string, detail: string): string {
   const mapped = problemMessages.get(type);
   if (mapped) return mapped;
+  if (
+    type === 'urn:jtalk:live-communication:problem:not-in-room' &&
+    detail.includes('has not joined room')
+  ) {
+    return 'You are not currently in this room. Rejoin to continue.';
+  }
   const event = isPlainObject(response.error) ? response.error : undefined;
   if (
     response.status === 408 ||
@@ -64,7 +90,13 @@ function messageFor(response: HttpErrorResponse, type: string, detail: string): 
       return detail || 'Too many requests. Please wait a moment.';
     }
     default:
-      if (response.status === 0 || response.status >= 500) {
+      if (response.status === 0) {
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+          return 'You appear to be offline. Check your connection and try again.';
+        }
+        return 'Unable to reach JTalk right now. Please try again shortly.';
+      }
+      if (response.status >= 500) {
         return 'Unable to reach JTalk right now. Please try again shortly.';
       }
       return detail || 'The request could not be completed.';
@@ -97,7 +129,12 @@ export const httpErrorInterceptor: HttpInterceptorFn = (request, next) => {
 
   return next(request).pipe(
     catchError((error: unknown) => {
-      if (isAuthSessionError(error)) {
+      if (
+        isAuthSessionError(error) ||
+        (error instanceof HttpErrorResponse &&
+          error.status === 401 &&
+          request.headers.has('Authorization'))
+      ) {
         sessionExpiry.handle();
       }
       throw error instanceof HttpErrorResponse ? new ApiError(error) : error;

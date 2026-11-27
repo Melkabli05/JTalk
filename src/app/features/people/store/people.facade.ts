@@ -18,7 +18,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import type { DiscoveredUserResponse, UserPageResponse } from '../../../core/auth/auth.models';
 import { IdentityStore } from '../../../core/auth/identity';
 import { UsersApi } from '../../../core/auth/users-api';
-import { errorMessage } from '../../../core/http/http-error.interceptor';
+import { ApiError, errorMessage } from '../../../core/http/http-error.interceptor';
 import { ToastNotifier } from '../../../core/services/toast-notifier';
 import {
   PEOPLE_MATCHMAKING_PAGE_SIZE,
@@ -122,6 +122,11 @@ export class PeopleFacade {
     return err
       ? errorMessage(err, this.searching() ? 'Could not search users.' : 'Could not load people.')
       : null;
+  });
+  readonly needsLearningLanguage: Signal<boolean> = computed((): boolean => {
+    if (this.searching()) return false;
+    const err = this.matches.error();
+    return err instanceof ApiError && err.type === 'urn:jtalk:user:problem:no-learning-language';
   });
   readonly hasMore: Signal<boolean> = computed(
     (): boolean => !this.searching() && this.matches.hasValue() && this.matches.value().hasNext,
