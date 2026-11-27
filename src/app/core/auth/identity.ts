@@ -296,16 +296,44 @@ export class IdentityStore {
     const current = this.me();
     return this.usersApi.updateMe(patch).pipe(
       map((updated) => {
-        const merged: UserProfileResponse =
-          updated.socialStats !== undefined
-            ? updated
-            : current?.socialStats
-              ? { ...updated, socialStats: current.socialStats }
-              : updated;
+        const merged = this.withPreservedSocialStats(current, updated);
         this.meState.set(merged);
         return merged;
       }),
     );
+  }
+
+  uploadAvatar(avatarBlob: Blob, onDone?: (result: ProfileSaveResult) => void): void {
+    if (this.savingProfileState()) {
+      onDone?.({ ok: false, error: 'A profile save is already in progress.' });
+      return;
+    }
+    if (!this.hasProfile()) {
+      onDone?.({ ok: false, error: 'Load your profile before uploading a picture.' });
+      return;
+    }
+
+    this.savingProfileState.set(true);
+    const current = this.me();
+    this.usersApi
+      .uploadAvatar(avatarBlob)
+      .pipe(
+        map((updated) => this.withPreservedSocialStats(current, updated)),
+        finalize(() => this.savingProfileState.set(false)),
+      )
+      .subscribe({
+        next: (saved) => {
+          this.meState.set(saved);
+          onDone?.({ ok: true, profile: saved });
+        },
+        error: (err: unknown) => {
+          onDone?.({
+            ok: false,
+            error: errorMessage(err, 'Could not upload picture.'),
+            ...(err instanceof ApiError ? { errorType: err.type } : {}),
+          });
+        },
+      });
   }
 
   saveProfile(
@@ -324,21 +352,17 @@ export class IdentityStore {
 
     this.savingProfileState.set(true);
     const current = this.me();
-    const preserveSocialStats = (profile: UserProfileResponse): UserProfileResponse =>
-      profile.socialStats !== undefined
-        ? profile
-        : current?.socialStats
-          ? { ...profile, socialStats: current.socialStats }
-          : profile;
 
     const save$ = (
       current ? this.updateExistingProfile(current, input) : this.createInitialProfile(input)
     ).pipe(
-      map(preserveSocialStats),
+      map((saved) => this.withPreservedSocialStats(current, saved)),
       switchMap((saved) => {
         if (!avatarBlob) return of(saved);
         this.meState.set(saved);
-        return this.usersApi.uploadAvatar(avatarBlob).pipe(map(preserveSocialStats));
+        return this.usersApi
+          .uploadAvatar(avatarBlob)
+          .pipe(map((updated) => this.withPreservedSocialStats(current, updated)));
       }),
       finalize(() => this.savingProfileState.set(false)),
     );
@@ -356,6 +380,17 @@ export class IdentityStore {
         });
       },
     });
+  }
+
+  private withPreservedSocialStats(
+    current: UserProfileResponse | null,
+    profile: UserProfileResponse,
+  ): UserProfileResponse {
+    return profile.socialStats !== undefined
+      ? profile
+      : current?.socialStats
+        ? { ...profile, socialStats: current.socialStats }
+        : profile;
   }
 
   deleteAccount(onDone?: (result: AccountActionResult) => void): void {

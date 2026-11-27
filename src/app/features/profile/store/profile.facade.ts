@@ -182,6 +182,18 @@ export class ProfileFacade {
     });
   }
 
+  uploadAvatar(blob: Blob, onResult?: (res: ProfileSaveResult) => void): void {
+    this.identity.uploadAvatar(blob, (res) => {
+      if (this.destroyRef.destroyed) return;
+      onResult?.(res);
+      if (res.ok) {
+        this.toast?.show('Picture saved.');
+      } else {
+        this.toast?.show(res.error ?? 'Could not upload picture.');
+      }
+    });
+  }
+
   saveProfile(event: ProfileEditSaveEvent, onResult?: (res: ProfileSaveResult) => void): void {
     const wasOnboarding = this.identity.needsOnboarding();
     this.identity.saveProfile(event.input, event.avatarBlob, (res) => {

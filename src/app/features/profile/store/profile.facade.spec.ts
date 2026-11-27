@@ -49,6 +49,7 @@ describe('ProfileFacade', () => {
     setProfile: vi.fn(),
     patchMe: vi.fn(),
     applyLanguageMatrix: vi.fn(),
+    uploadAvatar: vi.fn(),
     saveProfile: vi.fn(),
     deleteAccount: vi.fn(),
   };
@@ -72,6 +73,7 @@ describe('ProfileFacade', () => {
     identityMock.setProfile.mockReset();
     identityMock.patchMe.mockReset();
     identityMock.applyLanguageMatrix.mockReset();
+    identityMock.uploadAvatar.mockReset();
     identityMock.saveProfile.mockReset();
     identityMock.deleteAccount.mockReset();
     roomStoreMock.signOut.mockReset();

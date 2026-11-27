@@ -39,7 +39,6 @@ import type { ProfileLanguageRow } from '../../utils/profile-format.utils';
       (saved)="onSaved($event)"
       (discarded)="onDiscarded()"
       (cropFileRequested)="onCropFileRequested($event)"
-      (avatarPicked)="facade.notify('Picture ready to save.')"
       (uploadError)="facade.notify($event)"
       (serverErrorCleared)="clearServerError($event)"
       (addLanguageRequested)="openAddLanguage()"
@@ -95,7 +94,9 @@ export class ProfileEditPage implements HasUnsavedProfileChanges {
     });
     ref.afterClosed().subscribe((result) => {
       if (!result) return;
+      this.serverErrors.update((prev) => ({ ...prev, avatar: null }));
       this.editForm()?.applyCroppedAvatar(result.blob, result.previewUrl);
+      this.facade.uploadAvatar(result.blob, (res) => this.handleSaveResult(res));
     });
   }
 
