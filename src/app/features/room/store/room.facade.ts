@@ -129,7 +129,10 @@ export class RoomFacade {
     (): boolean => this.stageStore.isCurrentUserOnStage() && !this.stageStore.isHost(),
   );
   readonly canRaiseHand: Signal<boolean> = computed(
-    (): boolean => !this.stageStore.isCurrentUserOnStage() && !this.stageStore.isModerator(),
+    (): boolean =>
+      !this.stageStore.isHost() &&
+      !this.stageStore.isModerator() &&
+      !this.stageStore.isCurrentUserOnStage(),
   );
 
   readonly listeners: Signal<readonly RoomListener[]> = this.stageStore.listeners;
