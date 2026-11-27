@@ -11,7 +11,7 @@ import { from } from 'rxjs';
 import { vi } from 'vitest';
 import { provideNoopAuthForTests } from '../../../../core/auth/auth.providers';
 import { ToastNotifier } from '../../../../core/services/toast-notifier';
-import { LIVEKIT_CONNECTOR, type LiveKitListener } from '../../data-access/livekit-audio-engine';
+import { LIVEKIT_CONNECTOR, type LiveKitListener } from '../../data-access/livekit-connector';
 import { LiveRoomStore } from '../../store/live-room-store';
 import { ROOM_ROUTES } from '../../room.routes';
 import { RoomPage } from './room-page';

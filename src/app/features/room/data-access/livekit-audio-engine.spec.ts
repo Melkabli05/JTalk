@@ -4,13 +4,13 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { RoomSessionDto } from '../../../shared/models/voice-room.model';
 import { VoiceRoomApi } from './voice-room-api';
+import { LiveKitAudioEngine } from './livekit-audio-engine';
 import {
   LIVEKIT_CONNECTOR,
-  LiveKitAudioEngine,
-  LiveKitConnectionHandle,
-  LiveKitConnectorFn,
-  LiveKitListener,
-} from './livekit-audio-engine';
+  type LiveKitConnectionHandle,
+  type LiveKitConnectorFn,
+  type LiveKitListener,
+} from './livekit-connector';
 
 describe('LiveKitAudioEngine', () => {
   const session: RoomSessionDto = {
