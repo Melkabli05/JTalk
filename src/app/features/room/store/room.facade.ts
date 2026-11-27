@@ -58,6 +58,8 @@ export class RoomFacade {
   private readonly sendingCommentState = signal(false);
   readonly sendingComment: Signal<boolean> = this.sendingCommentState.asReadonly();
   private readonly reconnectingAudioState = signal(false);
+  private readonly leavingRoomState = signal(false);
+  readonly leavingRoom = this.leavingRoomState.asReadonly();
   readonly reconnectingAudio: Signal<boolean> = this.reconnectingAudioState.asReadonly();
 
   readonly roomId: Signal<string | null> = this.roomStore.roomId;
@@ -134,7 +136,8 @@ export class RoomFacade {
       const state = this.roomStore.connectionState();
       if (state.status === 'ended' || state.status === 'kicked') {
         untracked(() => {
-          this.toast.show(state.status === 'ended' ? 'Room closed.' : state.message);
+          this.leavingRoomState.set(true);
+          this.toast.show(state.message || 'Room closed.');
           void this.router.navigate(['/rooms']);
         });
       }
@@ -142,10 +145,12 @@ export class RoomFacade {
   }
 
   enterRoom(roomId: string): void {
+    this.leavingRoomState.set(false);
     this.roomStore.enterRoom(roomId);
   }
 
   retryJoin(roomId: string): void {
+    this.leavingRoomState.set(false);
     this.roomStore.enterRoom(roomId);
   }
 
@@ -243,10 +248,13 @@ export class RoomFacade {
   }
 
   endRoom(roomId: string): void {
+    this.leavingRoomState.set(true);
     this.roomStore.endRoom((res) => {
       if (this.handleFeedback(roomId, res, 'Room ended.')) {
         void this.router.navigate(['/rooms']);
+        return;
       }
+      this.leavingRoomState.set(false);
     });
   }
 
@@ -535,11 +543,14 @@ export class RoomFacade {
   }
 
   leaveQuietly(roomId: string): void {
+    this.leavingRoomState.set(true);
     this.roomStore.leaveRoom((res) => {
       this.handleFeedback(roomId, res, 'Left the room.');
       if (!this.destroyRef.destroyed && this.roomStore.roomId() !== roomId) {
         void this.router.navigate(['/rooms']);
+        return;
       }
+      this.leavingRoomState.set(false);
     });
   }
 

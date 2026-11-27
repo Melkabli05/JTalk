@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { finalize } from 'rxjs';
 import { IdentityStore } from '../../../core/auth/identity';
-import { errorMessage } from '../../../core/http/http-error.interceptor';
+import { ApiError, errorMessage } from '../../../core/http/http-error.interceptor';
 import { BrowserStorage } from '../../../core/services/browser-storage';
 import { ACTIVE_ROOM_STORAGE_KEY } from '../../../shared/constants/storage-keys.constants';
 import type {
@@ -300,9 +300,17 @@ export class LiveRoomStore {
             this.teardownAudioEvents();
             this.resetAll();
             this.rememberRoom(null);
+            const missing =
+              err instanceof ApiError &&
+              (err.status === 404 ||
+                err.problem?.type ===
+                  'urn:jtalk:live-communication:problem:voice-room-not-found');
             this.connectionStateSignal.set({
-              status: 'error',
-              message: errorMessage(err, 'Could not join this voice room.'),
+              status: missing ? 'ended' : 'error',
+              message: errorMessage(
+                err,
+                missing ? 'This voice room no longer exists.' : 'Could not join this voice room.',
+              ),
             });
           }
           onDone(false);
