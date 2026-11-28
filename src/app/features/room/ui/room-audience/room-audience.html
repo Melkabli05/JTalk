@@ -82,7 +82,7 @@
 
     <mat-menu #listenerMenu="matMenu" class="jtalk-menu" xPosition="before">
       <ng-template matMenuContent let-listener="listener">
-        @if (isHost() && listener.handRaised) {
+        @if (effectiveCanModerate() && listener.handRaised) {
           <button
             mat-menu-item
             type="button"
@@ -91,7 +91,15 @@
             <mat-icon>check_circle</mat-icon>
             <span>Approve speaker request</span>
           </button>
-        } @else if (isHost()) {
+          <button
+            mat-menu-item
+            type="button"
+            (click)="listenerAction.emit({ action: 'dismiss-hand', listener })"
+          >
+            <mat-icon>do_not_touch</mat-icon>
+            <span>Lower raised hand</span>
+          </button>
+        } @else if (effectiveCanModerate()) {
           <button
             mat-menu-item
             type="button"
@@ -111,6 +119,17 @@
           <span>View profile</span>
         </button>
 
+        @if (canModerateTarget(listener)) {
+          <button
+            mat-menu-item
+            type="button"
+            (click)="listenerAction.emit({ action: 'mute-chat', listener })"
+          >
+            <mat-icon>{{ chatMutedUsers().has(listener.id) ? 'chat' : 'speaker_notes_off' }}</mat-icon>
+            <span>{{ chatMutedUsers().has(listener.id) ? 'Unmute in chat' : 'Mute in chat' }}</span>
+          </button>
+        }
+
         @if (isHost()) {
           <button
             mat-menu-item
@@ -121,7 +140,9 @@
             <span>Transfer host</span>
             <span class="ca-chip-inline">Host</span>
           </button>
+        }
 
+        @if (canModerateTarget(listener)) {
           <button
             mat-menu-item
             class="menu-item-danger"

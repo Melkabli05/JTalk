@@ -1898,13 +1898,17 @@ app-room-card {
   position: relative;
 }
 
+.room-header-queue-btn.is-has-requests {
+  color: var(--mat-sys-primary);
+}
+
 .header-badge-count {
   position: absolute;
   top: 4px;
   right: 4px;
   min-width: 16px;
   height: 16px;
-  padding: 0 4px;
+  padding: 0 var(--sp-xs);
   border-radius: var(--r-full);
   background: var(--mat-sys-primary);
   color: var(--mat-sys-on-primary);
@@ -1913,6 +1917,37 @@ app-room-card {
   line-height: 16px;
   text-align: center;
   pointer-events: none;
+}
+
+.mod-queue-menu.mat-mdc-menu-panel {
+  min-width: 288px;
+  max-width: min(340px, calc(100vw - 24px));
+}
+
+.mod-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-s);
+  padding: var(--sp-s) var(--sp-l) var(--sp-xs);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.mod-menu-header .mod-menu-section-label {
+  padding: 0;
+}
+
+.mod-menu-count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 var(--sp-s);
+  border-radius: var(--r-full);
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 22px;
+  text-align: center;
 }
 
 .mod-menu-section-label {
@@ -1925,41 +1960,129 @@ app-room-card {
 }
 
 .mod-menu-empty {
-  padding: 6px 14px 10px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-s);
+  padding: var(--sp-m) var(--sp-l);
   font-size: 0.8125rem;
   color: var(--muted);
+}
+
+.mod-menu-empty mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  line-height: 18px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.mod-req-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xxs);
+  padding: var(--sp-xs) var(--sp-s);
+  max-height: 320px;
+  overflow-y: auto;
 }
 
 .mod-req-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 6px 14px;
-  min-width: 220px;
+  gap: var(--sp-s);
+  padding: var(--sp-xs);
+  border-radius: var(--r-m);
+  min-width: 248px;
+}
+
+.mod-req-user {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-s);
+  padding: var(--sp-xs) var(--sp-s);
+  border: 0;
+  border-radius: var(--r-m);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.mod-req-user:hover {
+  background: var(--menu-hover);
+}
+
+.mod-req-user:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.mod-req-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-full);
+  flex: 0 0 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow: hidden;
+}
+
+.mod-req-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mod-req-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xxs);
 }
 
 .mod-req-name {
   font-size: 0.875rem;
   font-weight: 500;
+  line-height: 1.15rem;
   color: var(--mat-sys-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mod-req-sub {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--mat-sys-on-surface-variant);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mod-req-actions {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  flex-shrink: 0;
+  gap: var(--sp-xs);
 }
 
-.mod-req-btn {
-  width: var(--touch-min);
-  height: var(--touch-min);
-  border: 0;
+.mod-req-btn.mat-mdc-icon-button {
+  --mat-icon-button-state-layer-size: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   border-radius: var(--r-full);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
 }
 
 .mod-req-btn mat-icon {
@@ -2290,6 +2413,11 @@ app-room-card {
 .speaker-badge-mic.is-muted {
   background: var(--mat-sys-error-container);
   color: var(--mat-sys-on-error-container);
+}
+
+.speaker-badge-mic.is-host-muted {
+  background: var(--mat-sys-error);
+  color: var(--mat-sys-on-error);
 }
 
 .speaker-badge-wave {

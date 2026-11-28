@@ -204,7 +204,17 @@ export class LiveKitAudioEngine {
     return ok;
   }
 
-  async setMicrophone(enabled: boolean): Promise<boolean> {
+  applyHostMute(muted: boolean): void {
+    this.isMutedByHostState.set(muted);
+    if (muted) {
+      this.canPublishState.set(false);
+      void this.setMicrophone(false, false);
+      return;
+    }
+    this.canPublishState.set(true);
+  }
+
+  async setMicrophone(enabled: boolean, persistPreference = true): Promise<boolean> {
     const connection = this.activeConnection();
     if (!connection || (enabled && !this.canPublish())) {
       this.micOnState.set(false);
@@ -214,7 +224,9 @@ export class LiveKitAudioEngine {
       await connection.setMicrophone(enabled);
       if (connection !== this.activeConnection()) return false;
       this.micOnState.set(enabled && this.activeConnection() !== null);
-      this.rememberMicMuted(this.currentRoomId, !enabled);
+      if (persistPreference) {
+        this.rememberMicMuted(this.currentRoomId, !enabled);
+      }
       this.micErrorState.set(null);
       if (enabled) {
         this.refreshAudioInputDevices();
@@ -371,7 +383,9 @@ export class LiveKitAudioEngine {
         );
         if (isLocal) {
           this.micOnState.set(!muted && this.activeConnection() !== null);
-          this.rememberMicMuted(this.currentRoomId, muted);
+          if (!this.isMutedByHost() && this.canPublish()) {
+            this.rememberMicMuted(this.currentRoomId, muted);
+          }
         }
       }),
       onCanPublishChanged: guard((canPublish) => {
@@ -380,7 +394,7 @@ export class LiveKitAudioEngine {
         }
         if (canPublish === this.canPublish()) return;
         this.canPublishState.set(canPublish);
-        void this.setMicrophone(canPublish);
+        void this.setMicrophone(canPublish, canPublish);
       }),
       onSoundBlocked: guard((blocked) => this.soundBlockedState.set(blocked)),
       onLinkStatus: guard((status) => {

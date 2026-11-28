@@ -109,4 +109,81 @@ describe('RoomStage', () => {
     expect(badgeEmoji?.getAttribute('data-animated')).toBe('true');
     expect(badgeEmoji?.querySelector('source')?.getAttribute('srcset')).toContain('/2764_fe0f/512.webp');
   });
+
+  it('distinguishes host-muted speakers, toggles mute/unmute mic and chat, and respects moderator hierarchy', () => {
+    const fixture = TestBed.createComponent(RoomStage);
+    const speakers: readonly RoomSpeaker[] = [
+      {
+        ...sampleSpeakers[0]!,
+        id: 'host-1',
+        isYou: false,
+        role: 'host',
+        muted: false,
+      },
+      {
+        ...sampleSpeakers[1]!,
+        id: 'mod-you',
+        name: 'Mod',
+        isYou: true,
+        role: 'speaker',
+        muted: false,
+        speaking: false,
+      },
+      {
+        id: 'sp-2',
+        name: 'Tariq',
+        initial: 'T',
+        chipClass: 'avatar-chip-blue',
+        role: 'speaker',
+        muted: true,
+        muteReason: 'host',
+        speaking: false,
+      },
+    ];
+    fixture.componentRef.setInput('speakers', speakers);
+    fixture.componentRef.setInput('maxSeats', 8);
+    fixture.componentRef.setInput('isHost', false);
+    fixture.componentRef.setInput('canModerate', true);
+    fixture.componentRef.setInput('hostId', 'host-1');
+    fixture.componentRef.setInput('moderatorIds', new Set(['mod-you']));
+    fixture.componentRef.setInput('chatMutedUsers', new Set(['sp-2']));
+    fixture.detectChanges();
+
+    const hostMutedBadge = fixture.nativeElement.querySelector(
+      '[data-speaker-id="sp-2"] .speaker-badge-mic',
+    ) as HTMLElement | null;
+    expect(hostMutedBadge?.classList.contains('is-host-muted')).toBe(true);
+    expect(hostMutedBadge?.getAttribute('title')).toBe('Muted by host');
+    expect(
+      fixture.nativeElement
+        .querySelector('[data-speaker-id="sp-2"]')
+        ?.getAttribute('aria-label'),
+    ).toContain('muted by host');
+
+    // Moderator can moderate regular speaker, cannot moderate host, and cannot transfer host
+    expect(fixture.componentInstance.canModerateTarget(speakers[0]!)).toBe(false);
+    expect(fixture.componentInstance.canModerateTarget(speakers[2]!)).toBe(true);
+    expect(fixture.componentInstance.canTransferHost(speakers[2]!)).toBe(false);
+    expect(fixture.componentInstance.isHostMuted(speakers[2]!)).toBe(true);
+
+    const actionSpy = vi.fn();
+    fixture.componentInstance.speakerAction.subscribe(actionSpy);
+    const tariqTile = fixture.nativeElement.querySelector(
+      '[data-speaker-id="sp-2"]',
+    ) as HTMLButtonElement;
+    tariqTile.click();
+    fixture.detectChanges();
+
+    const menuButtons = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('.mat-mdc-menu-panel button[mat-menu-item]'),
+    );
+    const unmuteBtn = menuButtons.find((b) => b.textContent?.includes('Unmute speaker'));
+    const unmuteChatBtn = menuButtons.find((b) => b.textContent?.includes('Unmute in chat'));
+    expect(unmuteBtn).toBeTruthy();
+    expect(unmuteChatBtn).toBeTruthy();
+
+    unmuteBtn?.click();
+    expect(actionSpy).toHaveBeenCalledWith({ action: 'unmute', speaker: speakers[2] });
+  });
 });
+

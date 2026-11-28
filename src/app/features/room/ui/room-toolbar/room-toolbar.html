@@ -93,13 +93,24 @@
         <button
           matIconButton
           class="room-header-icon-btn room-header-queue-btn"
+          [class.is-has-requests]="pendingRequests().length > 0"
           id="modQueueBtn"
           type="button"
-          aria-label="Raised hands queue"
-          matTooltip="Raised hands"
+          [attr.aria-label]="
+            pendingRequests().length > 0
+              ? 'Raised hands queue, ' + pendingRequests().length + ' waiting'
+              : 'Raised hands queue'
+          "
+          [matTooltip]="
+            pendingRequests().length > 0
+              ? pendingRequests().length +
+                ' raised ' +
+                (pendingRequests().length === 1 ? 'hand' : 'hands')
+              : 'Raised hands'
+          "
           [matMenuTriggerFor]="modQueueMenu"
         >
-          <mat-icon>how_to_reg</mat-icon>
+          <mat-icon>front_hand</mat-icon>
           @if (pendingRequests().length > 0) {
             <span class="header-badge-count" id="pendingReqBadge">
               {{ pendingRequests().length }}
@@ -107,26 +118,68 @@
           }
         </button>
         <mat-menu #modQueueMenu="matMenu" class="jtalk-menu mod-queue-menu" xPosition="before">
-          <div class="mod-menu-section-label">Raised hands ({{ pendingRequests().length }})</div>
+          <div class="mod-menu-header">
+            <span class="mod-menu-section-label">Raised hands</span>
+            <span class="mod-menu-count">{{ pendingRequests().length }}</span>
+          </div>
           @if (pendingRequests().length === 0) {
-            <div class="mod-menu-empty">No raised hands right now.</div>
+            <div class="mod-menu-empty">
+              <mat-icon aria-hidden="true">front_hand</mat-icon>
+              <span>No raised hands right now.</span>
+            </div>
           } @else {
-            @for (req of pendingRequests(); track req.id) {
-              <div class="mod-req-row">
-                <span class="mod-req-name">{{ req.name }}</span>
-                <div class="mod-req-actions">
+            <div class="mod-req-list" role="list" aria-label="Raised hands queue">
+              @for (req of pendingRequests(); track req.id) {
+                <div class="mod-req-row" role="listitem" [attr.data-request-id]="req.id">
                   <button
-                    matIconButton
                     type="button"
-                    class="mod-req-btn is-approve"
-                    [attr.aria-label]="'Bring ' + req.name + ' to stage'"
-                    (click)="$event.stopPropagation(); approveRequest.emit(req.id)"
+                    class="mod-req-user"
+                    [attr.aria-label]="'View ' + req.name + '\'s profile'"
+                    (click)="viewRequestProfile.emit(req.id)"
                   >
-                    <mat-icon>check</mat-icon>
+                    <span class="mod-req-avatar" [class]="req.chipClass" aria-hidden="true">
+                      @if (req.avatarUrl; as url) {
+                        <img
+                          [src]="url"
+                          alt=""
+                          referrerpolicy="no-referrer"
+                          width="36"
+                          height="36"
+                        />
+                      } @else {
+                        {{ req.initial }}
+                      }
+                    </span>
+                    <span class="mod-req-meta">
+                      <span class="mod-req-name">{{ req.name }}</span>
+                      <span class="mod-req-sub">#{{ req.position }} in queue · Profile</span>
+                    </span>
                   </button>
+                  <div class="mod-req-actions">
+                    <button
+                      matIconButton
+                      type="button"
+                      class="mod-req-btn is-approve"
+                      matTooltip="Bring to stage"
+                      [attr.aria-label]="'Bring ' + req.name + ' to stage'"
+                      (click)="$event.stopPropagation(); approveRequest.emit(req.id)"
+                    >
+                      <mat-icon>check</mat-icon>
+                    </button>
+                    <button
+                      matIconButton
+                      type="button"
+                      class="mod-req-btn is-reject"
+                      matTooltip="Lower hand"
+                      [attr.aria-label]="'Lower ' + req.name + '\'s hand'"
+                      (click)="$event.stopPropagation(); dismissRequest.emit(req.id)"
+                    >
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            }
+              }
+            </div>
           }
         </mat-menu>
       }

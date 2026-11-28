@@ -10,6 +10,7 @@ import type {
   SpeakerMenuAction,
   StageReaction,
 } from '../../models/live-room.model';
+import { canModerateTargetUser } from '../../utils/room-moderation.utils';
 
 @Component({
   selector: 'app-room-stage',
@@ -26,6 +27,10 @@ export class RoomStage {
   readonly speakerReactions = input<ReadonlyMap<string, string>>(new Map());
 
   readonly isHost = input(false);
+  readonly canModerate = input(false);
+  readonly hostId = input<string | null>(null);
+  readonly moderatorIds = input<ReadonlySet<string>>(new Set());
+  readonly chatMutedUsers = input<ReadonlySet<string>>(new Set());
   readonly hasOpenSeat = input(false);
   readonly canUseMic = input(true);
   readonly pinnedMessage = input<DiscussionMessage | null>(null);
@@ -35,17 +40,35 @@ export class RoomStage {
   readonly claimSeat = output<void>();
   readonly unpinMessage = output<void>();
 
+  readonly effectiveCanModerate = computed(() => this.isHost() || this.canModerate());
+
   readonly stageColumns = computed<2 | 3 | 4>(() => {
     const slots = this.speakers().length + (this.hasOpenSeat() ? 1 : 0);
     return slots <= 2 ? 2 : slots === 3 ? 3 : 4;
   });
 
   canModerateTarget(speaker: RoomSpeaker): boolean {
+    if (speaker.isYou || speaker.role === 'host') return false;
+    return canModerateTargetUser({
+      isHost: this.isHost(),
+      isModerator: this.canModerate() && !this.isHost(),
+      currentUserId: '',
+      hostId: this.hostId(),
+      moderatorIds: this.moderatorIds(),
+      targetUserId: speaker.id,
+    });
+  }
+
+  canTransferHost(speaker: RoomSpeaker): boolean {
     return this.isHost() && !speaker.isYou && speaker.role !== 'host';
   }
 
   canMuteSpeaker(speaker: RoomSpeaker): boolean {
     return (Boolean(speaker.isYou) && this.canUseMic()) || this.canModerateTarget(speaker);
+  }
+
+  isHostMuted(speaker: RoomSpeaker): boolean {
+    return speaker.muted && speaker.muteReason === 'host';
   }
 
   canLeaveOwnStage(speaker: RoomSpeaker): boolean {
@@ -62,11 +85,13 @@ export class RoomStage {
     const role = speaker.role === 'host' ? 'Host' : 'Speaker';
     const state = speaker.reconnecting
       ? 'reconnecting'
-      : speaker.muted
-        ? 'muted'
-        : speaker.speaking
-          ? 'speaking'
-          : 'microphone on';
+      : this.isHostMuted(speaker)
+        ? 'muted by host'
+        : speaker.muted
+          ? 'muted'
+          : speaker.speaking
+            ? 'speaking'
+            : 'microphone on';
     return `${speaker.name}, ${role}, ${state}. Open speaker options`;
   }
 

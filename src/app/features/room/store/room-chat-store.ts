@@ -370,13 +370,22 @@ export class RoomChatStore {
   muteChatUser(targetUserId: string, onDone?: (res: ActionFeedback) => void): void {
     if (this.pendingMuteUserIds.has(targetUserId)) return;
     this.pendingMuteUserIds.add(targetUserId);
+    const wasMuted = this.chatMutedUsers().has(targetUserId);
+    const generation = this.stageStore.generation();
     this.stageStore.runRoomCommand(
       (id) =>
-        this.chatMutedUsers().has(targetUserId)
+        wasMuted
           ? this.voiceRoomApi.unmuteChatUser(id, targetUserId)
           : this.voiceRoomApi.muteChatUser(id, targetUserId),
-      'Could not update chat mute.',
-      undefined,
+      wasMuted ? 'Could not unmute user in chat.' : 'Could not mute user in chat.',
+      () => {
+        if (generation === this.stageStore.generation()) {
+          this.applyChatRealtimeEvent({
+            type: wasMuted ? 'CHAT_UNMUTED' : 'CHAT_MUTED',
+            targetUserId,
+          });
+        }
+      },
       (res) => {
         this.pendingMuteUserIds.delete(targetUserId);
         onDone?.(res);

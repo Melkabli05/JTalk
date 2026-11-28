@@ -119,6 +119,9 @@ export interface RoomJoinSnapshot {
   readonly audienceCount: number;
   readonly audience: AudiencePage;
   readonly handRaiseQueue: readonly string[];
+  readonly handRaiseProfiles?: readonly ParticipantPreview[];
+  readonly hostMuted?: readonly string[];
+  readonly moderators?: readonly string[];
   readonly chat: ChatStateDto;
 }
 
@@ -133,6 +136,7 @@ export interface StageDto {
   readonly speakers: readonly string[];
   readonly handRaiseQueue: readonly string[];
   readonly moderators?: readonly string[];
+  readonly hostMuted?: readonly string[];
 }
 
 export interface RoomCommentDto {
@@ -198,6 +202,8 @@ export interface RoomRealtimeEvent {
     | 'HAND_LOWERED'
     | 'SPEAKER_RECONNECTING'
     | 'SPEAKER_RECONNECTED'
+    | 'SPEAKER_MUTED'
+    | 'SPEAKER_UNMUTED'
     | 'PRESENCE_CHANGED'
     | 'ROOM_UPDATED'
     | 'REACTIONS'

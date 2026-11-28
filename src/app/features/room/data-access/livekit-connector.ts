@@ -15,6 +15,8 @@ const ROOM_EVENT_TYPES = new Set<string>([
   'HAND_LOWERED',
   'SPEAKER_RECONNECTING',
   'SPEAKER_RECONNECTED',
+  'SPEAKER_MUTED',
+  'SPEAKER_UNMUTED',
   'PRESENCE_CHANGED',
   'ROOM_UPDATED',
   'REACTIONS',
@@ -142,7 +144,32 @@ export async function defaultLiveKitConnector(
     }
   };
 
+  const syncParticipantMicState = (participant: Participant): void => {
+    const micPub = participant.getTrackPublication(Track.Source.Microphone);
+    listener.onMicrophoneMuted(
+      participant.identity,
+      micPub ? micPub.isMuted : true,
+      participant === room.localParticipant,
+    );
+  };
+
   room
+    .on(RoomEvent.ParticipantConnected, (participant) => {
+      syncParticipantMicState(participant);
+    })
+    .on(RoomEvent.TrackPublished, (publication, participant) => {
+      reportMicState(publication, participant);
+    })
+    .on(RoomEvent.TrackUnpublished, (publication, participant) => {
+      if (publication.source === Track.Source.Microphone) {
+        listener.onMicrophoneMuted(participant.identity, true, false);
+      }
+    })
+    .on(RoomEvent.LocalTrackUnpublished, (publication, participant) => {
+      if (publication.source === Track.Source.Microphone) {
+        listener.onMicrophoneMuted(participant.identity, true, true);
+      }
+    })
     .on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
       if (track.kind === Track.Kind.Audio) {
         audioHost.append(track.attach());
@@ -238,6 +265,9 @@ export async function defaultLiveKitConnector(
     throw err;
   }
 
+  for (const participant of room.remoteParticipants.values()) {
+    syncParticipantMicState(participant);
+  }
   listener.onSoundBlocked(!room.canPlaybackAudio);
   return {
     setMicrophone: async (enabled: boolean) => {

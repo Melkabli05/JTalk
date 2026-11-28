@@ -12,7 +12,7 @@
     </div>
 
     <div class="disc-head-actions">
-      @if (isHost()) {
+      @if (effectiveCanModerate()) {
         <button
           matIconButton
           type="button"
@@ -38,7 +38,7 @@
     </div>
   </div>
 
-  @if (editingTopic() && isHost()) {
+  @if (editingTopic() && effectiveCanModerate()) {
     <form class="topic-editor-form" (submit)="onSaveTopic($event, topic.value)">
       <mat-form-field class="topic-editor-field" subscriptSizing="dynamic">
         <mat-label>Pinned chat topic</mat-label>
@@ -71,7 +71,7 @@
         <span class="disc-pinned-topic-label">Topic</span>
         <p class="disc-pinned-topic-text">{{ topic }}</p>
       </div>
-      @if (isHost()) {
+      @if (effectiveCanModerate()) {
         <div class="disc-pinned-topic-actions">
           <button
             type="button"
@@ -456,7 +456,7 @@
           <span>Reply in thread</span>
         </button>
       }
-      @if (isHost() && canPinMessage(msg)) {
+      @if (effectiveCanModerate() && canPinMessage(msg)) {
         <button
           mat-menu-item
           type="button"
@@ -464,7 +464,7 @@
         >
           <mat-icon>push_pin</mat-icon>
           <span>{{ pinnedMessageId() === msg.id ? 'Unpin from stage' : 'Pin to Stage' }}</span>
-          <span class="ca-chip-inline">Host</span>
+          <span class="ca-chip-inline">{{ isHost() ? 'Host' : 'Mod' }}</span>
         </button>
       }
       @if (canCopyMessage(msg)) {
@@ -477,17 +477,17 @@
           <span>Copy</span>
         </button>
       }
-      @if (isHost() && !msg.isYou && msg.authorId) {
+      @if (canMuteAuthorInChat(msg) && msg.authorId) {
         <button
           mat-menu-item
           type="button"
           (click)="commentAction.emit({ action: 'mute', message: msg })"
         >
-          <mat-icon>speaker_notes_off</mat-icon>
+          <mat-icon>{{ mutedUsers().has(msg.authorId) ? 'chat' : 'speaker_notes_off' }}</mat-icon>
           <span>{{ mutedUsers().has(msg.authorId) ? 'Unmute in chat' : 'Mute in chat' }}</span>
         </button>
       }
-      @if (isHost()) {
+      @if (canDeleteMessage(msg)) {
         <button
           mat-menu-item
           class="menu-item-danger"

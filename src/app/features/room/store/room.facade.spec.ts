@@ -103,4 +103,87 @@ describe('RoomFacade', () => {
     await vi.waitFor(() => expect(navSpy).toHaveBeenCalledWith(['/rooms']));
     http.verify();
   });
+
+  it('prunes raised hands when users leave, dismisses raised hands, toggles speaker mute/unmute, and updates chat mute state immediately', async () => {
+    const facade = TestBed.inject(RoomFacade);
+    const http = TestBed.inject(HttpTestingController);
+
+    facade.enterRoom('room-1');
+    http.expectOne('/api/v1/voice-rooms/room-1/participants/join').flush({
+      ...session,
+      room: {
+        ...room,
+        speakers: ['host', 'sp-1'],
+        participantCount: 4,
+        handRaiseCount: 2,
+      },
+      snapshot: {
+        ...session.snapshot,
+        speakers: [
+          { userId: 'host', displayName: 'Host', isReconnecting: false },
+          { userId: 'sp-1', displayName: 'Elena', isReconnecting: false },
+        ],
+        audienceCount: 2,
+        audience: {
+          audiencePreview: [
+            { userId: 'u-1', displayName: 'Amina', avatarUrl: 'https://cdn.example.com/a.png' },
+            { userId: 'u-2', displayName: 'Kenji', avatarUrl: null },
+          ],
+          nextCursor: null,
+          hasMoreAudience: false,
+        },
+        handRaiseQueue: ['u-1', 'u-2'],
+        handRaiseProfiles: [
+          { userId: 'u-1', displayName: 'Amina', avatarUrl: 'https://cdn.example.com/a.png' },
+          { userId: 'u-2', displayName: 'Kenji', avatarUrl: null },
+        ],
+        hostMuted: [],
+        moderators: [],
+      },
+    });
+    await vi.waitFor(() => expect(facade.pendingRequests().length).toBe(2));
+    expect(facade.pendingRequests()[0]?.avatarUrl).toBe('https://cdn.example.com/a.png');
+    expect(facade.pendingRequests()[0]?.position).toBe(1);
+
+    // Dismiss u-1's raised hand
+    facade.dismissHandRaise('room-1', 'u-1');
+    http
+      .expectOne({ method: 'DELETE', url: '/api/v1/voice-rooms/room-1/stage/raise-hand/u-1' })
+      .flush(null);
+    expect(facade.pendingRequests().map((r) => r.id)).toEqual(['u-2']);
+
+    // Mute and unmute remote speaker sp-1
+    const elenaSpeaker = facade.speakers().find((s) => s.id === 'sp-1')!;
+    const openProfile = vi.fn();
+    facade.speakerAction('room-1', { speaker: elenaSpeaker, action: 'mute' }, openProfile);
+    http.expectOne({ method: 'POST', url: '/api/v1/voice-rooms/room-1/stage/mute/sp-1' }).flush(null);
+    expect(facade.speakers().find((s) => s.id === 'sp-1')?.muteReason).toBe('host');
+
+    facade.speakerAction(
+      'room-1',
+      { speaker: facade.speakers().find((s) => s.id === 'sp-1')!, action: 'unmute' },
+      openProfile,
+    );
+    http
+      .expectOne({ method: 'DELETE', url: '/api/v1/voice-rooms/room-1/stage/mute/sp-1' })
+      .flush(null);
+    expect(facade.speakers().find((s) => s.id === 'sp-1')?.muteReason).toBeUndefined();
+
+    // Mute and unmute u-2 in chat — updates chatMutedUsers immediately on HTTP success
+    const kenjiListener = facade.listeners().find((l) => l.id === 'u-2')!;
+    facade.listenerAction('room-1', { listener: kenjiListener, action: 'mute-chat' }, openProfile);
+    http
+      .expectOne({ method: 'POST', url: '/api/v1/voice-rooms/room-1/comments/mute/u-2' })
+      .flush(null);
+    expect(facade.chatMutedUsers().has('u-2')).toBe(true);
+
+    facade.listenerAction('room-1', { listener: kenjiListener, action: 'mute-chat' }, openProfile);
+    http
+      .expectOne({ method: 'DELETE', url: '/api/v1/voice-rooms/room-1/comments/mute/u-2' })
+      .flush(null);
+    expect(facade.chatMutedUsers().has('u-2')).toBe(false);
+
+    http.verify();
+  });
 });
+

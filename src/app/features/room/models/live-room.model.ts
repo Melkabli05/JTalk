@@ -24,10 +24,24 @@ export type RoomConnectionState =
   | { readonly status: 'kicked'; readonly message: string }
   | { readonly status: 'error'; readonly message: string };
 
-export type ListenerMenuAction = 'stage' | 'approve' | 'profile' | 'transfer-host' | 'remove';
+export type ListenerMenuAction =
+  | 'stage'
+  | 'approve'
+  | 'dismiss-hand'
+  | 'profile'
+  | 'mute-chat'
+  | 'transfer-host'
+  | 'remove';
 
 export type SpeakerMenuAction =
-  'profile' | 'mute' | 'audience' | 'leave-stage' | 'remove' | 'transfer-host';
+  | 'profile'
+  | 'mute'
+  | 'unmute'
+  | 'mute-chat'
+  | 'audience'
+  | 'leave-stage'
+  | 'remove'
+  | 'transfer-host';
 
 export interface ConfirmActionDialogData {
   readonly title: string;
@@ -40,6 +54,9 @@ export interface ToolbarPendingRequest {
   readonly id: string;
   readonly name: string;
   readonly initial: string;
+  readonly avatarUrl?: string | null;
+  readonly chipClass: string;
+  readonly position: number;
 }
 
 export interface HostProfileDialogData {

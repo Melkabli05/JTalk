@@ -91,6 +91,8 @@ export class RoomFacade {
         : (this.stageStore.room()?.handRaiseCount ?? 0),
   );
   readonly isHost: Signal<boolean> = this.stageStore.isHost;
+  readonly hostId: Signal<string | null> = this.stageStore.hostId;
+  readonly moderatorIds: Signal<ReadonlySet<string>> = this.stageStore.moderatorIds;
   readonly pendingRequests = this.stageStore.pendingRequests;
 
   readonly audioStatus: Signal<LiveKitConnectionStatus> = this.roomStore.audio.status;
@@ -106,10 +108,10 @@ export class RoomFacade {
   readonly canUseMic: Signal<boolean> = this.roomStore.audio.canPublish;
   readonly mutedByHost: Signal<boolean> = computed(
     (): boolean =>
-      this.roomStore.audio.isMutedByHost() ||
-      (this.stageStore.isCurrentUserOnStage() &&
-        this.audioStatus() === 'connected' &&
-        !this.canUseMic()),
+      this.stageStore.isCurrentUserOnStage() &&
+      (this.roomStore.audio.isMutedByHost() ||
+        this.stageStore.hostMutedIds().has(this.stageStore.currentUserId()) ||
+        (this.audioStatus() === 'connected' && !this.canUseMic())),
   );
 
   readonly speakers: Signal<readonly RoomSpeaker[]> = this.stageStore.speakers;
@@ -200,6 +202,37 @@ export class RoomFacade {
     effect(() => {
       if (this.audioStatus() === 'connected' && this.soundBlocked()) {
         untracked(() => this.enableAudio());
+      }
+    });
+
+    let lastObservedRoomId: string | null = null;
+    let lastObservedChatMuted = false;
+    let lastObservedHostMuted = false;
+    effect(() => {
+      const activeRoomId = this.roomId();
+      const chatMuted = this.chatStore.isChatMuted();
+      const hostMuted = this.mutedByHost();
+      const onStage = this.stageStore.isCurrentUserOnStage();
+      if (activeRoomId !== lastObservedRoomId) {
+        lastObservedRoomId = activeRoomId;
+        lastObservedChatMuted = chatMuted;
+        lastObservedHostMuted = hostMuted;
+        return;
+      }
+      if (!activeRoomId) return;
+      if (chatMuted !== lastObservedChatMuted) {
+        lastObservedChatMuted = chatMuted;
+        untracked(() =>
+          this.toast.show(chatMuted ? 'You were muted in chat.' : 'You were unmuted in chat.'),
+        );
+      }
+      if (hostMuted !== lastObservedHostMuted) {
+        lastObservedHostMuted = hostMuted;
+        if (hostMuted) {
+          untracked(() => this.toast.show('Your microphone was muted by a host.'));
+        } else if (onStage) {
+          untracked(() => this.toast.show('Your microphone was unmuted by a host.'));
+        }
       }
     });
 
@@ -396,22 +429,22 @@ export class RoomFacade {
         if (speaker.isYou) {
           this.toggleMute(roomId);
         } else {
-          if (speaker.muteReason === 'self') {
-            this.stageStore.runRoomCommand(
-              (id) => this.voiceRoomApi.sendOpenMicInvitation(id, speaker.id),
-              'Could not send open mic invitation.',
-              undefined,
-              (res) => this.handleFeedback(roomId, res, `Sent open mic invitation to ${speaker.name}.`),
-            );
-          } else {
-            this.stageStore.runRoomCommand(
-              (id) => this.voiceRoomApi.muteSpeaker(id, speaker.id),
-              'Could not mute speaker.',
-              undefined,
-              (res) => this.handleFeedback(roomId, res, `Muted ${speaker.name}.`),
-            );
-          }
+          this.stageStore.setSpeakerHostMuted(speaker.id, true, (res) =>
+            this.handleFeedback(roomId, res, `Muted ${speaker.name}.`),
+          );
         }
+        return;
+      case 'unmute':
+        if (speaker.isYou) {
+          this.toggleMute(roomId);
+        } else {
+          this.stageStore.setSpeakerHostMuted(speaker.id, false, (res) =>
+            this.handleFeedback(roomId, res, `Unmuted ${speaker.name}.`),
+          );
+        }
+        return;
+      case 'mute-chat':
+        this.toggleChatMuteForUser(roomId, speaker.id, speaker.name);
         return;
       case 'leave-stage':
         this.leaveStage(roomId);
@@ -459,12 +492,15 @@ export class RoomFacade {
     switch (action) {
       case 'stage':
       case 'approve':
-        this.stageStore.runRoomCommand(
-          (id) => this.voiceRoomApi.promoteSpeaker(id, listener.id),
-          'Could not promote to stage.',
-          undefined,
-          (res) => this.handleFeedback(roomId, res, `${listener.name} moved to stage.`),
+        this.stageStore.promoteToStage(listener.id, (res) =>
+          this.handleFeedback(roomId, res, `${listener.name} moved to stage.`),
         );
+        return;
+      case 'dismiss-hand':
+        this.dismissHandRaise(roomId, listener.id, listener.name);
+        return;
+      case 'mute-chat':
+        this.toggleChatMuteForUser(roomId, listener.id, listener.name);
         return;
       case 'transfer-host':
         this.stageStore.runRoomCommand(
@@ -498,7 +534,10 @@ export class RoomFacade {
   }
 
   toggleHand(roomId: string): void {
-    this.stageStore.toggleHandRaised((res) => this.handleFeedback(roomId, res));
+    const wasRaised = this.handRaised();
+    this.stageStore.toggleHandRaised((res) =>
+      this.handleFeedback(roomId, res, wasRaised ? 'Hand lowered.' : 'Hand raised.'),
+    );
   }
 
   claimStageSeat(roomId: string): void {
@@ -510,11 +549,27 @@ export class RoomFacade {
   }
 
   approveRequest(roomId: string, targetId: string): void {
-    this.stageStore.runRoomCommand(
-      (id) => this.voiceRoomApi.promoteSpeaker(id, targetId),
-      'Could not promote to stage.',
-      undefined,
-      (res) => this.handleFeedback(roomId, res, 'Promoted to stage.'),
+    const name = this.stageStore.resolveDisplayName(targetId, 'Listener');
+    this.stageStore.promoteToStage(targetId, (res) =>
+      this.handleFeedback(roomId, res, `${name} moved to stage.`),
+    );
+  }
+
+  dismissHandRaise(roomId: string, targetId: string, name?: string): void {
+    const label = name ?? this.stageStore.resolveDisplayName(targetId, 'Listener');
+    this.stageStore.dismissHandRaise(targetId, (res) =>
+      this.handleFeedback(roomId, res, `Lowered ${label}'s hand.`),
+    );
+  }
+
+  toggleChatMuteForUser(roomId: string, targetUserId: string, displayName: string): void {
+    const wasMuted = this.chatStore.chatMutedUsers().has(targetUserId);
+    this.chatStore.muteChatUser(targetUserId, (res) =>
+      this.handleFeedback(
+        roomId,
+        res,
+        wasMuted ? `Unmuted ${displayName} in chat.` : `Muted ${displayName} in chat.`,
+      ),
     );
   }
 
@@ -621,9 +676,7 @@ export class RoomFacade {
       }
       case 'mute':
         if (message.authorId) {
-          this.chatStore.muteChatUser(message.authorId, (res) =>
-            this.handleFeedback(roomId, res, `Updated chat mute for ${message.author}.`),
-          );
+          this.toggleChatMuteForUser(roomId, message.authorId, message.author);
         }
         return;
       case 'delete':

@@ -14,7 +14,7 @@
       <span class="stage-pinned-text">
         <strong>{{ pinned.author }}:</strong> {{ pinned.text }}
       </span>
-      @if (isHost()) {
+      @if (effectiveCanModerate()) {
         <button
           matIconButton
           type="button"
@@ -107,8 +107,9 @@
           } @else if (speaker.muted) {
             <span
               class="speaker-badge speaker-badge-mic is-muted"
+              [class.is-host-muted]="isHostMuted(speaker)"
               [attr.id]="speaker.isYou ? 'hostMicBadge' : null"
-              title="Muted"
+              [title]="isHostMuted(speaker) ? 'Muted by host' : 'Muted'"
               aria-hidden="true"
             >
               <mat-icon>mic_off</mat-icon>
@@ -172,22 +173,34 @@
       </button>
 
       @if (canMuteSpeaker(speaker)) {
-        <button
-          mat-menu-item
-          type="button"
-          (click)="speakerAction.emit({ action: 'mute', speaker })"
-        >
-          <mat-icon>
-            {{ speaker.isYou ? (speaker.muted ? 'mic' : 'mic_off') : 'mic_off' }}
-          </mat-icon>
-          <span>
-            @if (speaker.isYou) {
-              {{ speaker.muted ? 'Unmute microphone' : 'Mute microphone' }}
-            } @else {
-              Mute speaker
-            }
-          </span>
-        </button>
+        @if (speaker.isYou) {
+          <button
+            mat-menu-item
+            type="button"
+            (click)="speakerAction.emit({ action: 'mute', speaker })"
+          >
+            <mat-icon>{{ speaker.muted ? 'mic' : 'mic_off' }}</mat-icon>
+            <span>{{ speaker.muted ? 'Unmute microphone' : 'Mute microphone' }}</span>
+          </button>
+        } @else if (isHostMuted(speaker)) {
+          <button
+            mat-menu-item
+            type="button"
+            (click)="speakerAction.emit({ action: 'unmute', speaker })"
+          >
+            <mat-icon>mic</mat-icon>
+            <span>Unmute speaker</span>
+          </button>
+        } @else {
+          <button
+            mat-menu-item
+            type="button"
+            (click)="speakerAction.emit({ action: 'mute', speaker })"
+          >
+            <mat-icon>mic_off</mat-icon>
+            <span>Mute speaker</span>
+          </button>
+        }
       }
 
       @if (canLeaveOwnStage(speaker)) {
@@ -205,21 +218,32 @@
         <button
           mat-menu-item
           type="button"
+          (click)="speakerAction.emit({ action: 'mute-chat', speaker })"
+        >
+          <mat-icon>{{ chatMutedUsers().has(speaker.id) ? 'chat' : 'speaker_notes_off' }}</mat-icon>
+          <span>{{ chatMutedUsers().has(speaker.id) ? 'Unmute in chat' : 'Mute in chat' }}</span>
+        </button>
+
+        <button
+          mat-menu-item
+          type="button"
           (click)="speakerAction.emit({ action: 'audience', speaker })"
         >
           <mat-icon>arrow_downward</mat-icon>
           <span>Move to audience</span>
         </button>
 
-        <button
-          mat-menu-item
-          type="button"
-          (click)="speakerAction.emit({ action: 'transfer-host', speaker })"
-        >
-          <mat-icon>swap_horiz</mat-icon>
-          <span>Transfer host</span>
-          <span class="ca-chip-inline">Host</span>
-        </button>
+        @if (canTransferHost(speaker)) {
+          <button
+            mat-menu-item
+            type="button"
+            (click)="speakerAction.emit({ action: 'transfer-host', speaker })"
+          >
+            <mat-icon>swap_horiz</mat-icon>
+            <span>Transfer host</span>
+            <span class="ca-chip-inline">Host</span>
+          </button>
+        }
 
         <button
           mat-menu-item

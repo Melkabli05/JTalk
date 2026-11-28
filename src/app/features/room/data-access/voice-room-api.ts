@@ -83,6 +83,10 @@ export class VoiceRoomApi {
     return this.mutate('DELETE', roomId, 'stage/raise-hand');
   }
 
+  dismissHandRaise(roomId: string, targetUserId: string): Observable<void> {
+    return this.mutate('DELETE', roomId, `stage/raise-hand/${encodeURIComponent(targetUserId)}`);
+  }
+
   promoteSpeaker(roomId: string, targetUserId: string): Observable<void> {
     return this.mutate('POST', roomId, `stage/promote/${encodeURIComponent(targetUserId)}`);
   }
@@ -101,6 +105,10 @@ export class VoiceRoomApi {
 
   muteSpeaker(roomId: string, targetUserId: string): Observable<void> {
     return this.mutate('POST', roomId, `stage/mute/${encodeURIComponent(targetUserId)}`);
+  }
+
+  unmuteSpeaker(roomId: string, targetUserId: string): Observable<void> {
+    return this.mutate('DELETE', roomId, `stage/mute/${encodeURIComponent(targetUserId)}`);
   }
 
   updateSelfMute(roomId: string, muted: boolean): Observable<void> {

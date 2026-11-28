@@ -24,7 +24,13 @@ import type {
   RoomListener,
   RoomSpeaker,
   StageReaction,
+  ToolbarPendingRequest,
 } from '../models/live-room.model';
+import {
+  deriveSpeakerMuteState,
+  orderListenersByRaisedHand,
+  pruneHandRaiseQueue,
+} from '../utils/room-moderation.utils';
 
 @Service()
 export class RoomStageStore {
@@ -54,15 +60,18 @@ export class RoomStageStore {
   private readonly hostReconnectingState = signal(false);
   private readonly idleWarningState = signal(false);
   private readonly moderatorIdsState = signal<ReadonlySet<string>>(new Set());
+  private readonly hostMutedIdsState = signal<ReadonlySet<string>>(new Set());
   private readonly reactionTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private nextReactionId = 0;
   private nextReactionLane = 0;
 
   readonly room = this.roomState.asReadonly();
   readonly roomId = computed(() => this.room()?.id ?? null);
+  readonly hostId = computed(() => this.room()?.hostId ?? null);
   readonly currentUserId = computed(() => this.identity.userId() ?? '');
   readonly isHost = computed(() => this.roleState() === 'HOST');
   readonly moderatorIds = this.moderatorIdsState.asReadonly();
+  readonly hostMutedIds = this.hostMutedIdsState.asReadonly();
   readonly isModerator = computed(() => this.moderatorIdsState().has(this.currentUserId()));
   readonly canModerate = computed(() => this.isHost() || this.isModerator());
   readonly isCurrentUserOnStage = computed(() =>
@@ -108,16 +117,29 @@ export class RoomStageStore {
     const myId = this.currentUserId();
     const activeIds = this.audio.speakingIdSet();
     const mutedIds = this.audio.mutedIdSet();
+    const hostMutedIds = this.hostMutedIdsState();
+    const localMicOn = this.audio.micOn();
+    const localMutedByHost =
+      this.audio.isMutedByHost() ||
+      (this.audio.status() === 'connected' && !this.audio.canPublish());
     const reconnectingIds = this.reconnectingSpeakerIdsState();
     return this.stage().speakers.map((userId) => {
       const isYou = userId === myId;
-      const muted = isYou ? !this.audio.micOn() : mutedIds.has(userId);
+      const { muted, muteReason } = deriveSpeakerMuteState({
+        userId,
+        isYou,
+        localMicOn,
+        localMutedByHost,
+        hostMutedIds,
+        remoteMutedIds: mutedIds,
+      });
       const reconnecting = reconnectingIds.has(userId);
       return {
         ...this.resolveParticipantCard(userId, 'Speaker'),
         role: hostId === userId ? 'host' : 'speaker',
         isYou,
         muted,
+        ...(muteReason ? { muteReason } : {}),
         speaking: activeIds.has(userId) && !muted && !reconnecting,
         reconnecting,
       };
@@ -125,18 +147,22 @@ export class RoomStageStore {
   });
 
   readonly listeners = computed<readonly RoomListener[]>(() => {
-    const speakerSet = new Set(this.stage().speakers);
-    const handQueue = new Set(this.stage().handRaiseQueue);
-    return this.audienceIds()
-      .filter((userId) => !speakerSet.has(userId))
-      .map((userId) => ({
+    const stage = this.stage();
+    const speakerSet = new Set(stage.speakers);
+    const handQueue = new Set(stage.handRaiseQueue);
+    return orderListenersByRaisedHand(this.audienceIds(), stage.handRaiseQueue, speakerSet).map(
+      (userId) => ({
         ...this.resolveParticipantCard(userId, 'Listener'),
         handRaised: handQueue.has(userId),
-      }));
+      }),
+    );
   });
 
-  readonly pendingRequests = computed(() =>
-    this.stage().handRaiseQueue.map((userId) => this.resolveParticipantCard(userId, 'Listener')),
+  readonly pendingRequests = computed<readonly ToolbarPendingRequest[]>(() =>
+    this.stage().handRaiseQueue.map((userId, index) => ({
+      ...this.resolveParticipantCard(userId, 'Listener'),
+      position: index + 1,
+    })),
   );
 
   readonly handRaised = computed(() => {
@@ -211,6 +237,7 @@ export class RoomStageStore {
     this.roleState.set(session.role);
     const myId = this.currentUserId();
     this.moderatorIdsState.set(session.isModerator && myId ? new Set([myId]) : new Set());
+    this.hostMutedIdsState.set(session.isMutedByHost && myId ? new Set([myId]) : new Set());
     this.roomState.set(session.room);
     this.stageState.set({ speakers: session.room.speakers, handRaiseQueue: [] });
     const existing = this.identity.userDirectory();
@@ -237,15 +264,37 @@ export class RoomStageStore {
   }
 
   applyJoinSnapshot(snapshot: RoomJoinSnapshot): void {
-    this.cachePreviews([...snapshot.speakers, ...snapshot.audience.audiencePreview]);
+    this.cachePreviews([
+      ...snapshot.speakers,
+      ...snapshot.audience.audiencePreview,
+      ...(snapshot.handRaiseProfiles ?? []),
+    ]);
+    const speakerIds = snapshot.speakers.map(({ userId }) => userId);
+    const speakerSet = new Set(speakerIds);
+    const prunedQueue = pruneHandRaiseQueue(snapshot.handRaiseQueue, new Set(), speakerSet);
     this.reconnectingSpeakerIdsState.set(
       new Set(snapshot.speakers.filter((s) => s.isReconnecting).map((s) => s.userId)),
     );
+    if (snapshot.moderators) {
+      this.moderatorIdsState.set(new Set(snapshot.moderators));
+    }
+    if (snapshot.hostMuted) {
+      const nextMuted = new Set(snapshot.hostMuted.filter((id) => speakerSet.has(id)));
+      const myId = this.currentUserId();
+      if (this.audio.isMutedByHost() && myId && speakerSet.has(myId)) {
+        nextMuted.add(myId);
+      }
+      this.hostMutedIdsState.set(nextMuted);
+    }
     this.stageState.set({
-      speakers: snapshot.speakers.map(({ userId }) => userId),
-      handRaiseQueue: snapshot.handRaiseQueue,
+      speakers: speakerIds,
+      handRaiseQueue: prunedQueue,
     });
+    this.roomState.update((room): VoiceRoomDto | null =>
+      room ? { ...room, speakers: speakerIds, handRaiseCount: prunedQueue.length } : null,
+    );
     this.applySnapshotAudience(snapshot);
+    this.resolveMissingUsers(prunedQueue);
   }
 
   applyResyncSnapshot(
@@ -254,19 +303,46 @@ export class RoomStageStore {
   ): void {
     if (this.room() === before.room && this.stage() === before.stage) {
       this.roleState.set(res.role);
+      const myId = this.currentUserId();
+      if (res.snapshot.moderators) {
+        this.moderatorIdsState.set(new Set(res.snapshot.moderators));
+      } else if (res.isModerator !== undefined && myId) {
+        this.moderatorIdsState.update((prev) => {
+          const next = new Set(prev);
+          if (res.isModerator) next.add(myId);
+          else next.delete(myId);
+          return next;
+        });
+      }
     }
     if (this.room() === before.room) {
       this.roomState.set(res.room);
     }
-    this.cachePreviews([...res.snapshot.speakers, ...res.snapshot.audience.audiencePreview]);
+    this.cachePreviews([
+      ...res.snapshot.speakers,
+      ...res.snapshot.audience.audiencePreview,
+      ...(res.snapshot.handRaiseProfiles ?? []),
+    ]);
     if (this.stage() === before.stage) {
+      const speakerIds = res.snapshot.speakers.map(({ userId }) => userId);
+      const speakerSet = new Set(speakerIds);
+      const prunedQueue = pruneHandRaiseQueue(res.snapshot.handRaiseQueue, new Set(), speakerSet);
       this.reconnectingSpeakerIdsState.set(
         new Set(res.snapshot.speakers.filter((s) => s.isReconnecting).map((s) => s.userId)),
       );
+      if (res.snapshot.hostMuted) {
+        this.hostMutedIdsState.set(
+          new Set(res.snapshot.hostMuted.filter((id) => speakerSet.has(id))),
+        );
+      }
       this.stageState.set({
-        speakers: res.snapshot.speakers.map(({ userId }) => userId),
-        handRaiseQueue: res.snapshot.handRaiseQueue,
+        speakers: speakerIds,
+        handRaiseQueue: prunedQueue,
       });
+      this.roomState.update((room): VoiceRoomDto | null =>
+        room ? { ...room, speakers: speakerIds, handRaiseCount: prunedQueue.length } : null,
+      );
+      this.resolveMissingUsers(prunedQueue);
     }
     if (this.audienceIds() === before.audience) {
       this.applySnapshotAudience(res.snapshot);
@@ -403,16 +479,87 @@ export class RoomStageStore {
   toggleHandRaised(onDone?: (res: ActionFeedback) => void): void {
     if (this.togglingHandState()) return;
     const generation = this.sessionGeneration;
+    const wasRaised = this.handRaised();
+    const myId = this.currentUserId();
     this.togglingHandState.set(true);
     this.runRoomCommand(
-      (id) =>
-        this.handRaised() ? this.voiceRoomApi.lowerHand(id) : this.voiceRoomApi.raiseHand(id),
+      (id) => (wasRaised ? this.voiceRoomApi.lowerHand(id) : this.voiceRoomApi.raiseHand(id)),
       'Could not update hand state.',
-      undefined,
+      () => {
+        if (generation !== this.sessionGeneration || !myId) return;
+        this.stageState.update((curr) => {
+          const nextQueue = wasRaised
+            ? curr.handRaiseQueue.filter((uid) => uid !== myId)
+            : curr.handRaiseQueue.includes(myId)
+              ? curr.handRaiseQueue
+              : [...curr.handRaiseQueue, myId];
+          return { ...curr, handRaiseQueue: nextQueue };
+        });
+        this.syncRoomHandCount();
+      },
       (res) => {
         if (generation === this.sessionGeneration) this.togglingHandState.set(false);
         onDone?.(res);
       },
+    );
+  }
+
+  dismissHandRaise(targetUserId: string, onDone?: (res: ActionFeedback) => void): void {
+    const generation = this.sessionGeneration;
+    this.runRoomCommand(
+      (id) => this.voiceRoomApi.dismissHandRaise(id, targetUserId),
+      'Could not dismiss raised hand.',
+      () => {
+        if (generation !== this.sessionGeneration) return;
+        this.stageState.update((curr) => ({
+          ...curr,
+          handRaiseQueue: curr.handRaiseQueue.filter((uid) => uid !== targetUserId),
+        }));
+        this.syncRoomHandCount();
+      },
+      onDone,
+    );
+  }
+
+  promoteToStage(targetUserId: string, onDone?: (res: ActionFeedback) => void): void {
+    const generation = this.sessionGeneration;
+    this.runRoomCommand(
+      (id) => this.voiceRoomApi.promoteSpeaker(id, targetUserId),
+      'Could not promote to stage.',
+      () => {
+        if (generation !== this.sessionGeneration) return;
+        this.updateHostMutedId(targetUserId, false);
+        this.stageState.update((curr) => {
+          const speakers = curr.speakers.includes(targetUserId)
+            ? curr.speakers
+            : [...curr.speakers, targetUserId];
+          const handRaiseQueue = curr.handRaiseQueue.filter((uid) => uid !== targetUserId);
+          return { ...curr, speakers, handRaiseQueue };
+        });
+        this.audienceIdsState.update((ids) => ids.filter((uid) => uid !== targetUserId));
+        this.syncRoomHandCount();
+      },
+      onDone,
+    );
+  }
+
+  setSpeakerHostMuted(
+    targetUserId: string,
+    muted: boolean,
+    onDone?: (res: ActionFeedback) => void,
+  ): void {
+    const generation = this.sessionGeneration;
+    this.runRoomCommand(
+      (id) =>
+        muted
+          ? this.voiceRoomApi.muteSpeaker(id, targetUserId)
+          : this.voiceRoomApi.unmuteSpeaker(id, targetUserId),
+      muted ? 'Could not mute speaker.' : 'Could not unmute speaker.',
+      () => {
+        if (generation !== this.sessionGeneration) return;
+        this.updateHostMutedId(targetUserId, muted);
+      },
+      onDone,
     );
   }
 
@@ -430,15 +577,30 @@ export class RoomStageStore {
         const prevSpeakers = this.stage().speakers;
         const prevSpeakerSet = new Set(prevSpeakers);
         const nextSpeakerSet = new Set(nextStage.speakers);
+        const prunedQueue = pruneHandRaiseQueue(nextStage.handRaiseQueue, new Set(), nextSpeakerSet);
+        const normalizedStage: StageDto = { ...nextStage, handRaiseQueue: prunedQueue };
         const demoted = prevSpeakers.filter((id) => !nextSpeakerSet.has(id));
         const promotedCount = nextStage.speakers.filter((id) => !prevSpeakerSet.has(id)).length;
 
-        this.stageState.set(nextStage);
+        this.stageState.set(normalizedStage);
+        if (nextStage.moderators) {
+          this.moderatorIdsState.set(new Set(nextStage.moderators));
+        }
+        if (nextStage.hostMuted) {
+          this.hostMutedIdsState.set(
+            new Set(nextStage.hostMuted.filter((id) => nextSpeakerSet.has(id))),
+          );
+        } else {
+          this.hostMutedIdsState.update((prev) => {
+            const kept = new Set([...prev].filter((id) => nextSpeakerSet.has(id)));
+            return kept.size === prev.size ? prev : kept;
+          });
+        }
         if (!this.isHost()) {
           const onStage = nextSpeakerSet.has(this.currentUserId());
           this.roleState.set(onStage ? 'SPEAKER' : 'LISTENER');
           if (!onStage) {
-            void this.audio.setMicrophone(false);
+            void this.audio.setMicrophone(false, false);
           }
         }
         if (demoted.length > 0 || promotedCount > 0) {
@@ -453,21 +615,77 @@ export class RoomStageStore {
           );
         }
         this.roomState.update((room): VoiceRoomDto | null =>
-          room ? { ...room, speakers: nextStage.speakers } : null,
+          room
+            ? {
+                ...room,
+                speakers: normalizedStage.speakers,
+                handRaiseCount: prunedQueue.length,
+              }
+            : null,
         );
-        this.resolveMissingUsers([...nextStage.speakers, ...nextStage.handRaiseQueue, ...demoted]);
+        this.resolveMissingUsers([...normalizedStage.speakers, ...prunedQueue, ...demoted]);
+        return;
+      }
+      case 'SPEAKER_MUTED': {
+        const userId = event.targetUserId;
+        if (!userId) return;
+        this.updateHostMutedId(userId, true);
+        if (userId === this.currentUserId()) {
+          this.audio.applyHostMute(true);
+        }
+        return;
+      }
+      case 'SPEAKER_UNMUTED': {
+        const userId = event.targetUserId;
+        if (!userId) return;
+        this.updateHostMutedId(userId, false);
+        if (userId === this.currentUserId()) {
+          this.audio.applyHostMute(false);
+        }
         return;
       }
       case 'PRESENCE_CHANGED': {
         const presence = event.presence;
         if (!presence) return;
         const speakers = new Set(this.stage().speakers);
+        const leftSet = new Set(presence.left);
         if (presence.audienceCount !== undefined)
           this.audienceCountState.set(presence.audienceCount);
+
+        let prunedHandCount = this.stage().handRaiseQueue.length;
+        if (leftSet.size > 0) {
+          const nextQueue = pruneHandRaiseQueue(this.stage().handRaiseQueue, leftSet, speakers);
+          prunedHandCount = nextQueue.length;
+          if (nextQueue !== this.stage().handRaiseQueue) {
+            this.stageState.update((curr) => ({ ...curr, handRaiseQueue: nextQueue }));
+          }
+          this.hostMutedIdsState.update((prev) => {
+            let changed = false;
+            const next = new Set(prev);
+            for (const uid of leftSet) {
+              if (next.delete(uid)) changed = true;
+            }
+            return changed ? next : prev;
+          });
+          this.reconnectingSpeakerIdsState.update((prev) => {
+            let changed = false;
+            const next = new Set(prev);
+            for (const uid of leftSet) {
+              if (next.delete(uid)) changed = true;
+            }
+            return changed ? next : prev;
+          });
+        }
+
         this.roomState.update((curr): VoiceRoomDto | null =>
-          curr ? { ...curr, participantCount: presence.participantCount } : curr,
+          curr
+            ? {
+                ...curr,
+                participantCount: presence.participantCount,
+                handRaiseCount: prunedHandCount,
+              }
+            : curr,
         );
-        const leftSet = new Set(presence.left);
         const kept = this.audienceIds().filter((uid) => !leftSet.has(uid) && !speakers.has(uid));
         const existingIds = new Set(kept);
         const additions = presence.joined.filter(
@@ -611,6 +829,7 @@ export class RoomStageStore {
     this.hostReconnectingState.set(false);
     this.idleWarningState.set(false);
     this.moderatorIdsState.set(new Set());
+    this.hostMutedIdsState.set(new Set());
     this.roleState.set('LISTENER');
     this.roomState.set(null);
     this.audienceIdsState.set([]);
@@ -620,6 +839,26 @@ export class RoomStageStore {
     this.audienceLimit.set(AUDIENCE_INITIAL_LIMIT);
     this.stageState.set({ speakers: [], handRaiseQueue: [] });
     this.lastStageEventAt = 0;
+  }
+
+  private updateHostMutedId(userId: string, muted: boolean): void {
+    this.hostMutedIdsState.update((prev): ReadonlySet<string> => {
+      if (muted) {
+        if (prev.has(userId)) return prev;
+        return new Set(prev).add(userId);
+      }
+      if (!prev.has(userId)) return prev;
+      const next = new Set(prev);
+      next.delete(userId);
+      return next;
+    });
+  }
+
+  private syncRoomHandCount(): void {
+    const count = this.stageState().handRaiseQueue.length;
+    this.roomState.update((room): VoiceRoomDto | null =>
+      room ? { ...room, handRaiseCount: count } : null,
+    );
   }
 
   private applySnapshotAudience(snapshot: RoomJoinSnapshot): void {

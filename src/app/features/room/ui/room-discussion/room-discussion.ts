@@ -43,6 +43,7 @@ import {
   isNearChatBottom,
   resolveScrollPillState,
 } from '../../utils/chat-scroll.utils';
+import { canModerateTargetUser } from '../../utils/room-moderation.utils';
 
 interface CommentReactionBurst {
   readonly id: number;
@@ -97,8 +98,11 @@ export class RoomDiscussion {
   readonly topicChange = output<string>();
   readonly editingTopic = signal(false);
   readonly isHost = input(false);
+  readonly canModerate = input(false);
+  readonly moderatorIds = input<ReadonlySet<string>>(new Set());
   readonly canSend = input(true);
 
+  readonly effectiveCanModerate = computed(() => this.isHost() || this.canModerate());
   readonly mutedUsers = input<ReadonlySet<string>>(new Set());
   readonly gifResults = input<readonly GifItem[]>([]);
   readonly gifLoading = input(false);
@@ -148,7 +152,7 @@ export class RoomDiscussion {
   private autoScrollTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly composerPlaceholder = computed(() => {
-    if (!this.canSend()) return 'Chat is currently disabled';
+    if (!this.canSend()) return 'You are muted in chat';
     if (this.correcting()) return 'Write the corrected text…';
     const target = this.replyTarget();
     return target ? `Reply to ${target}…` : 'Say something to the room…';
@@ -254,8 +258,30 @@ export class RoomDiscussion {
     return canCopyMessage(msg);
   }
 
+  canMuteAuthorInChat(msg: DiscussionMessage): boolean {
+    if (msg.isYou || msg.isHost || !msg.authorId) return false;
+    return canModerateTargetUser({
+      isHost: this.isHost(),
+      isModerator: this.canModerate() && !this.isHost(),
+      currentUserId: '',
+      hostId: null,
+      moderatorIds: this.moderatorIds(),
+      targetUserId: msg.authorId,
+    });
+  }
+
+  canDeleteMessage(msg: DiscussionMessage): boolean {
+    return this.isHost() || (this.effectiveCanModerate() && !msg.isHost);
+  }
+
   hasCommentActions(msg: DiscussionMessage): boolean {
-    return this.canSend() || this.isHost() || canCopyMessage(msg);
+    return (
+      this.canSend() ||
+      this.canCopyMessage(msg) ||
+      (this.effectiveCanModerate() && this.canPinMessage(msg)) ||
+      this.canMuteAuthorInChat(msg) ||
+      this.canDeleteMessage(msg)
+    );
   }
 
   isEmojiActive(msg: DiscussionMessage, emoji: string): boolean {

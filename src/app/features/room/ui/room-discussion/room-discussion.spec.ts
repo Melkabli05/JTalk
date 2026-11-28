@@ -249,4 +249,45 @@ describe('RoomDiscussion', () => {
     expect(fixture.componentInstance.hasCommentActions(base)).toBe(true);
     expect(fixture.componentInstance.hasCommentActions(gifMessage)).toBe(false);
   });
+
+  it('allows moderators to mute/unmute regular users in chat while protecting hosts and other moderators', () => {
+    const fixture = TestBed.createComponent(RoomDiscussion);
+    const hostMsg: DiscussionMessage = {
+      ...sampleMessages[0]!,
+      id: 'm-host',
+      authorId: 'host-1',
+      isHost: true,
+      isYou: false,
+    };
+    const modMsg: DiscussionMessage = {
+      ...sampleMessages[0]!,
+      id: 'm-mod',
+      authorId: 'mod-2',
+      isHost: false,
+      isYou: false,
+    };
+    const userMsg: DiscussionMessage = {
+      ...sampleMessages[0]!,
+      id: 'm-user',
+      authorId: 'user-3',
+      isHost: false,
+      isYou: false,
+    };
+    fixture.componentRef.setInput('messages', [hostMsg, modMsg, userMsg]);
+    fixture.componentRef.setInput('commentCountLabel', '3 comments');
+    fixture.componentRef.setInput('chatError', false);
+    fixture.componentRef.setInput('isHost', false);
+    fixture.componentRef.setInput('canModerate', true);
+    fixture.componentRef.setInput('moderatorIds', new Set(['mod-1', 'mod-2']));
+    fixture.componentRef.setInput('mutedUsers', new Set(['user-3']));
+    fixture.componentRef.setInput('canSend', false);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.canMuteAuthorInChat(hostMsg)).toBe(false);
+    expect(fixture.componentInstance.canMuteAuthorInChat(modMsg)).toBe(false);
+    expect(fixture.componentInstance.canMuteAuthorInChat(userMsg)).toBe(true);
+    expect(fixture.componentInstance.mutedUsers().has('user-3')).toBe(true);
+    expect(fixture.componentInstance.composerPlaceholder()).toBe('You are muted in chat');
+  });
 });
+
